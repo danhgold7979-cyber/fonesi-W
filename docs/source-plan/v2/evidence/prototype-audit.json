@@ -1,0 +1,442 @@
+{
+  "errors": [],
+  "views": {
+    "inspector": {
+      "controls": 138,
+      "width": 1600,
+      "scroll": 1600
+    },
+    "devices": {
+      "controls": 35,
+      "width": 1600,
+      "scroll": 1600
+    },
+    "process": {
+      "controls": 92,
+      "width": 1600,
+      "scroll": 1600
+    },
+    "workflows": {
+      "controls": 28,
+      "width": 1600,
+      "scroll": 1600
+    },
+    "schedule": {
+      "controls": 18,
+      "width": 1600,
+      "scroll": 1600
+    },
+    "history": {
+      "controls": 16,
+      "width": 1600,
+      "scroll": 1600
+    }
+  },
+  "checks": {
+    "context_settings": {
+      "weekdays": [
+        1
+      ],
+      "startDate": "2026-10-26",
+      "savedContextFields": [
+        "rows",
+        "slots",
+        "daily",
+        "startDate"
+      ]
+    },
+    "unbounded_edge_port": []
+  },
+  "catalog": [
+    [
+      "start",
+      "Bắt đầu",
+      "play",
+      "Luồng điều khiển",
+      "#129c7c"
+    ],
+    [
+      "end",
+      "Kết thúc",
+      "flag",
+      "Luồng điều khiển",
+      "#129c7c"
+    ],
+    [
+      "condition",
+      "If / Else",
+      "branch",
+      "Luồng điều khiển",
+      "#c18a28"
+    ],
+    [
+      "loop",
+      "Vòng lặp giới hạn",
+      "refresh",
+      "Luồng điều khiển",
+      "#c18a28"
+    ],
+    [
+      "break",
+      "Thoát vòng lặp",
+      "stop",
+      "Luồng điều khiển",
+      "#c18a28"
+    ],
+    [
+      "continue",
+      "Lượt tiếp theo",
+      "step",
+      "Luồng điều khiển",
+      "#c18a28"
+    ],
+    [
+      "subflow",
+      "Quy trình con",
+      "box",
+      "Luồng điều khiển",
+      "#7862d6"
+    ],
+    [
+      "launch",
+      "Mở ứng dụng",
+      "external",
+      "Ứng dụng & hệ thống",
+      "#5b78cc"
+    ],
+    [
+      "installed",
+      "Kiểm tra đã cài app",
+      "check",
+      "Ứng dụng & hệ thống",
+      "#5b78cc"
+    ],
+    [
+      "current",
+      "Kiểm tra app hiện tại",
+      "phone",
+      "Ứng dụng & hệ thống",
+      "#5b78cc"
+    ],
+    [
+      "closeapp",
+      "Đóng / mở lại app",
+      "refresh",
+      "Ứng dụng & hệ thống",
+      "#5b78cc"
+    ],
+    [
+      "back",
+      "Back / Home / Recent",
+      "back",
+      "Ứng dụng & hệ thống",
+      "#5b78cc"
+    ],
+    [
+      "tap",
+      "Bấm phần tử",
+      "tap",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "doubletap",
+      "Bấm đúp",
+      "tap",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "hold",
+      "Nhấn giữ",
+      "hand",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "drag",
+      "Kéo thả",
+      "mouse",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "swipe",
+      "Vuốt màn hình",
+      "swipe",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "scroll",
+      "Cuộn tới phần tử",
+      "swipe",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "pinch",
+      "Chụm / mở hai ngón",
+      "zoom",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "type",
+      "Nhập văn bản",
+      "text",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "clear",
+      "Xóa nội dung ô nhập",
+      "close",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "keyboard",
+      "Ẩn / thao tác bàn phím",
+      "table",
+      "Thao tác điện thoại",
+      "#5c83d5"
+    ],
+    [
+      "find",
+      "Tìm XPath / thuộc tính",
+      "search",
+      "Nhận diện & chờ",
+      "#399c92"
+    ],
+    [
+      "image",
+      "Tìm ảnh mẫu",
+      "image",
+      "Nhận diện & chờ",
+      "#399c92"
+    ],
+    [
+      "ocr",
+      "Đọc chữ OCR",
+      "text",
+      "Nhận diện & chờ",
+      "#399c92"
+    ],
+    [
+      "read",
+      "Đọc thuộc tính / văn bản",
+      "eye",
+      "Nhận diện & chờ",
+      "#399c92"
+    ],
+    [
+      "wait",
+      "Chờ thời gian / ngẫu nhiên",
+      "clock",
+      "Nhận diện & chờ",
+      "#399c92"
+    ],
+    [
+      "waitfor",
+      "Chờ điều kiện",
+      "clock",
+      "Nhận diện & chờ",
+      "#399c92"
+    ],
+    [
+      "screenshot",
+      "Chụp màn hình",
+      "image",
+      "Nhận diện & chờ",
+      "#399c92"
+    ],
+    [
+      "setvar",
+      "Gán / biến đổi biến",
+      "code",
+      "Dữ liệu & nội dung",
+      "#a06eae"
+    ],
+    [
+      "row",
+      "Đọc dòng công việc",
+      "table",
+      "Dữ liệu & nội dung",
+      "#a06eae"
+    ],
+    [
+      "stage",
+      "Chuyển nội dung sang máy",
+      "upload",
+      "Dữ liệu & nội dung",
+      "#a06eae"
+    ],
+    [
+      "index",
+      "Chờ MediaStore",
+      "refresh",
+      "Dữ liệu & nội dung",
+      "#a06eae"
+    ],
+    [
+      "selectmedia",
+      "Chọn đúng nội dung",
+      "video",
+      "Dữ liệu & nội dung",
+      "#a06eae"
+    ],
+    [
+      "cleanup",
+      "Xóa tệp staging đã sở hữu",
+      "trash",
+      "Dữ liệu & nội dung",
+      "#a06eae"
+    ],
+    [
+      "transaction",
+      "Ghi ý định gửi / đăng",
+      "lock",
+      "Giao dịch & kết quả",
+      "#d48363"
+    ],
+    [
+      "verify",
+      "Xác minh kết quả",
+      "check",
+      "Giao dịch & kết quả",
+      "#d48363"
+    ],
+    [
+      "output",
+      "Ghi dữ liệu đầu ra",
+      "download",
+      "Giao dịch & kết quả",
+      "#d48363"
+    ],
+    [
+      "review",
+      "Dừng để kiểm tra",
+      "flag",
+      "Giao dịch & kết quả",
+      "#d48363"
+    ],
+    [
+      "log",
+      "Ghi nhật ký",
+      "list",
+      "Giao dịch & kết quả",
+      "#d48363"
+    ]
+  ],
+  "apps": [
+    {
+      "id": "fb",
+      "name": "Facebook",
+      "pkg": "com.facebook.katana",
+      "logo": "f",
+      "cls": ""
+    },
+    {
+      "id": "lite",
+      "name": "Facebook Lite",
+      "pkg": "com.facebook.lite",
+      "logo": "f",
+      "cls": "lite"
+    },
+    {
+      "id": "ig",
+      "name": "Instagram",
+      "pkg": "com.instagram.android",
+      "logo": "◎",
+      "cls": "ig"
+    },
+    {
+      "id": "tt",
+      "name": "TikTok",
+      "pkg": "com.zhiliaoapp.musically",
+      "logo": "♪",
+      "cls": "tt"
+    },
+    {
+      "id": "th",
+      "name": "Threads",
+      "pkg": "com.instagram.barcelona",
+      "logo": "@",
+      "cls": "th"
+    }
+  ],
+  "workflows": [
+    {
+      "id": "w1",
+      "app": "fb",
+      "name": "Đăng video fanpage",
+      "version": 3,
+      "kind": "main"
+    },
+    {
+      "id": "w2",
+      "app": "fb",
+      "name": "Đăng ảnh bảng tin",
+      "version": 1,
+      "kind": "main"
+    },
+    {
+      "id": "w3",
+      "app": "fb",
+      "name": "Kiểm tra & chuyển account",
+      "version": 2,
+      "kind": "sub"
+    },
+    {
+      "id": "w4",
+      "app": "lite",
+      "name": "Đăng video · Facebook Lite",
+      "version": 1,
+      "kind": "main"
+    },
+    {
+      "id": "w5",
+      "app": "ig",
+      "name": "Đăng video / Reel Instagram",
+      "version": 2,
+      "kind": "main"
+    },
+    {
+      "id": "w6",
+      "app": "tt",
+      "name": "Đăng video TikTok",
+      "version": 1,
+      "kind": "main"
+    },
+    {
+      "id": "w7",
+      "app": "th",
+      "name": "Đăng bài Threads",
+      "version": 1,
+      "kind": "main"
+    }
+  ],
+  "sizes": [
+    {
+      "width": 1920,
+      "scroll": 1920,
+      "canvas": 1281
+    },
+    {
+      "width": 1366,
+      "scroll": 1366,
+      "canvas": 727
+    },
+    {
+      "width": 1024,
+      "scroll": 1024,
+      "canvas": 485
+    },
+    {
+      "width": 390,
+      "scroll": 1000,
+      "canvas": 461
+    }
+  ]
+}

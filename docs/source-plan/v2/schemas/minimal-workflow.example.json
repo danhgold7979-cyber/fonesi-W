@@ -1,0 +1,48 @@
+{
+  "format": "autoreels-workflow",
+  "schemaVersion": 2,
+  "workflow": {
+    "id": "workflow_basic",
+    "appId": "fb",
+    "name": "Workflow khởi đầu",
+    "kind": "main"
+  },
+  "mainGraphId": "main",
+  "graphs": [
+    {
+      "id": "main",
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "name": "Bắt đầu",
+          "x": 40,
+          "y": 60,
+          "config": {}
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "name": "Kết thúc",
+          "x": 350,
+          "y": 60,
+          "config": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge_start_end",
+          "source": "start",
+          "target": "end",
+          "port": "next"
+        }
+      ],
+      "groups": [],
+      "inputs": [],
+      "outputs": []
+    }
+  ],
+  "inputs": [],
+  "outputs": [],
+  "dependencies": []
+}

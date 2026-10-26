@@ -1,0 +1,1782 @@
+{
+  "version": "2.1",
+  "baseline": "Studio Workspace HTML + inherited V1.7 runtime invariants",
+  "status": "COMPACT_PREVIEW_BEFORE_PRODUCTION_IMPLEMENTATION",
+  "phaseCount": 15,
+  "stepCount": 125,
+  "phases": [
+    {
+      "id": "P00",
+      "title": "Baseline, repository và công cụ",
+      "owner": "foundation",
+      "dependsOn": [],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S001",
+          "number": 1,
+          "title": "Kiểm kê nguồn và checksum",
+          "acceptance": "Giữ nguyên reference; nêu rõ gói FULL-TRANSFER chưa đọc được.",
+          "testId": "AT-001",
+          "plannedModules": [
+            "docs/",
+            "AGENTS.md",
+            "package.json",
+            ".github/workflows/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S002",
+          "number": 2,
+          "title": "Chốt kiểm kê UI và phạm vi",
+          "acceptance": "124 lệnh, fields, gestures, 40 node, các chức năng kế thừa đều có registry.",
+          "testId": "AT-002",
+          "plannedModules": [
+            "docs/",
+            "AGENTS.md",
+            "package.json",
+            ".github/workflows/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S003",
+          "number": 3,
+          "title": "Chốt quyết định và migration V1.7 → Studio",
+          "acceptance": "Mỗi xung đột có quyết định; UI mới và runtime invariants được phân biệt.",
+          "testId": "AT-003",
+          "plannedModules": [
+            "docs/",
+            "AGENTS.md",
+            "package.json",
+            ".github/workflows/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S004",
+          "number": 4,
+          "title": "Chuẩn bị repository và hướng dẫn agent",
+          "acceptance": "Giữ README/commit remote và docs hiện có; không tạo worktree mặc định.",
+          "testId": "AT-004",
+          "plannedModules": [
+            "docs/",
+            "AGENTS.md",
+            "package.json",
+            ".github/workflows/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S005",
+          "number": 5,
+          "title": "Ghim toolchain và gates cloud/Windows",
+          "acceptance": "Cài có integrity; exact Electron/SQLite chỉ chốt sau compatibility check.",
+          "testId": "AT-005",
+          "plannedModules": [
+            "docs/",
+            "AGENTS.md",
+            "package.json",
+            ".github/workflows/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S006",
+          "number": 6,
+          "title": "Thiết lập checks và CI nền",
+          "acceptance": "Typecheck/lint/unit/build có kết quả thực; kiểm tra Windows tách khỏi Linux.",
+          "testId": "AT-006",
+          "plannedModules": [
+            "docs/",
+            "AGENTS.md",
+            "package.json",
+            ".github/workflows/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P01",
+      "title": "Domain và contracts",
+      "owner": "contracts",
+      "dependsOn": [
+        "P00"
+      ],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S007",
+          "number": 7,
+          "title": "AppDefinition và CapabilityProfile mở",
+          "acceptance": "Registry mở theo package; 5 app là seed/templates. Chưa có certification không được giả hỗ trợ automation.",
+          "testId": "AT-007",
+          "plannedModules": [
+            "packages/contracts/",
+            "packages/domain/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S008",
+          "number": 8,
+          "title": "WorkflowDraft, WorkflowVersion và Certification",
+          "acceptance": "Draft sửa được, version immutable, certification theo target profile.",
+          "testId": "AT-008",
+          "plannedModules": [
+            "packages/contracts/",
+            "packages/domain/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S009",
+          "number": 9,
+          "title": "Graph, Node, Edge và Group schemas",
+          "acceptance": "ID/ports/config schema versioned, phân biệt group trực quan và subflow.",
+          "testId": "AT-009",
+          "plannedModules": [
+            "packages/contracts/",
+            "packages/domain/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S010",
+          "number": 10,
+          "title": "Input/Output schema và typed values",
+          "acceptance": "9 loại field; scope row/process/output; keys an toàn; mapping có kiểu.",
+          "testId": "AT-010",
+          "plannedModules": [
+            "packages/contracts/",
+            "packages/domain/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S011",
+          "number": 11,
+          "title": "Process độc lập với editor/test device",
+          "acceptance": "Process ID bền; app/workflow/account/target/device refs hợp lệ.",
+          "testId": "AT-011",
+          "plannedModules": [
+            "packages/contracts/",
+            "packages/domain/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S012",
+          "number": 12,
+          "title": "MediaAsset, ContentItem, Job và Transaction",
+          "acceptance": "Một content item có 0/1/n asset; job snapshot và effect journal riêng.",
+          "testId": "AT-012",
+          "plannedModules": [
+            "packages/contracts/",
+            "packages/domain/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S013",
+          "number": 13,
+          "title": "IPC, event và error contracts",
+          "acceptance": "Runtime validation, operation IDs, cancellation và per-device batch results.",
+          "testId": "AT-013",
+          "plannedModules": [
+            "packages/contracts/",
+            "packages/domain/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P02",
+      "title": "SQLite và persistence",
+      "owner": "database",
+      "dependsOn": [
+        "P01"
+      ],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S014",
+          "number": 14,
+          "title": "Schema quan hệ và migrations",
+          "acceptance": "FK/index/unique scope rõ; history không bị cascade-delete.",
+          "testId": "AT-014",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S015",
+          "number": 15,
+          "title": "SQLite adapter và Electron compatibility",
+          "acceptance": "Chứng minh driver dưới Electron ABI; không chỉ standalone Node.",
+          "testId": "AT-015",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S016",
+          "number": 16,
+          "title": "Lưu workflow bundle hoàn chỉnh",
+          "acceptance": "Main/subgraphs/inputs/outputs/dependencies cùng transaction, không chia sẻ graph toàn cục.",
+          "testId": "AT-016",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S017",
+          "number": 17,
+          "title": "Lưu Process và settings đúng scope",
+          "acceptance": "Weekdays, slots, source, fields, policies và device enabled giữ qua restart.",
+          "testId": "AT-017",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S018",
+          "number": 18,
+          "title": "Lưu assets/content items và references",
+          "acceptance": "Asset reuse không tái sử dụng content/job ID; ordered multi-asset rõ.",
+          "testId": "AT-018",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S019",
+          "number": 19,
+          "title": "Lưu job, leases, effects và review records",
+          "acceptance": "Unique occurrence/effect keys, fencing tokens và transaction boundaries có test contention.",
+          "testId": "AT-019",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S020",
+          "number": 20,
+          "title": "Backup/restore, WAL và integrity",
+          "acceptance": "Backup nhất quán; restore vào staging DB rồi integrity check trước thay thế.",
+          "testId": "AT-020",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S021",
+          "number": 21,
+          "title": "Import atomic, revisions và rollback",
+          "acceptance": "Import sai schema/refs không mutate DB; optimistic concurrency chống ghi đè.",
+          "testId": "AT-021",
+          "plannedModules": [
+            "packages/database/",
+            "packages/import-export/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P03",
+      "title": "Shell và UI nền Studio",
+      "owner": "shell",
+      "dependsOn": [
+        "P01",
+        "P02"
+      ],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S022",
+          "number": 22,
+          "title": "Rail, header, footer và sáu route",
+          "acceptance": "Theo layout mới, breadcrumbs/ngữ cảnh/capability status thống nhất.",
+          "testId": "AT-022",
+          "plannedModules": [
+            "apps/desktop/src/renderer/shell/",
+            "apps/desktop/src/main/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S023",
+          "number": 23,
+          "title": "Theme, layout và Windows DPI",
+          "acceptance": "Light/dark; kích thước panel lưu thật; 100/125/150% không che nút chính.",
+          "testId": "AT-023",
+          "plannedModules": [
+            "apps/desktop/src/renderer/shell/",
+            "apps/desktop/src/main/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S024",
+          "number": 24,
+          "title": "Điều hướng và context isolation",
+          "acceptance": "Chuyển máy/app/target không mang rows hoặc schema của context khác.",
+          "testId": "AT-024",
+          "plannedModules": [
+            "apps/desktop/src/renderer/shell/",
+            "apps/desktop/src/main/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S025",
+          "number": 25,
+          "title": "Modal, context menu và keyboard focus",
+          "acceptance": "Focus trap/restore/Escape; confirm destructive; menu không ra ngoài viewport.",
+          "testId": "AT-025",
+          "plannedModules": [
+            "apps/desktop/src/renderer/shell/",
+            "apps/desktop/src/main/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S026",
+          "number": 26,
+          "title": "Empty/loading/error/unsupported states",
+          "acceptance": "Không tự tạo thiết bị hoặc reported success; thiếu backend có lý do hiển thị.",
+          "testId": "AT-026",
+          "plannedModules": [
+            "apps/desktop/src/renderer/shell/",
+            "apps/desktop/src/main/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S027",
+          "number": 27,
+          "title": "Save status, toasts và notifications",
+          "acceptance": "Chỉ báo saved sau ACK bền; lỗi save/revision conflict có retry an toàn.",
+          "testId": "AT-027",
+          "plannedModules": [
+            "apps/desktop/src/renderer/shell/",
+            "apps/desktop/src/main/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S028",
+          "number": 28,
+          "title": "Visual và navigation regressions",
+          "acceptance": "Ảnh các route/modal và test focus/resize; fixture tách runtime production.",
+          "testId": "AT-028",
+          "plannedModules": [
+            "apps/desktop/src/renderer/shell/",
+            "apps/desktop/src/main/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P04",
+      "title": "Workflow editor",
+      "owner": "editor",
+      "dependsOn": [
+        "P03"
+      ],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S029",
+          "number": 29,
+          "title": "Node library và tìm kiếm",
+          "acceptance": "40 node từ catalog chung; nhóm và subflow library nhất quán.",
+          "testId": "AT-029",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S030",
+          "number": 30,
+          "title": "Thêm/kéo/resize node",
+          "acceptance": "Tọa độ world-space, snap và auto-pan ổn định dưới zoom.",
+          "testId": "AT-030",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S031",
+          "number": 31,
+          "title": "Selection, clipboard, undo/redo và phím tắt",
+          "acceptance": "Canvas focus scope, nudge 1/10, selection/clipboard/history scoped workflow; typing không sửa node.",
+          "testId": "AT-031",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S032",
+          "number": 32,
+          "title": "Nối/xóa/chèn node trên edge",
+          "acceptance": "Ports hợp lệ; một edge/output trừ cơ chế fanout được thiết kế; undo một lần.",
+          "testId": "AT-032",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S033",
+          "number": 33,
+          "title": "Bẻ dây và routing",
+          "acceptance": "Handles bám node/zoom; reroute không đổi graph semantics.",
+          "testId": "AT-033",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S034",
+          "number": 34,
+          "title": "Pan/zoom/fit/minimap và command palette",
+          "acceptance": "Fit selection, readable default zoom, Ctrl+K/node search, mouse gestures có cùng command registry.",
+          "testId": "AT-034",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S035",
+          "number": 35,
+          "title": "Layout, align và group trực quan",
+          "acceptance": "Group membership cập nhật sau move/delete; không giả làm subflow.",
+          "testId": "AT-035",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S036",
+          "number": 36,
+          "title": "Properties và advanced editor theo node type",
+          "acceptance": "Field-specific config, validation inline, effect retry policy có kiểm soát.",
+          "testId": "AT-036",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S037",
+          "number": 37,
+          "title": "Tạo/mở/convert subflow và mapping",
+          "acceptance": "Nested refs/version/type-safe; clone/export đầy đủ dependencies.",
+          "testId": "AT-037",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S038",
+          "number": 38,
+          "title": "Breadcrumb/call-stack và Debug UI",
+          "acceptance": "Về cha thật theo stack; không luôn nhảy main; no real action trong undo.",
+          "testId": "AT-038",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S039",
+          "number": 39,
+          "title": "Autosave, progressive panels và shortcuts",
+          "acceptance": "4 primary controls, library/phone collapse, properties theo selection, no command conflicts.",
+          "testId": "AT-039",
+          "plannedModules": [
+            "apps/desktop/src/renderer/editor/",
+            "packages/editor/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P05",
+      "title": "Validator, compiler và execution core",
+      "owner": "engine",
+      "dependsOn": [
+        "P01",
+        "P04"
+      ],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S040",
+          "number": 40,
+          "title": "Validate schema import và reserved keys",
+          "acceptance": "Reject unknown types/ports, duplicate IDs, prototype keys và payload quá resource budget.",
+          "testId": "AT-040",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S041",
+          "number": 41,
+          "title": "Validate graph topology",
+          "acceptance": "Endpoints/ports/output uniqueness/reachability và required terminal đầy đủ.",
+          "testId": "AT-041",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S042",
+          "number": 42,
+          "title": "Loops/break/continue và budgets",
+          "acceptance": "Loop body có scope/giới hạn; không cho arbitrary wire cycle hoặc runaway execution.",
+          "testId": "AT-042",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S043",
+          "number": 43,
+          "title": "Validate toàn bộ dependency closure",
+          "acceptance": "Mọi subgraph được check; recursive call/type mismatch và thiếu dependency bị chặn.",
+          "testId": "AT-043",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S044",
+          "number": 44,
+          "title": "DSL và template mapping an toàn",
+          "acceptance": "Không eval/Function/shell; whitelist expression/field paths và typed conversion.",
+          "testId": "AT-044",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S045",
+          "number": 45,
+          "title": "Compile IR và kiểm tra side effects",
+          "acceptance": "Transaction intent thống trị effect; không dựa node name để chứng nhận hành vi.",
+          "testId": "AT-045",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S046",
+          "number": 46,
+          "title": "Interpreter và call stack",
+          "acceptance": "RunFrame/local scope/return/output mapping; test adapters chỉ ở fixtures.",
+          "testId": "AT-046",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S047",
+          "number": 47,
+          "title": "Pause/breakpoint/step/into/out/stop",
+          "acceptance": "Continue vượt breakpoint một lần; cancellation tại safe point, không skip pending recovery.",
+          "testId": "AT-047",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S048",
+          "number": 48,
+          "title": "40 handler contracts và adapter boundaries",
+          "acceptance": "Mỗi node có real handler hoặc explicit unavailable; typed errors/timeouts.",
+          "testId": "AT-048",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S049",
+          "number": 49,
+          "title": "Trace-only diagnostics và capability gates",
+          "acceptance": "Dry-run không tạo POSTED/SUCCESS thật; real run phải preflight/certify.",
+          "testId": "AT-049",
+          "plannedModules": [
+            "packages/workflow-engine/",
+            "packages/contracts/nodes/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P06",
+      "title": "Process, input và media",
+      "owner": "process-media",
+      "dependsOn": [
+        "P02",
+        "P03",
+        "P05"
+      ],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S050",
+          "number": 50,
+          "title": "Process CRUD và clone",
+          "acceptance": "ID riêng; clone có preview; giữ hoặc clear bindings có chủ đích.",
+          "testId": "AT-050",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S051",
+          "number": 51,
+          "title": "Dynamic fields và input mapping",
+          "acceptance": "Row/process/output với 9 types; file[] ordered, list thật; không ép mọi thứ thành string.",
+          "testId": "AT-051",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S052",
+          "number": 52,
+          "title": "Chọn nguồn thư mục/tệp và multi-asset",
+          "acceptance": "Desktop dùng file dialog scoped; browser metadata không bị coi là filesystem access.",
+          "testId": "AT-052",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S053",
+          "number": 53,
+          "title": "Watcher/reconcile và subfolders",
+          "acceptance": "Không overlap; events gắn process/generation; ignore và auto-append đúng scope.",
+          "testId": "AT-053",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S054",
+          "number": 54,
+          "title": "Fingerprint và validation nguồn",
+          "acceptance": "Source đổi/mất/copy dở/corrupt có trạng thái; job không âm thầm đổi content.",
+          "testId": "AT-054",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S055",
+          "number": 55,
+          "title": "Thumbnail/probe queue",
+          "acceptance": "Bounded CPU/I/O, actual media metadata; cache evict không xóa source.",
+          "testId": "AT-055",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S056",
+          "number": 56,
+          "title": "Virtualized table, search và inline edits",
+          "acceptance": "Query/store thật; selection theo ID không theo row index.",
+          "testId": "AT-056",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S057",
+          "number": 57,
+          "title": "Bulk edit và import preview",
+          "acceptance": "Set/append/prepend/clear; explicit ID mismatch không fallback sửa nhầm.",
+          "testId": "AT-057",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S058",
+          "number": 58,
+          "title": "CSV/JSON/XLSX import/export",
+          "acceptance": "Round-trip typed/custom fields; duplicate/ambiguous report; formula protection.",
+          "testId": "AT-058",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S059",
+          "number": 59,
+          "title": "Remove/ignore/archive và retention",
+          "acceptance": "Không xóa file PC; pending jobs cần xử lý rõ; posted history giữ nguyên.",
+          "testId": "AT-059",
+          "plannedModules": [
+            "packages/processes/",
+            "packages/media/",
+            "apps/desktop/src/renderer/processes/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P07",
+      "title": "Scheduler, queue và timeline",
+      "owner": "scheduler",
+      "dependsOn": [
+        "P02",
+        "P05",
+        "P06"
+      ],
+      "hardwareRequired": false,
+      "steps": [
+        {
+          "id": "S060",
+          "number": 60,
+          "title": "UTC/timezone, date, slots và weekdays",
+          "acceptance": "DD/MM display; local date round-trip; invalid date/time bị reject.",
+          "testId": "AT-060",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S061",
+          "number": 61,
+          "title": "Policy quá hạn và randomization",
+          "acceptance": "Lưu theo process; seed kết quả preview; không random lại khi retry/apply.",
+          "testId": "AT-061",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S062",
+          "number": 62,
+          "title": "Preview/apply idempotent",
+          "acceptance": "Batch revision token; apply lặp không tạo occurrence trùng.",
+          "testId": "AT-062",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S063",
+          "number": 63,
+          "title": "Snapshot workflow/content/target/network",
+          "acceptance": "Pin immutable version/dependency hashes; sửa draft không đổi scheduled jobs.",
+          "testId": "AT-063",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S064",
+          "number": 64,
+          "title": "Due queue, priority và device leases",
+          "acceptance": "Một device/một job; fairness/cancel; unassigned process không chạy thật.",
+          "testId": "AT-064",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S065",
+          "number": 65,
+          "title": "Timeline toàn workspace",
+          "acceptance": "Range/app/process/device filters; các context được truy vấn từ DB.",
+          "testId": "AT-065",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S066",
+          "number": 66,
+          "title": "Drag/reschedule/clear pending",
+          "acceptance": "Cùng job ID và revision; không sửa pending external transaction.",
+          "testId": "AT-066",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S067",
+          "number": 67,
+          "title": "Conflict và spread",
+          "acceptance": "Phân biệt timestamp/reserved interval; preview scope và crossing-day policy.",
+          "testId": "AT-067",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S068",
+          "number": 68,
+          "title": "Restart/sleep/resume recovery",
+          "acceptance": "Due jobs theo policy; uncertainty verify trước retry; ledger giữ bền.",
+          "testId": "AT-068",
+          "plannedModules": [
+            "packages/scheduler/",
+            "apps/desktop/src/renderer/schedule/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P08",
+      "title": "ADB registry và worker",
+      "owner": "devices",
+      "dependsOn": [
+        "P01",
+        "P02",
+        "P03"
+      ],
+      "hardwareRequired": true,
+      "steps": [
+        {
+          "id": "S069",
+          "number": 69,
+          "title": "Platform-Tools discovery/verification",
+          "acceptance": "Version/hash/source có evidence; không overwrite toolchain khác.",
+          "testId": "AT-069",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S070",
+          "number": 70,
+          "title": "USB và authorization",
+          "acceptance": "Authorized/unauthorized/offline phân biệt; không tạo serial mẫu.",
+          "testId": "AT-070",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S071",
+          "number": 71,
+          "title": "LAN pairing/connect",
+          "acceptance": "Android pairing/code route phù hợp; endpoint validated, không mở dịch vụ công khai.",
+          "testId": "AT-071",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S072",
+          "number": 72,
+          "title": "Device identity và transport reconciliation",
+          "acceptance": "USB/LAN không duplicate sai; không gộp thiết bị chỉ vì cùng model/IP.",
+          "testId": "AT-072",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S073",
+          "number": 73,
+          "title": "Heartbeat/reconnect và registry events",
+          "acceptance": "Lỗi riêng máy; bounded backoff/cancellation.",
+          "testId": "AT-073",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S074",
+          "number": 74,
+          "title": "DeviceWorker ownership",
+          "acceptance": "Automation/manual/inspector/app/network mutation chung lease/fencing.",
+          "testId": "AT-074",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S075",
+          "number": 75,
+          "title": "Enabled/bulk actions và sidebar/grid",
+          "acceptance": "Persist thật; per-device ACK, selected set khác active device.",
+          "testId": "AT-075",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S076",
+          "number": 76,
+          "title": "Thông tin/app discovery và quick actions",
+          "acceptance": "Metadata/packages thật; capability unsupported hiển thị rõ.",
+          "testId": "AT-076",
+          "plannedModules": [
+            "packages/device-runtime/",
+            "apps/desktop/src/renderer/devices/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P09",
+      "title": "Stream, UI Inspector và manual control",
+      "owner": "stream-inspector",
+      "dependsOn": [
+        "P08",
+        "P04"
+      ],
+      "hardwareRequired": true,
+      "steps": [
+        {
+          "id": "S077",
+          "number": 77,
+          "title": "ADB coexistence design spike",
+          "acceptance": "Shared/dedicated/exclusive strategy được kiểm tra, không kill server khác mù.",
+          "testId": "AT-077",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S078",
+          "number": 78,
+          "title": "Pin scrcpy server/client/protocol",
+          "acceptance": "Compatibility set và checksum binaries được ghi build metadata.",
+          "testId": "AT-078",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S079",
+          "number": 79,
+          "title": "Video decoder và IPC transport",
+          "acceptance": "H.264/WebCodecs capability; buffers/backpressure, không JSON/base64 frame flood.",
+          "testId": "AT-079",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S080",
+          "number": 80,
+          "title": "Preview resource profiles",
+          "acceptance": "Visible/offscreen/focus streams điều chỉnh tài nguyên thực.",
+          "testId": "AT-080",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S081",
+          "number": 81,
+          "title": "Máy test độc lập process bindings",
+          "acceptance": "Đổi test device không đổi target/process/workflow draft.",
+          "testId": "AT-081",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S082",
+          "number": 82,
+          "title": "UI XML/frame snapshot thực",
+          "acceptance": "Versioned screenshot/XML/frame dimensions/orientation cùng correlation ID.",
+          "testId": "AT-082",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S083",
+          "number": 83,
+          "title": "Pick selector và matching",
+          "acceptance": "Bounds đúng content rect; match count/confidence/version; stale snapshot bị chặn.",
+          "testId": "AT-083",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S084",
+          "number": 84,
+          "title": "Dock/right/top/floating/popup và quick actions",
+          "acceptance": "Compact overflow, saved layout, popup origin/channel, real control lease; fit/zoom đồng bộ.",
+          "testId": "AT-084",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S085",
+          "number": 85,
+          "title": "Manual group/MASTER kế thừa V17",
+          "acceptance": "Normalized geometry/rotation; acquire từng máy; real outcomes và release/redetect.",
+          "testId": "AT-085",
+          "plannedModules": [
+            "packages/device-runtime/stream/",
+            "packages/ui-inspector/",
+            "apps/desktop/src/renderer/inspector/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P10",
+      "title": "Technical Risk Gate",
+      "owner": "hardware-risk",
+      "dependsOn": [
+        "P08",
+        "P09",
+        "P05",
+        "P06"
+      ],
+      "hardwareRequired": true,
+      "steps": [
+        {
+          "id": "S086",
+          "number": 86,
+          "title": "R1 embedded video/control",
+          "acceptance": "Ít nhất hai điện thoại thật: decode/input/reconnect/profile evidence.",
+          "testId": "AT-086",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S087",
+          "number": 87,
+          "title": "R2 Unicode input",
+          "acceptance": "Tiếng Việt/emoji/URL/newline trên field thật khớp yêu cầu.",
+          "testId": "AT-087",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S088",
+          "number": 88,
+          "title": "R3 media staging/picker",
+          "acceptance": "Hai Android/vendor profiles; portrait/landscape; exact-media evidence.",
+          "testId": "AT-088",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S089",
+          "number": 89,
+          "title": "R4 account/target discovery",
+          "acceptance": "So với manual inspection; trùng tên/scroll/cache đều có case.",
+          "testId": "AT-089",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S090",
+          "number": 90,
+          "title": "R5 detection/version/locale",
+          "acceptance": "Unknown/updated app không đoán selectors; có fixture và device profile.",
+          "testId": "AT-090",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S091",
+          "number": 91,
+          "title": "R6 publish verification feasibility",
+          "acceptance": "Controlled test Page; signal posted/pending/ambiguous được chứng minh.",
+          "testId": "AT-091",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S092",
+          "number": 92,
+          "title": "R7 device routing",
+          "acceptance": "Mỗi claimed-supported proxy type có Android/Facebook evidence; unsupported ghi riêng.",
+          "testId": "AT-092",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S093",
+          "number": 93,
+          "title": "R8 ADB coexistence acceptance",
+          "acceptance": "Chạy với software fleet thực; PASS/FAIL/DEFERRED ghi riêng.",
+          "testId": "AT-093",
+          "plannedModules": [
+            "docs/evidence/risk-gate/",
+            "tests/hardware/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P11",
+      "title": "Execution và transactions thực",
+      "owner": "execution",
+      "dependsOn": [
+        "P02",
+        "P05",
+        "P07",
+        "P08",
+        "P09",
+        "P10"
+      ],
+      "hardwareRequired": true,
+      "steps": [
+        {
+          "id": "S094",
+          "number": 94,
+          "title": "Preflight và eligibility",
+          "acceptance": "Device/session/identity/file/app/version/locale/selector profile đều đúng.",
+          "testId": "AT-094",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S095",
+          "number": 95,
+          "title": "Staging ownership và MediaStore",
+          "acceptance": "Ledger bền, job-unique paths, transfer/index readiness có xác minh.",
+          "testId": "AT-095",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S096",
+          "number": 96,
+          "title": "Exact media và Unicode form fill",
+          "acceptance": "Không lấy thumbnail đầu tiên; kiểm tra target/content trước Publish.",
+          "testId": "AT-096",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S097",
+          "number": 97,
+          "title": "Intent journal trước side effect",
+          "acceptance": "Durable attempt/uncertainty trước click; crash window không tự retry mù.",
+          "testId": "AT-097",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S098",
+          "number": 98,
+          "title": "Xác minh bài đúng provider/identity",
+          "acceptance": "External ID/fingerprint/time window; ambiguous thành NEEDS_REVIEW.",
+          "testId": "AT-098",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S099",
+          "number": 99,
+          "title": "Fault injection/restart recovery",
+          "acceptance": "Kill trước/sau click/verify/DB commit; uncertainty không bị coi FAILED retryable.",
+          "testId": "AT-099",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S100",
+          "number": 100,
+          "title": "Comment transaction/list",
+          "acceptance": "Từng comment có hash/index/key; verify trước retry; không repost Reel.",
+          "testId": "AT-100",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S101",
+          "number": 101,
+          "title": "Cancel, partial-result và manual review",
+          "acceptance": "Uncertain effect pause device automation; verified post + definite comment failure có SUCCESS_WITH_WARNINGS và comment retry riêng.",
+          "testId": "AT-101",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S102",
+          "number": 102,
+          "title": "Cleanup/reconciliation",
+          "acceptance": "Chỉ owned staging; pending giữ file; cleanup failure không tạo lại post.",
+          "testId": "AT-102",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S103",
+          "number": 103,
+          "title": "Certification-aware runtime",
+          "acceptance": "Engine contract tests + hardware reference adapter evidence; release eligibility vẫn theo từng app/profile.",
+          "testId": "AT-103",
+          "plannedModules": [
+            "packages/execution/",
+            "packages/staging/",
+            "packages/review/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P12",
+      "title": "Adapters theo ứng dụng",
+      "owner": "app-adapters",
+      "dependsOn": [
+        "P11"
+      ],
+      "hardwareRequired": true,
+      "steps": [
+        {
+          "id": "S104",
+          "number": 104,
+          "title": "App adapter interface và capability matrix",
+          "acceptance": "Target kinds/media/audience/comments/selectors không giả là giống nhau.",
+          "testId": "AT-104",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S105",
+          "number": 105,
+          "title": "Facebook video/Reels adapter",
+          "acceptance": "com.facebook.katana: phiên bản/locale/profile được chứng nhận riêng.",
+          "testId": "AT-105",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S106",
+          "number": 106,
+          "title": "Facebook photo/multi-asset flow",
+          "acceptance": "Không đổi tên video template rồi coi là photo support; ordering/type kiểm tra thật.",
+          "testId": "AT-106",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S107",
+          "number": 107,
+          "title": "Facebook Lite adapter",
+          "acceptance": "Không dùng selectors Facebook thường; chứng nhận độc lập.",
+          "testId": "AT-107",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S108",
+          "number": 108,
+          "title": "Instagram adapter",
+          "acceptance": "Reel/video/profile semantics/limits/verification được test riêng.",
+          "testId": "AT-108",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S109",
+          "number": 109,
+          "title": "TikTok adapter",
+          "acceptance": "Package thực trên fleet, profile locale, media/comment capability có evidence.",
+          "testId": "AT-109",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S110",
+          "number": 110,
+          "title": "Threads adapter",
+          "acceptance": "Text và attachments theo capability; không gắn nhãn Reels giả.",
+          "testId": "AT-110",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S111",
+          "number": 111,
+          "title": "Acceptance/certification theo app",
+          "acceptance": "App chưa chứng nhận vẫn author workflow được; automation bị disable với lý do.",
+          "testId": "AT-111",
+          "plannedModules": [
+            "packages/app-adapters/",
+            "tests/hardware/apps/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P13",
+      "title": "Công cụ và vận hành",
+      "owner": "operations",
+      "dependsOn": [
+        "P02",
+        "P08",
+        "P09",
+        "P11"
+      ],
+      "hardwareRequired": true,
+      "steps": [
+        {
+          "id": "S112",
+          "number": 112,
+          "title": "Device tools 3 tab và APK manager",
+          "acceptance": "Kết nối/Ứng dụng/Mạng; thực thi có scoped file picker, bounded queue, per-device result và quick action scope.",
+          "testId": "AT-112",
+          "plannedModules": [
+            "packages/network/",
+            "packages/apk/",
+            "packages/diagnostics/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S113",
+          "number": 113,
+          "title": "Proxy parser/checker/secret storage",
+          "acceptance": "Parser/check PC/device support ba mức riêng; log/export redacted.",
+          "testId": "AT-113",
+          "plannedModules": [
+            "packages/network/",
+            "packages/apk/",
+            "packages/diagnostics/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S114",
+          "number": 114,
+          "title": "Device proxy adapters",
+          "acceptance": "Apply + egress + app traffic verify; rollback/unsupported có trạng thái.",
+          "testId": "AT-114",
+          "plannedModules": [
+            "packages/network/",
+            "packages/apk/",
+            "packages/diagnostics/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S115",
+          "number": 115,
+          "title": "VPN adapters và mutual exclusion",
+          "acceptance": "Discover/open/verify; không auto rotation để né protections.",
+          "testId": "AT-115",
+          "plannedModules": [
+            "packages/network/",
+            "packages/apk/",
+            "packages/diagnostics/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S116",
+          "number": 116,
+          "title": "Logs/diagnostics/notifications",
+          "acceptance": "Operation correlation, retention, export preview và consent khi chia sẻ.",
+          "testId": "AT-116",
+          "plannedModules": [
+            "packages/network/",
+            "packages/apk/",
+            "packages/diagnostics/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S117",
+          "number": 117,
+          "title": "Disk/power/lifecycle resilience",
+          "acceptance": "Low/full disk, sleep/resume, tray, graceful quit và crash reconciler.",
+          "testId": "AT-117",
+          "plannedModules": [
+            "packages/network/",
+            "packages/apk/",
+            "packages/diagnostics/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S118",
+          "number": 118,
+          "title": "Scale/resource acceptance",
+          "acceptance": "Measured devices/streams/jobs/media; bounded workers/backpressure, không trần nghiệp vụ giả.",
+          "testId": "AT-118",
+          "plannedModules": [
+            "packages/network/",
+            "packages/apk/",
+            "packages/diagnostics/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    },
+    {
+      "id": "P14",
+      "title": "Packaging và release",
+      "owner": "release",
+      "dependsOn": [
+        "P03",
+        "P07",
+        "P11",
+        "P13"
+      ],
+      "hardwareRequired": true,
+      "steps": [
+        {
+          "id": "S119",
+          "number": 119,
+          "title": "Supported matrix/build receipts",
+          "acceptance": "Windows/Android/app versions/locales/ABI/protocol/schema khai báo chính xác.",
+          "testId": "AT-119",
+          "plannedModules": [
+            "build/",
+            ".github/workflows/",
+            "docs/evidence/releases/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S120",
+          "number": 120,
+          "title": "Offline bundling và licenses",
+          "acceptance": "Không CDN runtime; binaries verified và third-party notices.",
+          "testId": "AT-120",
+          "plannedModules": [
+            "build/",
+            ".github/workflows/",
+            "docs/evidence/releases/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S121",
+          "number": 121,
+          "title": "Windows clean-machine install",
+          "acceptance": "App/SQLite/ADB/stream chạy không cần dev toolchain; signing theo phạm vi phát hành.",
+          "testId": "AT-121",
+          "plannedModules": [
+            "build/",
+            ".github/workflows/",
+            "docs/evidence/releases/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S122",
+          "number": 122,
+          "title": "Upgrade/migration/rollback",
+          "acceptance": "Fixtures DB cũ; backup/integrity và transaction recovery được kiểm tra.",
+          "testId": "AT-122",
+          "plannedModules": [
+            "build/",
+            ".github/workflows/",
+            "docs/evidence/releases/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S123",
+          "number": 123,
+          "title": "Uninstall/update policies",
+          "acceptance": "Giữ DB/media trừ thao tác rõ; không update giữa critical transaction.",
+          "testId": "AT-123",
+          "plannedModules": [
+            "build/",
+            ".github/workflows/",
+            "docs/evidence/releases/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S124",
+          "number": 124,
+          "title": "UI ↔ service ↔ test completeness audit",
+          "acceptance": "Shipped controls accepted, không mock success/unowned/missing handler.",
+          "testId": "AT-124",
+          "plannedModules": [
+            "build/",
+            ".github/workflows/",
+            "docs/evidence/releases/"
+          ],
+          "status": "PLANNED"
+        },
+        {
+          "id": "S125",
+          "number": 125,
+          "title": "Release bundle và báo cáo bàn giao",
+          "acceptance": "Ghi checks pass/fail/unrun và limitations; publish/push chỉ khi có ủy quyền.",
+          "testId": "AT-125",
+          "plannedModules": [
+            "build/",
+            ".github/workflows/",
+            "docs/evidence/releases/"
+          ],
+          "status": "PLANNED"
+        }
+      ],
+      "status": "PLANNED",
+      "gatePolicy": "Full phase completion requires all owned steps accepted; a release may select capability slices with explicit unshipped/deferred items. P10 gates required core spikes; optional routing spike may be deferred when routing is not shipped. P14 additionally requires P12 certification for every shipped app/profile."
+    }
+  ],
+  "releaseGatePolicy": "R1 requires Facebook Reels and TikTok evidence on exact device/app profiles; the remaining apps have independent later gates. No phase is accepted by a preview.",
+  "userDecisionStatus": "ACCEPTED_RECOMMENDATIONS_2026-10-26"
+}

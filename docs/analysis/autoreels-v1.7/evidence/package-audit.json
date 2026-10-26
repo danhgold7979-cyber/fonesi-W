@@ -1,0 +1,36 @@
+{
+  "html_sha256": "fe9e23625d1a50f384ea34eb4003c4049820f68524d0e450c2e70d85b5434b49",
+  "expected_sha256": "fe9e23625d1a50f384ea34eb4003c4049820f68524d0e450c2e70d85b5434b49",
+  "manifest_missing": [
+    "tools/Activate-AutoReels.ps1",
+    "tools/AutoReels_Check_Then_Install_V1_2.md",
+    "tools/AutoReels_Environment_Bootstrap_V1_2.ps1",
+    "tools/AutoReels_Install_Before_Coding_V1_1.md",
+    "tools/AutoReels_PreCode_GateA_V1_1.ps1"
+  ],
+  "manifest_unlisted": [
+    "Tiếp tục kiểm tra migration.txt",
+    "AutoReels_Check_Then_Install_V1_2.md",
+    "AutoReels_Install_Before_Coding_V1_1.md",
+    "Activate-AutoReels.ps1",
+    "AutoReels_Environment_Bootstrap_V1_2.ps1",
+    "PROJECT_MANIFEST.json"
+  ],
+  "registry_checks": {
+    "pnpm-12.6.0": {
+      "status": 200,
+      "version": "12.6.0",
+      "dist_tag_latest": null
+    },
+    "pnpm-latest": {
+      "status": 200,
+      "version": "12.15.0",
+      "dist_tag_latest": null
+    },
+    "electron-latest": {
+      "status": 200,
+      "version": "45.0.0",
+      "dist_tag_latest": null
+    }
+  }
+}

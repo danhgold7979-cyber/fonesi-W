@@ -1,0 +1,65 @@
+/* Review-only extension. The frozen reference remains byte-for-byte unchanged. */
+:root { --sidew: 200px; --phonew: 300px; }
+[hidden] { display: none !important; }
+.workflow-top { padding: 9px 12px; }
+.workflow-title { font-size: 14px; }
+.canvas-tools { min-height: 38px; padding: 4px 8px; }
+.inspector-bottom { height: 196px; }
+.inspector.studio-bottom-collapsed .inspector-bottom { height: 40px !important; min-height: 40px !important; }
+.node-library .library-header { padding: 10px; }
+.lib-node { padding: 6px; }
+.lib-node .add { display: none; }
+.studio-pin { margin-left: auto; border: 0; background: transparent; padding: 2px 4px; color: var(--muted); opacity: 0; }
+.lib-node:hover .studio-pin, .studio-pin:focus-visible, .studio-pin.pinned { opacity: 1; }
+.studio-pin.pinned { color: var(--amber); }
+.studio-favorites { padding: 0 0 8px; border-bottom: 1px solid var(--line); }
+.studio-favorite { display: flex; width: 100%; justify-content: flex-start; font-size: 11px; margin: 4px 0; }
+.inspector.studio-library-hidden .node-library { display: none; }
+.inspector.studio-phone-hidden .phone-pane,
+.inspector.studio-phone-hidden .phone-resize { display: none !important; }
+.phone-stage { padding: 12px 10px; }
+.phone-heading { padding: 9px 10px; }
+.phone-device { width: min(250px, 100%); min-height: 450px; }
+.phone-caption { font-size: 9px; }
+.phone-footer { padding: 8px 10px; }
+.phone-toolbar { gap: 3px; }
+.phone-toolbar button { width: 29px; height: 29px; }
+.studio-quick { display: flex; gap: 5px; margin-top: 7px; justify-content: center; }
+.studio-quick .phone-controls { margin: 0; }
+.studio-palette { display: grid; gap: 4px; max-height: min(52vh, 460px); overflow: auto; margin-top: 12px; }
+.studio-palette button { width: 100%; justify-content: flex-start; text-align: left; border-color: transparent; padding: 9px 10px; }
+.studio-palette button .kbd { margin-left: auto; }
+.studio-palette button:hover, .studio-palette button:focus-visible { background: var(--primarybg); color: var(--primary); }
+.studio-palette-count { font-size: 10px; color: var(--muted); padding: 8px 0 0; }
+.studio-tools-tabs { margin: -5px -4px 18px; }
+.studio-tools-body { min-height: 210px; }
+.studio-facts { display: grid; gap: 8px; }
+.studio-facts > div { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.studio-tool-footer { margin-top: 16px; }
+.studio-help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.studio-help-grid h3 { margin-bottom: 10px; }
+.studio-help-grid p { padding: 5px 0; }
+.studio-column-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+#content-rows tr.studio-selected { background: var(--primarybg); }
+.context-menu { max-height: calc(100vh - 20px); overflow-y: auto; }
+.context-menu .ico { width: 15px; height: 15px; }
+.page { padding: 20px 24px; }
+.card-body { padding: 15px; }
+.metric-grid { gap: 12px; }
+.metric { padding: 15px; }
+.statusbar { gap: 8px; }
+.statusbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.studio-command-button { font-size: 10px; gap: 6px; }
+.studio-command-button .ico { width: 14px; height: 14px; }
+.canvas-wrap:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+@media (max-width: 1450px) {
+  :root { --sidew: 180px; --phonew: 275px; }
+  .workflow-sub { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .studio-command-button .studio-command-label { display: none; }
+  .phone-device { width: 235px; min-height: 430px; }
+}
+@media (max-width: 1050px) {
+  .workflow-top [data-action="validate"], .workflow-top [data-action="save"] { width: 30px; overflow: hidden; font-size: 0; padding: 5px; }
+  .workflow-top [data-action="validate"] .ico, .workflow-top [data-action="save"] .ico { width: 16px; height: 16px; }
+  .studio-help-grid { grid-template-columns: 1fr; }
+}

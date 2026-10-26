@@ -1,0 +1,88 @@
+{
+  "scope": "COMPACT_HTML_PREVIEW_ONLY_NOT_ANDROID_OR_PRODUCTION_APP",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Full inspector loads with four primary toolbar controls",
+      "status": "PASS"
+    },
+    {
+      "name": "Command palette search and Enter navigate",
+      "status": "PASS"
+    },
+    {
+      "name": "Alt route shortcut",
+      "status": "PASS"
+    },
+    {
+      "name": "Nudge is one or ten world units",
+      "status": "PASS"
+    },
+    {
+      "name": "Input editing does not delete selected nodes",
+      "status": "PASS"
+    },
+    {
+      "name": "Fit selection works",
+      "status": "PASS"
+    },
+    {
+      "name": "Pin favorite without adding an unwanted node",
+      "status": "PASS"
+    },
+    {
+      "name": "Library can collapse and restore",
+      "status": "PASS"
+    },
+    {
+      "name": "Shift wheel pans horizontally exactly once",
+      "status": "PASS"
+    },
+    {
+      "name": "Device tool tabs expose no fake working hardware actions",
+      "status": "PASS"
+    },
+    {
+      "name": "Phone fit synchronizes zoom label",
+      "status": "PASS"
+    },
+    {
+      "name": "Hide table column and retain configuration",
+      "status": "PASS"
+    },
+    {
+      "name": "Row context duplicate uses a new stable ID",
+      "status": "PASS"
+    },
+    {
+      "name": "Device navigation preserves isolated row data",
+      "status": "PASS"
+    },
+    {
+      "name": "Library filtering does not change the editor app",
+      "status": "PASS"
+    },
+    {
+      "name": "Custom app registration uses a generic workflow without Facebook subflows",
+      "status": "PASS"
+    },
+    {
+      "name": "Workflow duplication retains custom input schema",
+      "status": "PASS"
+    },
+    {
+      "name": "Node context menu has relevant editing actions",
+      "status": "PASS"
+    },
+    {
+      "name": "Shortcut help can open and close",
+      "status": "PASS"
+    },
+    {
+      "name": "All six routes render and desktop viewports avoid document overflow",
+      "status": "PASS"
+    }
+  ],
+  "uncaughtErrors": [],
+  "referenceUnchanged": true
+}

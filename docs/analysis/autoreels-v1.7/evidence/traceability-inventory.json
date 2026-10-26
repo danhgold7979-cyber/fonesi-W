@@ -1,0 +1,1346 @@
+[
+  {
+    "featureId": "APP-001",
+    "sourceLine": 50,
+    "cells": [
+      "Chạy nền Tắt/Bật",
+      "BACKEND",
+      "`app.setRunInBackground(enabled)`",
+      "app_settings",
+      "close window hides to tray when enabled; exits when disabled",
+      "0"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APP-002",
+    "sourceLine": 51,
+    "cells": [
+      "Dark/Light",
+      "UI_ONLY + persistence",
+      "`settings.setTheme(theme)` optional IPC or renderer store",
+      "app_settings",
+      "restart preserves theme",
+      "0"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APP-003",
+    "sourceLine": 52,
+    "cells": [
+      "CPU",
+      "BACKEND",
+      "`system.getMetrics()` / metrics event",
+      "none",
+      "value updates without blocking UI",
+      "0"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APP-004",
+    "sourceLine": 53,
+    "cells": [
+      "RAM",
+      "BACKEND",
+      "same",
+      "none",
+      "same",
+      "0"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APP-005",
+    "sourceLine": 54,
+    "cells": [
+      "GPU %",
+      "BACKEND",
+      "same",
+      "none",
+      "percentage only",
+      "0"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APP-006",
+    "sourceLine": 55,
+    "cells": [
+      "Disk",
+      "BACKEND",
+      "same",
+      "none",
+      "real disk value for workspace/system",
+      "0"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APP-007",
+    "sourceLine": 56,
+    "cells": [
+      "Preview FPS slider",
+      "BACKEND",
+      "`streams.setGlobalPreviewProfile({fps})`",
+      "app_settings",
+      "visible previews change; MASTER unaffected",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APP-008",
+    "sourceLine": 57,
+    "cells": [
+      "Preview quality slider",
+      "BACKEND",
+      "`streams.setGlobalPreviewProfile({quality})`",
+      "app_settings",
+      "visible previews change; MASTER unaffected",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-001",
+    "sourceLine": 65,
+    "cells": [
+      "Search devices",
+      "UI_ONLY over backend device list",
+      "none",
+      "none",
+      "filter does not mutate devices",
+      "2"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-002",
+    "sourceLine": 66,
+    "cells": [
+      "Filter All/Ready/Running/Error",
+      "UI_ONLY",
+      "none",
+      "none",
+      "correct filter",
+      "2"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-003",
+    "sourceLine": 67,
+    "cells": [
+      "Quét máy",
+      "BACKEND",
+      "`devices.scan()`",
+      "devices",
+      "USB/LAN registry refreshes",
+      "2"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-004",
+    "sourceLine": 68,
+    "cells": [
+      "Thêm máy",
+      "BACKEND",
+      "`devices.addManualConnection(input)`",
+      "devices/device_connections",
+      "validates LAN address; USB is discovered, not manually invented",
+      "2"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-005",
+    "sourceLine": 69,
+    "cells": [
+      "Click device",
+      "UI_ONLY selection",
+      "none",
+      "optional lastSelectedDevice",
+      "detail view changes",
+      "2"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-006",
+    "sourceLine": 70,
+    "cells": [
+      "Ctrl/click multi-select",
+      "UI_ONLY",
+      "none",
+      "none",
+      "selected set correct",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-007",
+    "sourceLine": 71,
+    "cells": [
+      "Drag-select devices",
+      "UI_ONLY via Selecto",
+      "none",
+      "none",
+      "selected set correct",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-008",
+    "sourceLine": 72,
+    "cells": [
+      "Double-click device",
+      "UI_ONLY + stream request",
+      "`streams.focus(deviceId)`",
+      "none",
+      "floating MASTER opens real stream",
+      "3/4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-009",
+    "sourceLine": 73,
+    "cells": [
+      "Right-click device/group",
+      "BACKEND actions below",
+      "typed per action",
+      "varies",
+      "action applies exactly to selected set",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-001",
+    "sourceLine": 79,
+    "cells": [
+      "Open/focus",
+      "`streams.focus(deviceId)`",
+      "StreamManager",
+      "real focused stream"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-002",
+    "sourceLine": 80,
+    "cells": [
+      "Select/deselect",
+      "UI_ONLY",
+      "renderer",
+      "selected set"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-003",
+    "sourceLine": 81,
+    "cells": [
+      "Reconnect ADB",
+      "`devices.reconnect(ids[])`",
+      "DeviceRegistry",
+      "reconnect result per device"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-004",
+    "sourceLine": 82,
+    "cells": [
+      "Refresh screen",
+      "`streams.requestKeyFrame(ids[])`",
+      "StreamManager",
+      "new frame received"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-005",
+    "sourceLine": 83,
+    "cells": [
+      "Open/restart Facebook",
+      "`devices.openPackage(ids[], \"com.facebook.katana\", restart)`",
+      "AndroidAppService",
+      "Facebook foreground verified"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-006",
+    "sourceLine": 84,
+    "cells": [
+      "Clear background",
+      "**BACKEND, semantics locked below**",
+      "AndroidAppService",
+      "deterministic result"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-007",
+    "sourceLine": 85,
+    "cells": [
+      "Screenshot",
+      "`devices.captureScreenshot(ids[])`",
+      "Diagnostics",
+      "file paths returned"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-008",
+    "sourceLine": 86,
+    "cells": [
+      "Device info",
+      "`devices.getDetails(ids[])`",
+      "DeviceRegistry",
+      "real values"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "DEV-CTX-009",
+    "sourceLine": 87,
+    "cells": [
+      "Lock/unlock worker",
+      "`workers.setManualLock(ids[], locked)`",
+      "DeviceWorkerManager",
+      "automation ownership enforced"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-001",
+    "sourceLine": 108,
+    "cells": [
+      "Tổng quan tab",
+      "BACKEND render source",
+      "stream subscriptions",
+      "real frames",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-002",
+    "sourceLine": 109,
+    "cells": [
+      "Detail tab",
+      "BACKEND render source",
+      "focused preview subscription",
+      "real frame",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-003",
+    "sourceLine": 110,
+    "cells": [
+      "Select all",
+      "UI_ONLY",
+      "none",
+      "all IDs selected",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-004",
+    "sourceLine": 111,
+    "cells": [
+      "Clear selection",
+      "UI_ONLY",
+      "none",
+      "set empty",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-005",
+    "sourceLine": 112,
+    "cells": [
+      "Refresh all",
+      "BACKEND",
+      "`streams.requestKeyFrame(ids[])`",
+      "frames update",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-006",
+    "sourceLine": 113,
+    "cells": [
+      "Fullscreen",
+      "UI_ONLY via screenfull",
+      "none",
+      "full-screen works",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-007",
+    "sourceLine": 114,
+    "cells": [
+      "Overview Ctrl+wheel",
+      "UI_ONLY",
+      "none",
+      "wrap/no overlap",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-008",
+    "sourceLine": 115,
+    "cells": [
+      "Detail Ctrl+wheel",
+      "UI_ONLY",
+      "none",
+      "30–500% / scroll",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-009",
+    "sourceLine": 116,
+    "cells": [
+      "Floating MASTER drag/resize/Ctrl+wheel",
+      "UI_ONLY",
+      "none",
+      "free movement/resize",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-010",
+    "sourceLine": 117,
+    "cells": [
+      "MASTER tap",
+      "BACKEND",
+      "`manualControl.tap(group, normalizedPoint)`",
+      "DeviceWorker control",
+      "normalized broadcast",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-011",
+    "sourceLine": 118,
+    "cells": [
+      "MASTER swipe",
+      "BACKEND",
+      "`manualControl.swipe(group, normalizedGesture)`",
+      "DeviceWorker control",
+      "normalized broadcast",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-012",
+    "sourceLine": 119,
+    "cells": [
+      "Back",
+      "BACKEND",
+      "`manualControl.key(group, BACK)`",
+      "none",
+      "all selected phones react",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-013",
+    "sourceLine": 120,
+    "cells": [
+      "Home",
+      "BACKEND",
+      "`manualControl.key(group, HOME)`",
+      "none",
+      "same",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-014",
+    "sourceLine": 121,
+    "cells": [
+      "Recent",
+      "BACKEND",
+      "`manualControl.key(group, RECENTS)`",
+      "none",
+      "same",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-015",
+    "sourceLine": 122,
+    "cells": [
+      "Clear background",
+      "BACKEND",
+      "DEV-CTX-006",
+      "none",
+      "same",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCR-016",
+    "sourceLine": 123,
+    "cells": [
+      "Offscreen throttling",
+      "BACKEND",
+      "stream visibility policy",
+      "app_settings",
+      "~1fps/last-frame",
+      "3"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "QAPP-001",
+    "sourceLine": 131,
+    "cells": [
+      "Facebook",
+      "`devices.openApp(ids, FACEBOOK)`",
+      "known package",
+      "2/4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "QAPP-002",
+    "sourceLine": 132,
+    "cells": [
+      "Gallery",
+      "`devices.openSystemRole(ids, GALLERY)`",
+      "resolve Android intent / OEM fallback",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "QAPP-003",
+    "sourceLine": 133,
+    "cells": [
+      "Files",
+      "`devices.openSystemRole(ids, FILES)`",
+      "resolve intent / OEM fallback",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "QAPP-004",
+    "sourceLine": 134,
+    "cells": [
+      "Settings",
+      "`devices.openSettings(ids)`",
+      "Android settings intent",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "QAPP-005",
+    "sourceLine": 135,
+    "cells": [
+      "VPN",
+      "`network.openActiveVpnApp(ids)`",
+      "only if configured",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "QAPP-006",
+    "sourceLine": 136,
+    "cells": [
+      "Browser",
+      "`devices.openSystemRole(ids, BROWSER)`",
+      "default browser intent",
+      "4"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "ACC-001",
+    "sourceLine": 146,
+    "cells": [
+      "Manual login button",
+      "`accounts.openLogin(deviceId)`",
+      "login_sessions",
+      "Facebook opens/focuses",
+      "7"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "ACC-002",
+    "sourceLine": 147,
+    "cells": [
+      "Scan Nick/Page",
+      "`accounts.scan(deviceId)`",
+      "sessions/identities",
+      "actual UI scan",
+      "7"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "ACC-003",
+    "sourceLine": 148,
+    "cells": [
+      "Nick combobox",
+      "`accounts.list(deviceId)`",
+      "login_sessions",
+      "variable/unlimited list",
+      "7"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "ACC-004",
+    "sourceLine": 149,
+    "cells": [
+      "Page/Profile combobox",
+      "`identities.list(sessionId)`",
+      "identities",
+      "variable/unlimited list",
+      "7"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "ACC-005",
+    "sourceLine": 150,
+    "cells": [
+      "Like/Follow 1D/7D/30D",
+      "`metrics.list(identityId)`",
+      "identity_metrics",
+      "real snapshots / dash if absent",
+      "8"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "ACC-006",
+    "sourceLine": 151,
+    "cells": [
+      "Switch Nick",
+      "`facebook.ensureAccount(sessionId)` on job/manual intent",
+      "state cache",
+      "verify switch",
+      "7/9"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "ACC-007",
+    "sourceLine": 152,
+    "cells": [
+      "Switch Page/Profile",
+      "`facebook.ensureIdentity(identityId)`",
+      "state cache",
+      "verify switch",
+      "7/9"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "WF-001",
+    "sourceLine": 181,
+    "cells": [
+      "delay min",
+      "BACKEND config",
+      "`campaigns.updateDelay()`",
+      "6/10"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "WF-002",
+    "sourceLine": 182,
+    "cells": [
+      "delay max",
+      "BACKEND config",
+      "same",
+      "6/10"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "WF-003",
+    "sourceLine": 183,
+    "cells": [
+      "state graph",
+      "BACKEND event visualization",
+      "`jobs.stateChanged`",
+      "6+"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "WF-DEV-001",
+    "sourceLine": 184,
+    "cells": [
+      "step next",
+      "DEV_ONLY",
+      "test harness only",
+      "test"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "WF-DEV-002",
+    "sourceLine": 185,
+    "cells": [
+      "simulate error",
+      "DEV_ONLY",
+      "test harness only",
+      "test"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "WF-DEV-003",
+    "sourceLine": 186,
+    "cells": [
+      "reset workflow",
+      "DEV_ONLY",
+      "test harness only",
+      "test"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CAM-001",
+    "sourceLine": 194,
+    "cells": [
+      "Campaign selector",
+      "`campaigns.list/get`",
+      "campaigns",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CAM-002",
+    "sourceLine": 195,
+    "cells": [
+      "New Campaign",
+      "`campaigns.create()`",
+      "campaigns",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CAM-003",
+    "sourceLine": 196,
+    "cells": [
+      "Choose folder",
+      "`campaigns.setFolder()`",
+      "campaigns",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CAM-004",
+    "sourceLine": 197,
+    "cells": [
+      "Rescan",
+      "`media.reconcile(campaignId)`",
+      "media",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CAM-005",
+    "sourceLine": 198,
+    "cells": [
+      "Auto scan on/off",
+      "`campaigns.setWatcherEnabled()`",
+      "app/campaign settings",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CAM-006",
+    "sourceLine": 199,
+    "cells": [
+      "Reconcile interval",
+      "`campaigns.setReconcileInterval()`",
+      "settings",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-001",
+    "sourceLine": 211,
+    "cells": [
+      "row select / select all",
+      "UI_ONLY",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-002",
+    "sourceLine": 212,
+    "cells": [
+      "caption edit",
+      "`media.update(id,{caption})`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-003",
+    "sourceLine": 213,
+    "cells": [
+      "hashtag edit",
+      "`media.update(id,{hashtags})`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-004",
+    "sourceLine": 214,
+    "cells": [
+      "comment edit",
+      "`media.update(id,{comment})`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-005",
+    "sourceLine": 215,
+    "cells": [
+      "audience",
+      "`media.update(id,{audience})`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-006",
+    "sourceLine": 216,
+    "cells": [
+      "remix",
+      "`media.update(id,{remix})`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-007",
+    "sourceLine": 217,
+    "cells": [
+      "story",
+      "`media.update(id,{shareStory})`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-008",
+    "sourceLine": 218,
+    "cells": [
+      "date/time",
+      "`schedule.updateMedia()` or job creation",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-009",
+    "sourceLine": 219,
+    "cells": [
+      "target",
+      "`media.updateTarget()`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-010",
+    "sourceLine": 220,
+    "cells": [
+      "post now",
+      "`jobs.enqueueNow(mediaId)`",
+      "6/10"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-011",
+    "sourceLine": 221,
+    "cells": [
+      "bulk edit",
+      "`media.bulkUpdate(ids,patch,mode)`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-012",
+    "sourceLine": 222,
+    "cells": [
+      "import Excel",
+      "`media.importSpreadsheet()`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-013",
+    "sourceLine": 223,
+    "cells": [
+      "export Excel",
+      "`media.exportSpreadsheet()`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-014",
+    "sourceLine": 224,
+    "cells": [
+      "delete selected",
+      "`media.ignore/removeFromCampaign(ids)`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-015",
+    "sourceLine": 225,
+    "cells": [
+      "right-click clone row",
+      "`media.cloneMetadata(id)`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-016",
+    "sourceLine": 226,
+    "cells": [
+      "right-click change target",
+      "`media.updateTarget()`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-017",
+    "sourceLine": 227,
+    "cells": [
+      "right-click clear schedule",
+      "`schedule.clearMedia()`",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "MED-018",
+    "sourceLine": 228,
+    "cells": [
+      "right-click remove",
+      "`media.ignore/removeFromCampaign()`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-001",
+    "sourceLine": 238,
+    "cells": [
+      "start date",
+      "campaign schedule config",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-002",
+    "sourceLine": 239,
+    "cells": [
+      "videos/day",
+      "schedule generator",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-003",
+    "sourceLine": 240,
+    "cells": [
+      "dynamic time slots",
+      "schedule slots CRUD",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-004",
+    "sourceLine": 241,
+    "cells": [
+      "auto append new media",
+      "campaign schedule setting",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-005",
+    "sourceLine": 242,
+    "cells": [
+      "Apply schedule",
+      "`scheduler.generateJobs(campaignId)`",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-006",
+    "sourceLine": 243,
+    "cells": [
+      "Clear unsent schedule",
+      "`scheduler.clearPending()`",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-007",
+    "sourceLine": 244,
+    "cells": [
+      "Timeline view mode",
+      "UI query",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-008",
+    "sourceLine": 245,
+    "cells": [
+      "Timeline date range",
+      "UI query",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-009",
+    "sourceLine": 246,
+    "cells": [
+      "phone multi-select",
+      "UI query",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-010",
+    "sourceLine": 247,
+    "cells": [
+      "Refresh timeline",
+      "`scheduler.query()`",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-011",
+    "sourceLine": 248,
+    "cells": [
+      "Drag job time",
+      "`scheduler.reschedule(jobId,time)`",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-012",
+    "sourceLine": 249,
+    "cells": [
+      "Ctrl+wheel zoom",
+      "UI_ONLY",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "SCH-013",
+    "sourceLine": 250,
+    "cells": [
+      "Anti-conflict",
+      "`scheduler.spreadConflicts()`",
+      "6"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "VPN-001",
+    "sourceLine": 260,
+    "cells": [
+      "Scan VPN",
+      "`network.scanVpnApps(deviceId)`",
+      "package manager",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "VPN-002",
+    "sourceLine": 261,
+    "cells": [
+      "VPN icon toggle",
+      "`network.setVpn(deviceId,package,on)`",
+      "adapter-based UI automation",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "VPN-003",
+    "sourceLine": 262,
+    "cells": [
+      "Unknown VPN package",
+      "open only / unsupported adapter state",
+      "no fake generic toggle",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-001",
+    "sourceLine": 272,
+    "cells": [
+      "Import proxy text",
+      "`proxy.parseAndUpsert(text)`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-002",
+    "sourceLine": 273,
+    "cells": [
+      "Select proxies",
+      "UI_ONLY",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-003",
+    "sourceLine": 274,
+    "cells": [
+      "Select device(s) per proxy",
+      "UI_ONLY mapping draft",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-004",
+    "sourceLine": 275,
+    "cells": [
+      "Check selected",
+      "`proxy.check(ids)`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-005",
+    "sourceLine": 276,
+    "cells": [
+      "Check all",
+      "`proxy.checkAll()`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-006",
+    "sourceLine": 277,
+    "cells": [
+      "Check one row",
+      "`proxy.check([id])`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-007",
+    "sourceLine": 278,
+    "cells": [
+      "Apply selected",
+      "`proxy.assign(mapping)`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-008",
+    "sourceLine": 279,
+    "cells": [
+      "Verify device received routing",
+      "part of assign result",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "PXY-009",
+    "sourceLine": 280,
+    "cells": [
+      "Remove proxy",
+      "`proxy.clear(deviceIds)`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APK-001",
+    "sourceLine": 290,
+    "cells": [
+      "choose APK",
+      "Electron file picker",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APK-002",
+    "sourceLine": 291,
+    "cells": [
+      "package name",
+      "validate package identifier",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APK-003",
+    "sourceLine": 292,
+    "cells": [
+      "select all devices",
+      "UI_ONLY",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APK-004",
+    "sourceLine": 293,
+    "cells": [
+      "deselect all",
+      "UI_ONLY",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APK-005",
+    "sourceLine": 294,
+    "cells": [
+      "install",
+      "`apk.install(deviceIds,path)`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "APK-006",
+    "sourceLine": 295,
+    "cells": [
+      "uninstall",
+      "`apk.uninstall(deviceIds,package)`",
+      "13"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CLONE-001",
+    "sourceLine": 318,
+    "cells": [
+      "source",
+      "`config.getCloneSource()`",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CLONE-002",
+    "sourceLine": 319,
+    "cells": [
+      "destination device",
+      "devices query",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CLONE-003",
+    "sourceLine": 320,
+    "cells": [
+      "destination account",
+      "accounts query",
+      "7"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CLONE-004",
+    "sourceLine": 321,
+    "cells": [
+      "copy name",
+      "validation",
+      "5"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  },
+  {
+    "featureId": "CLONE-005",
+    "sourceLine": 322,
+    "cells": [
+      "confirm clone",
+      "`config.clone()`",
+      "7"
+    ],
+    "reviewStatus": "REFERENCE_ONLY_NOT_ACCEPTED"
+  }
+]

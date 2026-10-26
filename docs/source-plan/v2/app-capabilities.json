@@ -1,0 +1,102 @@
+[
+  {
+    "appId": "fb",
+    "name": "Facebook",
+    "referencePackage": "com.facebook.katana",
+    "workflowAuthoring": "PLANNED",
+    "manualControl": "REQUIRES_DEVICE_COMPATIBILITY",
+    "automationCertification": "NOT_RUN",
+    "supportedVersionProfiles": [],
+    "selectorsCertified": false,
+    "mediaModesToCertify": [
+      "video",
+      "image",
+      "multi-image"
+    ],
+    "targetKindsToVerify": [
+      "account",
+      "profile",
+      "page"
+    ],
+    "notes": "Parser/template presence is not proof of automation support; actual installed package/version/locales must match."
+  },
+  {
+    "appId": "lite",
+    "name": "Facebook Lite",
+    "referencePackage": "com.facebook.lite",
+    "workflowAuthoring": "PLANNED",
+    "manualControl": "REQUIRES_DEVICE_COMPATIBILITY",
+    "automationCertification": "NOT_RUN",
+    "supportedVersionProfiles": [],
+    "selectorsCertified": false,
+    "mediaModesToCertify": [
+      "video",
+      "image",
+      "multi-image"
+    ],
+    "targetKindsToVerify": [
+      "account",
+      "profile",
+      "page"
+    ],
+    "notes": "Parser/template presence is not proof of automation support; actual installed package/version/locales must match."
+  },
+  {
+    "appId": "ig",
+    "name": "Instagram",
+    "referencePackage": "com.instagram.android",
+    "workflowAuthoring": "PLANNED",
+    "manualControl": "REQUIRES_DEVICE_COMPATIBILITY",
+    "automationCertification": "NOT_RUN",
+    "supportedVersionProfiles": [],
+    "selectorsCertified": false,
+    "mediaModesToCertify": [
+      "video",
+      "image",
+      "multi-image"
+    ],
+    "targetKindsToVerify": [
+      "account",
+      "profile"
+    ],
+    "notes": "Parser/template presence is not proof of automation support; actual installed package/version/locales must match."
+  },
+  {
+    "appId": "tt",
+    "name": "TikTok",
+    "referencePackage": "com.zhiliaoapp.musically",
+    "workflowAuthoring": "PLANNED",
+    "manualControl": "REQUIRES_DEVICE_COMPATIBILITY",
+    "automationCertification": "NOT_RUN",
+    "supportedVersionProfiles": [],
+    "selectorsCertified": false,
+    "mediaModesToCertify": [
+      "video",
+      "image",
+      "multi-image"
+    ],
+    "targetKindsToVerify": [
+      "account",
+      "profile"
+    ],
+    "notes": "Parser/template presence is not proof of automation support; actual installed package/version/locales must match."
+  },
+  {
+    "appId": "th",
+    "name": "Threads",
+    "referencePackage": "com.instagram.barcelona",
+    "workflowAuthoring": "PLANNED",
+    "manualControl": "REQUIRES_DEVICE_COMPATIBILITY",
+    "automationCertification": "NOT_RUN",
+    "supportedVersionProfiles": [],
+    "selectorsCertified": false,
+    "mediaModesToCertify": [
+      "text"
+    ],
+    "targetKindsToVerify": [
+      "account",
+      "profile"
+    ],
+    "notes": "Parser/template presence is not proof of automation support; actual installed package/version/locales must match."
+  }
+]

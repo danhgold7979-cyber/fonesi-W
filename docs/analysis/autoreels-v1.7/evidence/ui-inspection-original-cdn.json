@@ -1,0 +1,147 @@
+{
+  "scope": "HTML prototype only; no Android, Windows, or production acceptance",
+  "errors": [],
+  "failed_requests": [
+    {
+      "url": "https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/5.2.0/screenfull.min.js",
+      "failure": "net::ERR_TUNNEL_CONNECTION_FAILED"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/selecto/dist/selecto.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/5.2.0/screenfull.min.js",
+      "failure": "net::ERR_TUNNEL_CONNECTION_FAILED"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/selecto/dist/selecto.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js",
+      "failure": "net::ERR_CERT_AUTHORITY_INVALID"
+    }
+  ],
+  "screens": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "sidebar": 220,
+      "main": 1410,
+      "phone": 290,
+      "table": 1390,
+      "bodyFont": "13px"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "sidebar": 220,
+      "main": 856,
+      "phone": 290,
+      "table": 1280,
+      "bodyFont": "13px"
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "sidebar": 220,
+      "main": 770,
+      "phone": 290,
+      "table": 1280,
+      "bodyFont": "13px"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1219,
+      "sidebar": 200,
+      "main": 720,
+      "phone": 255,
+      "table": 1280,
+      "bodyFont": "13px"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 1219,
+      "sidebar": 200,
+      "main": 720,
+      "phone": 255,
+      "table": 1280,
+      "bodyFont": "13px"
+    }
+  ],
+  "checks": {
+    "schedule_local_date": {
+      "requested": "2026-10-26",
+      "actual": "2026-10-25",
+      "time": "06:00"
+    },
+    "fromDateTime_local_date": {
+      "date": "2026-10-25",
+      "time": "06:00"
+    },
+    "campaign_schedule_isolation": {
+      "newCampaign": 2,
+      "dailySlots": "5"
+    },
+    "bulk_clear_comment": {
+      "requestedEmpty": true,
+      "actual": "keep"
+    },
+    "master_wheel_bubbling": {
+      "before": 350,
+      "after": 350,
+      "factor": 1
+    },
+    "reload_persistence": {
+      "before": "ANALYSIS_PERSISTENCE_PROBE",
+      "after": "01 - Máy hút bụi mini cầm tay giá tốt"
+    }
+  },
+  "dependencies": {
+    "choices": false,
+    "interact": false,
+    "selecto": false,
+    "xlsx": false,
+    "screenfull": false
+  },
+  "baseline": {
+    "devices": 8,
+    "media": 20,
+    "campaigns": 3,
+    "date": "2026-09-24"
+  }
+}

@@ -1,0 +1,24 @@
+**V1 lỗi TypeScript; đã lập plan và sửa guard trước khi đọc `receipt`.**
+
+Đã kiểm thử **3 lượt độc lập, đều PASS**: mỗi lượt **283 kiểm tra Node + 8 kiểm tra chụp ảnh**. V2 còn chờ TypeScript và 299 mục kiểm thử Windows, nên **chưa xuất bản cài**.
+
+**Bước 29/64 · B2/3 · mục 1–4/7** — khởi tạo và chạy run dữ liệu; còn **44 bước chưa nghiệm thu đầy đủ**.
+
+Tải [AutoReels-P4-G03-Step29-Data-Session-V2.zip](sandbox:/workspace/scratch/0caaec11d50d/deliverables/AutoReels-P4-G03-Step29-Data-Session-V2.zip) vào Downloads, đóng AutoReels rồi chạy:
+
+```powershell
+$d = Join-Path $env:USERPROFILE 'Downloads'
+$n = 'AutoReels-P4-G03-Step29-Data-Session-V2'
+Expand-Archive -LiteralPath "$d\$n.zip" -DestinationPath $d -Force
+
+$f = Join-Path $d $n
+$s = Join-Path $f 'Run-AutoReels-P4-G03-Data-Session.ps1'
+if (!(Test-Path -LiteralPath $s -PathType Leaf)) {
+    throw "Không tìm thấy script: $s"
+}
+
+& (Join-Path $f 'Cleanup-Previous-Downloads.ps1')
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $s
+```
+
+Gửi ZIP kết quả trong **Desktop\Autoreels**. Gói này chỉ kiểm thử trong thư mục tạm.

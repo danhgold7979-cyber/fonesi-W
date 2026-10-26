@@ -1,0 +1,594 @@
+# 01 — MASTER SPEC
+
+## A. Scale
+
+There is no `MAX_DEVICES` or `MAX_VIDEOS` business rule.
+
+Scale is controlled only through resource management:
+
+- virtual lists;
+- pagination;
+- stream throttling;
+- job queues;
+- disk/network/CPU/GPU capacity.
+
+Do not truncate device or media records because a configured maximum was reached.
+
+## B. Device registry
+
+Each device record contains at minimum:
+
+```text
+device_id
+display_name
+adb_serial
+transport = USB | LAN
+ip
+state
+current_job_id
+queue_depth
+proxy_profile_id
+vpn_package
+last_seen_at
+```
+
+Device status examples:
+
+```text
+ONLINE
+BUSY
+OFFLINE
+ERROR
+NEEDS_REVIEW
+```
+
+A device failure cannot block other workers.
+
+## C. Device display and control
+
+Right panel has:
+
+```text
+[Tổng quan] [Điện thoại XX]
+```
+
+### Tổng quan
+
+- Show all registered/connected device screens.
+- Thin borders.
+- Grid wraps; screens never overlap.
+- Ctrl+wheel changes tile size.
+- Fullscreen mode.
+- Select multiple devices by dragging a selection rectangle.
+- Ctrl+A while pointer is in Overview selects all devices.
+- Right-click actions apply to the selected group.
+- Devices outside the viewport use last-frame / about 1 FPS.
+- Visible previews use the global preview sliders.
+
+### Single phone tab
+
+- Right panel itself is freely resizable to the left.
+- Ctrl+wheel while pointer is directly on the phone screen resizes that phone preview independently.
+- Preserve Android aspect ratio.
+- If preview grows larger than the panel, scroll rather than clipping it.
+
+### Floating MASTER
+
+Double-click a phone:
+
+- it becomes MASTER;
+- floating screen opens;
+- freely draggable;
+- freely resizable;
+- Ctrl+wheel resizes it;
+- minimal surrounding UI;
+- high FPS/high quality independent of global preview sliders.
+
+### Group control
+
+Selected device IDs form the broadcast set.
+
+Normalized control:
+
+```text
+xRatio = masterX / masterWidth
+yRatio = masterY / masterHeight
+
+targetX = xRatio * targetWidth
+targetY = yRatio * targetHeight
+```
+
+Supported manual broadcast actions:
+
+- tap;
+- swipe;
+- Back;
+- Home;
+- Recent;
+- clear background.
+
+If automation owns a target device, manual control must first acquire/pause the device worker lock. On release, the automation re-detects UI state before continuing.
+
+## D. Performance controls
+
+Top system strip shows:
+
+- CPU usage;
+- RAM usage;
+- GPU usage percentage;
+- disk usage;
+- preview FPS slider;
+- preview quality slider.
+
+Focused/master phone is never degraded by the global preview settings.
+
+## E. Facebook login/session model
+
+Login is manual.
+
+The tool:
+
+1. opens Facebook on the selected phone;
+2. user enters credentials/2FA/checkpoint manually;
+3. tool detects `LOGIN_OK`;
+4. scanner discovers profiles and Pages.
+
+The tool never stores:
+
+- Facebook password;
+- 2FA secret;
+- private Facebook session DB/token obtained by extraction.
+
+Session states:
+
+```text
+LOGIN_OK
+LOGIN_REQUIRED
+CHECKPOINT
+SESSION_EXPIRED
+UNKNOWN
+```
+
+## F. Facebook account/profile/Page scan
+
+Scanner behavior:
+
+1. detect Facebook current state;
+2. open profile/menu switcher;
+3. locate equivalent of `See all profiles`;
+4. parse visible identities;
+5. scroll until no new identities are found;
+6. classify personal/additional profile vs Page;
+7. cache in SQLite;
+8. update page counts.
+
+Detection priority:
+
+1. UIAutomator XML;
+2. resource-id / text / content-desc;
+3. geometry;
+4. screenshot/template matching;
+5. OCR fallback.
+
+Do not read Facebook private storage.
+
+### Identity combobox
+
+Canonical line:
+
+```text
+Nick A · 2 Fanpage · ♥ 18.240 · 👤 31.610 · 1N +2.1% · 7N +8.4% · 30N -1.7%
+```
+
+Page line:
+
+```text
+Fanpage A1 · ♥ 5.600 · 👤 8.200 · 1N +... · 7N ... · 30N ...
+```
+
+Increase is green; decrease is red; unavailable historical snapshot is `—`.
+
+The demo has 3 accounts with different Page counts, but production has no hard account/Page count limit.
+
+Metrics failure does not block posting when identity verification succeeds.
+
+## G. Account/Page metric snapshots
+
+Store snapshots:
+
+```text
+identity_id
+captured_at
+likes
+followers
+```
+
+1D / 7D / 30D comparison:
+
+- use the closest snapshot at or before the target age;
+- if unavailable, show `—`;
+- do not fabricate/interpolate.
+
+Refresh:
+
+- after successful manual login;
+- explicit rescan;
+- before first job if cache is stale;
+- when identity verification fails.
+
+Do not scan continuously every few seconds.
+
+## H. Campaign
+
+One Campaign owns one media folder.
+
+Campaign includes:
+
+```text
+campaign_id
+name
+device_id
+login_session_id
+target_identity_id
+folder_path
+timezone
+default_audience
+default_remix
+default_share_story
+default_network_mode
+schedule_profile
+```
+
+A scheduled Job stores a snapshot. Later campaign edits do not mutate already-created jobs.
+
+## I. Media folder
+
+No hard video limit.
+
+Use Chokidar for:
+
+```text
+add
+change
+unlink
+```
+
+Default light reconciliation every 10 seconds.
+
+Do not decode every video on every reconciliation.
+
+Rules:
+
+- new file -> append;
+- thumbnail generated by bounded worker queue;
+- missing scheduled file -> `FILE_MISSING`;
+- posted history preserved;
+- manual deletion in tool -> `ignored_files`;
+- ignored file does not auto-reappear while still present in folder;
+- reappearing file with matching fingerprint can recover;
+- changed content requires review.
+
+Default caption = filename without extension.
+
+## J. Media row
+
+```text
+media_id
+campaign_id
+path
+filename
+fingerprint
+thumbnail_path
+caption
+hashtags
+comment
+audience
+remix
+share_story
+scheduled_at
+target_identity_id
+device_id
+status
+```
+
+No separate affiliate field; affiliate URL belongs in Comment.
+
+Bulk edit works only on selected rows:
+
+- Caption
+- Hashtag
+- Comment
+- Audience
+- Remix
+- Share Story
+- append / prepend / replace
+
+Excel matching is based on stable ID/path/filename policy, never spreadsheet row number.
+
+## K. Schedule
+
+Default:
+
+```text
+3 videos/day
+06:00
+12:00
+18:00
+```
+
+No maximum videos/day, only `>= 1`.
+
+Timeline:
+
+- Day;
+- Month;
+- Date range;
+- choose one or many phones;
+- only selected phones are rendered;
+- Ctrl+wheel zoom;
+- drag job horizontally to change time;
+- unique target/Page color;
+- conflicts red.
+
+Conflict:
+
+```text
+same device + overlapping/same datetime
+```
+
+Different devices can post simultaneously.
+
+Anti-conflict button spreads jobs on each device by random 60–120 minute intervals.
+
+Database time is UTC. UI converts to campaign/local timezone.
+
+## L. One device / one job
+
+Per device:
+
+```text
+MAX_ACTIVE_AUTOMATION_JOB = 1
+```
+
+A second due job becomes queued.
+
+If device is offline:
+
+```text
+WAITING_DEVICE / OVERDUE
+```
+
+When it returns:
+
+- preflight again;
+- re-verify session/account/Page/media/network;
+- then run.
+
+## M. Reel workflow
+
+Canonical stages:
+
+```text
+Chuẩn bị
+Điện thoại
+Mạng
+VPN?
+Facebook
+Popup?
+Tài khoản
+Trang/Profile
+Tạo Reel
+Chọn video
+Next
+Mô tả/Hashtag
+Đối tượng
+Remix?
+Tin?
+Đăng
+Xác minh bài
+Bình luận?
+Bình luận
+Xác minh bình luận
+Hoàn tất
+```
+
+Every step:
+
+```text
+ACTION
+-> ACTION COMPLETE
+-> VERIFY
+-> RANDOM WAIT(min,max)
+-> NEXT
+```
+
+Random delay starts only after verification.
+
+VPN is optional.
+
+Story is conditional: use it only when enabled and the current Facebook UI exposes the option.
+
+## N. Publish transaction
+
+Never blindly press Publish twice.
+
+```text
+POST_INTENT
+-> CLICK_PUBLISH_ONCE
+-> POST_PENDING
+-> VERIFY_EXACT_POST
+-> POSTED
+```
+
+Ambiguous result:
+
+- do not publish again;
+- search for exact new post;
+- unresolved => `NEEDS_REVIEW`.
+
+Each publish operation has an idempotency key.
+
+## O. Comment transaction
+
+```text
+COMMENT_INTENT
+-> COMMENT_PENDING
+-> VERIFY_COMMENT
+-> SUCCESS
+```
+
+Comment failure retries comment only, never reposts the Reel.
+
+## P. Popups / recovery
+
+Known popup:
+- handle;
+- verify.
+
+Unknown popup:
+1. safe close;
+2. verify;
+3. Back;
+4. verify;
+5. restart Facebook;
+6. verify account;
+7. verify Page/Profile.
+
+Finite retry counts only.
+
+Security challenge => `NEEDS_REVIEW`.
+
+## Q. VPN
+
+Optional.
+
+Known packages may include:
+
+```text
+Windscribe
+WARP / 1.1.1.1
+TunnelBear
+PIA
+Proton VPN
+WireGuard
+```
+
+Scan installed packages and expose discovered VPN apps.
+
+## R. Proxy
+
+Supported input examples:
+
+```text
+host:port
+host:port:user:pass
+http://host:port
+https://host:port
+socks4://host:port
+socks5://host:port
+protocol://user:pass@host:port
+```
+
+Flow:
+
+```text
+select proxy
+-> select phone(s)
+-> check proxy
+-> alive?
+-> apply
+-> verify device routing
+```
+
+One active proxy per phone.
+
+Proxy and VPN are mutually exclusive:
+
+- turning VPN on clears Proxy;
+- assigning Proxy turns VPN off.
+
+Do not add automatic rotation intended to evade platform protections.
+
+## S. APK
+
+One fullscreen/resizable manager:
+
+- install APK;
+- uninstall package;
+- multiple devices;
+- bounded concurrency queue.
+
+## T. Persistence
+
+SQLite is mandatory.
+
+Restart must restore:
+
+- campaigns;
+- media;
+- job queues;
+- account/Page cache;
+- metrics;
+- network profiles;
+- pending transactions.
+
+Stale worker locks must be reconciled safely.
+
+## U. Right-click phone
+
+When one device is selected, action applies to that device.
+
+When a group is selected, action applies to the group.
+
+Actions include:
+
+- open/focus;
+- select/deselect;
+- reconnect ADB;
+- refresh screen;
+- open/restart Facebook;
+- clear background;
+- screenshot;
+- device info;
+- lock/unlock worker.
+
+
+## V. Media staging to Android
+
+PC source media must be staged to Android before Facebook can select it.
+
+The production pipeline is defined in `23_MEDIA_STAGING_AND_TEXT_INPUT.md`.
+
+Exact-media selection is mandatory; ambiguous selection stops before publish.
+
+## W. Compatibility and risk gates
+
+Device registration is not the same as automation certification.
+
+Unknown Android/Facebook version/locale may remain manually controllable while posting automation is disabled.
+
+Before full automation implementation, `27_TECHNICAL_RISK_GATE.md` must pass for core assumptions.
+
+
+## X. AutoReels staging ownership
+
+AutoReels does **not** clear the Android Gallery or delete unrelated device media.
+
+It manages only a dedicated AutoReels staging root.
+
+Recommended lifecycle:
+
+```text
+PC source
+-> stage current job media
+-> MediaStore index
+-> exact picker verification
+-> publish transaction
+-> comment transaction if any
+-> SUCCESS
+-> delete AutoReels staged file
+-> reconcile MediaStore
+-> verify staging cleanup
+```
+
+Keep staging intact whenever POST_PENDING or post verification is unresolved.

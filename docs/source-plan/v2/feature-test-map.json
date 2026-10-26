@@ -1,0 +1,5863 @@
+[
+  {
+    "featureId": "CMD-001",
+    "testId": "UI-CMD-001",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-002",
+    "testId": "UI-CMD-002",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-003",
+    "testId": "UI-CMD-003",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-004",
+    "testId": "UI-CMD-004",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-005",
+    "testId": "UI-CMD-005",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-006",
+    "testId": "UI-CMD-006",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-007",
+    "testId": "UI-CMD-007",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-008",
+    "testId": "UI-CMD-008",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-009",
+    "testId": "UI-CMD-009",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-010",
+    "testId": "UI-CMD-010",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-011",
+    "testId": "UI-CMD-011",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-012",
+    "testId": "UI-CMD-012",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-013",
+    "testId": "UI-CMD-013",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-014",
+    "testId": "UI-CMD-014",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-015",
+    "testId": "UI-CMD-015",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-016",
+    "testId": "UI-CMD-016",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-017",
+    "testId": "UI-CMD-017",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-018",
+    "testId": "UI-CMD-018",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-019",
+    "testId": "UI-CMD-019",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-020",
+    "testId": "UI-CMD-020",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-021",
+    "testId": "UI-CMD-021",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-022",
+    "testId": "UI-CMD-022",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-023",
+    "testId": "UI-CMD-023",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-024",
+    "testId": "UI-CMD-024",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-025",
+    "testId": "UI-CMD-025",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-026",
+    "testId": "UI-CMD-026",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-027",
+    "testId": "UI-CMD-027",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-028",
+    "testId": "UI-CMD-028",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-029",
+    "testId": "UI-CMD-029",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-030",
+    "testId": "UI-CMD-030",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-031",
+    "testId": "UI-CMD-031",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-032",
+    "testId": "UI-CMD-032",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-033",
+    "testId": "UI-CMD-033",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-034",
+    "testId": "UI-CMD-034",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-035",
+    "testId": "UI-CMD-035",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-036",
+    "testId": "UI-CMD-036",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-037",
+    "testId": "UI-CMD-037",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-038",
+    "testId": "UI-CMD-038",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-039",
+    "testId": "UI-CMD-039",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-040",
+    "testId": "UI-CMD-040",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-041",
+    "testId": "UI-CMD-041",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-042",
+    "testId": "UI-CMD-042",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-043",
+    "testId": "UI-CMD-043",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-044",
+    "testId": "UI-CMD-044",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-045",
+    "testId": "UI-CMD-045",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-046",
+    "testId": "UI-CMD-046",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-047",
+    "testId": "UI-CMD-047",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-048",
+    "testId": "UI-CMD-048",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-049",
+    "testId": "UI-CMD-049",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-050",
+    "testId": "UI-CMD-050",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-051",
+    "testId": "UI-CMD-051",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-052",
+    "testId": "UI-CMD-052",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-053",
+    "testId": "UI-CMD-053",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-054",
+    "testId": "UI-CMD-054",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-055",
+    "testId": "UI-CMD-055",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-056",
+    "testId": "UI-CMD-056",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-057",
+    "testId": "UI-CMD-057",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-058",
+    "testId": "UI-CMD-058",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-059",
+    "testId": "UI-CMD-059",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-060",
+    "testId": "UI-CMD-060",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-061",
+    "testId": "UI-CMD-061",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-062",
+    "testId": "UI-CMD-062",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-063",
+    "testId": "UI-CMD-063",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-064",
+    "testId": "UI-CMD-064",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-065",
+    "testId": "UI-CMD-065",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-066",
+    "testId": "UI-CMD-066",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-067",
+    "testId": "UI-CMD-067",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-068",
+    "testId": "UI-CMD-068",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-069",
+    "testId": "UI-CMD-069",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-070",
+    "testId": "UI-CMD-070",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-071",
+    "testId": "UI-CMD-071",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-072",
+    "testId": "UI-CMD-072",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-073",
+    "testId": "UI-CMD-073",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-074",
+    "testId": "UI-CMD-074",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-075",
+    "testId": "UI-CMD-075",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-076",
+    "testId": "UI-CMD-076",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-077",
+    "testId": "UI-CMD-077",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-078",
+    "testId": "UI-CMD-078",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-079",
+    "testId": "UI-CMD-079",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-080",
+    "testId": "UI-CMD-080",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-081",
+    "testId": "UI-CMD-081",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-082",
+    "testId": "UI-CMD-082",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-083",
+    "testId": "UI-CMD-083",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-084",
+    "testId": "UI-CMD-084",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-085",
+    "testId": "UI-CMD-085",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-086",
+    "testId": "UI-CMD-086",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-087",
+    "testId": "UI-CMD-087",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-088",
+    "testId": "UI-CMD-088",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-089",
+    "testId": "UI-CMD-089",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-090",
+    "testId": "UI-CMD-090",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-091",
+    "testId": "UI-CMD-091",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-092",
+    "testId": "UI-CMD-092",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-093",
+    "testId": "UI-CMD-093",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-094",
+    "testId": "UI-CMD-094",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-095",
+    "testId": "UI-CMD-095",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-096",
+    "testId": "UI-CMD-096",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-097",
+    "testId": "UI-CMD-097",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-098",
+    "testId": "UI-CMD-098",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-099",
+    "testId": "UI-CMD-099",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-100",
+    "testId": "UI-CMD-100",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-101",
+    "testId": "UI-CMD-101",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-102",
+    "testId": "UI-CMD-102",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-103",
+    "testId": "UI-CMD-103",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-104",
+    "testId": "UI-CMD-104",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-105",
+    "testId": "UI-CMD-105",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-106",
+    "testId": "UI-CMD-106",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-107",
+    "testId": "UI-CMD-107",
+    "ownerPhase": "P12",
+    "plannedSteps": [
+      "S104",
+      "S105",
+      "S106",
+      "S107",
+      "S108",
+      "S109",
+      "S110",
+      "S111"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-108",
+    "testId": "UI-CMD-108",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-109",
+    "testId": "UI-CMD-109",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-110",
+    "testId": "UI-CMD-110",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-111",
+    "testId": "UI-CMD-111",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-112",
+    "testId": "UI-CMD-112",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-113",
+    "testId": "UI-CMD-113",
+    "ownerPhase": "P11",
+    "plannedSteps": [
+      "S094",
+      "S095",
+      "S096",
+      "S097",
+      "S098",
+      "S099",
+      "S100",
+      "S101",
+      "S102",
+      "S103"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-114",
+    "testId": "UI-CMD-114",
+    "ownerPhase": "P13",
+    "plannedSteps": [
+      "S112",
+      "S113",
+      "S114",
+      "S115",
+      "S116",
+      "S117",
+      "S118"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-115",
+    "testId": "UI-CMD-115",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-116",
+    "testId": "UI-CMD-116",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-117",
+    "testId": "UI-CMD-117",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-118",
+    "testId": "UI-CMD-118",
+    "ownerPhase": "P13",
+    "plannedSteps": [
+      "S112",
+      "S113",
+      "S114",
+      "S115",
+      "S116",
+      "S117",
+      "S118"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-119",
+    "testId": "UI-CMD-119",
+    "ownerPhase": "P13",
+    "plannedSteps": [
+      "S112",
+      "S113",
+      "S114",
+      "S115",
+      "S116",
+      "S117",
+      "S118"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-120",
+    "testId": "UI-CMD-120",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-121",
+    "testId": "UI-CMD-121",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-122",
+    "testId": "UI-CMD-122",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-123",
+    "testId": "UI-CMD-123",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "CMD-124",
+    "testId": "UI-CMD-124",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-001",
+    "testId": "UI-FIELD-001",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-002",
+    "testId": "UI-FIELD-002",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-003",
+    "testId": "UI-FIELD-003",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-004",
+    "testId": "UI-FIELD-004",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-005",
+    "testId": "UI-FIELD-005",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-006",
+    "testId": "UI-FIELD-006",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-007",
+    "testId": "UI-FIELD-007",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-008",
+    "testId": "UI-FIELD-008",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-009",
+    "testId": "UI-FIELD-009",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-010",
+    "testId": "UI-FIELD-010",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-011",
+    "testId": "UI-FIELD-011",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-012",
+    "testId": "UI-FIELD-012",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-013",
+    "testId": "UI-FIELD-013",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-014",
+    "testId": "UI-FIELD-014",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-015",
+    "testId": "UI-FIELD-015",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-016",
+    "testId": "UI-FIELD-016",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-017",
+    "testId": "UI-FIELD-017",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-018",
+    "testId": "UI-FIELD-018",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-019",
+    "testId": "UI-FIELD-019",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-020",
+    "testId": "UI-FIELD-020",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-021",
+    "testId": "UI-FIELD-021",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-022",
+    "testId": "UI-FIELD-022",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-023",
+    "testId": "UI-FIELD-023",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-024",
+    "testId": "UI-FIELD-024",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-025",
+    "testId": "UI-FIELD-025",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-026",
+    "testId": "UI-FIELD-026",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-027",
+    "testId": "UI-FIELD-027",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-028",
+    "testId": "UI-FIELD-028",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-029",
+    "testId": "UI-FIELD-029",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-030",
+    "testId": "UI-FIELD-030",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-031",
+    "testId": "UI-FIELD-031",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-032",
+    "testId": "UI-FIELD-032",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-033",
+    "testId": "UI-FIELD-033",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-034",
+    "testId": "UI-FIELD-034",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-035",
+    "testId": "UI-FIELD-035",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-036",
+    "testId": "UI-FIELD-036",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-037",
+    "testId": "UI-FIELD-037",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-038",
+    "testId": "UI-FIELD-038",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-039",
+    "testId": "UI-FIELD-039",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-040",
+    "testId": "UI-FIELD-040",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-041",
+    "testId": "UI-FIELD-041",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-042",
+    "testId": "UI-FIELD-042",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-043",
+    "testId": "UI-FIELD-043",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-044",
+    "testId": "UI-FIELD-044",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-045",
+    "testId": "UI-FIELD-045",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-046",
+    "testId": "UI-FIELD-046",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-047",
+    "testId": "UI-FIELD-047",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-048",
+    "testId": "UI-FIELD-048",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-049",
+    "testId": "UI-FIELD-049",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-050",
+    "testId": "UI-FIELD-050",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-051",
+    "testId": "UI-FIELD-051",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-052",
+    "testId": "UI-FIELD-052",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-053",
+    "testId": "UI-FIELD-053",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-054",
+    "testId": "UI-FIELD-054",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-055",
+    "testId": "UI-FIELD-055",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-056",
+    "testId": "UI-FIELD-056",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-057",
+    "testId": "UI-FIELD-057",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-058",
+    "testId": "UI-FIELD-058",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-059",
+    "testId": "UI-FIELD-059",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-060",
+    "testId": "UI-FIELD-060",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-061",
+    "testId": "UI-FIELD-061",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-062",
+    "testId": "UI-FIELD-062",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-063",
+    "testId": "UI-FIELD-063",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-064",
+    "testId": "UI-FIELD-064",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-065",
+    "testId": "UI-FIELD-065",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-066",
+    "testId": "UI-FIELD-066",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-067",
+    "testId": "UI-FIELD-067",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-068",
+    "testId": "UI-FIELD-068",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-069",
+    "testId": "UI-FIELD-069",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-070",
+    "testId": "UI-FIELD-070",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-071",
+    "testId": "UI-FIELD-071",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-072",
+    "testId": "UI-FIELD-072",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-073",
+    "testId": "UI-FIELD-073",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-074",
+    "testId": "UI-FIELD-074",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-075",
+    "testId": "UI-FIELD-075",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-076",
+    "testId": "UI-FIELD-076",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-077",
+    "testId": "UI-FIELD-077",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-078",
+    "testId": "UI-FIELD-078",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-079",
+    "testId": "UI-FIELD-079",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-080",
+    "testId": "UI-FIELD-080",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-081",
+    "testId": "UI-FIELD-081",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-082",
+    "testId": "UI-FIELD-082",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-083",
+    "testId": "UI-FIELD-083",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-084",
+    "testId": "UI-FIELD-084",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-085",
+    "testId": "UI-FIELD-085",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-086",
+    "testId": "UI-FIELD-086",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-087",
+    "testId": "UI-FIELD-087",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-088",
+    "testId": "UI-FIELD-088",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-089",
+    "testId": "UI-FIELD-089",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-090",
+    "testId": "UI-FIELD-090",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-091",
+    "testId": "UI-FIELD-091",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-092",
+    "testId": "UI-FIELD-092",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-093",
+    "testId": "UI-FIELD-093",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-094",
+    "testId": "UI-FIELD-094",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-095",
+    "testId": "UI-FIELD-095",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-096",
+    "testId": "UI-FIELD-096",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-097",
+    "testId": "UI-FIELD-097",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-098",
+    "testId": "UI-FIELD-098",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-099",
+    "testId": "UI-FIELD-099",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-100",
+    "testId": "UI-FIELD-100",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-101",
+    "testId": "UI-FIELD-101",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-102",
+    "testId": "UI-FIELD-102",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-103",
+    "testId": "UI-FIELD-103",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-104",
+    "testId": "UI-FIELD-104",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-105",
+    "testId": "UI-FIELD-105",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-106",
+    "testId": "UI-FIELD-106",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-107",
+    "testId": "UI-FIELD-107",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-108",
+    "testId": "UI-FIELD-108",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-109",
+    "testId": "UI-FIELD-109",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "FIELD-110",
+    "testId": "UI-FIELD-110",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-001",
+    "testId": "RT-NODE-001",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-002",
+    "testId": "RT-NODE-002",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-003",
+    "testId": "RT-NODE-003",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-004",
+    "testId": "RT-NODE-004",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-005",
+    "testId": "RT-NODE-005",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-006",
+    "testId": "RT-NODE-006",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-007",
+    "testId": "RT-NODE-007",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-008",
+    "testId": "RT-NODE-008",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-009",
+    "testId": "RT-NODE-009",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-010",
+    "testId": "RT-NODE-010",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-011",
+    "testId": "RT-NODE-011",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-012",
+    "testId": "RT-NODE-012",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-013",
+    "testId": "RT-NODE-013",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-014",
+    "testId": "RT-NODE-014",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-015",
+    "testId": "RT-NODE-015",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-016",
+    "testId": "RT-NODE-016",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-017",
+    "testId": "RT-NODE-017",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-018",
+    "testId": "RT-NODE-018",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-019",
+    "testId": "RT-NODE-019",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-020",
+    "testId": "RT-NODE-020",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-021",
+    "testId": "RT-NODE-021",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-022",
+    "testId": "RT-NODE-022",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-023",
+    "testId": "RT-NODE-023",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-024",
+    "testId": "RT-NODE-024",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-025",
+    "testId": "RT-NODE-025",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-026",
+    "testId": "RT-NODE-026",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-027",
+    "testId": "RT-NODE-027",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-028",
+    "testId": "RT-NODE-028",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-029",
+    "testId": "RT-NODE-029",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-030",
+    "testId": "RT-NODE-030",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-031",
+    "testId": "RT-NODE-031",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-032",
+    "testId": "RT-NODE-032",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-033",
+    "testId": "RT-NODE-033",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-034",
+    "testId": "RT-NODE-034",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-035",
+    "testId": "RT-NODE-035",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-036",
+    "testId": "RT-NODE-036",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-037",
+    "testId": "RT-NODE-037",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-038",
+    "testId": "RT-NODE-038",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-039",
+    "testId": "RT-NODE-039",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "NODE-040",
+    "testId": "RT-NODE-040",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-001",
+    "testId": "UI-EVT-001",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-002",
+    "testId": "UI-EVT-002",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-003",
+    "testId": "UI-EVT-003",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-004",
+    "testId": "UI-EVT-004",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-005",
+    "testId": "UI-EVT-005",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-006",
+    "testId": "UI-EVT-006",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-007",
+    "testId": "UI-EVT-007",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-008",
+    "testId": "UI-EVT-008",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-009",
+    "testId": "UI-EVT-009",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-010",
+    "testId": "UI-EVT-010",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-011",
+    "testId": "UI-EVT-011",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-012",
+    "testId": "UI-EVT-012",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-013",
+    "testId": "UI-EVT-013",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-014",
+    "testId": "UI-EVT-014",
+    "ownerPhase": "P01",
+    "plannedSteps": [
+      "S007",
+      "S008",
+      "S009",
+      "S010",
+      "S011",
+      "S012",
+      "S013"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-015",
+    "testId": "UI-EVT-015",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-016",
+    "testId": "UI-EVT-016",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-017",
+    "testId": "UI-EVT-017",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-018",
+    "testId": "UI-EVT-018",
+    "ownerPhase": "P07",
+    "plannedSteps": [
+      "S060",
+      "S061",
+      "S062",
+      "S063",
+      "S064",
+      "S065",
+      "S066",
+      "S067",
+      "S068"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-019",
+    "testId": "UI-EVT-019",
+    "ownerPhase": "P08",
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S071",
+      "S072",
+      "S073",
+      "S074",
+      "S075",
+      "S076"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-020",
+    "testId": "UI-EVT-020",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-021",
+    "testId": "UI-EVT-021",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-022",
+    "testId": "UI-EVT-022",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-023",
+    "testId": "UI-EVT-023",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-024",
+    "testId": "UI-EVT-024",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-025",
+    "testId": "UI-EVT-025",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "EVT-026",
+    "testId": "UI-EVT-026",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-001",
+    "testId": "UI-UX-001",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-002",
+    "testId": "UI-UX-002",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-003",
+    "testId": "UI-UX-003",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-004",
+    "testId": "UI-UX-004",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-005",
+    "testId": "UI-UX-005",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-006",
+    "testId": "UI-UX-006",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-007",
+    "testId": "UI-UX-007",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-008",
+    "testId": "UI-UX-008",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-009",
+    "testId": "UI-UX-009",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-010",
+    "testId": "UI-UX-010",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-011",
+    "testId": "UI-UX-011",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-012",
+    "testId": "UI-UX-012",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-013",
+    "testId": "UI-UX-013",
+    "ownerPhase": "P13",
+    "plannedSteps": [
+      "S112",
+      "S113",
+      "S114",
+      "S115",
+      "S116",
+      "S117",
+      "S118"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-014",
+    "testId": "UI-UX-014",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-015",
+    "testId": "UI-UX-015",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-016",
+    "testId": "UI-UX-016",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-017",
+    "testId": "UI-UX-017",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-018",
+    "testId": "UI-UX-018",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-019",
+    "testId": "UI-UX-019",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-020",
+    "testId": "UI-UX-020",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-021",
+    "testId": "UI-UX-021",
+    "ownerPhase": "P06",
+    "plannedSteps": [
+      "S050",
+      "S051",
+      "S052",
+      "S053",
+      "S054",
+      "S055",
+      "S056",
+      "S057",
+      "S058",
+      "S059"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-022",
+    "testId": "UI-UX-022",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-023",
+    "testId": "UI-UX-023",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-024",
+    "testId": "UI-UX-024",
+    "ownerPhase": "P04",
+    "plannedSteps": [
+      "S029",
+      "S030",
+      "S031",
+      "S032",
+      "S033",
+      "S034",
+      "S035",
+      "S036",
+      "S037",
+      "S038",
+      "S039"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-025",
+    "testId": "UI-UX-025",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-026",
+    "testId": "UI-UX-026",
+    "ownerPhase": "P09",
+    "plannedSteps": [
+      "S077",
+      "S078",
+      "S079",
+      "S080",
+      "S081",
+      "S082",
+      "S083",
+      "S084",
+      "S085"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-027",
+    "testId": "UI-UX-027",
+    "ownerPhase": "P05",
+    "plannedSteps": [
+      "S040",
+      "S041",
+      "S042",
+      "S043",
+      "S044",
+      "S045",
+      "S046",
+      "S047",
+      "S048",
+      "S049"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-028",
+    "testId": "UI-UX-028",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-029",
+    "testId": "UI-UX-029",
+    "ownerPhase": "P03",
+    "plannedSteps": [
+      "S022",
+      "S023",
+      "S024",
+      "S025",
+      "S026",
+      "S027",
+      "S028"
+    ],
+    "implementationStatus": "PLANNED"
+  },
+  {
+    "featureId": "UX-030",
+    "testId": "UI-UX-030",
+    "ownerPhase": "P13",
+    "plannedSteps": [
+      "S112",
+      "S113",
+      "S114",
+      "S115",
+      "S116",
+      "S117",
+      "S118"
+    ],
+    "implementationStatus": "PLANNED"
+  }
+]

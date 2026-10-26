@@ -1,0 +1,254 @@
+[
+  {
+    "path": "docs/reference/autoreels-v1.7/00_START_HERE.md",
+    "bytes": 1516,
+    "sha256": "e9e607919eaca2378ce3717b1a449f8175d9a997771479126734f633e6ad8941",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/01_MASTER_SPEC.md",
+    "bytes": 10389,
+    "sha256": "4e71b9a9203e39952f75ea49ab47929a18a821d47c14a671a0a8553e455b4b2a",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/02_IMPLEMENTATION_PLAN.md",
+    "bytes": 7415,
+    "sha256": "cc0ba91c859edaf95db39c2a7112745f58d33005f8cb2f8e05d077dd4857fe43",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/03_ARCHITECTURE.md",
+    "bytes": 2984,
+    "sha256": "2e47f3aa67e957edab01fba109138362d2338b35c8b7a0156052fa8fe272b472",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/04_DATABASE_SCHEMA.md",
+    "bytes": 2736,
+    "sha256": "02e6ca24e08dd9047894330ae53d0af52011c3f9ad9c329e4916e3c513071eaf",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/05_STATE_MACHINES.md",
+    "bytes": 1617,
+    "sha256": "06bc70bcda0ccea3836b210fc92efe76f1fbe06cb299ecffb6331c99e5510659",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/06_ACCEPTANCE_TESTS.md",
+    "bytes": 3671,
+    "sha256": "61de761e5f50071d26352ff4b0ecfaf7917dff70a02112620f2bb0f1c12c2903",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/07_OPEN_SOURCE_DEPENDENCIES.md",
+    "bytes": 2985,
+    "sha256": "01cc8bad2ea50e7ea7b52ca27bede61ef66d391e150b7077b2eeb72905e03f1d",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/08_PROJECT_INSTRUCTIONS.md",
+    "bytes": 3986,
+    "sha256": "17f8082fa2714db187e3ef1289c375e1e6bef1c332cb0c5571c49fc91cf324b9",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/09_HANDOFF_PROMPT.md",
+    "bytes": 1951,
+    "sha256": "de68251e8220b1b5408815a4bf6334b07d49ba8116356922cb7c2a4feb3d73cc",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/10_DECISION_LOG.md",
+    "bytes": 4918,
+    "sha256": "3bf3e076533eb16c100420cd88c3f958430ee9bf36294c9740d94a6d5e3aa4ec",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/11_SECURITY_BOUNDARIES.md",
+    "bytes": 1322,
+    "sha256": "c7ba06e53e5272a6d4cbc962e60f63a69361aab872022b850a223a1912212f75",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/12_ENVIRONMENT_REQUIREMENTS.md",
+    "bytes": 3432,
+    "sha256": "0c8a99d37f21706643944dfc7ac28ca56ddbabb684a69dda66e3b4880ac68277",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/13_PRE_CODE_CHECKLIST.md",
+    "bytes": 2107,
+    "sha256": "9d281d82c70dd5b11270bb017c674eedce657c99c122736c107a919d91c6c17f",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/14_DEVELOPMENT_WORKFLOW.md",
+    "bytes": 1623,
+    "sha256": "3eb23720057a24b6e2dcb829ec87b1a3e3e17b2346726a6b4bfd068b0442902d",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/15_TOOLCHAIN_BOOTSTRAP.md",
+    "bytes": 523,
+    "sha256": "cc695f85943caa3851135c305f2786e2e98f04cd81a1be86541e103751695b90",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/16_TOOLCHAIN_ACTIVATION.md",
+    "bytes": 782,
+    "sha256": "17cc42166798bbdfa2c43ff52b534ce7878eae0448c68a747d55682504f76f1a",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/17_PYTHON_ACTIVATION_FIX.md",
+    "bytes": 738,
+    "sha256": "aa0b1493785b0643c180e90b9e2c5d26d082a2eb313376738c1024d9dc0f8709",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/18_UI_BACKEND_TRACEABILITY.md",
+    "bytes": 15100,
+    "sha256": "cec71e4d850509a2483440477519f0547b5177300ea461fe9049ca0b4262eac3",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/19_DEFINITION_OF_DONE.md",
+    "bytes": 2515,
+    "sha256": "551479f6c0f0cbee9aeb55954798b914ba5ff5a6bd4b31980930b1ceb0a9933f",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/20_BACKEND_IPC_CONTRACT.md",
+    "bytes": 3748,
+    "sha256": "4193027261d8e41cf29ef3ebb8328652af391cd6c6fcdf63c5fc9c5b0a117dd7",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/21_COMPLETENESS_AUDIT.md",
+    "bytes": 1904,
+    "sha256": "857ddea3996c57d64a3b1623f225109db0e1d454817ef6e7c494c82b70a626b6",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/22_FINAL_DEEP_AUDIT.md",
+    "bytes": 8288,
+    "sha256": "e34b29695adb2cb6d7a5f6d97cd7aa9d6257db89e519baf1f8dba928d25b0039",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/23_MEDIA_STAGING_AND_TEXT_INPUT.md",
+    "bytes": 3659,
+    "sha256": "8c9adbf0afcca485592a32815675a3742e8c2363b9fd2ffa58bf022ce2a30d9f",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/24_STREAM_ADB_ARCHITECTURE_AND_COMPATIBILITY.md",
+    "bytes": 3094,
+    "sha256": "33571bf4436f9541c6a7147f79b0cc4760c6d0e3516b00e03934ba397cbe214c",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/25_ERROR_TIMEOUT_RETRY_AND_RECOVERY_POLICY.md",
+    "bytes": 2798,
+    "sha256": "588535b9a61c25b5956798331011966c4275c3ff077bc5147fc49ec8b85c13e8",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/26_RUNTIME_DATA_RETENTION_BACKUP_AND_OBSERVABILITY.md",
+    "bytes": 2112,
+    "sha256": "01584433f49812841e2338ddef59661f4eb08d8ad0132336be49c3d99455ff4e",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/27_TECHNICAL_RISK_GATE.md",
+    "bytes": 2629,
+    "sha256": "d767ce25c07440ddc4965f162df3bf5e94dcfb28d633043921205864b3fa96ea",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/28_RELEASE_AND_OPERATIONAL_GATES.md",
+    "bytes": 1547,
+    "sha256": "b73dad193e134cba7c72c4c773479bb33e3a172ec4e0a19fbe16e061cd18aa84",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/Activate-AutoReels.ps1",
+    "bytes": 4130,
+    "sha256": "448136c8fa1a099abc5fc4eac67fdf1d6b29cd940d05cb13b47c097fbde46d0d",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/AutoReels_Check_Then_Install_V1_2.md",
+    "bytes": 3941,
+    "sha256": "812c25f1e90d0234838f22877ce9c9c4748ea37312ac0d3d7d3d9049ecd39a97",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/AutoReels_Environment_Bootstrap_V1_2.ps1",
+    "bytes": 22106,
+    "sha256": "cdae9c9a057f6f15acc532e86be74d1e6d3ac090a118ed63ace2cb8ad1d11325",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/AutoReels_Install_Before_Coding_V1_1.md",
+    "bytes": 1217,
+    "sha256": "3833738a548eb55bf5dcaf5e286ac3fbcb429151ce26d5f40267b04e1e2fb813",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/AutoReels_PreCode_GateA_V1_1.ps1",
+    "bytes": 7485,
+    "sha256": "1872a1926b1e6ac7f9c0b06efc6ee3903a2a79fde016c0666128a5d97bbe5814",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/CHANGE_REQUEST_TEMPLATE.md",
+    "bytes": 327,
+    "sha256": "0bacd138c9055c9bb81274d63ddf775080b7c995351e085cb3b9d9a37758d59e",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/Facebook_Auto_Farm_FINAL_V17.html",
+    "bytes": 149933,
+    "sha256": "fe9e23625d1a50f384ea34eb4003c4049820f68524d0e450c2e70d85b5434b49",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/PROJECT_INTRODUCTION.md",
+    "bytes": 1849,
+    "sha256": "619583817c237a6cbd1d25d38fd41f32926dfb1187252760c440ae5163ae062a",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/PROJECT_KNOWLEDGE_MASTER.md",
+    "bytes": 5053,
+    "sha256": "fb161efe0cecf3ed9cb286f3ea09a923e9aea79aa59edd1f3c2fe8654fbb94b3",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/PROJECT_MANIFEST.json",
+    "bytes": 2843,
+    "sha256": "fb1dcb21ca88a3c77bd63e9e92154d9728fe0ba0159a2163b74781f151f20bf0",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/README.md",
+    "bytes": 2363,
+    "sha256": "b01e9504fb5004f6c026427b20b93976c894c1620de64210e60ebd0aececa92a",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/autoreels-v1.7/Tiếp tục kiểm tra migration.txt",
+    "bytes": 1216,
+    "sha256": "1c24872f29a0c83b51e798e13993e8bc707a22cabe2a68660a38fa941dfc7430",
+    "status": "READ_REFERENCE_ONLY"
+  },
+  {
+    "path": "docs/reference/studio-workspace/AutoReels-Workspace.html",
+    "bytes": 163787,
+    "sha256": "3afb29c567a58b654de2b555b19ed60e8e074c604b2d1d4621e77d21d44cdf54",
+    "status": "READ_REFERENCE_ONLY"
+  }
+]

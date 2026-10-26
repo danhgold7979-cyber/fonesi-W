@@ -1,0 +1,236 @@
+[
+  {
+    "id": "EVT-001",
+    "name": "NAV",
+    "binding": "data-view",
+    "behavior": "Sáu route, giữ context và dirty-state warning",
+    "ownerPhase": "P03",
+    "testId": "UI-EVT-001",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-002",
+    "name": "ADD",
+    "binding": "data-add/data-modal-add",
+    "behavior": "40 node variants, insert edge phải atomic",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-002",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-003",
+    "name": "SUB",
+    "binding": "data-sub-add",
+    "behavior": "Tạo tham chiếu subflow có mapping/type/version",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-003",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-004",
+    "name": "LIB",
+    "binding": "data-lib",
+    "behavior": "Node/subflow tabs, search giữ đúng library",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-004",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-005",
+    "name": "BOTTOM",
+    "binding": "data-bottom",
+    "behavior": "Properties/tree/variables/logs/debug",
+    "ownerPhase": "P03",
+    "testId": "UI-EVT-005",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-006",
+    "name": "TREE",
+    "binding": "data-tree/phone-screen",
+    "behavior": "Snapshot match thực, target count và stale state",
+    "ownerPhase": "P09",
+    "testId": "UI-EVT-006",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-007",
+    "name": "DSETUP",
+    "binding": "data-device-setup",
+    "behavior": "Chọn Process qua context service, không mutate device đơn lẻ",
+    "ownerPhase": "P06",
+    "testId": "UI-EVT-007",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-008",
+    "name": "DINSPECT",
+    "binding": "data-device-inspector",
+    "behavior": "Đổi test device độc lập Process",
+    "ownerPhase": "P09",
+    "testId": "UI-EVT-008",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-009",
+    "name": "DCARD",
+    "binding": "data-device-card/device-select",
+    "behavior": "Active device và selected group là hai state",
+    "ownerPhase": "P08",
+    "testId": "UI-EVT-009",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-010",
+    "name": "SETUP",
+    "binding": "data-setup-device/setup-app/setup-workflow/setup-account/setup-target",
+    "behavior": "Đổi binding có save/load atomic, refs được kiểm tra",
+    "ownerPhase": "P06",
+    "testId": "UI-EVT-010",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-011",
+    "name": "APPTAB",
+    "binding": "data-library-app",
+    "behavior": "Library filter không đổi app của workflow đang chỉnh",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-011",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-012",
+    "name": "WFOPEN",
+    "binding": "data-open-wf/data-wf-menu",
+    "behavior": "Bundle nguyên khối và version đúng",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-012",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-013",
+    "name": "WEEKDAY",
+    "binding": "data-day",
+    "behavior": "Weekdays per-process, ít nhất một ngày",
+    "ownerPhase": "P07",
+    "testId": "UI-EVT-013",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-014",
+    "name": "INPUT",
+    "binding": "data-input-key/type/scope/required/delete",
+    "behavior": "Typed declarations, reserved/duplicate keys rejected",
+    "ownerPhase": "P01",
+    "testId": "UI-EVT-014",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-015",
+    "name": "ROW",
+    "binding": "data-row-check/data-row-field/data-row-more",
+    "behavior": "Stable content ID, persist edits, details read-only",
+    "ownerPhase": "P06",
+    "testId": "UI-EVT-015",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-016",
+    "name": "PROP",
+    "binding": "data-prop",
+    "behavior": "Property config theo node schema, validation inline",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-016",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-017",
+    "name": "CUSTOM",
+    "binding": "data-process-extra/dynamic row columns",
+    "behavior": "9 data types theo workflow version, preserve round-trip",
+    "ownerPhase": "P06",
+    "testId": "UI-EVT-017",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-018",
+    "name": "SLOT",
+    "binding": "data-slot/daily/start-date/schedule-scope",
+    "behavior": "Slots/time/scope valid, page 24 chỉ UI pagination",
+    "ownerPhase": "P07",
+    "testId": "UI-EVT-018",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-019",
+    "name": "ENABLE",
+    "binding": "data-device-enable",
+    "behavior": "Enabled persisted; không giả online/automation capability",
+    "ownerPhase": "P08",
+    "testId": "UI-EVT-019",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-020",
+    "name": "RESIZE",
+    "binding": "phone-resize/resize-y/data-size",
+    "behavior": "Bounds, pointer capture, world coordinates, persist geometry",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-020",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-021",
+    "name": "WIRE",
+    "binding": "data-port/data-edge/data-reroute",
+    "behavior": "Valid ports/edge routing with topology checks",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-021",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-022",
+    "name": "GROUP",
+    "binding": "data-toggle-group",
+    "behavior": "Group visual only, membership after node delete/move",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-022",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-023",
+    "name": "GESTURE",
+    "binding": "wheel/pointer/drop/contextmenu",
+    "behavior": "Canvas drag/pan/zoom/marquee, grid drag timeline",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-023",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-024",
+    "name": "SHORTCUT",
+    "binding": "keydown/keyup",
+    "behavior": "Ctrl+S/Z/Y/C/V/D/A/F/0,F2,Delete,Space,Esc: scope/focus",
+    "ownerPhase": "P04",
+    "testId": "UI-EVT-024",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-025",
+    "name": "FILE",
+    "binding": "folder-input/media-input/csv-input/workflow-input",
+    "behavior": "File dialogs and imports validate before state mutation",
+    "ownerPhase": "P06",
+    "testId": "UI-EVT-025",
+    "status": "PLANNED"
+  },
+  {
+    "id": "EVT-026",
+    "name": "POPUP",
+    "binding": "message/popup beforeunload",
+    "behavior": "Sender+origin+channel/nonce allowlist; no arbitrary action relay",
+    "ownerPhase": "P09",
+    "testId": "UI-EVT-026",
+    "status": "PLANNED"
+  }
+]

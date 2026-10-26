@@ -1,0 +1,272 @@
+[
+  {
+    "id": "UX-001",
+    "title": "Tìm lệnh và node",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "ui-palette",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-001"
+  },
+  {
+    "id": "UX-002",
+    "title": "Chuyển 6 route bằng phím",
+    "ownerPhase": "P03",
+    "previewStatus": "INTERACTIVE",
+    "binding": "Alt+1..6",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-002"
+  },
+  {
+    "id": "UX-003",
+    "title": "Shortcuts theo focus",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "focus guard",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-003"
+  },
+  {
+    "id": "UX-004",
+    "title": "Lưu nhanh theo ngữ cảnh",
+    "ownerPhase": "P03",
+    "previewStatus": "INTERACTIVE",
+    "binding": "Ctrl+S",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-004"
+  },
+  {
+    "id": "UX-005",
+    "title": "Undo/redo/copy/paste/duplicate",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "canvas command history",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-005"
+  },
+  {
+    "id": "UX-006",
+    "title": "Fit vùng chọn",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "ui-fit-selection",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-006"
+  },
+  {
+    "id": "UX-007",
+    "title": "Nudge node 1/10",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "arrow keys",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-007"
+  },
+  {
+    "id": "UX-008",
+    "title": "Wheel zoom/pan",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "wheel gestures",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-008"
+  },
+  {
+    "id": "UX-009",
+    "title": "Thu gọn panels và properties theo selection",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "ui-library/ui-phone/bottom-toggle",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-009"
+  },
+  {
+    "id": "UX-010",
+    "title": "Ghim node hay dùng",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "ui-pin",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-010"
+  },
+  {
+    "id": "UX-011",
+    "title": "Context menu node/edge/canvas",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "showCanvasMenu",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-011"
+  },
+  {
+    "id": "UX-012",
+    "title": "Context menu media",
+    "ownerPhase": "P06",
+    "previewStatus": "INTERACTIVE",
+    "binding": "row contextmenu",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-012"
+  },
+  {
+    "id": "UX-013",
+    "title": "Device Tools 3 tab",
+    "ownerPhase": "P13",
+    "previewStatus": "LAYOUT_ONLY_HARDWARE_DISABLED",
+    "binding": "ui-tools",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-013"
+  },
+  {
+    "id": "UX-014",
+    "title": "Quick actions overflow",
+    "ownerPhase": "P09",
+    "previewStatus": "LAYOUT_ONLY_HARDWARE_DISABLED",
+    "binding": "ui-phone-menu",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-014"
+  },
+  {
+    "id": "UX-015",
+    "title": "Properties nâng cao theo type",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "advancedNode",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-015"
+  },
+  {
+    "id": "UX-016",
+    "title": "Hướng dẫn F1",
+    "ownerPhase": "P03",
+    "previewStatus": "INTERACTIVE",
+    "binding": "ui-help",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-016"
+  },
+  {
+    "id": "UX-017",
+    "title": "Ẩn/hiện cột",
+    "ownerPhase": "P06",
+    "previewStatus": "INTERACTIVE",
+    "binding": "ui-columns",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-017"
+  },
+  {
+    "id": "UX-018",
+    "title": "Subflow back stack",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "parent",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-018"
+  },
+  {
+    "id": "UX-019",
+    "title": "Phone zoom và fit đồng bộ",
+    "ownerPhase": "P09",
+    "previewStatus": "INTERACTIVE",
+    "binding": "phone-fit",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-019"
+  },
+  {
+    "id": "UX-020",
+    "title": "Clone giữ schema đầy đủ",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "workflow-duplicate",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-020"
+  },
+  {
+    "id": "UX-021",
+    "title": "Process context đúng máy",
+    "ownerPhase": "P06",
+    "previewStatus": "INTERACTIVE",
+    "binding": "switchContext",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-021"
+  },
+  {
+    "id": "UX-022",
+    "title": "Library filter riêng",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "data-library-app",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-022"
+  },
+  {
+    "id": "UX-023",
+    "title": "Tooltip/accessible names",
+    "ownerPhase": "P03",
+    "previewStatus": "INTERACTIVE",
+    "binding": "studioA11y",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-023"
+  },
+  {
+    "id": "UX-024",
+    "title": "Hủy pending insertion",
+    "ownerPhase": "P04",
+    "previewStatus": "INTERACTIVE",
+    "binding": "closeModal",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-024"
+  },
+  {
+    "id": "UX-025",
+    "title": "UI tree search và freeze snapshot",
+    "ownerPhase": "P09",
+    "previewStatus": "PLANNED",
+    "binding": "inspector snapshots",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-025"
+  },
+  {
+    "id": "UX-026",
+    "title": "Test selector/count/highlight",
+    "ownerPhase": "P09",
+    "previewStatus": "PLANNED",
+    "binding": "inspector queryElements",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-026"
+  },
+  {
+    "id": "UX-027",
+    "title": "Jump từ lỗi tới node/row",
+    "ownerPhase": "P05",
+    "previewStatus": "PLANNED",
+    "binding": "validation issues",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-027"
+  },
+  {
+    "id": "UX-028",
+    "title": "Saved layout và reset workspace",
+    "ownerPhase": "P03",
+    "previewStatus": "PLANNED",
+    "binding": "preferences",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-028"
+  },
+  {
+    "id": "UX-029",
+    "title": "Onboarding theo ngữ cảnh",
+    "ownerPhase": "P03",
+    "previewStatus": "PLANNED",
+    "binding": "context guide",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-029"
+  },
+  {
+    "id": "UX-030",
+    "title": "Batch progress/cancel/results",
+    "ownerPhase": "P13",
+    "previewStatus": "PLANNED",
+    "binding": "batch operations",
+    "productionStatus": "PLANNED",
+    "testId": "UI-UX-030"
+  }
+]
