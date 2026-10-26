@@ -28,4 +28,4 @@ Các lệnh/checks còn đang thay đổi được chạy lại khi scope code �
 
 P06 tiếp tục thumbnails, import preview/apply, bulk/virtualized table và explicit changed-file adoption/rebind. P07 tiếp tục queue claim/recovery/calendar/spread; P04/P05 còn advanced editor/engine contracts. Các phần này làm tiếp trên cloud. P08 kết nối/control cần nghiệm thu Windows/Android thật; chưa có thiết bị thì không tự nhận discovery, vuốt, proxy hay posting thành công.
 
-GitHub push vào `feat/studio-workspace` đã hoạt động lại; remote trước increment này là `91528a21465af6d897391b7fb97891c3e6ac4e59`. Commit/push increment mới sau checks; không merge main hoặc phát hành installer. Receipt theo revision ghi trong `docs/evidence/implementation/`.
+GitHub đã xác minh remote `feat/studio-workspace` ở code commit `3a3e9cd1fb1d55e46540034a789bd7d5192b00a8`. Receipt [checkpoint-003](../evidence/implementation/checkpoint-003.json) ghi các checks trên revision này; commit tài liệu/ZIP có thể mới hơn code commit. Không merge main hoặc phát hành installer.

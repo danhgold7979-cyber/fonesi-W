@@ -166,19 +166,34 @@
       "sha256": "147b4a46700767742a91e0afb7abbf2b33cdabde6473af166c22daafaebf2d64"
     },
     {
+      "path": "docs/evidence/implementation/checkpoint-003.json",
+      "bytes": 2974,
+      "sha256": "891f574d90ad41bcca88996ad84333caad41c1b30aaeb54d3a8b34d460a4bf30"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/content-form-1600.png",
+      "bytes": 128397,
+      "sha256": "8b2aa4d14b15b444815258bd8badbea94d8a5a83714510cf0156bac8b07d3f8a"
+    },
+    {
       "path": "docs/evidence/implementation/ui/inspector-1600.png",
-      "bytes": 115387,
-      "sha256": "7c3fb902f62d47705d8ecd7944f198c321b2b4f2ab8c74a313487665515bf23f"
+      "bytes": 115606,
+      "sha256": "d8c54f7c196f858b4cff37693beb450ef02055883b7920b79d17c2fac7cbd331"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/schedule-1600.png",
+      "bytes": 61595,
+      "sha256": "638590ccd8d5cd04416e5e7f320926de77fc936bbdd922c8dc26bd362f4483aa"
     },
     {
       "path": "docs/handoff/RESUME_PROMPT.md",
-      "bytes": 2141,
-      "sha256": "5ccbbd20bd34be191fef838a4a8a5491bfac9e253628b1cb4fa279e5df9f8fc6"
+      "bytes": 2148,
+      "sha256": "98eaa802a18ef317da6e8bcc17d1e0f2c0aededb40c1e2871b6f4a98f938bf69"
     },
     {
       "path": "docs/handoff/START_HERE.md",
-      "bytes": 6796,
-      "sha256": "dd2da22ef491b5fcd2b97560c0df9ed7248958c02b5d3fe6108d5261397685f2"
+      "bytes": 6872,
+      "sha256": "cf2379ff45bdaa54425fab7201b25d20b5e8091c71bd32bcc6398275b40a9a55"
     },
     {
       "path": "docs/implementation/ADR-001-SQLITE-AND-CSP.md",
@@ -217,18 +232,18 @@
     },
     {
       "path": "docs/implementation/P06_PLAN.md",
-      "bytes": 2845,
-      "sha256": "3e14bf18fde3deb8d36b3229d4e622e533998f3580ada22eae8ee8c5a93a687d"
+      "bytes": 4871,
+      "sha256": "4604806d43e01616eb2864bb36339510f0239ee17b33481322f9d8a05d851960"
     },
     {
       "path": "docs/implementation/P07_PLAN.md",
-      "bytes": 2516,
-      "sha256": "ade8f5f2673b864424f0b081aa779705b8d3ed87ef50ef1ac8fd6849f1959e49"
+      "bytes": 4584,
+      "sha256": "e8c9c6183738d3b1ddca92d3e0e4fc1b8300fea84154fb00a9990b314667df96"
     },
     {
       "path": "docs/implementation/PROGRESS.md",
-      "bytes": 4380,
-      "sha256": "989c1672928ce9b6f32b1076099c1e731a569c0d9923b95d4cea56948bbf16ed"
+      "bytes": 5639,
+      "sha256": "e132ae86a801e0e0159e47f667f2bbb8743ddccb85fa76cc387b4ffe4f7a2e6f"
     },
     {
       "path": "docs/previews/AutoReels-Studio-Compact.html",

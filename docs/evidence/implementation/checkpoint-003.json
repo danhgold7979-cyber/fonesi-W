@@ -1,0 +1,83 @@
+{
+  "scope": "NATIVE_MEDIA_AND_PERSISTED_SCHEDULING_NOT_ANDROID_ACCEPTANCE",
+  "revision": "3a3e9cd1fb1d55e46540034a789bd7d5192b00a8",
+  "dateUtc": "2026-10-26T10:52:15.112357+00:00",
+  "commands": {
+    "pnpm check": {
+      "status": "PASS",
+      "testFiles": 9,
+      "tests": 98,
+      "includes": [
+        "generated parity",
+        "typecheck",
+        "lint",
+        "unit/integration",
+        "production renderer build"
+      ]
+    },
+    "pnpm exec playwright test": {
+      "status": "PASS",
+      "scenarios": 5,
+      "runnerStatistics": {
+        "startTime": "2026-10-26T10:49:26.537Z",
+        "duration": 11528.239,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "coverage": [
+        "workflow full-bundle round trip",
+        "Process context/save races and preview",
+        "host origin/token/private-command/raw-path rejection",
+        "typed content zero/false/missing/multiline-list ordering",
+        "persisted preview→apply→timeline→reschedule/cancel"
+      ]
+    },
+    "node tools/smoke-media-host.mjs": {
+      "status": "PASS",
+      "filesystem": "REAL_TEMP_FILES",
+      "databaseWorker": "REAL",
+      "nativePicker": "TEST_ADAPTER",
+      "scanIgnoreRescan": true,
+      "privateGrantRejectedThroughPublicDispatcher": true
+    },
+    "Electron renderer smoke": {
+      "status": "PASS",
+      "electron": "45.0.0",
+      "sandbox": true,
+      "nodeIntegration": false,
+      "routes": 6,
+      "saveReload": true,
+      "nativeChooserCapability": true,
+      "privateApi": "NOT_EXPOSED",
+      "interactiveNativeDialog": "NOT_RUN"
+    },
+    "pnpm install --offline --frozen-lockfile --ignore-scripts": "PASS",
+    "pnpm check:plan": "PASS"
+  },
+  "databaseSchemaVersion": 3,
+  "githubPush": {
+    "status": "VERIFIED_REMOTE_FEATURE_BRANCH",
+    "repository": "danhgold7979-cyber/fonesi-W",
+    "branch": "feat/studio-workspace",
+    "verifiedSourceRevision": "3a3e9cd1fb1d55e46540034a789bd7d5192b00a8",
+    "mainMerged": false
+  },
+  "fullPhaseAcceptance": false,
+  "android": "NOT_IMPLEMENTED_NOT_RUN",
+  "windows": "NOT_RUN",
+  "uiFixtures": "Schedule E2E uses a test-only registered device record in an isolated DB; no device control or posting emulation.",
+  "mediaApplyLimit": "Scheduling freezes observed ledger state and hashes. Reading/staging the exact bytes is a future hardware preflight gate.",
+  "unimplemented": [
+    "interactive native chooser/Windows acceptance",
+    "thumbnails/CSV-XLSX import preview/bulk/virtualization",
+    "adopt changed media and preserve source IDs when rebinding across hosts",
+    "required Process-field binding UI",
+    "queue claim/dispatch/overdue recovery/calendar/spread",
+    "advanced editor/dependency resolution/full debugger",
+    "ADB/control/stream/OCR/identity/certification/app adapters/proxy/APK/installer"
+  ],
+  "progress": "docs/implementation/PROGRESS.md",
+  "environmentDraft": "SAVED_NOT_PUBLISHED"
+}
