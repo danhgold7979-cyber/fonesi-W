@@ -3,6 +3,22 @@ const { contextBridge, ipcRenderer } = require('electron') as typeof import('ele
 const send = <T,>(command: ApiCommand, input: unknown = {}): Promise<T> =>
   ipcRenderer.invoke('studio:request', { command, input }) as Promise<T>;
 const api: StudioApi = {
+  deviceSnapshot: () => send('deviceSnapshot'),
+  scanDevices: () => send('scanDevices'),
+  cancelDeviceScan: () => send('cancelDeviceScan'),
+  chooseAdbSdk: () => send('chooseAdbSdk'),
+  startAdbServer: () => send('startAdbServer'),
+  connectDevice: (endpoint, reconnect = true) => send('connectDevice', { endpoint, reconnect }),
+  setDeviceReconnect: (endpoint, expectedRevision, desired) =>
+    send('setDeviceReconnect', { endpoint, expectedRevision, desired }),
+  pairDevice: (endpoint, code) => send('pairDevice', { endpoint, code }),
+  updateDevice: (id, expectedRevision, patch) =>
+    send('updateDevice', { id, expectedRevision, patch }),
+  inspectDevice: (id) => send('inspectDevice', { id }),
+  captureDevice: (id) => send('captureDevice', { id }),
+  devicePackages: (id) => send('devicePackages', { id }),
+  deviceAction: (id, action) => send('deviceAction', { id, action }),
+  disconnectDevice: (id) => send('disconnectDevice', { id }),
   previewContentImport: (processId, expectedRevision, format, data) =>
     send('previewContentImport', { processId, expectedRevision, format, data }),
   previewBulkContent: (processId, expectedRevision, request) =>

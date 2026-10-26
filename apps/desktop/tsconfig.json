@@ -29,6 +29,9 @@
     },
     {
       "path": "../../packages/import-export"
+    },
+    {
+      "path": "../../packages/devices"
     }
   ],
   "include": [

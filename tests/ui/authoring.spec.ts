@@ -354,3 +354,44 @@ test('typed content form preserves zero, false, missing fields and ordered multi
   await expect(page.locator('.table-empty')).toBeVisible();
   expect(await request(page, 'content', { processId: 'process_typed_form' })).toEqual([]);
 });
+
+test('canvas clipboard preserves wires/groups through paste, cut, undo and persisted reload', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.locator('[data-route="library"]').click();
+  await page.getByRole('button', { name: '＋ Workflow mới', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Tên workflow', exact: true }).fill('Clipboard groups');
+  await page.getByRole('dialog').getByRole('button', { name: 'Tạo workflow', exact: true }).click();
+  const canvas = page.getByTestId('canvas');
+  await canvas.focus();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Control+g');
+  await expect(page.locator('.canvas-visual-group')).toHaveCount(1);
+  const groupName = page.getByRole('textbox', { name: /Tên nhóm group_/ });
+  await groupName.fill('My selected group');
+  await groupName.press('Tab');
+  await canvas.focus();
+  await page.keyboard.press('Control+c');
+  await page.keyboard.press('Control+v');
+  await expect(page.locator('.react-flow__node-studio')).toHaveCount(4);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+  await expect(page.locator('.canvas-visual-group')).toHaveCount(2);
+  await page.keyboard.press('Control+x');
+  await expect(page.locator('.react-flow__node-studio')).toHaveCount(2);
+  await page.keyboard.press('Control+z');
+  await expect(page.locator('.react-flow__node-studio')).toHaveCount(4);
+  await page.keyboard.press('Control+s');
+  await expect(page.locator('.editor-status')).toContainText('Đã lưu cục bộ');
+  await page.reload();
+  await page.locator('[data-route="library"]').click();
+  await page.getByRole('button', { name: /^Clipboard groups/ }).click();
+  await expect(page.locator('.react-flow__node-studio')).toHaveCount(4);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+  await expect(page.locator('.canvas-visual-group')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Bỏ nhóm', exact: true }).first().click();
+  await expect(page.locator('.canvas-visual-group')).toHaveCount(1);
+  await expect(page.locator('.react-flow__node-studio')).toHaveCount(4);
+  await page.getByRole('button', { name: 'Hoàn tác', exact: true }).click();
+  await expect(page.locator('.canvas-visual-group')).toHaveCount(2);
+});

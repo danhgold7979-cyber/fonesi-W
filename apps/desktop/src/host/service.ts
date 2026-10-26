@@ -7,6 +7,7 @@ import {
   jobStateSchema,
   localDateSchema,
   timezoneSchema,
+  packageNameSchema,
 } from '@autoreels/contracts';
 import type { ContentItem } from '@autoreels/contracts';
 import { StudioDatabase } from '@autoreels/database';
@@ -35,8 +36,61 @@ export const mediaSchemas = {
     options: z.strictObject({ recursive: z.boolean(), watch: z.boolean(), active: z.boolean() }),
   }),
 } as const;
+const coordinate = z.number().int().min(0).max(8191);
+export const deviceSchemas = {
+  deviceSnapshot: z.strictObject({}),
+  scanDevices: z.strictObject({}),
+  cancelDeviceScan: z.strictObject({}),
+  chooseAdbSdk: z.strictObject({}),
+  startAdbServer: z.strictObject({}),
+  connectDevice: z.strictObject({
+    endpoint: z.string().max(256),
+    reconnect: z.boolean().default(true),
+  }),
+  setDeviceReconnect: z.strictObject({
+    endpoint: z.string().max(256),
+    expectedRevision: revision,
+    desired: z.boolean(),
+  }),
+  pairDevice: z.strictObject({ endpoint: z.string().max(256), code: z.string().regex(/^\d{6}$/) }),
+  updateDevice: id.extend({
+    expectedRevision: revision,
+    patch: z.strictObject({
+      name: z.string().trim().min(1).max(120).optional(),
+      enabled: z.boolean().optional(),
+    }),
+  }),
+  inspectDevice: id,
+  captureDevice: id,
+  devicePackages: id,
+  disconnectDevice: id,
+  deviceAction: id.extend({
+    action: z.discriminatedUnion('type', [
+      z.strictObject({
+        type: z.literal('KEY'),
+        key: z.enum(['BACK', 'HOME', 'RECENT', 'POWER', 'VOLUME_UP', 'VOLUME_DOWN']),
+      }),
+      z.strictObject({ type: z.literal('TAP'), captureId: idSchema, x: coordinate, y: coordinate }),
+      z.strictObject({
+        type: z.literal('SWIPE'),
+        captureId: idSchema,
+        x1: coordinate,
+        y1: coordinate,
+        x2: coordinate,
+        y2: coordinate,
+        durationMs: z.number().int().min(50).max(10000),
+      }),
+      z.strictObject({ type: z.enum(['LAUNCH', 'FORCE_STOP']), packageName: packageNameSchema }),
+      z.strictObject({
+        type: z.literal('SYSTEM'),
+        target: z.enum(['SETTINGS', 'FILES', 'GALLERY', 'BROWSER', 'VPN']),
+      }),
+    ]),
+  }),
+} as const;
 const formatSchema = z.enum(['JSON', 'CSV', 'XLSX']);
 const schemas = {
+  ...deviceSchemas,
   previewContentImport: z.strictObject({
     processId: idSchema,
     expectedRevision: revision,
@@ -127,6 +181,21 @@ export async function dispatch(
     input = schemas[request.command].parse(request.input);
   // Parse per case to retain exact static DTO types after runtime validation.
   switch (request.command) {
+    case 'deviceSnapshot':
+    case 'scanDevices':
+    case 'cancelDeviceScan':
+    case 'chooseAdbSdk':
+    case 'startAdbServer':
+    case 'setDeviceReconnect':
+    case 'connectDevice':
+    case 'pairDevice':
+    case 'updateDevice':
+    case 'inspectDevice':
+    case 'captureDevice':
+    case 'devicePackages':
+    case 'deviceAction':
+    case 'disconnectDevice':
+      throw new DomainError('HOST_REQUIRED', 'Thao tác thiết bị cần device service của host.');
     case 'previewContentImport': {
       const p = schemas.previewContentImport.parse(input),
         process = db.getProcess(p.processId);

@@ -8,6 +8,7 @@ import type {
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
 import { Processes } from './Processes.js';
+import { Devices } from './Devices.js';
 import { Schedule } from './Schedule.js';
 const Editor = lazy(() => import('./Editor.js').then((module) => ({ default: module.Editor })));
 
@@ -21,6 +22,7 @@ const routes = [
 ] as const;
 type View = (typeof routes)[number]['id'];
 export function App() {
+  const [processDeviceScope, setProcessDeviceScope] = useState<string | null>(null);
   const [boot, setBoot] = useState<BootstrapData | null>(null),
     [failure, setFailure] = useState(''),
     [view, setView] = useState<View>('devices');
@@ -64,9 +66,10 @@ export function App() {
     return () => clearTimeout(t);
   }, [toast]);
   const navigation = useRef<(next: View) => Promise<void>>(async () => undefined);
-  async function go(next: View) {
+  async function go(next: View, deviceScope: string | null = null) {
     try {
       if (view !== next && saveAction.current) await saveAction.current();
+      if (next === 'processes') setProcessDeviceScope(deviceScope);
       setView(next);
       setModal(null);
     } catch (e) {
@@ -229,58 +232,44 @@ export function App() {
             ⌕ Tìm lệnh <kbd>Ctrl K</kbd>
           </button>
           <span className="badge local">● Lưu cục bộ</span>
-          <small className="muted">Android chưa kết nối</small>
+          <small className="muted">
+            {boot.hardware.connected ? 'Android đã kết nối' : 'Android chưa kết nối'}
+          </small>
         </div>
       </header>
       <main className="app-main">
         {view === 'devices' && (
-          <div className="page">
-            <div className="page-heading">
-              <div>
-                <h1>Điện thoại</h1>
-                <p>Quản lý kết nối và các tiến trình trên thiết bị.</p>
-              </div>
-              <button disabled title={boot.hardware.reason}>
-                ＋ Kết nối điện thoại
-              </button>
-            </div>
-            <div className="metric-grid">
-              <div>
-                <span>Đã đăng ký</span>
-                <strong>{boot.devices.length}</strong>
-              </div>
-              <div>
-                <span>Tiến trình</span>
-                <strong>{boot.processes.length}</strong>
-              </div>
-              <div>
-                <span>Workflow</span>
-                <strong>{boot.workflows.length}</strong>
-              </div>
-            </div>
-            <Empty
-              icon="▯"
-              title="Chưa có điện thoại kết nối"
-              action={
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setWorkflowApp(libraryApp === 'all' ? 'fb' : libraryApp);
-                    setModal('create');
-                  }}
-                >
-                  ＋ Tạo workflow trước
-                </button>
-              }
-            >
-              Bạn có thể thiết kế và lưu workflow trước khi kết nối điện thoại. Điều khiển thiết bị
-              chưa có trong phiên bản này.
-            </Empty>
-            <div className="notice">
-              Workflow dùng chung nhiều máy. Mỗi tiến trình giữ dữ liệu và lịch riêng; thiết bị kiểm
-              thử được chọn độc lập.
-            </div>
-          </div>
+          <Devices
+            apps={boot.apps}
+            processCount={boot.processes.length}
+            workflowCount={boot.workflows.length}
+            notify={notify}
+            snapshot={(value) => {
+              setBoot((previous) =>
+                previous
+                  ? {
+                      ...previous,
+                      devices: value.devices.map((d) => ({
+                        id: d.id,
+                        name: d.name,
+                        enabled: d.enabled,
+                      })),
+                      hardware: {
+                        connected: value.devices.some((d) => d.capabilities.connected),
+                        reason: value.diagnostic.message,
+                      },
+                    }
+                  : previous,
+              );
+            }}
+            openProcesses={(id) => {
+              void go('processes', id);
+            }}
+            createWorkflow={() => {
+              setWorkflowApp(libraryApp === 'all' ? 'fb' : libraryApp);
+              setModal('create');
+            }}
+          />
         )}
         {view === 'inspector' &&
           (active ? (
@@ -412,6 +401,8 @@ export function App() {
         )}
         {view === 'processes' && (
           <Processes
+            deviceScope={processDeviceScope}
+            clearDeviceScope={() => setProcessDeviceScope(null)}
             devices={boot.devices}
             apps={boot.apps}
             workflows={boot.workflows}

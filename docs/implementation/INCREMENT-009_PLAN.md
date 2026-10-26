@@ -1,0 +1,13 @@
+# Increment 009 — correlated XML Inspector
+
+Trước code đã đọc P09 master/S082/S083 và contracts. Scope này dùng screenshot tĩnh + XML, không giả video, OCR, account discovery hay posting.
+
+- Thêm saxes pinned strict SAX parser. Android uiautomator dump `/dev/tty` trong một shell_v2 request, không cần file ngoài staging/không xóa file người dùng. Bound response XML 2MiB/10k nodes/depth128/attribute8k; DTD và entity khai báo bị reject. OEM không hỗ trợ trả lỗi, không dùng cache XML cũ.
+- Snapshot actor INSPECTOR: read rotation/foreground → screenshot → XML → read rotation/foreground; interval tối đa10s, rotation/foreground thay đổi thì reject toàn bộ. Cùng lease/gen/profile; không khẳng định screen content atomic vì animations vẫn có thể đổi. XML root rotation phải khớp, bounds nằm trong physical PNG. ID snapshot và capture chung, timestamp/interval hiện rõ; frozen chỉ là state UI, không kéo dài quyền input.
+- Named API inspectDevice(id); DTO capture+nodes/duration/foreground; không raw shell/path từ renderer. Pure selector query/pick trong shared package contracts để renderer dùng cùng rules, không kéo node:net vào browser.
+- Compact Inspector component: chụp cây/ảnh, search node attributes, chọn cây hoặc click trên ảnh read-only, bounding overlay, ancestor IDs, JSON selector builder exact/contains, match count/zero/ambiguous và copy clipboard. Danh sách render bounded DOM; node password text/description redacted, text không ghi logs/DB. Không auto save raw tree vào source ZIP.
+- Devices Tools mở Inspector riêng, test device ID độc lập Process binding. Tests strict XML/DTD/overflow/rotation/bounds, selector/pick, actual service fixture/scope, E2E capture→pick→query. Các thao tác touch vẫn qua P08 và consent riêng.
+
+Điều chỉnh trước adapter: shell_v2 raw không bảo đảm có controlling TTY cho `/dev/tty`; dùng nonce path `/data/local/tmp/autoreels-inspector-<uuid>.xml` do chính lượt capture tạo. Chỉ cat và rm đúng nonce path đó trong finally, không glob/không đụng file khác. Abort dùng cleanup signal riêng bounded 2s dưới cùng lease/fence; lỗi cleanup không biến capture lỗi thành success. Snapshot toàn phần deadline10s và lease30s; không lưu XML raw vào DB/log.
+
+009 editor integration trước code: thay phone placeholder bằng component query DeviceSnapshot thật, local testDeviceId riêng; selected test device không ghi Process/preferences/bundle. Poll sequence fence, unavailable không tự chọn điện thoại khác. Mở cùng Inspector read-only từ panel; quick Back/Home/Recent chỉ khi bật consent, qua named deviceAction/lease như Devices. Không đổi TRACE thành DEVICE_TEST. Shortcuts editor bỏ qua mọi dialog để thao tác Inspector không sửa canvas. Lease hiện implementation là60s, snapshot deadline10s, cleanup2s.

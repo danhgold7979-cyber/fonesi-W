@@ -1,0 +1,9 @@
+# Increment 011 — lexical loop body graphs và TRACE budgets
+
+Trước code: đọc lại master/P05, runtime loop/frame/DSL semantics, current validateBundle/interpreter/tests. P04/P08/P09 007–010 có159 unit/integration và11 browser đã qua. Pinned deps/typed subflow mappings/debug sessions chưa được đánh dấu hoàn thành.
+
+1. Cho bodyGraphRef nội bộ tồn tại chạy thật trong TRACE; one body source: ref hoặc inline body wire, không cả hai. Body ref thay required body wire, vẫn require done. Compiler reject unresolved/recursive ref. Child graph inputs/outputs có khai báo chưa có mapping trong loop config thì explicit LOOP_BODY_MAPPING_UNSUPPORTED, không âm thầm bỏ schema.
+2. Body graph là lexical loop scope, dùng cùng enclosing local như inline body; item/index binding tạm Number(index) và restore trong finally kể cả REVIEW/ERROR/CANCELLED. Nested loop cùng binding khôi phục outer cursor. break/continue trả cho đúng nearest loop frame; thêm events của control nodes.
+3. Compiler scope không suy lexical loop chỉ vì graph được một loop tham chiếu: graph còn được gọi bằng subflow/main thì outside-loop break phải reject. Inline body không được có bypass path từ start/done vào break mà không qua body entry. Required-port/reachability/cycles giữ nguyên.
+4. TRACE giới hạn maxSteps integer1..100000, maxDurationMs integer1..60000 mặc định10s, call depth64; monotonic clock, yield mỗi128 semantic steps cho AbortSignal/timer có cơ hội chạy. Không sleep theo wait/node delays vì TRACE không device execution. Không đổi unsupported hardware thành success.
+5. Tests separate body execution/index logs, missing/ambiguous ref, nesting index restore, lexical scope/bypass graph, zero loop, cancellation mid-run/review restoration và invalid/depth/time budgets. UI/IPC không đổi; full checks + existing TRACE authoring browser regression sau runtime change.

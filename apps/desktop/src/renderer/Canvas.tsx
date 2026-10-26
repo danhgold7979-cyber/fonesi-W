@@ -11,15 +11,18 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Node, NodeProps, NodeChange, Connection, Edge, XYPosition } from '@xyflow/react';
+import { groupBounds } from '@autoreels/editor';
 import { NODE_DEFINITIONS } from '@autoreels/contracts';
 import type { WorkflowGraph, WorkflowNode, Port } from '@autoreels/contracts';
 import '@xyflow/react/dist/style.css';
 
-type ViewNode = Node<{ value: WorkflowNode }, 'studio'>;
+type StudioViewNode = Node<{ value: WorkflowNode }, 'studio'>;
+type GroupViewNode = Node<{ label: string }, 'visualGroup'>;
+type ViewNode = StudioViewNode | GroupViewNode;
 const ResizeContext = createContext<
   (id: string, values: { x: number; y: number; width: number; height: number }) => void
 >(() => undefined);
-function StudioNode({ data, selected }: NodeProps<ViewNode>) {
+function StudioNode({ data, selected }: NodeProps<StudioViewNode>) {
   const node = data.value,
     def = NODE_DEFINITIONS.find((d) => d.type === node.type)!,
     resize = useContext(ResizeContext);
@@ -75,7 +78,14 @@ function StudioNode({ data, selected }: NodeProps<ViewNode>) {
     </div>
   );
 }
-const nodeTypes = { studio: StudioNode };
+function VisualGroup({ data }: NodeProps<GroupViewNode>) {
+  return (
+    <div className="canvas-visual-group">
+      <span>{data.label}</span>
+    </div>
+  );
+}
+const nodeTypes = { studio: StudioNode, visualGroup: VisualGroup };
 export interface CanvasMenu {
   kind: 'canvas' | 'node' | 'edge';
   id?: string;
@@ -108,8 +118,8 @@ function Inner(props: Props) {
     });
   });
   const nodes: ViewNode[] = useMemo(
-    () =>
-      props.graph.nodes.map((n) => ({
+    () => [
+      ...props.graph.nodes.map((n): StudioViewNode => ({
         id: n.id,
         type: 'studio',
         position: positions[n.id] ?? { x: n.x, y: n.y },
@@ -117,6 +127,29 @@ function Inner(props: Props) {
         selected: props.selected.includes(n.id),
         style: { width: n.w ?? 210, ...(n.h ? { height: n.h } : {}) },
       })),
+      ...(props.graph.groups ?? []).flatMap((group): GroupViewNode[] => {
+        const bounds = groupBounds(
+          { ...props.graph, nodes: props.graph.nodes.map((n) => ({ ...n, ...positions[n.id] })) },
+          group,
+        );
+        return bounds
+          ? [
+              {
+                id: 'visual_' + group.id,
+                type: 'visualGroup',
+                position: { x: bounds.x, y: bounds.y },
+                data: { label: group.name },
+                draggable: false,
+                selectable: false,
+                connectable: false,
+                focusable: false,
+                zIndex: -10,
+                style: { width: bounds.width, height: bounds.height, pointerEvents: 'none' },
+              },
+            ]
+          : [];
+      }),
+    ],
     [props.graph, props.selected, positions],
   );
   const edges: Edge[] = props.graph.edges.map((e) => ({
@@ -185,7 +218,7 @@ function Inner(props: Props) {
           onPaneClick={() => props.select([])}
           onNodeContextMenu={(e, n) => {
             e.preventDefault();
-            props.select([n.id]);
+            if (!props.selected.includes(n.id)) props.select([n.id]);
             props.menu({ kind: 'node', id: n.id, x: e.clientX, y: e.clientY });
           }}
           onEdgeContextMenu={(e, edge) => {

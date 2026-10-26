@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { DbClient } from '../host/db-client.js';
 import { envelopeSchema } from '../host/service.js';
 import { HostMediaService, loadHostId } from '../host/media-service.js';
+import { HostDeviceService } from '../host/device-service.js';
+import { HostServices } from '../host/services.js';
 
 app.setName('AutoReels Studio');
 if (process.argv.includes('--smoke') && !process.env.AUTOREELS_DATA_DIR)
@@ -19,7 +21,7 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   let window: BrowserWindow | null = null,
     db: DbClient | null = null,
-    media: HostMediaService | null = null;
+    services: HostServices | null = null;
   app.on('second-instance', () => {
     window?.show();
     window?.focus();
@@ -46,7 +48,7 @@ else {
           sandbox: true,
         },
       });
-      media = new HostMediaService(db, hostId, async (kind) => {
+      const media = new HostMediaService(db, hostId, async (kind) => {
         const result = await dialog.showOpenDialog(window!, {
           title: kind === 'FOLDER' ? 'Chọn thư mục media' : 'Chọn tệp media',
           properties: kind === 'FOLDER' ? ['openDirectory'] : ['openFile', 'multiSelections'],
@@ -76,7 +78,24 @@ else {
         });
         return result.canceled ? null : result.filePaths;
       });
-      await media.ready();
+      const devices = new HostDeviceService(
+        db,
+        hostId,
+        app.getPath('userData'),
+        async () => {
+          const result = await dialog.showOpenDialog(window!, {
+            title: 'Chọn adb / adb.exe từ Platform-Tools',
+            properties: ['openFile'],
+          });
+          return result.canceled ? null : (result.filePaths[0] ?? null);
+        },
+        {
+          port: Number(process.env.AUTOREELS_ADB_SERVER_PORT ?? 5037),
+          ...(process.env.AUTOREELS_ADB ? { path: process.env.AUTOREELS_ADB } : {}),
+        },
+      );
+      services = new HostServices(media, devices);
+      await services.ready();
       const request = z.strictObject({ command: z.string(), input: z.unknown() });
       ipcMain.handle('studio:request', async (event, raw: unknown) => {
         if (
@@ -90,7 +109,7 @@ else {
             ...parsed,
             operationId: 'op_' + randomUUID().replaceAll('-', ''),
           });
-        return media!.request(envelope.command, envelope.input);
+        return services!.request(envelope.command, envelope.input);
       });
       window.webContents.setWindowOpenHandler(({ url }) => {
         if (url.startsWith('https://')) void shell.openExternal(url);
@@ -150,12 +169,12 @@ else {
         )
           throw new Error('Electron renderer smoke failed');
         window.destroy();
-        await media.close();
+        await services.close();
         await db.close();
         app.exit(0);
       }
       app.on('window-all-closed', () => {
-        void media
+        void services
           ?.close()
           .then(() => db?.close())
           .finally(() => app.quit());

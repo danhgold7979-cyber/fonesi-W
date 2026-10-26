@@ -26,8 +26,14 @@ import {
   insertOnEdge,
   layoutGraph,
   createSubgraph,
+  copySelection,
+  pasteSelection,
+  createGroup,
+  removeGroup,
 } from '@autoreels/editor';
+import type { GraphClipboard } from '@autoreels/editor';
 import { api } from './api.js';
+import { EditorDevicePanel } from './EditorDevicePanel.js';
 import { Canvas } from './Canvas.js';
 import type { CanvasMenu } from './Canvas.js';
 import { Dialog, Empty, Field } from './components.js';
@@ -81,7 +87,8 @@ export function Editor(props: Props) {
     [trace, setTrace] = useState<TraceReportDto | null>(null),
     [rowData, setRowData] = useState('{}');
   const [favorites, setFavorites] = useState<string[]>([]),
-    clipboard = useRef<WorkflowNode[]>([]),
+    clipboard = useRef<GraphClipboard | null>(null),
+    pasteCount = useRef(0),
     fit = useRef<(selection?: boolean) => void>(() => undefined);
   const graphId = stack.at(-1)!,
     graph = graphById(bundle, graphId),
@@ -151,8 +158,59 @@ export function Editor(props: Props) {
     const result = await promise;
     return generation.current !== savedGeneration.current ? save() : result;
   }
-  const actions = useRef({ save, apply, bundle, graphId, selected, node, modal, palette, dirty });
-  actions.current = { save, apply, bundle, graphId, selected, node, modal, palette, dirty };
+  function copyNodes(cut = false) {
+    clipboard.current = copySelection(graph, selected);
+    pasteCount.current = 0;
+    if (cut) {
+      apply((b) => removeNodes(graphById(b, graphId), selected));
+      setSelected([]);
+    }
+  }
+  function pasteNodes(at?: { x: number; y: number }) {
+    const content = clipboard.current;
+    if (!content?.nodes.length) return;
+    const amount = 28 * ++pasteCount.current,
+      offset = at
+        ? {
+            x: at.x - Math.min(...content.nodes.map((n) => n.x)),
+            y: at.y - Math.min(...content.nodes.map((n) => n.y)),
+          }
+        : { x: amount, y: amount };
+    apply((b) => setSelected(pasteSelection(graphById(b, graphId), content, offset)));
+  }
+  function groupSelected() {
+    apply((b) => {
+      createGroup(graphById(b, graphId), selected);
+    });
+  }
+  const actions = useRef({
+    save,
+    apply,
+    bundle,
+    graphId,
+    selected,
+    node,
+    modal,
+    palette,
+    dirty,
+    copyNodes,
+    pasteNodes,
+    groupSelected,
+  });
+  actions.current = {
+    save,
+    apply,
+    bundle,
+    graphId,
+    selected,
+    node,
+    modal,
+    palette,
+    dirty,
+    copyNodes,
+    pasteNodes,
+    groupSelected,
+  };
   useEffect(() => {
     props.registerSave(() => actions.current.save());
     return () => props.registerSave(null);
@@ -176,7 +234,11 @@ export function Editor(props: Props) {
     const key = (e: KeyboardEvent) => {
       const a = actions.current,
         target = e.target as HTMLElement;
-      if (a.modal || a.palette || target.closest('input,textarea,select,[contenteditable="true"]'))
+      if (
+        a.modal ||
+        a.palette ||
+        target.closest('input,textarea,select,[contenteditable="true"],[role="dialog"]')
+      )
         return;
       if (e.key === 'Escape') {
         setMenu(null);
@@ -199,7 +261,10 @@ export function Editor(props: Props) {
       if (!canvas) return;
       const currentGraph = graphById(a.bundle, a.graphId),
         ids = a.selected;
-      if (e.ctrlKey && ['z', 'y', 'a', 'c', 'v', 'd', '0'].includes(e.key.toLowerCase())) {
+      if (
+        e.ctrlKey &&
+        ['z', 'y', 'a', 'c', 'x', 'v', 'd', 'g', '0'].includes(e.key.toLowerCase())
+      ) {
         e.preventDefault();
         switch (e.key.toLowerCase()) {
           case 'z':
@@ -213,9 +278,13 @@ export function Editor(props: Props) {
             setSelected(currentGraph.nodes.map((n) => n.id));
             break;
           case 'c':
-            clipboard.current = structuredClone(
-              currentGraph.nodes.filter((n) => ids.includes(n.id)),
-            );
+            a.copyNodes();
+            break;
+          case 'x':
+            a.copyNodes(true);
+            break;
+          case 'g':
+            a.groupSelected();
             break;
           case 'd':
             a.apply((b) => {
@@ -223,18 +292,7 @@ export function Editor(props: Props) {
             });
             break;
           case 'v':
-            if (clipboard.current.length)
-              a.apply((b) => {
-                const g = graphById(b, a.graphId),
-                  copies = clipboard.current.map((n) => ({
-                    ...structuredClone(n),
-                    id: 'node_' + crypto.randomUUID().replaceAll('-', ''),
-                    x: n.x + 30,
-                    y: n.y + 30,
-                  }));
-                g.nodes.push(...copies);
-                setSelected(copies.map((n) => n.id));
-              });
+            a.pasteNodes();
             break;
           case '0':
             fit.current();
@@ -547,6 +605,14 @@ export function Editor(props: Props) {
             >
               ↷
             </button>
+            <button
+              aria-label="Gom nhóm vùng chọn"
+              title="Gom nhóm · Ctrl+G"
+              disabled={selected.length < 2}
+              onClick={groupSelected}
+            >
+              ▧
+            </button>
             <button aria-label="Ẩn hiện điện thoại" onClick={() => setPhone((v) => !v)}>
               ▥
             </button>
@@ -599,8 +665,38 @@ export function Editor(props: Props) {
               </button>
             ))}
           </div>
-          {(tab !== 'properties' || node) && (
+          {(tab !== 'properties' || node || graph.groups?.length || selected.length > 1) && (
             <div className={'bottom-panel ' + (tab === 'properties' ? 'properties-panel' : '')}>
+              {tab === 'properties' && !!graph.groups?.length && (
+                <div className="editor-groups">
+                  {graph.groups.map((group) => (
+                    <div key={group.id}>
+                      <input
+                        aria-label={'Tên nhóm ' + group.id}
+                        key={group.id + group.name}
+                        defaultValue={group.name}
+                        maxLength={120}
+                        onBlur={(e) => {
+                          const name = e.target.value.trim();
+                          if (name && name !== group.name)
+                            apply((b) => {
+                              graphById(b, graphId).groups!.find((g) => g.id === group.id)!.name =
+                                name;
+                            });
+                        }}
+                      />
+                      <button onClick={() => setSelected(group.nodeIds)}>
+                        Chọn nhóm ({group.nodeIds.length})
+                      </button>
+                      <button
+                        onClick={() => apply((b) => removeGroup(graphById(b, graphId), group.id))}
+                      >
+                        Bỏ nhóm
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               {tab === 'properties' && node && (
                 <>
                   <div className="property-heading">
@@ -765,25 +861,7 @@ export function Editor(props: Props) {
                 ×
               </button>
             </div>
-            <select aria-label="Điện thoại kiểm thử" disabled>
-              <option>Chưa có điện thoại kết nối</option>
-            </select>
-            <div className="phone-placeholder">
-              <span>▯</span>
-              <strong>Chưa kết nối Android</strong>
-              <p>Workflow dùng chung nhiều máy. Thiết bị kiểm thử độc lập với tiến trình.</p>
-              <button disabled title="Chưa có backend thiết bị">
-                Chọn phần tử
-              </button>
-            </div>
-            <div className="phone-quick">
-              {['←', '⌂', '▢', '⋯'].map((label, i) => (
-                <button key={i} disabled title="Cần kết nối thiết bị thật">
-                  {label}
-                </button>
-              ))}
-            </div>
-            <small className="muted">Stream, điều khiển và cài đặt thiết bị chưa khả dụng.</small>
+            <EditorDevicePanel notify={props.notify} />
           </aside>
         )}
       </div>
@@ -822,6 +900,34 @@ export function Editor(props: Props) {
         >
           {menu.kind === 'node' && (
             <>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  copyNodes();
+                  setMenu(null);
+                }}
+              >
+                Sao chép · Ctrl+C
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  copyNodes(true);
+                  setMenu(null);
+                }}
+              >
+                Cắt · Ctrl+X
+              </button>
+              <button
+                role="menuitem"
+                disabled={selected.length < 2}
+                onClick={() => {
+                  groupSelected();
+                  setMenu(null);
+                }}
+              >
+                Gom nhóm · Ctrl+G
+              </button>
               <button
                 role="menuitem"
                 onClick={() => {
@@ -906,6 +1012,16 @@ export function Editor(props: Props) {
           )}
           {menu.kind === 'canvas' && (
             <>
+              <button
+                role="menuitem"
+                disabled={!clipboard.current?.nodes.length}
+                onClick={() => {
+                  pasteNodes(menu.world);
+                  setMenu(null);
+                }}
+              >
+                Dán · Ctrl+V
+              </button>
               <button
                 role="menuitem"
                 onClick={() => {

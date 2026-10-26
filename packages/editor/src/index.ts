@@ -5,6 +5,8 @@ import type {
   WorkflowGraph,
   WorkflowNode,
   Port,
+  WorkflowEdge,
+  WorkflowGroup,
 } from '@autoreels/contracts';
 
 const id = (prefix: string): string => prefix + '_' + crypto.randomUUID().replaceAll('-', '');
@@ -127,29 +129,94 @@ export function removeNodes(graph: WorkflowGraph, selected: readonly string[]): 
       ?.map((g) => ({ ...g, nodeIds: g.nodeIds.filter((n) => !ids.has(n)) }))
       .filter((g) => g.nodeIds.length) ?? [];
 }
-export function duplicateNodes(
+export interface GraphClipboard {
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+  groups: WorkflowGroup[];
+}
+export function copySelection(graph: WorkflowGraph, selected: readonly string[]): GraphClipboard {
+  const ids = new Set(selected);
+  return structuredClone({
+    nodes: graph.nodes.filter((n) => ids.has(n.id)),
+    edges: graph.edges.filter((e) => ids.has(e.source) && ids.has(e.target)),
+    groups: (graph.groups ?? []).filter(
+      (g) => g.nodeIds.length && g.nodeIds.every((n) => ids.has(n)),
+    ),
+  });
+}
+export function pasteSelection(
   graph: WorkflowGraph,
-  selected: readonly string[],
-  offset = 28,
+  clipboard: GraphClipboard,
+  offset = { x: 28, y: 28 },
 ): string[] {
-  const map = new Map<string, string>(),
-    copies: WorkflowNode[] = [];
-  for (const node of graph.nodes.filter((n) => selected.includes(n.id))) {
-    const newId = id('node');
-    map.set(node.id, newId);
-    copies.push({ ...structuredClone(node), id: newId, x: node.x + offset, y: node.y + offset });
-  }
-  const edges = graph.edges
+  if (!Number.isFinite(offset.x) || !Number.isFinite(offset.y))
+    throw new Error('Invalid paste offset');
+  const map = new Map(clipboard.nodes.map((n) => [n.id, id('node')]));
+  const nodes = clipboard.nodes.map((n) => ({
+    ...structuredClone(n),
+    id: map.get(n.id)!,
+    x: n.x + offset.x,
+    y: n.y + offset.y,
+  }));
+  const edges = clipboard.edges
     .filter((e) => map.has(e.source) && map.has(e.target))
     .map((e) => ({
       ...structuredClone(e),
       id: id('edge'),
       source: map.get(e.source)!,
       target: map.get(e.target)!,
+      ...(e.reroute ? { reroute: { x: e.reroute.x + offset.x, y: e.reroute.y + offset.y } } : {}),
     }));
-  graph.nodes.push(...copies);
+  const groups = clipboard.groups
+    .filter((g) => g.nodeIds.length && g.nodeIds.every((n) => map.has(n)))
+    .map((g) => ({
+      ...structuredClone(g),
+      id: id('group'),
+      nodeIds: g.nodeIds.map((n) => map.get(n)!),
+      ...(g.x !== undefined ? { x: g.x + offset.x } : {}),
+      ...(g.y !== undefined ? { y: g.y + offset.y } : {}),
+    }));
+  graph.nodes.push(...nodes);
   graph.edges.push(...edges);
-  return copies.map((n) => n.id);
+  graph.groups = [...(graph.groups ?? []), ...groups];
+  return nodes.map((n) => n.id);
+}
+export function duplicateNodes(
+  graph: WorkflowGraph,
+  selected: readonly string[],
+  offset = 28,
+): string[] {
+  return pasteSelection(graph, copySelection(graph, selected), { x: offset, y: offset });
+}
+export function createGroup(
+  graph: WorkflowGraph,
+  selected: readonly string[],
+  name = 'Nhóm node',
+): string {
+  const nodeIds = graph.nodes.filter((n) => selected.includes(n.id)).map((n) => n.id);
+  if (nodeIds.length < 2) throw new Error('Chọn ít nhất hai node để tạo nhóm.');
+  if (!name.trim() || name.trim().length > 120) throw new Error('Tên nhóm phải có 1–120 ký tự.');
+  const groupId = id('group');
+  graph.groups = [...(graph.groups ?? []), { id: groupId, name: name.trim(), nodeIds }];
+  return groupId;
+}
+export function removeGroup(graph: WorkflowGraph, groupId: string): void {
+  graph.groups = (graph.groups ?? []).filter((g) => g.id !== groupId);
+}
+export function groupBounds(
+  graph: WorkflowGraph,
+  group: WorkflowGroup,
+): { x: number; y: number; width: number; height: number } | null {
+  const nodes = graph.nodes.filter((n) => group.nodeIds.includes(n.id));
+  if (!nodes.length) return null;
+  const x = Math.min(...nodes.map((n) => n.x)) - 20,
+    y = Math.min(...nodes.map((n) => n.y)) - 32;
+  return {
+    x,
+    y,
+    width: Math.max(...nodes.map((n) => n.x + (n.w ?? 210))) + 20 - x,
+    height: Math.max(...nodes.map((n) => n.y + (n.h ?? 110))) + 20 - y,
+  };
 }
 export function insertOnEdge(graph: WorkflowGraph, edgeId: string, type: NodeType): string {
   const edge = graph.edges.find((e) => e.id === edgeId);

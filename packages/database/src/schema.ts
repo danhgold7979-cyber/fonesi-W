@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 7;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -48,10 +48,20 @@ CREATE INDEX job_claim_device ON job_claims(device_id,expires_at);
 CREATE TABLE queue_events(id TEXT PRIMARY KEY,job_id TEXT NOT NULL REFERENCES jobs(id),kind TEXT NOT NULL,detail TEXT NOT NULL,created_at TEXT NOT NULL) STRICT;
 CREATE INDEX queue_event_job ON queue_events(job_id,created_at);
 `;
+export const deviceRegistryMigration = `
+CREATE TABLE device_profiles(device_id TEXT PRIMARY KEY REFERENCES devices(id),fingerprint TEXT NOT NULL UNIQUE,metadata TEXT,identity TEXT NOT NULL CHECK(identity IN('VERIFIED_PROPERTIES','PROVISIONAL','CONFLICT')),revision INTEGER NOT NULL CHECK(revision>=0)) STRICT;
+CREATE TABLE device_transports(host_id TEXT NOT NULL,serial TEXT NOT NULL,device_id TEXT NOT NULL REFERENCES devices(id),kind TEXT NOT NULL CHECK(kind IN('USB','TCP','EMULATOR')),state TEXT NOT NULL CHECK(state IN('CONNECTED','UNAUTHORIZED','OFFLINE','NO_PERMISSIONS','DISCONNECTED')),generation INTEGER NOT NULL CHECK(generation>0),last_seen TEXT NOT NULL,identity_verified INTEGER NOT NULL CHECK(identity_verified IN(0,1)),PRIMARY KEY(host_id,serial)) STRICT;
+CREATE INDEX device_transport_device ON device_transports(device_id,host_id,state);
+`;
+export const endpointPolicyMigration = `
+CREATE TABLE device_endpoint_policies(host_id TEXT NOT NULL,endpoint TEXT NOT NULL,resolved_serial TEXT,desired INTEGER NOT NULL CHECK(desired IN(0,1)),revision INTEGER NOT NULL CHECK(revision>=0),failures INTEGER NOT NULL CHECK(failures>=0),next_attempt_utc TEXT,last_error_code TEXT,PRIMARY KEY(host_id,endpoint)) STRICT;
+`;
 export const migrations = [
   { version: 1, sql: migration },
   { version: 2, sql: mediaMigration },
   { version: 3, sql: scheduleMigration },
   { version: 4, sql: contentChangeMigration },
   { version: 5, sql: queueClaimMigration },
+  { version: 6, sql: deviceRegistryMigration },
+  { version: 7, sql: endpointPolicyMigration },
 ] as const;

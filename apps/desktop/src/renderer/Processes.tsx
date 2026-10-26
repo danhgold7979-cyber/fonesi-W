@@ -16,6 +16,8 @@ import { ContentActions } from './ContentActions.js';
 import { ContentFields } from './ContentFields.js';
 
 interface Props {
+  deviceScope?: string | null;
+  clearDeviceScope?: () => void;
   apps: AppDefinition[];
   workflows: WorkflowSummary[];
   processes: ProcessDefinition[];
@@ -209,7 +211,10 @@ export function Processes(props: Props) {
           <button
             onClick={() => {
               void save().then(() => {
-                setCurrent(newProcess(props.apps[0]!.id));
+                setCurrent({
+                  ...newProcess(props.apps[0]!.id),
+                  deviceId: props.deviceScope ?? null,
+                });
                 setRows([]);
                 setIsNew(true);
                 setDirty(true);
@@ -232,6 +237,13 @@ export function Processes(props: Props) {
         </div>
       </div>
       <div className="process-selector">
+        {props.deviceScope && (
+          <span className="badge">
+            Thiết bị:{' '}
+            {props.devices.find((d) => d.id === props.deviceScope)?.name ?? props.deviceScope}{' '}
+            <button onClick={props.clearDeviceScope}>Hiện tất cả</button>
+          </span>
+        )}
         <label>
           Tiến trình
           <select
@@ -244,11 +256,13 @@ export function Processes(props: Props) {
           >
             <option value="">Chọn tiến trình</option>
             {isNew && current && <option value={current.id}>{current.name} · mới</option>}
-            {props.processes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+            {props.processes
+              .filter((p) => !props.deviceScope || p.deviceId === props.deviceScope)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
           </select>
         </label>
         <span className="badge">

@@ -56,6 +56,9 @@ importers:
       '@autoreels/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@autoreels/devices':
+        specifier: workspace:*
+        version: link:../../packages/devices
       '@autoreels/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -111,6 +114,9 @@ importers:
       '@autoreels/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@autoreels/devices':
+        specifier: workspace:*
+        version: link:../devices
       '@autoreels/domain':
         specifier: workspace:*
         version: link:../domain
@@ -123,6 +129,18 @@ importers:
       '@autoreels/workflow-engine':
         specifier: workspace:*
         version: link:../workflow-engine
+
+  packages/devices:
+    dependencies:
+      '@autoreels/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@autoreels/domain':
+        specifier: workspace:*
+        version: link:../domain
+      saxes:
+        specifier: 6.0.0
+        version: 6.0.0
 
   packages/domain:
     dependencies:
@@ -1170,6 +1188,10 @@ packages:
     resolution: {integrity: sha512-2bG564AAJcm/3vyZC0Uhs/mACrH+4AHMaKHKAB2M5xMqomUZa27FQ7MYaQGFKVcJk/MVzSEQ34A8QZWW+eiWEw==}
     engines: {node: '>= 20.12'}
 
+  saxes@6.0.0:
+    resolution: {integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==}
+    engines: {node: '>=v12.22.7'}
+
   scheduler@0.28.0:
     resolution: {integrity: sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw==}
 
@@ -1360,6 +1382,9 @@ packages:
   write-excel-file@4.1.1:
     resolution: {integrity: sha512-MUnCnNtQrcZek832ZcU24uU0rSphFmKPD1DvIjXOlygVb93CV7Tme6H3jUTkxsMmjB2W7HIzERzjqTi5kui71A==}
     engines: {node: '>=18'}
+
+  xmlchars@2.2.0:
+    resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
@@ -2247,6 +2272,10 @@ snapshots:
 
   saxen@11.2.0: {}
 
+  saxes@6.0.0:
+    dependencies:
+      xmlchars: 2.2.0
+
   scheduler@0.28.0: {}
 
   semver@7.8.5: {}
@@ -2368,6 +2397,8 @@ snapshots:
   write-excel-file@4.1.1:
     dependencies:
       fflate: 0.8.3
+
+  xmlchars@2.2.0: {}
 
   yocto-queue@0.1.0: {}
 

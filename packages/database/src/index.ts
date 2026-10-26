@@ -40,6 +40,10 @@ import type {
   ContentExportDocument,
   ContentImportRecord,
   QueueClaimResult,
+  TransportObservation,
+  DeviceRecord,
+  DeviceMetadata,
+  DeviceEndpointPolicy,
 } from '@autoreels/contracts';
 import {
   DomainError,
@@ -56,6 +60,7 @@ import {
   type SchedulePreview,
 } from '@autoreels/scheduler';
 import { validateBundle } from '@autoreels/workflow-engine';
+import { deviceFingerprint, parseEndpoint } from '@autoreels/devices';
 import { bulkPatch } from '@autoreels/import-export';
 import { migrations, SCHEMA_VERSION } from './schema.js';
 
@@ -520,6 +525,330 @@ export class StudioDatabase {
       throw new DomainError(
         'INVALID_ASSET_SCOPE',
         'Chỉ chọn media đã đăng ký trong tiến trình này và gắn đủ media vào nội dung.',
+      );
+  }
+
+  deviceEndpoints(hostId: string): DeviceEndpointPolicy[] {
+    return this.db
+      .prepare('SELECT * FROM device_endpoint_policies WHERE host_id=? ORDER BY endpoint')
+      .all(hostId)
+      .map((row) => ({
+        endpoint: String(row.endpoint),
+        resolvedSerial: row.resolved_serial === null ? null : String(row.resolved_serial),
+        desired: Boolean(row.desired),
+        revision: Number(row.revision),
+        failures: Number(row.failures),
+        nextAttemptUtc: row.next_attempt_utc === null ? null : String(row.next_attempt_utc),
+        lastErrorCode: row.last_error_code === null ? null : String(row.last_error_code),
+        deviceId: (() => {
+          const device = this.db
+            .prepare(
+              'SELECT device_id FROM device_transports WHERE host_id=? AND (serial=? OR serial=?) ORDER BY last_seen DESC LIMIT 1',
+            )
+            .get(hostId, String(row.endpoint), row.resolved_serial ?? '');
+          return device ? String(device.device_id) : null;
+        })(),
+      }));
+  }
+  setDeviceEndpoint(
+    hostId: string,
+    endpoint: string,
+    desired: boolean,
+    expectedRevision: number | null = null,
+  ): void {
+    endpoint = parseEndpoint(endpoint);
+    this.transaction(() => {
+      const row = this.db
+        .prepare('SELECT revision FROM device_endpoint_policies WHERE host_id=? AND endpoint=?')
+        .get(hostId, endpoint);
+      if (expectedRevision !== null && (!row || Number(row.revision) !== expectedRevision))
+        throw new DomainError(
+          'REVISION_CONFLICT',
+          'Endpoint policy đã đổi; tải lại trước khi sửa.',
+        );
+      this.db
+        .prepare(
+          'INSERT INTO device_endpoint_policies VALUES(?,?,NULL,?,0,0,NULL,NULL) ON CONFLICT(host_id,endpoint) DO UPDATE SET desired=excluded.desired,revision=revision+1,failures=0,next_attempt_utc=NULL,last_error_code=NULL',
+        )
+        .run(hostId, endpoint, Number(desired));
+    });
+  }
+  recordEndpointAttempt(
+    hostId: string,
+    endpoint: string,
+    resolvedSerial: string | null,
+    errorCode: string | null,
+    at: number,
+  ): void {
+    endpoint = parseEndpoint(endpoint);
+    if (
+      !Number.isSafeInteger(at) ||
+      !Number.isFinite(new Date(at).getTime()) ||
+      (errorCode && !/^[A-Z0-9_]{1,80}$/.test(errorCode))
+    )
+      throw new DomainError('INVALID_ENDPOINT_ATTEMPT', 'Endpoint attempt không hợp lệ.');
+    const row = this.db
+      .prepare('SELECT failures FROM device_endpoint_policies WHERE host_id=? AND endpoint=?')
+      .get(hostId, endpoint);
+    if (!row) return;
+    const failures = errorCode ? Number(row.failures) + 1 : 0,
+      next = errorCode
+        ? new Date(at + Math.min(300000, 2000 * 2 ** Math.min(failures - 1, 8))).toISOString()
+        : null;
+    this.db
+      .prepare(
+        'UPDATE device_endpoint_policies SET resolved_serial=coalesce(?,resolved_serial),failures=?,next_attempt_utc=?,last_error_code=? WHERE host_id=? AND endpoint=?',
+      )
+      .run(resolvedSerial, failures, next, errorCode, hostId, endpoint);
+  }
+  invalidateDeviceTransports(hostId: string, deviceId: string | null = null): void {
+    this.db
+      .prepare(
+        "UPDATE device_transports SET state='DISCONNECTED',identity_verified=0,generation=generation+1 WHERE host_id=? AND (? IS NULL OR device_id=?) AND state<>'DISCONNECTED'",
+      )
+      .run(hostId, deviceId, deviceId);
+  }
+  reconcileDeviceTransports(
+    hostId: string,
+    observations: TransportObservation[],
+    at = now(),
+  ): void {
+    assertJsonSafe(observations);
+    if (
+      new Set(observations.map((o) => o.serial)).size !== observations.length ||
+      observations.length > 10000
+    )
+      throw new DomainError('DEVICE_SCAN_INVALID', 'Scan transport trùng hoặc vượt budget.');
+    this.transaction(() => {
+      const seen = new Set<string>(),
+        grouped = new Map<string, string[]>();
+      for (const observation of observations) {
+        if (
+          !observation.serial ||
+          observation.serial.length > 220 ||
+          !['CONNECTED', 'UNAUTHORIZED', 'OFFLINE', 'NO_PERMISSIONS', 'DISCONNECTED'].includes(
+            observation.state,
+          ) ||
+          !['USB', 'TCP', 'EMULATOR'].includes(observation.kind)
+        )
+          throw new DomainError('DEVICE_SCAN_INVALID', 'Transport không hợp lệ.');
+        seen.add(observation.serial);
+        const old = this.db
+          .prepare('SELECT * FROM device_transports WHERE host_id=? AND serial=?')
+          .get(hostId, observation.serial);
+        const evidence = deviceFingerprint(observation.metadata, hostId, observation.serial);
+        let profile = this.db
+          .prepare('SELECT * FROM device_profiles WHERE fingerprint=?')
+          .get(evidence.fingerprint);
+        if (!profile && old) {
+          const previous = this.db
+            .prepare('SELECT * FROM device_profiles WHERE device_id=?')
+            .get(String(old.device_id));
+          if (previous?.identity === 'PROVISIONAL' || !observation.metadata) profile = previous;
+        }
+        let deviceId = profile ? String(profile.device_id) : null;
+        const metadata = observation.metadata
+          ? canonicalJson(observation.metadata)
+          : profile?.metadata
+            ? String(profile.metadata)
+            : null;
+        const identity =
+          profile?.identity === 'CONFLICT'
+            ? 'CONFLICT'
+            : evidence.provisional
+              ? (profile?.identity ?? 'PROVISIONAL')
+              : 'VERIFIED_PROPERTIES';
+        let profileChanged = false;
+        if (!deviceId) {
+          deviceId = makeId('device');
+          this.db
+            .prepare('INSERT INTO devices(id,name) VALUES(?,?)')
+            .run(deviceId, observation.metadata?.model ?? observation.serial);
+          this.db
+            .prepare('INSERT INTO device_profiles VALUES(?,?,?,?,0)')
+            .run(deviceId, evidence.fingerprint, metadata, identity);
+          profileChanged = true;
+        } else if (
+          metadata !== profile!.metadata ||
+          (!evidence.provisional && profile!.fingerprint !== evidence.fingerprint) ||
+          identity !== profile!.identity
+        ) {
+          this.db
+            .prepare(
+              'UPDATE device_profiles SET fingerprint=?,metadata=?,identity=?,revision=revision+1 WHERE device_id=?',
+            )
+            .run(
+              evidence.provisional ? String(profile!.fingerprint) : evidence.fingerprint,
+              metadata,
+              identity,
+              deviceId,
+            );
+          profileChanged = true;
+        }
+        const fresh =
+          observation.state === 'CONNECTED' &&
+          !evidence.provisional &&
+          observation.metadata !== null;
+        const changed =
+          !old ||
+          Boolean(old.identity_verified) !== fresh ||
+          old.device_id !== deviceId ||
+          old.state !== observation.state ||
+          profileChanged;
+        const generation = Number(old?.generation ?? 0) + (changed ? 1 : 0);
+        this.db
+          .prepare(
+            'INSERT INTO device_transports VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(host_id,serial) DO UPDATE SET device_id=excluded.device_id,kind=excluded.kind,state=excluded.state,generation=excluded.generation,last_seen=excluded.last_seen,identity_verified=excluded.identity_verified',
+          )
+          .run(
+            hostId,
+            observation.serial,
+            deviceId,
+            observation.kind,
+            observation.state,
+            generation,
+            at,
+            Number(fresh),
+          );
+        if (
+          observation.kind === 'USB' &&
+          observation.state === 'CONNECTED' &&
+          !evidence.provisional
+        ) {
+          const list = grouped.get(deviceId) ?? [];
+          list.push(observation.serial);
+          grouped.set(deviceId, list);
+        }
+      }
+      for (const old of this.db
+        .prepare('SELECT serial FROM device_transports WHERE host_id=?')
+        .all(hostId))
+        if (!seen.has(String(old.serial)))
+          this.db
+            .prepare(
+              "UPDATE device_transports SET state='DISCONNECTED',identity_verified=0,generation=generation+1 WHERE host_id=? AND serial=? AND state<>'DISCONNECTED'",
+            )
+            .run(hostId, String(old.serial));
+      for (const [deviceId, serials] of grouped)
+        if (serials.length > 1)
+          this.db
+            .prepare(
+              "UPDATE device_profiles SET identity='CONFLICT',revision=revision+1 WHERE device_id=? AND identity<>'CONFLICT'",
+            )
+            .run(deviceId);
+    });
+  }
+  listDeviceRecords(hostId: string, at = Date.now()): DeviceRecord[] {
+    return this.db
+      .prepare(
+        'SELECT d.*,p.metadata,p.identity,coalesce(p.revision,0) AS revision FROM devices d LEFT JOIN device_profiles p ON p.device_id=d.id ORDER BY d.rowid',
+      )
+      .all()
+      .map((row) => {
+        const id = String(row.id),
+          transports = this.db
+            .prepare(
+              "SELECT * FROM device_transports WHERE host_id=? AND device_id=? ORDER BY CASE kind WHEN 'USB' THEN 0 ELSE 1 END,serial",
+            )
+            .all(hostId, id)
+            .map((t) => ({
+              serial: String(t.serial),
+              kind: t.kind as TransportObservation['kind'],
+              state: t.state as TransportObservation['state'],
+              generation: Number(t.generation),
+              identityVerified: Boolean(t.identity_verified),
+              lastSeen: String(t.last_seen),
+            }));
+        const connected = transports.some((t) => t.state === 'CONNECTED'),
+          fresh = transports.some((t) => t.state === 'CONNECTED' && t.identityVerified),
+          verified = row.identity === 'VERIFIED_PROPERTIES',
+          enabled = Boolean(row.enabled),
+          reasons: string[] = [];
+        if (!connected) reasons.push('Thiết bị chưa kết nối hoặc chưa cấp quyền ADB.');
+        if (connected && !fresh)
+          reasons.push('Chưa đọc lại được thuộc tính nhận diện trên transport hiện tại.');
+        if (!verified)
+          reasons.push(
+            row.identity === 'CONFLICT'
+              ? 'Xung đột nhận diện thiết bị; chưa cho thao tác.'
+              : 'Chưa đủ thuộc tính để xác định thiết bị.',
+          );
+        if (!enabled) reasons.push('Thiết bị đang tắt trong workspace.');
+        const owner = this.db
+          .prepare(
+            'SELECT owner_kind,expires_at FROM leases WHERE device_id=? AND owner_id IS NOT NULL AND expires_at>?',
+          )
+          .get(id, at);
+        return {
+          id,
+          name: String(row.name),
+          enabled,
+          revision: Number(row.revision),
+          metadata: row.metadata ? parse<DeviceMetadata>(row.metadata) : null,
+          identity: (row.identity ?? 'PROVISIONAL') as DeviceRecord['identity'],
+          transports,
+          owner: owner
+            ? { kind: String(owner.owner_kind), expiresAt: Number(owner.expires_at) }
+            : null,
+          capabilities: {
+            connected,
+            manualControl: connected && fresh && verified && enabled,
+            screenshot: connected && fresh && verified && enabled,
+            stream: false,
+            automation: false,
+            reasons,
+          },
+        };
+      });
+  }
+  updateDevice(
+    id: string,
+    expectedRevision: number,
+    patch: { name?: string; enabled?: boolean },
+  ): void {
+    idSchema.parse(id);
+    this.transaction(() => {
+      const row = this.db
+        .prepare(
+          'SELECT d.*,p.revision FROM devices d LEFT JOIN device_profiles p ON p.device_id=d.id WHERE d.id=?',
+        )
+        .get(id);
+      if (!row || Number(row.revision ?? 0) !== expectedRevision)
+        throw new DomainError('REVISION_CONFLICT', 'Thiết bị đã đổi; tải lại trước khi sửa.');
+      if (patch.name !== undefined && (!patch.name.trim() || patch.name.length > 120))
+        throw new DomainError('INVALID_DEVICE_NAME', 'Tên thiết bị từ 1–120 ký tự.');
+      this.db
+        .prepare('UPDATE devices SET name=?,enabled=? WHERE id=?')
+        .run(
+          patch.name?.trim() ?? String(row.name),
+          patch.enabled === undefined ? Number(row.enabled) : Number(patch.enabled),
+          id,
+        );
+      if (row.revision === null)
+        this.db
+          .prepare("INSERT INTO device_profiles VALUES(?,?,NULL,'PROVISIONAL',1)")
+          .run(id, contentHash({ legacyDevice: id }));
+      else
+        this.db.prepare('UPDATE device_profiles SET revision=revision+1 WHERE device_id=?').run(id);
+    });
+  }
+  assertDeviceTransport(
+    hostId: string,
+    deviceId: string,
+    serial: string,
+    generation: number,
+  ): void {
+    const device = this.listDeviceRecords(hostId).find((d) => d.id === deviceId),
+      transport = device?.transports.find((t) => t.serial === serial);
+    if (
+      !device?.capabilities.manualControl ||
+      transport?.state !== 'CONNECTED' ||
+      !transport.identityVerified ||
+      transport.generation !== generation
+    )
+      throw new DomainError(
+        'STALE_DEVICE_TRANSPORT',
+        'Thiết bị/quyền/transport đã đổi; chụp và chọn lại trước khi thao tác.',
       );
   }
 

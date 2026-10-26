@@ -9,6 +9,11 @@ import {
   duplicateNodes,
   insertOnEdge,
   createSubgraph,
+  copySelection,
+  pasteSelection,
+  createGroup,
+  removeGroup,
+  groupBounds,
 } from './index.js';
 
 const bundle = (): WorkflowBundle => ({
@@ -92,5 +97,58 @@ describe('editor design transactions', () => {
     expect(h.bundle.inputs[0]!.key).toBe('zero');
     h.undo();
     expect(h.redo().graphs).toHaveLength(2);
+  });
+});
+
+describe('selection clipboard and visual groups', () => {
+  it('copies internal wires and complete groups, remaps all identities and preserves remote references without aliases', () => {
+    const b = bundle(),
+      g = b.graphs[0]!;
+    g.edges[0]!.reroute = { x: 100, y: 20 };
+    const group = createGroup(g, ['start', 'end'], 'Selection');
+    const copied = copySelection(g, ['start', 'end']);
+    const ids = pasteSelection(g, copied, { x: 50, y: 60 });
+    expect(g.nodes).toHaveLength(4);
+    expect(g.edges).toHaveLength(2);
+    expect(g.groups).toHaveLength(2);
+    expect(g.edges[1]).toMatchObject({
+      source: ids[0],
+      target: ids[1],
+      reroute: { x: 150, y: 80 },
+    });
+    expect(g.groups![1]!.id).not.toBe(group);
+    expect(g.groups![1]!.nodeIds).toEqual(ids);
+    g.nodes[2]!.name = 'Changed';
+    expect(copied.nodes[0]!.name).toBe('Start');
+    expect(g.nodes[0]!.name).toBe('Start');
+    expect(new Set(g.nodes.map((n) => n.id)).size).toBe(4);
+  });
+  it('excludes crossing wires and incomplete groups and keeps deletion consistent', () => {
+    const g = bundle().graphs[0]!;
+    createGroup(g, ['start', 'end']);
+    expect(copySelection(g, ['start']).edges).toEqual([]);
+    expect(copySelection(g, ['start']).groups).toEqual([]);
+    const nodes = structuredClone(g.nodes),
+      edges = structuredClone(g.edges);
+    removeGroup(g, g.groups![0]!.id);
+    expect(g.nodes).toEqual(nodes);
+    expect(g.edges).toEqual(edges);
+    expect(() => createGroup(g, ['start'])).toThrow('hai');
+  });
+  it('derives outline geometry from current world positions and makes one undo transaction for paste', () => {
+    const h = new EditorHistory(bundle());
+    h.mutate((b) => {
+      createGroup(b.graphs[0]!, ['start', 'end']);
+    });
+    const before = h.bundle,
+      copied = copySelection(before.graphs[0]!, ['start', 'end']);
+    h.mutate((b) => pasteSelection(b.graphs[0]!, copied));
+    expect(h.bundle.graphs[0]!.groups).toHaveLength(2);
+    expect(h.undo()).toEqual(before);
+    const g = h.redo().graphs[0]!;
+    g.nodes[0]!.x = -50;
+    const bounds = groupBounds(g, g.groups![0]!)!;
+    expect(bounds).toMatchObject({ x: -70, y: -32 });
+    expect(bounds.width).toBe(700);
   });
 });

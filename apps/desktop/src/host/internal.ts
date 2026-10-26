@@ -1,7 +1,59 @@
-import type { ScannedAsset, SourceGrant, DeviceLease } from '@autoreels/contracts';
+import type {
+  ScannedAsset,
+  SourceGrant,
+  DeviceLease,
+  TransportObservation,
+} from '@autoreels/contracts';
 import type { StudioDatabase } from '@autoreels/database';
 /** This union is never exported through preload, HTTP or the public service dispatcher. */
 export type InternalRequest =
+  | { command: 'endpoint.list'; hostId: string }
+  | {
+      command: 'endpoint.set';
+      hostId: string;
+      endpoint: string;
+      desired: boolean;
+      expectedRevision?: number;
+    }
+  | {
+      command: 'endpoint.attempt';
+      hostId: string;
+      endpoint: string;
+      resolvedSerial: string | null;
+      errorCode: string | null;
+      at: number;
+    }
+  | { command: 'device.invalidate'; hostId: string; deviceId?: string }
+  | {
+      command: 'device.reconcile';
+      hostId: string;
+      observations: TransportObservation[];
+      at: string;
+    }
+  | { command: 'device.records'; hostId: string }
+  | {
+      command: 'device.update';
+      id: string;
+      expectedRevision: number;
+      patch: { name?: string; enabled?: boolean };
+    }
+  | {
+      command: 'device.assertTransport';
+      hostId: string;
+      deviceId: string;
+      serial: string;
+      generation: number;
+    }
+  | {
+      command: 'lease.acquire';
+      deviceId: string;
+      ownerId: string;
+      kind: DeviceLease['ownerKind'];
+      at: number;
+      ttl: number;
+    }
+  | { command: 'lease.assert'; lease: DeviceLease; at: number }
+  | { command: 'lease.release'; lease: DeviceLease }
   | { command: 'queue.claim'; deviceId: string; ownerId: string; at: number; ttl: number }
   | { command: 'queue.renew'; jobId: string; lease: DeviceLease; at: number; ttl: number }
   | { command: 'queue.recover'; deviceId: string; at: number }
@@ -25,6 +77,50 @@ export type InternalRequest =
     };
 export function dispatchInternal(db: StudioDatabase, request: InternalRequest): unknown {
   switch (request.command) {
+    case 'endpoint.list':
+      return db.deviceEndpoints(request.hostId);
+    case 'endpoint.set':
+      return db.setDeviceEndpoint(
+        request.hostId,
+        request.endpoint,
+        request.desired,
+        request.expectedRevision ?? null,
+      );
+    case 'endpoint.attempt':
+      return db.recordEndpointAttempt(
+        request.hostId,
+        request.endpoint,
+        request.resolvedSerial,
+        request.errorCode,
+        request.at,
+      );
+    case 'device.invalidate':
+      return db.invalidateDeviceTransports(request.hostId, request.deviceId ?? null);
+    case 'device.reconcile':
+      return db.reconcileDeviceTransports(request.hostId, request.observations, request.at);
+    case 'device.records':
+      return db.listDeviceRecords(request.hostId);
+    case 'device.update':
+      return db.updateDevice(request.id, request.expectedRevision, request.patch);
+    case 'device.assertTransport':
+      return db.assertDeviceTransport(
+        request.hostId,
+        request.deviceId,
+        request.serial,
+        request.generation,
+      );
+    case 'lease.acquire':
+      return db.acquireLease(
+        request.deviceId,
+        request.ownerId,
+        request.kind,
+        request.at,
+        request.ttl,
+      );
+    case 'lease.assert':
+      return db.assertLease(request.lease, request.at);
+    case 'lease.release':
+      return db.releaseLease(request.lease);
     case 'queue.claim':
       return db.claimDueJob(request.deviceId, request.ownerId, request.at, request.ttl);
     case 'queue.renew':

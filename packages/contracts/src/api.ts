@@ -1,3 +1,5 @@
+import type { InspectorSnapshot } from './inspector.js';
+import type { DeviceSnapshot, DeviceCapture, ManualDeviceAction } from './devices.js';
 import type {
   ContentFormat,
   ContentPreviewDto,
@@ -30,7 +32,7 @@ export interface BootstrapData {
   processes: ProcessDefinition[];
   devices: { id: string; name: string; enabled: boolean }[];
   preferences: { revision: number; value: JsonValue } | null;
-  hardware: { connected: false; reason: string };
+  hardware: { connected: boolean; reason: string };
 }
 export interface TraceReportDto {
   mode: 'TRACE';
@@ -40,6 +42,28 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
+  deviceSnapshot(): Promise<DeviceSnapshot>;
+  scanDevices(): Promise<DeviceSnapshot>;
+  cancelDeviceScan(): Promise<void>;
+  chooseAdbSdk(): Promise<{ cancelled: boolean; snapshot: DeviceSnapshot }>;
+  startAdbServer(): Promise<DeviceSnapshot>;
+  connectDevice(endpoint: string, reconnect?: boolean): Promise<DeviceSnapshot>;
+  setDeviceReconnect(
+    endpoint: string,
+    expectedRevision: number,
+    desired: boolean,
+  ): Promise<DeviceSnapshot>;
+  pairDevice(endpoint: string, code: string): Promise<DeviceSnapshot>;
+  updateDevice(
+    id: string,
+    expectedRevision: number,
+    patch: { name?: string; enabled?: boolean },
+  ): Promise<DeviceSnapshot>;
+  inspectDevice(id: string): Promise<InspectorSnapshot>;
+  captureDevice(id: string): Promise<DeviceCapture>;
+  devicePackages(id: string): Promise<{ packages: string[]; foreground: string | null }>;
+  deviceAction(id: string, action: ManualDeviceAction): Promise<{ acknowledged: true }>;
+  disconnectDevice(id: string): Promise<DeviceSnapshot>;
   previewContentImport(
     processId: string,
     expectedRevision: number,
@@ -111,6 +135,20 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'deviceSnapshot'
+  | 'scanDevices'
+  | 'cancelDeviceScan'
+  | 'chooseAdbSdk'
+  | 'startAdbServer'
+  | 'setDeviceReconnect'
+  | 'connectDevice'
+  | 'pairDevice'
+  | 'updateDevice'
+  | 'inspectDevice'
+  | 'captureDevice'
+  | 'devicePackages'
+  | 'deviceAction'
+  | 'disconnectDevice'
   | 'previewContentImport'
   | 'previewBulkContent'
   | 'applyContentPreview'
@@ -150,6 +188,22 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    deviceSnapshot: () => call('deviceSnapshot'),
+    scanDevices: () => call('scanDevices'),
+    cancelDeviceScan: () => call('cancelDeviceScan'),
+    chooseAdbSdk: () => call('chooseAdbSdk'),
+    startAdbServer: () => call('startAdbServer'),
+    connectDevice: (endpoint, reconnect = true) => call('connectDevice', { endpoint, reconnect }),
+    setDeviceReconnect: (endpoint, expectedRevision, desired) =>
+      call('setDeviceReconnect', { endpoint, expectedRevision, desired }),
+    pairDevice: (endpoint, code) => call('pairDevice', { endpoint, code }),
+    updateDevice: (id, expectedRevision, patch) =>
+      call('updateDevice', { id, expectedRevision, patch }),
+    inspectDevice: (id) => call('inspectDevice', { id }),
+    captureDevice: (id) => call('captureDevice', { id }),
+    devicePackages: (id) => call('devicePackages', { id }),
+    deviceAction: (id, action) => call('deviceAction', { id, action }),
+    disconnectDevice: (id) => call('disconnectDevice', { id }),
     previewContentImport: (processId, expectedRevision, format, data) =>
       call('previewContentImport', { processId, expectedRevision, format, data }),
     previewBulkContent: (processId, expectedRevision, request) =>

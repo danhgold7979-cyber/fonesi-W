@@ -1,3 +1,5 @@
+import { performance } from 'node:perf_hooks';
+import { setImmediate as yieldImmediate } from 'node:timers/promises';
 import { NODE_DEFINITIONS, validateWorkflowShape, isSafeKey } from '@autoreels/contracts';
 import type {
   WorkflowBundle,
@@ -32,9 +34,22 @@ export function validateBundle(input: unknown): ValidationIssue[] {
   if (!graphIds.has(bundle.mainGraphId)) issue('MISSING_MAIN', 'Main graph not found');
   const loopBodies = new Set(
     bundle.graphs.flatMap((g) =>
-      g.nodes.filter((n) => n.type === 'loop').map((n) => String(n.config.bodyGraphRef)),
+      g.nodes
+        .filter(
+          (n) =>
+            n.type === 'loop' &&
+            typeof n.config.bodyGraphRef === 'string' &&
+            n.config.bodyGraphRef.length > 0,
+        )
+        .map((n) => String(n.config.bodyGraphRef)),
     ),
   );
+  const normalGraphs = new Set([
+    bundle.mainGraphId,
+    ...bundle.graphs.flatMap((g) =>
+      g.nodes.filter((n) => n.type === 'subflow').map((n) => String(n.config.graphRef)),
+    ),
+  ]);
   for (const fields of [
     bundle.inputs,
     bundle.outputs,
@@ -70,6 +85,17 @@ export function validateBundle(input: unknown): ValidationIssue[] {
           .filter((e) => e.source === n.id && e.port === 'body')
           .forEach((e) => collectBody(e.target)),
       );
+    const outsideLoop = new Set<string>();
+    function walkOutside(id: string): void {
+      if (outsideLoop.has(id)) return;
+      outsideLoop.add(id);
+      const node = graph.nodes.find((n) => n.id === id);
+      for (const edge of graph.edges.filter(
+        (e) => e.source === id && !(node?.type === 'loop' && e.port === 'body'),
+      ))
+        walkOutside(edge.target);
+    }
+    for (const start of graph.nodes.filter((n) => n.type === 'start')) walkOutside(start.id);
     for (const node of graph.nodes) {
       if (ids.has(node.id)) issue('DUPLICATE_NODE', 'Duplicate node ID', graph.id, node.id);
       ids.add(node.id);
@@ -84,17 +110,34 @@ export function validateBundle(input: unknown): ValidationIssue[] {
         issue('LOOP_BUDGET', 'Loop requires bounded maxIterations (0–1000)', graph.id, node.id);
       if (
         ['break', 'continue'].includes(node.type) &&
-        !loopBodies.has(graph.id) &&
-        !loopRegion.has(node.id)
+        !(loopBodies.has(graph.id) && !normalGraphs.has(graph.id)) &&
+        (!loopRegion.has(node.id) || outsideLoop.has(node.id))
       )
         issue('LOOP_SCOPE', 'break/continue outside loop body', graph.id, node.id);
-      if (node.type === 'loop' && node.config.bodyGraphRef)
-        issue(
-          'LOOP_GRAPH_REF_PENDING',
-          'This trace engine uses the body output region; separate bodyGraphRef execution is not enabled yet',
-          graph.id,
-          node.id,
-        );
+      if (node.type === 'loop' && node.config.bodyGraphRef) {
+        const target = bundle.graphs.find((g) => g.id === node.config.bodyGraphRef);
+        if (!target)
+          issue(
+            'UNRESOLVED_GRAPH',
+            'Loop body graph reference is missing/unresolved',
+            graph.id,
+            node.id,
+          );
+        if (graph.edges.some((e) => e.source === node.id && e.port === 'body'))
+          issue(
+            'AMBIGUOUS_LOOP_BODY',
+            'Choose bodyGraphRef or an inline body wire',
+            graph.id,
+            node.id,
+          );
+        if (target && (target.inputs.length || target.outputs.length))
+          issue(
+            'LOOP_BODY_MAPPING_UNSUPPORTED',
+            'Loop body schemas require explicit mapping support; do not discard declarations',
+            graph.id,
+            node.id,
+          );
+      }
       if (node.type === 'subflow') {
         const ref = node.config.graphRef;
         if (typeof ref !== 'string' || !graphIds.has(ref))
@@ -143,7 +186,10 @@ export function validateBundle(input: unknown): ValidationIssue[] {
     }
     for (const node of graph.nodes)
       for (const port of NODE_DEFINITIONS.find((n) => n.type === node.type)!.requiredPorts)
-        if (!outputs.has(node.id + ':' + port))
+        if (
+          !(node.type === 'loop' && node.config.bodyGraphRef && port === 'body') &&
+          !outputs.has(node.id + ':' + port)
+        )
           issue('MISSING_PORT', 'Required port is unconnected: ' + port, graph.id, node.id);
     const starts = graph.nodes.filter((n) => n.type === 'start');
     if (starts.length !== 1) issue('START_COUNT', 'Graph requires exactly one start', graph.id);
@@ -213,7 +259,7 @@ export interface TraceReport {
 export async function traceWorkflow(
   bundle: WorkflowBundle,
   data: { row?: Record<string, JsonValue>; process?: Record<string, JsonValue> } = {},
-  options: { maxSteps?: number; signal?: AbortSignal } = {},
+  options: { maxSteps?: number; maxDurationMs?: number; signal?: AbortSignal } = {},
 ): Promise<TraceReport> {
   const frozen = structuredClone(bundle),
     issues = validateBundle(frozen),
@@ -235,20 +281,53 @@ export async function traceWorkflow(
     report.status = 'ERROR';
     return report;
   }
+  const maxSteps = options.maxSteps ?? 5000,
+    maxDurationMs = options.maxDurationMs ?? 10000;
+  if (
+    !Number.isSafeInteger(maxSteps) ||
+    maxSteps < 1 ||
+    maxSteps > 100000 ||
+    !Number.isSafeInteger(maxDurationMs) ||
+    maxDurationMs < 1 ||
+    maxDurationMs > 60000
+  ) {
+    report.status = 'ERROR';
+    report.issues.push({
+      code: 'TRACE_BUDGET',
+      path: 'options',
+      message: 'Invalid TRACE step/time budget',
+    });
+    return report;
+  }
+  const started = performance.now();
+  let depth = 0;
   let steps = 0;
   type Signal = 'RETURN' | 'BREAK' | 'CONTINUE' | 'STOP';
   async function runGraph(graphId: string, loop = false, entryId?: string): Promise<Signal> {
+    if (++depth > 64) {
+      depth--;
+      throw new Error('Call depth budget exceeded');
+    }
+    try {
+      return await runFrame(graphId, loop, entryId);
+    } finally {
+      depth--;
+    }
+  }
+  async function runFrame(graphId: string, loop = false, entryId?: string): Promise<Signal> {
     const graph = frozen.graphs.find((g) => g.id === graphId)!,
       start = graph.nodes.find((n) => n.type === 'start')!;
     let node: WorkflowNode | undefined = entryId
       ? graph.nodes.find((n) => n.id === entryId)
       : start;
     while (node) {
+      if (steps && steps % 128 === 0) await yieldImmediate();
       if (options.signal?.aborted) {
         report.status = 'CANCELLED';
         return 'STOP';
       }
-      if (++steps > (options.maxSteps ?? 5000)) throw new Error('Step budget exceeded');
+      if (performance.now() - started > maxDurationMs) throw new Error('Time budget exceeded');
+      if (++steps > maxSteps) throw new Error('Step budget exceeded');
       const current = node;
       let port: Port = 'next';
       if (current.type === 'end') {
@@ -274,6 +353,13 @@ export async function traceWorkflow(
       }
       if (current.type === 'break' || current.type === 'continue') {
         if (!loop) throw new Error('Loop control outside loop');
+        events.push({
+          graphId,
+          nodeId: current.id,
+          type: current.type,
+          status: 'DONE',
+          detail: current.type === 'break' ? 'Break nearest loop' : 'Continue nearest loop',
+        });
         return current.type === 'break' ? 'BREAK' : 'CONTINUE';
       }
       if (current.type === 'condition') {
@@ -296,20 +382,28 @@ export async function traceWorkflow(
         }
         if (signal === 'STOP') return signal;
       } else if (current.type === 'loop') {
-        const body = graph.edges.find((e) => e.source === current.id && e.port === 'body');
-        if (!body) throw new Error('Loop body is not connected');
+        const body = graph.edges.find((e) => e.source === current.id && e.port === 'body'),
+          bodyRef = current.config.bodyGraphRef;
+        if (!body && !bodyRef) throw new Error('Loop body is not connected');
         const key = String(current.config.itemBinding ?? 'item');
         if (!isSafeKey(key)) throw new Error('Unsafe loop binding');
         const old = bindings.local[key],
           had = Object.hasOwn(bindings.local, key);
-        for (let index = 0; index < Number(current.config.maxIterations); index++) {
-          bindings.local[key] = index;
-          const signal = await runGraph(graphId, true, body.target);
-          if (signal === 'STOP') return signal;
-          if (signal === 'BREAK') break;
+        try {
+          for (let index = 0; index < Number(current.config.maxIterations); index++) {
+            bindings.local[key] = index;
+            const signal = await runGraph(
+              bodyRef ? String(bodyRef) : graphId,
+              true,
+              bodyRef ? undefined : body!.target,
+            );
+            if (signal === 'STOP') return signal;
+            if (signal === 'BREAK') break;
+          }
+        } finally {
+          if (had) bindings.local[key] = old!;
+          else delete bindings.local[key];
         }
-        if (had) bindings.local[key] = old!;
-        else delete bindings.local[key];
         port = 'done';
       } else if (current.type === 'output') {
         const mapping = current.config.valueMapping;

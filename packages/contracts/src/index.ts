@@ -9,3 +9,6 @@ export * from './generated/node-registry.js';
 export * from './schedule.js';
 export * from './job-states.js';
 export * from './content-data.js';
+export * from './devices.js';
+
+export * from './inspector.js';

@@ -14,6 +14,7 @@
     "@autoreels/domain": "workspace:*",
     "@autoreels/scheduler": "workspace:*",
     "@autoreels/workflow-engine": "workspace:*",
-    "@autoreels/import-export": "workspace:*"
+    "@autoreels/import-export": "workspace:*",
+    "@autoreels/devices": "workspace:*"
   }
 }

@@ -1,0 +1,13 @@
+# Kết nối và Inspector ở checkpoint 005
+
+Đây là hướng dẫn code hiện có, không phải biên bản nghiệm thu điện thoại. Chạy trên máy có quyền truy cập USB/LAN tới Android. USB cắm vào PC không tự xuất hiện trong phiên cloud; muốn điều khiển USB của PC thì chạy desktop/authoring host trên PC đó.
+
+1. Cài Node/pnpm theo README và chạy `pnpm desktop` trên máy có giao diện đồ họa. Lấy Android Platform-Tools từ Google; phiên bản/hashes đã kiểm file tải về ghi trong `platform-tools-manifest.json`, SDK chưa được bundle trong source ZIP.
+2. Tại Điện thoại, chọn **Chọn SDK** và chọn `adb.exe`/`adb` của host. Nếu đã có server protocol tương thích, app dùng server đó. Nếu chưa có, nút khởi động server riêng dùng cổng5038; app không kill server5037 của công cụ khác.
+3. USB: bật Developer options/USB debugging trên Android, cắm cáp dữ liệu và tự xác nhận RSA trên điện thoại. **Chờ cấp quyền**, **ADB offline**, **Thiếu quyền USB** khác **Đã kết nối**. Quét lại để đọc metadata; tên, trạng thái Bật và ID điện thoại được lưu riêng trạng thái kết nối hiện tại.
+4. LAN Android11+: mở Wireless debugging. Ghép đôi dùng endpoint ghép đôi + mã6số; **endpoint kết nối có thể dùng cổng khác**. Mã dùng một lần, không lưu vào DB/log. Kết nối với checkbox **Nhớ và tự kết nối lại** nếu muốn lưu endpoint trên host này. Bỏ checkbox chỉ kết nối một lần; tắt policy không tự ngắt phiên đang kết nối. Ngắt TCP trong Tools tắt các policy tương ứng trước; USB vẫn hoạt động nếu còn cắm.
+5. Chi tiết / điều khiển: chụp ảnh tĩnh, bật cho phép thao tác trên ảnh để click/tap, kéo/swipe, chuột phải Back. Phím nhanh và app actions qua cùng ownership/lease với workers. Ảnh cũ, orientation đổi, thiết bị disabled/busy hoặc transport đổi sẽ bị chặn; không tự replay lệnh lỗi.
+6. **Inspector** từ card hoặc panel điện thoại kiểm thử trong editor: chọn đúng máy, **Chụp cây và ảnh**, click ảnh hoặc danh sách để pick. Tìm theo text/resource-id/package; xem bounds, JSON selector và số0/1/n matches. Pick chỉ đọc, không gửi touch. Snapshot đóng băng và ảnh/XML đọc tuần tự; khi màn hình thay đổi hãy chụp lại. Nội dung password XML được ẩn; màn hình bảo mật/OEM không cung cấp tree có thể trả lỗi.
+7. Chọn điện thoại kiểm thử trong editor không đổi Process. Phím Back/Home/Recent tại panel chỉ bật khi có consent riêng. TRACE vẫn là chạy logic, không thực thi Android hay đăng bài.
+
+Đã có implementation/tests cho các luồng trên, physical Windows/Android acceptance vẫn NOT_RUN. Chưa có video stream/OCR/Unicode/multitouch, full debugger/device workflow executor, publish verification, APK/proxy providers hay installer. Đọc PROGRESS.md để tiếp tục các phần còn thiếu; không coi catalog đa app là automation certification.
