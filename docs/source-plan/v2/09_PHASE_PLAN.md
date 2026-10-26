@@ -4,6 +4,8 @@
 
 P00–P07 làm được phần nền/authoring trên cloud. Từ P08 cần Windows/Android cho nghiệm thu phần phụ thuộc. Giai đoạn engine trước hardware dùng test adapters trong test fixtures; không tính đó là automation thật. Các phase vẫn có công việc độc lập có thể tiến hành song song trong cùng tác vụ, nhưng không bỏ gate phụ thuộc.
 
+Thứ tự triển khai chi tiết nằm ở [master execution plan](16_MASTER_EXECUTION_PLAN.md) và [runbook](17_STEP_RUNBOOK.md): 375 đầu việc/250 scenarios dự kiến cho 125 bước. `dependsOn` của phase gate nghiệm thu toàn phase; dependencies từng bước cho phép làm native/device risk harness sớm khi contracts đã đủ. Hướng này không tăng scope hoặc tính spike thành phase production hoàn tất.
+
 | Phase | Phạm vi | Bước | Số | Điện thoại khi nghiệm thu |
 |---|---|---|---:|---|
 | P00 | Baseline, repository và công cụ | S001–S006 | 6 | Chưa cần |
@@ -260,5 +262,5 @@ Các milestone:
 
 - **R0 Authoring**: P00–P07, editor/process/media/schedule lưu thật; chưa chạy Android.
 - **R1 Multi-app cơ bản**: phần nền + P08–P11, Facebook Reels và TikTok capability tại P12 đã chứng nhận. P10 reference adapter dùng để chứng minh core, không phải chứng nhận toàn bộ app.
-- **R2 Multi-app**: từng adapter Lite/Instagram/TikTok/Threads qua gate riêng; một app fail không biến app khác thành fail.
+- **R2 Multi-app**: photo/multi-asset, Lite/Instagram/Threads và capabilities mở rộng qua gate riêng; TikTok cơ bản đã là điều kiện R1. Một app fail không biến app khác thành fail.
 - **R3 Operations/release**: P13–P14 theo scope công bố. Toàn bộ phạm vi đầy đủ vẫn là 125 bước.

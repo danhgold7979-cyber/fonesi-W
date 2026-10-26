@@ -23,7 +23,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-002",
@@ -43,7 +47,11 @@
     "testId": "RT-NODE-002",
     "status": "PLANNED",
     "requiredPorts": [],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-003",
@@ -74,7 +82,11 @@
       "true",
       "false"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-004",
@@ -105,7 +117,12 @@
       "body",
       "done"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S042",
+      "S046"
+    ]
   },
   {
     "id": "NODE-005",
@@ -127,7 +144,12 @@
     "testId": "RT-NODE-005",
     "status": "PLANNED",
     "requiredPorts": [],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S042",
+      "S046"
+    ]
   },
   {
     "id": "NODE-006",
@@ -149,7 +171,12 @@
     "testId": "RT-NODE-006",
     "status": "PLANNED",
     "requiredPorts": [],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S042",
+      "S046"
+    ]
   },
   {
     "id": "NODE-007",
@@ -180,7 +207,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S043",
+      "S046"
+    ]
   },
   {
     "id": "NODE-008",
@@ -208,7 +240,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
   },
   {
     "id": "NODE-009",
@@ -239,7 +276,12 @@
       "true",
       "false"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
   },
   {
     "id": "NODE-010",
@@ -270,7 +312,12 @@
       "true",
       "false"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
   },
   {
     "id": "NODE-011",
@@ -299,7 +346,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
   },
   {
     "id": "NODE-012",
@@ -326,7 +378,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
   },
   {
     "id": "NODE-013",
@@ -354,7 +411,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-014",
@@ -382,7 +444,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-015",
@@ -410,7 +477,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-016",
@@ -439,7 +511,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-017",
@@ -468,7 +545,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-018",
@@ -498,7 +580,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-019",
@@ -527,7 +614,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-020",
@@ -557,7 +649,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S087",
+      "S096"
+    ]
   },
   {
     "id": "NODE-021",
@@ -585,7 +682,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-022",
@@ -612,7 +714,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
   },
   {
     "id": "NODE-023",
@@ -644,7 +751,11 @@
       "true",
       "false"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
   },
   {
     "id": "NODE-024",
@@ -677,7 +788,11 @@
       "true",
       "false"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
   },
   {
     "id": "NODE-025",
@@ -707,7 +822,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
   },
   {
     "id": "NODE-026",
@@ -736,7 +855,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
   },
   {
     "id": "NODE-027",
@@ -764,7 +887,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-028",
@@ -793,7 +920,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
   },
   {
     "id": "NODE-029",
@@ -821,7 +952,12 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S082",
+      "S076"
+    ]
   },
   {
     "id": "NODE-030",
@@ -849,7 +985,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-031",
@@ -877,7 +1017,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-032",
@@ -906,7 +1050,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S095"
+    ]
   },
   {
     "id": "NODE-033",
@@ -934,7 +1082,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S095"
+    ]
   },
   {
     "id": "NODE-034",
@@ -962,7 +1114,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S096"
+    ]
   },
   {
     "id": "NODE-035",
@@ -990,7 +1146,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S102"
+    ]
   },
   {
     "id": "NODE-036",
@@ -1019,7 +1179,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S097"
+    ]
   },
   {
     "id": "NODE-037",
@@ -1051,7 +1215,11 @@
       "true",
       "false"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S098"
+    ]
   },
   {
     "id": "NODE-038",
@@ -1079,7 +1247,11 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-039",
@@ -1100,7 +1272,11 @@
     "testId": "RT-NODE-039",
     "status": "PLANNED",
     "requiredPorts": [],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   },
   {
     "id": "NODE-040",
@@ -1129,6 +1305,10 @@
     "requiredPorts": [
       "next"
     ],
-    "unwiredErrorPolicy": "STOP_FOR_REVIEW"
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
   }
 ]

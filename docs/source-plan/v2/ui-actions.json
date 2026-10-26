@@ -16,7 +16,11 @@
     "acceptance": "UI intent → scheduler/timeline/jobs → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-001",
     "contract": "ui.slots-prev",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S060"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-002",
@@ -35,7 +39,11 @@
     "acceptance": "UI intent → scheduler/timeline/jobs → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-002",
     "contract": "ui.slots-next",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S060"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-003",
@@ -46,15 +54,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-003",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.reroute-edge",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S033"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-004",
@@ -73,7 +85,11 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-004",
     "contract": "ui.modal-close",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S025"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-005",
@@ -92,7 +108,12 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-005",
     "contract": "workflows.saveDraft",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S039",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-006",
@@ -103,15 +124,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-006",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.undo",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-007",
@@ -122,15 +147,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-007",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.redo",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-008",
@@ -149,7 +178,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-008",
     "contract": "ui.fit",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S034"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-009",
@@ -168,7 +201,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-009",
     "contract": "ui.zoom-in",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S034"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-010",
@@ -187,7 +224,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-010",
     "contract": "ui.zoom-out",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S034"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-011",
@@ -206,7 +247,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-011",
     "contract": "ui.snap",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S034"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-012",
@@ -225,7 +270,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-012",
     "contract": "ui.minimap",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S034"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-013",
@@ -244,7 +293,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-013",
     "contract": "ui.focus",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S034"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-014",
@@ -263,7 +316,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-014",
     "contract": "ui.bottom-toggle",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S039"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-015",
@@ -282,7 +339,12 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-015",
     "contract": "ui.parent",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037",
+      "S038"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-016",
@@ -301,7 +363,12 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-016",
     "contract": "ui.open-selected-sub",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037",
+      "S038"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-017",
@@ -320,7 +387,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-017",
     "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-018",
@@ -339,7 +410,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-018",
     "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-019",
@@ -358,7 +433,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-019",
     "contract": "ui.add-node",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S030"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-020",
@@ -369,15 +448,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-020",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.duplicate",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-021",
@@ -388,15 +471,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-021",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.copy",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-022",
@@ -407,15 +494,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-022",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.paste",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-023",
@@ -426,15 +517,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-023",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.select-all",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-024",
@@ -445,15 +540,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-024",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.delete-selected",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-025",
@@ -472,7 +571,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-025",
     "contract": "ui.rename-node",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-026",
@@ -483,15 +586,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-026",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.rename-confirm",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-027",
@@ -502,15 +609,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-027",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.layout",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S035"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-028",
@@ -521,15 +632,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-028",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.layout-vertical",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S035"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-029",
@@ -540,15 +655,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-029",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.align",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S035"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-030",
@@ -559,15 +678,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-030",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.group",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S035"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-031",
@@ -586,7 +709,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-031",
     "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-032",
@@ -605,7 +732,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-032",
     "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-033",
@@ -616,15 +747,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-033",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.insert-edge",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S032"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-034",
@@ -643,7 +778,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-034",
     "contract": "ui.canvas-menu",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S034"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-035",
@@ -662,7 +801,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-035",
     "contract": "debugSessions.start",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-036",
@@ -681,7 +825,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-036",
     "contract": "debugSessions.stop",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-037",
@@ -700,7 +849,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-037",
     "contract": "debugSessions.stop",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-038",
@@ -719,7 +873,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-038",
     "contract": "ui.node-edit",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-039",
@@ -730,15 +888,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-039",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.node-copy",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-040",
@@ -749,15 +911,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-040",
-    "contract": "workflows.saveDraft:editorCommand",
-    "hardwareGate": false
+    "contract": "editor.node-delete",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S031"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-041",
@@ -776,7 +942,12 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-041",
     "contract": "ui.node-open",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037",
+      "S038"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-042",
@@ -795,7 +966,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-042",
     "contract": "ui.node-more",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-043",
@@ -814,7 +989,11 @@
     "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-043",
     "contract": "ui.advanced-node",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-044",
@@ -825,15 +1004,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "editor",
     "ownerPhase": "P04",
-    "service": "workflowDrafts/editorCommands",
-    "persistence": "workflow draft + editor preferences",
-    "classification": "BACKEND_REQUIRED",
+    "service": "renderer editor command bus; draft save uses workflows service",
+    "persistence": "local design transaction; persisted only after draft save ACK",
+    "classification": "UI_ONLY",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflowDrafts/editorCommands → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Scoped editor command changes the selected graph atomically, supports undo, respects input focus; persistence is verified by draft save/reload separately.",
     "testId": "UI-CMD-044",
-    "contract": "workflows.saveDraft:updateNode",
-    "hardwareGate": false
+    "contract": "editor.advanced-save",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-045",
@@ -852,7 +1035,13 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-045",
     "contract": "workflows.validateBundle",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S041",
+      "S043",
+      "S045"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-046",
@@ -871,7 +1060,11 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-046",
     "contract": "ui.run",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-047",
@@ -890,7 +1083,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-047",
     "contract": "debugSessions.start",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-048",
@@ -909,7 +1107,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-048",
     "contract": "debugSessions.start",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-049",
@@ -928,7 +1131,11 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-049",
     "contract": "ui.test-data",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-050",
@@ -947,7 +1154,11 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-050",
     "contract": "debugSessions.start:TRACE",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-051",
@@ -966,7 +1177,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-051",
     "contract": "debugSessions.pause/continue",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-052",
@@ -985,7 +1201,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-052",
     "contract": "debugSessions",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-053",
@@ -1004,7 +1225,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-053",
     "contract": "debugSessions.step",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-054",
@@ -1023,7 +1249,12 @@
     "acceptance": "UI intent → debugSessions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-054",
     "contract": "debugSessions.stepInto",
-    "hardwareGate": "DEVICE_MODE_ONLY"
+    "hardwareGate": "DEVICE_MODE_ONLY",
+    "plannedSteps": [
+      "S047",
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-055",
@@ -1042,7 +1273,12 @@
     "acceptance": "UI intent → workflowSchemas → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-055",
     "contract": "ui.inputs",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-056",
@@ -1061,7 +1297,12 @@
     "acceptance": "UI intent → workflowSchemas → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-056",
     "contract": "ui.input-add",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-057",
@@ -1080,7 +1321,12 @@
     "acceptance": "UI intent → workflowSchemas → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-057",
     "contract": "workflows.saveDraft:updateSchema",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-058",
@@ -1099,7 +1345,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-058",
     "contract": "inspector.captureSnapshot/queryElements",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S083"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-059",
@@ -1118,7 +1368,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-059",
     "contract": "workflows.saveDraft:updateSelector",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S083"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-060",
@@ -1137,7 +1391,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-060",
     "contract": "inspector.captureSnapshot",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S082"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-061",
@@ -1156,7 +1414,12 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-061",
     "contract": "workers.acquireManual",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S081",
+      "S074"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-062",
@@ -1175,7 +1438,12 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-062",
     "contract": "streams.requestFrame",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S079",
+      "S082"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-063",
@@ -1194,7 +1462,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-063",
     "contract": "ui.phone-fit",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S084"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-064",
@@ -1213,7 +1485,13 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-064",
     "contract": "manualControl.key",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S084",
+      "S076",
+      "S074"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-065",
@@ -1232,7 +1510,13 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-065",
     "contract": "manualControl.key",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S084",
+      "S076",
+      "S074"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-066",
@@ -1251,7 +1535,13 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-066",
     "contract": "manualControl.key",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S084",
+      "S076",
+      "S074"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-067",
@@ -1270,7 +1560,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-067",
     "contract": "ui.phone-dock",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S084"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-068",
@@ -1289,7 +1583,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-068",
     "contract": "ui.phone-popup",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S084"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-069",
@@ -1308,7 +1606,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-069",
     "contract": "ui.dock-right",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S084"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-070",
@@ -1327,7 +1629,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-070",
     "contract": "ui.dock-top",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S084"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-071",
@@ -1346,7 +1652,11 @@
     "acceptance": "UI intent → inspector/streams/manualControl → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-071",
     "contract": "ui.dock-floating",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S084"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-072",
@@ -1365,7 +1675,11 @@
     "acceptance": "UI intent → devices/deviceWorkers → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-072",
     "contract": "devices.getDetails",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S076"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-073",
@@ -1384,7 +1698,13 @@
     "acceptance": "UI intent → devices/deviceWorkers → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-073",
     "contract": "devices.scan",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S069",
+      "S070",
+      "S073"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-074",
@@ -1403,7 +1723,11 @@
     "acceptance": "UI intent → devices/deviceWorkers → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-074",
     "contract": "ui.device-manager",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S075"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-075",
@@ -1422,7 +1746,11 @@
     "acceptance": "UI intent → devices/deviceWorkers → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-075",
     "contract": "ui.device-bulk",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S075"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-076",
@@ -1441,7 +1769,11 @@
     "acceptance": "UI intent → devices/deviceWorkers → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-076",
     "contract": "devices.setEnabled",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S075"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-077",
@@ -1460,7 +1792,11 @@
     "acceptance": "UI intent → devices/deviceWorkers → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-077",
     "contract": "devices.setEnabled",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S075"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-078",
@@ -1479,7 +1815,12 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-078",
     "contract": "settings/app/notifications",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S024",
+      "S050"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-079",
@@ -1498,7 +1839,12 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-079",
     "contract": "settings/app/notifications",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S024",
+      "S081"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-080",
@@ -1517,7 +1863,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-080",
     "contract": "ui.new-workflow",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-081",
@@ -1536,7 +1887,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-081",
     "contract": "workflows.create",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-082",
@@ -1555,7 +1911,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-082",
     "contract": "ui.workflow-menu",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-083",
@@ -1574,7 +1935,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-083",
     "contract": "workflows.rename",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-084",
@@ -1593,7 +1959,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-084",
     "contract": "workflows.clone",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-085",
@@ -1612,7 +1983,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-085",
     "contract": "workflowVersions.createFromDraft",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S039",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-086",
@@ -1631,7 +2007,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-086",
     "contract": "ui.workflow-delete",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-087",
@@ -1650,7 +2031,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-087",
     "contract": "workflows.archive",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-088",
@@ -1669,7 +2055,12 @@
     "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-088",
     "contract": "workflowVersions.exportBundle",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037",
+      "S021"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-089",
@@ -1680,15 +2071,20 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "workflows",
     "ownerPhase": "P04",
-    "service": "workflows/versions/importExport",
+    "service": "validated host dialog/source registration/import preview",
     "persistence": "full workflow bundle + immutable versions",
-    "classification": "UI_ONLY",
+    "classification": "BACKEND_REQUIRED",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → workflows/versions/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Host-authorized file selection or source reference, cancel-safe, parsed/validated before mutation; arbitrary imported path is never a granted filesystem permission.",
     "testId": "UI-CMD-089",
-    "contract": "ui.import-workflow",
-    "hardwareGate": false
+    "contract": "hostFiles.import-workflow",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S037",
+      "S021"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-090",
@@ -1699,15 +2095,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "media",
     "ownerPhase": "P06",
-    "service": "processes/media/importExport",
+    "service": "validated host dialog/source registration/import preview",
     "persistence": "process/content/assets/source settings",
-    "classification": "UI_ONLY",
+    "classification": "BACKEND_REQUIRED",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Host-authorized file selection or source reference, cancel-safe, parsed/validated before mutation; arbitrary imported path is never a granted filesystem permission.",
     "testId": "UI-CMD-090",
-    "contract": "ui.folder",
-    "hardwareGate": false
+    "contract": "hostFiles.folder",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S052"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-091",
@@ -1718,15 +2118,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "media",
     "ownerPhase": "P06",
-    "service": "processes/media/importExport",
+    "service": "validated host dialog/source registration/import preview",
     "persistence": "process/content/assets/source settings",
-    "classification": "UI_ONLY",
+    "classification": "BACKEND_REQUIRED",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Host-authorized file selection or source reference, cancel-safe, parsed/validated before mutation; arbitrary imported path is never a granted filesystem permission.",
     "testId": "UI-CMD-091",
-    "contract": "ui.media",
-    "hardwareGate": false
+    "contract": "hostFiles.media",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S052"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-092",
@@ -1745,7 +2149,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-092",
     "contract": "ui.import-data",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S057"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-093",
@@ -1756,15 +2164,19 @@
     "sourceStatus": "BROWSER_CONTROL_OBSERVED",
     "group": "media",
     "ownerPhase": "P06",
-    "service": "processes/media/importExport",
+    "service": "validated host dialog/source registration/import preview",
     "persistence": "process/content/assets/source settings",
-    "classification": "UI_ONLY",
+    "classification": "BACKEND_REQUIRED",
     "productionStatus": "PLANNED",
     "errorRule": "Validation/timeout/cancel có structured error; không silent success",
-    "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
+    "acceptance": "Host-authorized file selection or source reference, cancel-safe, parsed/validated before mutation; arbitrary imported path is never a granted filesystem permission.",
     "testId": "UI-CMD-093",
-    "contract": "ui.pick-csv",
-    "hardwareGate": false
+    "contract": "hostFiles.pick-csv",
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S058"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-094",
@@ -1783,7 +2195,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-094",
     "contract": "media.export",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S058"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-095",
@@ -1802,7 +2218,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-095",
     "contract": "media.commitImport",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S057"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-096",
@@ -1821,7 +2241,11 @@
     "acceptance": "UI intent → devFixtures → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-096",
     "contract": "devFixtures",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-097",
@@ -1840,7 +2264,12 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-097",
     "contract": "media.createContentItem",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S056",
+      "S018"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-098",
@@ -1859,7 +2288,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-098",
     "contract": "ui.delete-rows",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S059"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-099",
@@ -1878,7 +2311,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-099",
     "contract": "media.removeFromProcess",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S059"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-100",
@@ -1897,7 +2334,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-100",
     "contract": "ui.bulk-edit",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S057"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-101",
@@ -1916,7 +2357,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-101",
     "contract": "media.bulkUpdate",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S057"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-102",
@@ -1935,7 +2380,11 @@
     "acceptance": "UI intent → scheduler/timeline/jobs → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-102",
     "contract": "scheduler.preview",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S062"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-103",
@@ -1954,7 +2403,11 @@
     "acceptance": "UI intent → scheduler/timeline/jobs → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-103",
     "contract": "scheduler.apply",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S062"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-104",
@@ -1973,7 +2426,12 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-104",
     "contract": "processes.update",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S050",
+      "S017"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-105",
@@ -1992,7 +2450,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-105",
     "contract": "ui.data-more",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S056"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-106",
@@ -2011,7 +2473,12 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-106",
     "contract": "processes.updateSourcePolicy",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S053",
+      "S017"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-107",
@@ -2030,7 +2497,12 @@
     "acceptance": "UI intent → appAdapters/identities → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-107",
     "contract": "identities.scan",
-    "hardwareGate": true
+    "hardwareGate": true,
+    "plannedSteps": [
+      "S104",
+      "S089"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-108",
@@ -2049,7 +2521,12 @@
     "acceptance": "UI intent → workflowSchemas → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-108",
     "contract": "ui.input-mapping",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S010",
+      "S051"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-109",
@@ -2068,7 +2545,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-109",
     "contract": "ui.clone-process",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S050"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-110",
@@ -2087,7 +2568,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-110",
     "contract": "processes.clone",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S050"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-111",
@@ -2106,7 +2591,11 @@
     "acceptance": "UI intent → processes/media/importExport → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-111",
     "contract": "ui.process-options",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S050"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-112",
@@ -2125,7 +2614,11 @@
     "acceptance": "UI intent → scheduler/timeline/jobs → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-112",
     "contract": "ui.queue",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S065"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-113",
@@ -2144,7 +2637,12 @@
     "acceptance": "UI intent → review/transactions → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-113",
     "contract": "review.getCase/recordResolution",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S101",
+      "S098"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-114",
@@ -2163,7 +2661,11 @@
     "acceptance": "UI intent → diagnostics/workspaceBackup → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-114",
     "contract": "diagnostics.export",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S116"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-115",
@@ -2182,7 +2684,12 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-115",
     "contract": "workspace.updatePreferences",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S023",
+      "S017"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-116",
@@ -2201,7 +2708,12 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-116",
     "contract": "ui.settings",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S025",
+      "S017"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-117",
@@ -2220,7 +2732,12 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-117",
     "contract": "workspace.updatePreferences",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S025",
+      "S017"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-118",
@@ -2239,7 +2756,11 @@
     "acceptance": "UI intent → diagnostics/workspaceBackup → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-118",
     "contract": "workspace.exportBackup",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S116"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-119",
@@ -2258,7 +2779,11 @@
     "acceptance": "UI intent → diagnostics/workspaceBackup → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-119",
     "contract": "workspace.previewImport/commitImport",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S116"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-120",
@@ -2277,7 +2802,11 @@
     "acceptance": "UI intent → devFixtures → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-120",
     "contract": "devFixtures",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-121",
@@ -2296,7 +2825,11 @@
     "acceptance": "UI intent → devFixtures → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-121",
     "contract": "devFixtures",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S049"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-122",
@@ -2315,7 +2848,11 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-122",
     "contract": "ui.help",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S025"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-123",
@@ -2334,7 +2871,12 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-123",
     "contract": "ui.coverage",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S028",
+      "S124"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   },
   {
     "id": "CMD-124",
@@ -2353,6 +2895,10 @@
     "acceptance": "UI intent → settings/app/notifications → effect/state đúng scope; restart nếu persisted; failure có UI",
     "testId": "UI-CMD-124",
     "contract": "ui.notifications",
-    "hardwareGate": false
+    "hardwareGate": false,
+    "plannedSteps": [
+      "S027"
+    ],
+    "traceabilityNote": "plannedSteps are concrete implementation/test units; classification distinguishes local command from privileged execution."
   }
 ]

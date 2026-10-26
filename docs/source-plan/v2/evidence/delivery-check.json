@@ -1,8 +1,8 @@
 {
-  "scope": "DELIVERY_ARCHIVE_ONLY",
+  "scope": "DELIVERY_ARCHIVE_ONLY_NOT_PRODUCTION_APP",
   "status": "PASS",
-  "archiveFilename": "AutoReels-Studio-Compact-and-Plan-V2.1.zip",
-  "membersVerified": 145,
-  "zipBytes": 7782710,
-  "sha256": "161bac7e9afd1af6bb3c59a514fdf54638b1e0b9f5043fcdb86a9f794a72c031"
+  "archiveFilename": "AutoReels-Full-Execution-Plan-V2.1.zip",
+  "membersVerified": 153,
+  "zipBytes": 7906410,
+  "sha256": "82814a168cba68e94e0f5dcf4172f1da088fc4068abde74819509fc1c40c2fa2"
 }

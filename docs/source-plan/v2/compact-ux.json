@@ -6,7 +6,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "ui-palette",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-001"
+    "testId": "UI-UX-001",
+    "plannedSteps": [
+      "S034"
+    ]
   },
   {
     "id": "UX-002",
@@ -15,7 +18,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "Alt+1..6",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-002"
+    "testId": "UI-UX-002",
+    "plannedSteps": [
+      "S024"
+    ]
   },
   {
     "id": "UX-003",
@@ -24,7 +30,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "focus guard",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-003"
+    "testId": "UI-UX-003",
+    "plannedSteps": [
+      "S031"
+    ]
   },
   {
     "id": "UX-004",
@@ -33,7 +42,11 @@
     "previewStatus": "INTERACTIVE",
     "binding": "Ctrl+S",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-004"
+    "testId": "UI-UX-004",
+    "plannedSteps": [
+      "S027",
+      "S039"
+    ]
   },
   {
     "id": "UX-005",
@@ -42,7 +55,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "canvas command history",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-005"
+    "testId": "UI-UX-005",
+    "plannedSteps": [
+      "S031"
+    ]
   },
   {
     "id": "UX-006",
@@ -51,7 +67,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "ui-fit-selection",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-006"
+    "testId": "UI-UX-006",
+    "plannedSteps": [
+      "S034"
+    ]
   },
   {
     "id": "UX-007",
@@ -60,7 +79,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "arrow keys",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-007"
+    "testId": "UI-UX-007",
+    "plannedSteps": [
+      "S031"
+    ]
   },
   {
     "id": "UX-008",
@@ -69,7 +91,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "wheel gestures",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-008"
+    "testId": "UI-UX-008",
+    "plannedSteps": [
+      "S034"
+    ]
   },
   {
     "id": "UX-009",
@@ -78,7 +103,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "ui-library/ui-phone/bottom-toggle",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-009"
+    "testId": "UI-UX-009",
+    "plannedSteps": [
+      "S039"
+    ]
   },
   {
     "id": "UX-010",
@@ -87,7 +115,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "ui-pin",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-010"
+    "testId": "UI-UX-010",
+    "plannedSteps": [
+      "S029"
+    ]
   },
   {
     "id": "UX-011",
@@ -96,7 +127,11 @@
     "previewStatus": "INTERACTIVE",
     "binding": "showCanvasMenu",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-011"
+    "testId": "UI-UX-011",
+    "plannedSteps": [
+      "S025",
+      "S032"
+    ]
   },
   {
     "id": "UX-012",
@@ -105,7 +140,12 @@
     "previewStatus": "INTERACTIVE",
     "binding": "row contextmenu",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-012"
+    "testId": "UI-UX-012",
+    "plannedSteps": [
+      "S056",
+      "S057",
+      "S059"
+    ]
   },
   {
     "id": "UX-013",
@@ -114,7 +154,10 @@
     "previewStatus": "LAYOUT_ONLY_HARDWARE_DISABLED",
     "binding": "ui-tools",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-013"
+    "testId": "UI-UX-013",
+    "plannedSteps": [
+      "S112"
+    ]
   },
   {
     "id": "UX-014",
@@ -123,7 +166,11 @@
     "previewStatus": "LAYOUT_ONLY_HARDWARE_DISABLED",
     "binding": "ui-phone-menu",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-014"
+    "testId": "UI-UX-014",
+    "plannedSteps": [
+      "S084",
+      "S076"
+    ]
   },
   {
     "id": "UX-015",
@@ -132,7 +179,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "advancedNode",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-015"
+    "testId": "UI-UX-015",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "UX-016",
@@ -141,7 +191,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "ui-help",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-016"
+    "testId": "UI-UX-016",
+    "plannedSteps": [
+      "S025"
+    ]
   },
   {
     "id": "UX-017",
@@ -150,7 +203,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "ui-columns",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-017"
+    "testId": "UI-UX-017",
+    "plannedSteps": [
+      "S056"
+    ]
   },
   {
     "id": "UX-018",
@@ -159,7 +215,11 @@
     "previewStatus": "INTERACTIVE",
     "binding": "parent",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-018"
+    "testId": "UI-UX-018",
+    "plannedSteps": [
+      "S037",
+      "S038"
+    ]
   },
   {
     "id": "UX-019",
@@ -168,7 +228,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "phone-fit",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-019"
+    "testId": "UI-UX-019",
+    "plannedSteps": [
+      "S084"
+    ]
   },
   {
     "id": "UX-020",
@@ -177,7 +240,11 @@
     "previewStatus": "INTERACTIVE",
     "binding": "workflow-duplicate",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-020"
+    "testId": "UI-UX-020",
+    "plannedSteps": [
+      "S037",
+      "S016"
+    ]
   },
   {
     "id": "UX-021",
@@ -186,7 +253,11 @@
     "previewStatus": "INTERACTIVE",
     "binding": "switchContext",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-021"
+    "testId": "UI-UX-021",
+    "plannedSteps": [
+      "S050",
+      "S024"
+    ]
   },
   {
     "id": "UX-022",
@@ -195,7 +266,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "data-library-app",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-022"
+    "testId": "UI-UX-022",
+    "plannedSteps": [
+      "S029"
+    ]
   },
   {
     "id": "UX-023",
@@ -204,7 +278,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "studioA11y",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-023"
+    "testId": "UI-UX-023",
+    "plannedSteps": [
+      "S025"
+    ]
   },
   {
     "id": "UX-024",
@@ -213,7 +290,10 @@
     "previewStatus": "INTERACTIVE",
     "binding": "closeModal",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-024"
+    "testId": "UI-UX-024",
+    "plannedSteps": [
+      "S032"
+    ]
   },
   {
     "id": "UX-025",
@@ -222,7 +302,10 @@
     "previewStatus": "PLANNED",
     "binding": "inspector snapshots",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-025"
+    "testId": "UI-UX-025",
+    "plannedSteps": [
+      "S082"
+    ]
   },
   {
     "id": "UX-026",
@@ -231,7 +314,10 @@
     "previewStatus": "PLANNED",
     "binding": "inspector queryElements",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-026"
+    "testId": "UI-UX-026",
+    "plannedSteps": [
+      "S083"
+    ]
   },
   {
     "id": "UX-027",
@@ -240,7 +326,11 @@
     "previewStatus": "PLANNED",
     "binding": "validation issues",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-027"
+    "testId": "UI-UX-027",
+    "plannedSteps": [
+      "S041",
+      "S049"
+    ]
   },
   {
     "id": "UX-028",
@@ -249,7 +339,10 @@
     "previewStatus": "PLANNED",
     "binding": "preferences",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-028"
+    "testId": "UI-UX-028",
+    "plannedSteps": [
+      "S023"
+    ]
   },
   {
     "id": "UX-029",
@@ -258,7 +351,11 @@
     "previewStatus": "PLANNED",
     "binding": "context guide",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-029"
+    "testId": "UI-UX-029",
+    "plannedSteps": [
+      "S025",
+      "S039"
+    ]
   },
   {
     "id": "UX-030",
@@ -267,6 +364,10 @@
     "previewStatus": "PLANNED",
     "binding": "batch operations",
     "productionStatus": "PLANNED",
-    "testId": "UI-UX-030"
+    "testId": "UI-UX-030",
+    "plannedSteps": [
+      "S112",
+      "S075"
+    ]
   }
 ]

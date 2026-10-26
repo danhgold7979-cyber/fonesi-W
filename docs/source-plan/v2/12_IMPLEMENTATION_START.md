@@ -1,10 +1,12 @@
 # Increment đầu tiên sau khi chuẩn hóa kế hoạch
 
-Current scope: source-plan V2.1 và HTML Compact review có tiện ích tương tác. App implementation chưa bắt đầu. Người dùng đã chốt C01–C12 và yêu cầu xem HTML trước; khi dựng production, lấy V2.1 làm baseline, không ghép HTML review vào Electron rồi coi xong.
+Current scope: source-plan V2.1 và HTML Compact review có tiện ích tương tác. App implementation chưa bắt đầu. Người dùng đã chốt C01–C12 và cho tiến hành code, yêu cầu chi tiết hóa toàn tool trước. Đọc [master execution plan](16_MASTER_EXECUTION_PLAN.md), [runbook](17_STEP_RUNBOOK.md) và [risks](18_READINESS_AND_RISKS.md); sau đó bắt đầu increment nền trong phạm vi đã ủy quyền, không hỏi chốt lại C01–C12. Không ghép HTML review vào Electron rồi coi xong.
 
 ## Increment A — repository/contracts baseline
 
 Mục tiêu: skeleton có trách nhiệm rõ, đủ chạy kiểm tra; không claim bất kỳ device automation nào.
+
+Step scope: S004–S006 và các contracts S007–S013 theo prerequisites cụ thể. P00 acceptance chưa hoàn tất thì contracts có thể được implement/test sớm nhưng không ghi cả P01 ACCEPTED. Gate đầu là các lệnh thực sự chạy được từ clean/frozen install; không scaffold mọi package rỗng.
 
 Files/modules dự kiến:
 
@@ -30,6 +32,8 @@ Các phase trong master plan là phạm vi/dependencies, không buộc một PR 
 ## Bắt đầu Android
 
 P08/S069 là mốc đầu cần kết nối điện thoại để nghiệm thu kết nối; P10 cần ít nhất hai thiết bị/Android profiles phù hợp để chứng minh risk assumptions. Trước đó domain/editor/scheduler logic có thể làm trên cloud. Device agent/remote bridge chưa thuộc default desktop scope; không tự cài một tunnel/VPN riêng vào cloud để giả thay host Windows.
+
+Có Windows/phone sớm thì ưu tiên harness SQLite S015, ADB/stream S069–S079 và các risk probes khi đủ prerequisite; không phải đợi toàn bộ editor/import/timeline được đánh bóng. Worker S074 dùng lease storage contract, không đợi S064 scheduler UI; full phase acceptance vẫn giữ gate. Chưa có hardware thì tiếp tục các slice cloud độc lập và ghi hardware UNRUN.
 
 ## Báo cáo sau mỗi increment
 

@@ -4,6 +4,8 @@ Baseline ngày 26/10/2026, múi giờ Việt Nam. Yêu cầu hiện tại: rà s
 
 **Đã chốt các khuyến nghị C01–C12:** xem [quyết định tiếp nhận](14_DECISIONS_TO_CONFIRM.md) và [30 tiện ích Compact](15_COMPACT_UX_ADDITIONS.md). Thứ tự hiện tại là xem HTML đầy đủ → cập nhật plan → dựng app production. Hardware feasibility vẫn cần test riêng.
 
+**Kế hoạch thực thi toàn tool đã chi tiết hóa:** [master execution plan](16_MASTER_EXECUTION_PLAN.md), [125 bước / 375 đầu việc / 250 tình huống dự kiến](17_STEP_RUNBOOK.md), [độ sẵn sàng và risks](18_READINESS_AND_RISKS.md). Đây là kế hoạch cần thực hiện, không phải số tests production đã chạy. Người dùng đã cho tiến hành code, yêu cầu làm rõ toàn tool trước.
+
 ## Trạng thái chính xác
 
 - **Đã hoàn thành đầu vào phân tích:** ZIP V1.7 gồm 41 file và HTML Studio Workspace mới; 42 file reference được lưu nguyên byte và có checksum.
@@ -39,8 +41,10 @@ Baseline ngày 26/10/2026, múi giờ Việt Nam. Yêu cầu hiện tại: rà s
 | `ui-fields.json` | Các chữ ký field khảo sát; chữ ký có thể khác placeholder dù cùng nghiệp vụ |
 | `ui-delegates.json` | 26 họ event/delegation/gesture/shortcut ngoài action dispatcher |
 | `node-catalog.json` | 40 node types; config, ports, handler boundary, test ID |
-| `app-capabilities.json` | 5 app; chưa app nào được chứng nhận automation |
+| `app-capabilities.json` | 5 app seed trong registry mở; chưa app nào được chứng nhận automation |
 | `implementation-plan.json` | 15 phase, 125 bước, dependencies/modules/tests/status |
+| `execution-runbook.json` | 125 bước, 375 tasks, prerequisite DAG, output paths và positive/negative scenarios |
+| `feature-test-map.json` | 330 features, mỗi feature trỏ 1–4 bước cụ thể; không phải evidence đã pass |
 | `findings.json` | Lỗi/giới hạn, mức độ, evidence và hướng xử lý |
 | `source-inventory.json` | Hash 42 file reference |
 | `schemas/workflow.schema.json` | Envelope/schema dự kiến; semantic compiler vẫn bắt buộc |
@@ -50,6 +54,8 @@ Baseline ngày 26/10/2026, múi giờ Việt Nam. Yêu cầu hiện tại: rà s
 Xem nhanh bằng [bảng tra cứu tương tác](REVIEW_EXPLORER.html): tìm/lọc lệnh, fields, nodes, phase và phát hiện. Các bản đọc dễ hơn JSON: [field matrix](UI_FIELD_MATRIX.md), [event/shortcut matrix](UI_EVENT_MATRIX.md), [node catalog](NODE_CATALOG.md).
 
 Chạy kiểm tra bộ kế hoạch bằng `python docs/source-plan/v2/tools/validate_plan.py` từ repository root. Script này kiểm tra tính nhất quán tài liệu/registry và checksum, **không chứng nhận ứng dụng hoặc điện thoại**.
+
+Kiểm tra dependencies/tasks/mapping: `python docs/source-plan/v2/tools/validate_execution_plan.py`. Sinh bản đọc từ JSON: `python docs/source-plan/v2/tools/build_execution_docs.py`.
 
 ## Quy tắc sử dụng
 

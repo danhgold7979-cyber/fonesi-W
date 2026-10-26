@@ -33,5 +33,7 @@
     }
   ],
   "searchAndDetail": "PASS",
+  "expandedExecutionDetails": "PASS_125_STEPS_LOADED",
+  "fieldContextVariants": "PASS",
   "uncaughtErrors": []
 }

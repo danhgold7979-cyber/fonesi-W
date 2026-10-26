@@ -15,7 +15,7 @@ Default Windows source path kế thừa `E:\AutoReels`; runtime cài đặt `%LO
 
 ## Toolchain policy
 
-- Node 24 LTS, pnpm 12.6.0 theo baseline đã kiểm tra có trên npm; khóa lockfile.
+- Node 24 LTS; pnpm exact version được resolve/pin/activate tại S005 cùng lockfile. Plan cũ nêu 12.6.0 trên npm, nhưng cloud hiện có Node 24.19.0 và pnpm 11.25.0; chưa có packageManager/lockfile app để tuyên bố môi trường production đã đồng nhất. Không nhầm bản cài sẵn với bản checkout đã ghim.
 - Windows native build prerequisites (MSVC/SDK/Python tương thích node-gyp) chỉ cài khi native strategy đã chọn và thiếu thực sự; không giả chúng có trên cloud.
 - Exact Electron/React/Vite/TS/SQLite versions được resolve từ maintained stable releases và test compatibility trước commit lockfile. Plan không coi npm latest là bằng chứng ABI đúng.
 - SQLite driver có interface tách domain; so sánh bundled `node:sqlite` khi Electron hỗ trợ thật với maintained native driver. Quyết định dựa smoke dưới exact Electron runtime, không chỉ Node shell.

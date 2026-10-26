@@ -12,11 +12,14 @@
       "device-manager",
       "device-bulk"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P08",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-001"
+    "testId": "UI-FIELD-001",
+    "plannedSteps": [
+      "S075"
+    ]
   },
   {
     "id": "FIELD-002",
@@ -31,11 +34,14 @@
       "device-manager",
       "device-bulk"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P08",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-002"
+    "testId": "UI-FIELD-002",
+    "plannedSteps": [
+      "S075"
+    ]
   },
   {
     "id": "FIELD-003",
@@ -50,11 +56,14 @@
       "device-manager",
       "device-bulk"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P08",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-003"
+    "testId": "UI-FIELD-003",
+    "plannedSteps": [
+      "S075"
+    ]
   },
   {
     "id": "FIELD-004",
@@ -75,7 +84,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-004"
+    "testId": "UI-FIELD-004",
+    "plannedSteps": [
+      "S075"
+    ]
   },
   {
     "id": "FIELD-005",
@@ -163,7 +175,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-005"
+    "testId": "UI-FIELD-005",
+    "plannedSteps": [
+      "S029"
+    ]
   },
   {
     "id": "FIELD-006",
@@ -245,7 +260,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-006"
+    "testId": "UI-FIELD-006",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-007",
@@ -348,7 +366,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-007"
+    "testId": "UI-FIELD-007",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-008",
@@ -430,7 +451,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-008"
+    "testId": "UI-FIELD-008",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-009",
@@ -512,7 +536,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-009"
+    "testId": "UI-FIELD-009",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-010",
@@ -594,7 +621,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-010"
+    "testId": "UI-FIELD-010",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-011",
@@ -676,7 +706,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-011"
+    "testId": "UI-FIELD-011",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-012",
@@ -758,7 +791,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-012"
+    "testId": "UI-FIELD-012",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-013",
@@ -863,7 +899,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-013"
+    "testId": "UI-FIELD-013",
+    "plannedSteps": [
+      "S081"
+    ]
   },
   {
     "id": "FIELD-014",
@@ -951,7 +990,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-014"
+    "testId": "UI-FIELD-014",
+    "plannedSteps": [
+      "S084"
+    ]
   },
   {
     "id": "FIELD-015",
@@ -1002,7 +1044,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-015"
+    "testId": "UI-FIELD-015",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-016",
@@ -1041,7 +1087,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-016"
+    "testId": "UI-FIELD-016",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-017",
@@ -1080,7 +1130,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-017"
+    "testId": "UI-FIELD-017",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-018",
@@ -1119,7 +1173,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-018"
+    "testId": "UI-FIELD-018",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-019",
@@ -1149,7 +1207,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-019"
+    "testId": "UI-FIELD-019",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-020",
@@ -1200,7 +1262,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-020"
+    "testId": "UI-FIELD-020",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-021",
@@ -1230,7 +1296,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-021"
+    "testId": "UI-FIELD-021",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-022",
@@ -1262,7 +1332,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-022"
+    "testId": "UI-FIELD-022",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-023",
@@ -1294,7 +1368,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-023"
+    "testId": "UI-FIELD-023",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-024",
@@ -1326,7 +1404,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-024"
+    "testId": "UI-FIELD-024",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-025",
@@ -1358,7 +1440,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-025"
+    "testId": "UI-FIELD-025",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-026",
@@ -1390,7 +1476,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-026"
+    "testId": "UI-FIELD-026",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
   },
   {
     "id": "FIELD-027",
@@ -1420,7 +1510,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-027"
+    "testId": "UI-FIELD-027",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-028",
@@ -1450,7 +1543,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-028"
+    "testId": "UI-FIELD-028",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-029",
@@ -1482,7 +1578,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-029"
+    "testId": "UI-FIELD-029",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-030",
@@ -1514,7 +1613,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-030"
+    "testId": "UI-FIELD-030",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-031",
@@ -1546,7 +1648,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-031"
+    "testId": "UI-FIELD-031",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-032",
@@ -1576,7 +1681,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-032"
+    "testId": "UI-FIELD-032",
+    "plannedSteps": [
+      "S061"
+    ]
   },
   {
     "id": "FIELD-033",
@@ -1606,7 +1714,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-033"
+    "testId": "UI-FIELD-033",
+    "plannedSteps": [
+      "S061"
+    ]
   },
   {
     "id": "FIELD-034",
@@ -1649,7 +1760,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-034"
+    "testId": "UI-FIELD-034",
+    "plannedSteps": [
+      "S062"
+    ]
   },
   {
     "id": "FIELD-035",
@@ -1666,7 +1780,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-035"
+    "testId": "UI-FIELD-035",
+    "plannedSteps": [
+      "S065"
+    ]
   },
   {
     "id": "FIELD-036",
@@ -1704,7 +1821,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-036"
+    "testId": "UI-FIELD-036",
+    "plannedSteps": [
+      "S065"
+    ]
   },
   {
     "id": "FIELD-037",
@@ -1722,7 +1842,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-037"
+    "testId": "UI-FIELD-037",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-038",
@@ -1740,7 +1863,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-038"
+    "testId": "UI-FIELD-038",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-039",
@@ -1771,7 +1897,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-039"
+    "testId": "UI-FIELD-039",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-040",
@@ -1789,7 +1918,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-040"
+    "testId": "UI-FIELD-040",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-041",
@@ -1807,7 +1939,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-041"
+    "testId": "UI-FIELD-041",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-042",
@@ -1825,7 +1960,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-042"
+    "testId": "UI-FIELD-042",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-043",
@@ -1843,7 +1981,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-043"
+    "testId": "UI-FIELD-043",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-044",
@@ -1861,7 +2002,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-044"
+    "testId": "UI-FIELD-044",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-045",
@@ -1896,7 +2040,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-045"
+    "testId": "UI-FIELD-045",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-046",
@@ -1931,7 +2078,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-046"
+    "testId": "UI-FIELD-046",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-047",
@@ -1949,7 +2099,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-047"
+    "testId": "UI-FIELD-047",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-048",
@@ -1967,7 +2120,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-048"
+    "testId": "UI-FIELD-048",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-049",
@@ -1997,7 +2153,12 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-049"
+    "testId": "UI-FIELD-049",
+    "productionMeaning": "Fixture branch scenario only in TRACE; no forced branch override for REAL_JOB.",
+    "plannedSteps": [
+      "S036",
+      "S049"
+    ]
   },
   {
     "id": "FIELD-050",
@@ -2016,7 +2177,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-050"
+    "testId": "UI-FIELD-050",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
   },
   {
     "id": "FIELD-051",
@@ -2072,7 +2237,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-051"
+    "testId": "UI-FIELD-051",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
   },
   {
     "id": "FIELD-052",
@@ -2104,7 +2273,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-052"
+    "testId": "UI-FIELD-052",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
   },
   {
     "id": "FIELD-053",
@@ -2123,7 +2296,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-053"
+    "testId": "UI-FIELD-053",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
   },
   {
     "id": "FIELD-054",
@@ -2165,7 +2342,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-054"
+    "testId": "UI-FIELD-054",
+    "plannedSteps": [
+      "S049"
+    ]
   },
   {
     "id": "FIELD-055",
@@ -2199,7 +2379,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-055"
+    "testId": "UI-FIELD-055",
+    "plannedSteps": [
+      "S049"
+    ]
   },
   {
     "id": "FIELD-056",
@@ -2214,11 +2397,43 @@
       "workflow-manage",
       "settings"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P03",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-056"
+    "testId": "UI-FIELD-056",
+    "contextVariants": [
+      {
+        "context": "pick-element",
+        "ownerPhase": "P09",
+        "plannedSteps": [
+          "S083"
+        ],
+        "meaning": "Actual selector/element detail from snapshot."
+      },
+      {
+        "context": "workflow-manage",
+        "ownerPhase": "P04",
+        "plannedSteps": [
+          "S029"
+        ],
+        "meaning": "Workflow metadata, validated by its form."
+      },
+      {
+        "context": "settings",
+        "ownerPhase": "P03",
+        "plannedSteps": [
+          "S025",
+          "S017"
+        ],
+        "meaning": "Workspace setting with its own key and validation."
+      }
+    ],
+    "plannedSteps": [
+      "S025",
+      "S083",
+      "S029"
+    ]
   },
   {
     "id": "FIELD-057",
@@ -2235,7 +2450,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-057"
+    "testId": "UI-FIELD-057",
+    "plannedSteps": [
+      "S037"
+    ]
   },
   {
     "id": "FIELD-058",
@@ -2252,7 +2470,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-058"
+    "testId": "UI-FIELD-058",
+    "plannedSteps": [
+      "S037"
+    ]
   },
   {
     "id": "FIELD-059",
@@ -2269,7 +2490,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-059"
+    "testId": "UI-FIELD-059",
+    "plannedSteps": [
+      "S036"
+    ]
   },
   {
     "id": "FIELD-060",
@@ -2307,7 +2531,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-060"
+    "testId": "UI-FIELD-060",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
   },
   {
     "id": "FIELD-061",
@@ -2333,7 +2561,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-061"
+    "testId": "UI-FIELD-061",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
   },
   {
     "id": "FIELD-062",
@@ -2350,7 +2582,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-062"
+    "testId": "UI-FIELD-062",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
   },
   {
     "id": "FIELD-063",
@@ -2367,7 +2603,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-063"
+    "testId": "UI-FIELD-063",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
   },
   {
     "id": "FIELD-064",
@@ -2380,11 +2620,14 @@
     "observedIn": [
       "device-manager"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P08",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-064"
+    "testId": "UI-FIELD-064",
+    "plannedSteps": [
+      "S071"
+    ]
   },
   {
     "id": "FIELD-065",
@@ -2409,11 +2652,53 @@
       "review-result",
       "settings"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P03",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-065"
+    "testId": "UI-FIELD-065",
+    "referenceOptionsOnly": true,
+    "contextVariants": [
+      {
+        "context": "device-manager",
+        "ownerPhase": "P08",
+        "plannedSteps": [
+          "S071"
+        ],
+        "meaning": "USB/LAN transport, pairing state from actual device service."
+      },
+      {
+        "context": "process-options",
+        "ownerPhase": "P06",
+        "plannedSteps": [
+          "S050"
+        ],
+        "meaning": "Process options schema, not transport options reused from prototype."
+      },
+      {
+        "context": "review-result",
+        "ownerPhase": "P11",
+        "plannedSteps": [
+          "S101"
+        ],
+        "meaning": "Review resolution enums/evidence, never USB/LAN values."
+      },
+      {
+        "context": "settings",
+        "ownerPhase": "P03",
+        "plannedSteps": [
+          "S025",
+          "S017"
+        ],
+        "meaning": "Setting-specific options; no shared mutable select model."
+      }
+    ],
+    "plannedSteps": [
+      "S025",
+      "S071",
+      "S050",
+      "S101"
+    ]
   },
   {
     "id": "FIELD-066",
@@ -2447,7 +2732,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-066"
+    "testId": "UI-FIELD-066",
+    "plannedSteps": [
+      "S057"
+    ]
   },
   {
     "id": "FIELD-067",
@@ -2477,7 +2765,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-067"
+    "testId": "UI-FIELD-067",
+    "plannedSteps": [
+      "S057"
+    ]
   },
   {
     "id": "FIELD-068",
@@ -2494,7 +2785,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-068"
+    "testId": "UI-FIELD-068",
+    "plannedSteps": [
+      "S057"
+    ]
   },
   {
     "id": "FIELD-069",
@@ -2528,7 +2822,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-069"
+    "testId": "UI-FIELD-069",
+    "plannedSteps": [
+      "S050"
+    ]
   },
   {
     "id": "FIELD-070",
@@ -2558,7 +2855,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-070"
+    "testId": "UI-FIELD-070",
+    "plannedSteps": [
+      "S050"
+    ]
   },
   {
     "id": "FIELD-071",
@@ -2575,7 +2875,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-071"
+    "testId": "UI-FIELD-071",
+    "plannedSteps": [
+      "S050"
+    ]
   },
   {
     "id": "FIELD-072",
@@ -2592,7 +2895,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-072"
+    "testId": "UI-FIELD-072",
+    "plannedSteps": [
+      "S053"
+    ]
   },
   {
     "id": "FIELD-073",
@@ -2609,7 +2915,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-073"
+    "testId": "UI-FIELD-073",
+    "plannedSteps": [
+      "S053"
+    ]
   },
   {
     "id": "FIELD-074",
@@ -2626,7 +2935,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-074"
+    "testId": "UI-FIELD-074",
+    "plannedSteps": [
+      "S053"
+    ]
   },
   {
     "id": "FIELD-075",
@@ -2643,7 +2955,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-075"
+    "testId": "UI-FIELD-075",
+    "plannedSteps": [
+      "S053"
+    ]
   },
   {
     "id": "FIELD-076",
@@ -2656,11 +2971,14 @@
     "observedIn": [
       "review-result"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P11",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-076"
+    "testId": "UI-FIELD-076",
+    "plannedSteps": [
+      "S101"
+    ]
   },
   {
     "id": "FIELD-077",
@@ -2673,11 +2991,14 @@
     "observedIn": [
       "review-result"
     ],
-    "ownerPhase": "P06",
+    "ownerPhase": "P11",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-077"
+    "testId": "UI-FIELD-077",
+    "plannedSteps": [
+      "S101"
+    ]
   },
   {
     "id": "FIELD-078",
@@ -2703,7 +3024,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-078"
+    "testId": "UI-FIELD-078",
+    "plannedSteps": [
+      "S023"
+    ]
   },
   {
     "id": "FIELD-079",
@@ -2729,11 +3053,16 @@
     "observedIn": [
       "settings"
     ],
-    "ownerPhase": "P03",
+    "ownerPhase": "P07",
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-079"
+    "testId": "UI-FIELD-079",
+    "productionMeaning": "Workspace default for NEW Processes only; actual overdue policy persists per Process. Does not rewrite existing jobs/process policies.",
+    "plannedSteps": [
+      "S061",
+      "S017"
+    ]
   },
   {
     "id": "FIELD-080",
@@ -2752,7 +3081,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-080"
+    "testId": "UI-FIELD-080",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-081",
@@ -2771,7 +3103,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-081"
+    "testId": "UI-FIELD-081",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-082",
@@ -2790,7 +3125,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-082"
+    "testId": "UI-FIELD-082",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-083",
@@ -2809,7 +3147,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-083"
+    "testId": "UI-FIELD-083",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-084",
@@ -2828,7 +3169,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-084"
+    "testId": "UI-FIELD-084",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-085",
@@ -2847,7 +3191,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-085"
+    "testId": "UI-FIELD-085",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-086",
@@ -2866,7 +3213,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-086"
+    "testId": "UI-FIELD-086",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-087",
@@ -2885,7 +3235,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-087"
+    "testId": "UI-FIELD-087",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-088",
@@ -2904,7 +3257,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-088"
+    "testId": "UI-FIELD-088",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-089",
@@ -2923,7 +3279,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-089"
+    "testId": "UI-FIELD-089",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-090",
@@ -2942,7 +3301,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-090"
+    "testId": "UI-FIELD-090",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-091",
@@ -2961,7 +3323,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-091"
+    "testId": "UI-FIELD-091",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-092",
@@ -2980,7 +3345,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-092"
+    "testId": "UI-FIELD-092",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-093",
@@ -2999,7 +3367,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-093"
+    "testId": "UI-FIELD-093",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-094",
@@ -3018,7 +3389,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-094"
+    "testId": "UI-FIELD-094",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-095",
@@ -3037,7 +3411,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-095"
+    "testId": "UI-FIELD-095",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-096",
@@ -3056,7 +3433,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-096"
+    "testId": "UI-FIELD-096",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-097",
@@ -3075,7 +3455,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-097"
+    "testId": "UI-FIELD-097",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-098",
@@ -3094,7 +3477,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-098"
+    "testId": "UI-FIELD-098",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-099",
@@ -3113,7 +3499,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-099"
+    "testId": "UI-FIELD-099",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-100",
@@ -3132,7 +3521,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-100"
+    "testId": "UI-FIELD-100",
+    "plannedSteps": [
+      "S060"
+    ]
   },
   {
     "id": "FIELD-101",
@@ -3151,7 +3543,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-101"
+    "testId": "UI-FIELD-101",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-102",
@@ -3168,7 +3564,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-102"
+    "testId": "UI-FIELD-102",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-103",
@@ -3185,7 +3585,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-103"
+    "testId": "UI-FIELD-103",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-104",
@@ -3202,7 +3606,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-104"
+    "testId": "UI-FIELD-104",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-105",
@@ -3219,7 +3627,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-105"
+    "testId": "UI-FIELD-105",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-106",
@@ -3236,7 +3648,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-106"
+    "testId": "UI-FIELD-106",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-107",
@@ -3253,7 +3669,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-107"
+    "testId": "UI-FIELD-107",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-108",
@@ -3270,7 +3690,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-108"
+    "testId": "UI-FIELD-108",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-109",
@@ -3287,7 +3711,11 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-109"
+    "testId": "UI-FIELD-109",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   },
   {
     "id": "FIELD-110",
@@ -3304,6 +3732,10 @@
     "productionStatus": "PLANNED",
     "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
     "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
-    "testId": "UI-FIELD-110"
+    "testId": "UI-FIELD-110",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
   }
 ]
