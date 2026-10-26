@@ -15,7 +15,25 @@ Baseline hiện tại: [Source Plan V2.1](docs/source-plan/v2/00_START_HERE.md),
 - [15 phase / 125 bước triển khai](docs/source-plan/v2/09_PHASE_PLAN.md).
 - [124 lệnh giao diện](docs/source-plan/v2/UI_ACTION_MATRIX.md).
 
-Trạng thái: tài liệu, reference, HTML review và evidence browser đã có; ứng dụng production chưa được scaffold. Thiết bị trong HTML là dữ liệu mẫu, chưa có chứng nhận Android/automation thực.
+Trạng thái hiện tại: đã bắt đầu ứng dụng React/Electron nhiều module, contracts/domain, SQLite và editor lưu thật. Android automation/stream/routing chưa có chứng nhận. HTML Compact và ZIP ngày 26/10 trước code là reference lịch sử; dùng code checkout mới nhất và `docs/implementation/` để tiếp tục.
+
+## Phát triển và kiểm tra
+
+Node 24.19+ (24.x), pnpm 11.25.0. Trên cloud:
+
+```sh
+bash scripts/setup-cloud.sh
+pnpm dev
+```
+
+`pnpm dev` build rồi chạy authoring host trên loopback. Dữ liệu mặc định `.data/studio.sqlite`; có thể đặt `AUTOREELS_DATA_DIR` để dùng data root riêng. `node tools/smoke-host.mjs` kiểm tra health + request bootstrap thật. Mở Electron trên máy có giao diện bằng `pnpm desktop`.
+
+```sh
+pnpm check
+pnpm test:ui
+```
+
+Browser tests dùng DB tạm độc lập; cloud có Chromium sẵn thì đặt `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. Trên máy khác cài Chromium của Playwright bằng `pnpm exec playwright install chromium`. Windows DPI/native/hardware checks có gates riêng, chưa chạy không ghi PASS.
 
 Kiểm tra tính nhất quán bộ kế hoạch:
 

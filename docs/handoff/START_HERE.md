@@ -2,6 +2,8 @@
 
 Snapshot ngày 26/10/2026: AutoReels Studio, baseline V2.1, execution plan 1.0. Gói này lưu các file dự án để tiếp tục làm việc độc lập với lịch sử cuộc chat. Tại thời điểm bàn giao có tài liệu, reference, HTML review và công cụ kiểm tra; **chưa có ứng dụng Electron production hoặc automation Android đã nghiệm thu**.
 
+Đoạn trên mô tả snapshot ban đầu trước code. Checkout mới đã bắt đầu implementation React/Electron/SQLite/editor; đọc `docs/implementation/PROGRESS.md` và code hiện có để lấy trạng thái mới nhất. Các ZIP trong archives là snapshots theo commit, không tự cập nhật khi repo có code mới.
+
 ## 1. Mở từ GitHub
 
 Repository: `danhgold7979-cyber/fonesi-W`. Nhánh công việc: `feat/studio-workspace`; main chưa được merge các thay đổi này. Việc đẩy snapshot chỉ thành công khi GitHub trả kết quả thành công; ZIP và commit local không tự chứng minh đã upload.

@@ -2,6 +2,8 @@
 
 Execution plan 1.0, baseline sản phẩm V2.1, ngày 26/10/2026. Đây là bản chi tiết hóa phạm vi đã chốt, không thêm phase và không đổi reference. **15 phase, 125 đơn vị nghiệm thu, 375 đầu việc cụ thể, 250 tình huống kiểm tra thành công/thất bại dự kiến.** Số tình huống trong plan không phải số tests đã chạy.
 
+Implementation đã bắt đầu sau khi lập bản này. Theo dõi code/evidence hiện tại ở [progress](../../implementation/PROGRESS.md); các mô tả trạng thái ban đầu dưới đây là baseline trước code, không thay thế kiểm kê checkout mới nhất.
+
 Đọc cùng [runbook từng bước](17_STEP_RUNBOOK.md), [các điểm cần kiểm chứng](18_READINESS_AND_RISKS.md), [plan theo phase](09_PHASE_PLAN.md) và [quy tắc nghiệm thu](10_ACCEPTANCE_GATES.md). Dữ liệu thực thi ở `execution-runbook.json`; chức năng → bước → test ở `feature-test-map.json`.
 
 ## 1. Đã clear đến đâu

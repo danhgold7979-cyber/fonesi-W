@@ -9,7 +9,7 @@
   "preview": "docs/previews/AutoReels-Studio-Compact.html",
   "entrypoint": "docs/source-plan/v2/00_START_HERE.md",
   "previewChecksPassed": 20,
-  "productionApplication": "NOT_IMPLEMENTED",
+  "productionApplication": "IMPLEMENTATION_IN_PROGRESS",
   "hardwareAcceptance": "NOT_RUN",
   "unreadSource": "FULL-TRANSFER ZIP exceeds executor transfer limit of 32 MiB",
   "executionPlanVersion": "1.0",
@@ -17,6 +17,8 @@
   "stepRunbook": "docs/source-plan/v2/17_STEP_RUNBOOK.md",
   "plannedTaskCount": 375,
   "plannedScenarioCount": 250,
+  "packageScope": "REVIEW_DOCUMENTS_AND_PREVIEW_HELPERS_ONLY",
+  "implementationProgress": "docs/implementation/PROGRESS.md",
   "files": [
     {
       "path": ".gitignore",
@@ -25,13 +27,13 @@
     },
     {
       "path": "AGENTS.md",
-      "bytes": 2817,
-      "sha256": "dcf24dc5d1fd8af7db4e4c7f1ab724989b7256feac7109574a4797af3819e2f6"
+      "bytes": 3447,
+      "sha256": "a156c5ccdc8eee23855581fe65d35956bedb3bee950f6957fb33032f2b4173bf"
     },
     {
       "path": "README.md",
-      "bytes": 2146,
-      "sha256": "3f589436107dfe440fa1ed06f8c5f5f5f03a566df4b4d758819a4166f7b665bf"
+      "bytes": 3067,
+      "sha256": "0b2f4db5b085fef24b78cd7b5fbdbe29a9a0ec05c79a3daa9ceee2287e6a5065"
     },
     {
       "path": "docs/analysis/autoreels-v1.7/ANALYSIS.md",
@@ -154,14 +156,59 @@
       "sha256": "38ad80b2c20a850975e4d839b513cccdaff38853c0eade2564b01c8557c5ce8f"
     },
     {
+      "path": "docs/evidence/implementation/ui/inspector-1600.png",
+      "bytes": 115489,
+      "sha256": "c26f2362cfe8d61bdd918d7ee15f5c57763417d130ed7a7845abb0b244dbf9ba"
+    },
+    {
       "path": "docs/handoff/RESUME_PROMPT.md",
       "bytes": 2141,
       "sha256": "5ccbbd20bd34be191fef838a4a8a5491bfac9e253628b1cb4fa279e5df9f8fc6"
     },
     {
       "path": "docs/handoff/START_HERE.md",
-      "bytes": 6457,
-      "sha256": "446a56478962fed2eb799360c36a448902023356e9db3f1db2a4e9cd2ea14807"
+      "bytes": 6796,
+      "sha256": "dd2da22ef491b5fcd2b97560c0df9ed7248958c02b5d3fe6108d5261397685f2"
+    },
+    {
+      "path": "docs/implementation/ADR-001-SQLITE-AND-CSP.md",
+      "bytes": 1363,
+      "sha256": "79b60b215e0f91ccab65888184d1bdad05a85f3c004b401f5b019ecf76d02cef"
+    },
+    {
+      "path": "docs/implementation/P00_PLAN.md",
+      "bytes": 1794,
+      "sha256": "1329ce7641213f223d70dcd236be6c3eac9ede99d3979b264bde643eca997eb7"
+    },
+    {
+      "path": "docs/implementation/P01_PLAN.md",
+      "bytes": 1865,
+      "sha256": "730f53a038b734b130933fb7598ba6e11b955541e855537dab669ef49c2da5df"
+    },
+    {
+      "path": "docs/implementation/P02_PLAN.md",
+      "bytes": 2171,
+      "sha256": "8cc67d05012386dc93179fe435585e4ad3630c6aa2593a3a7154c1de7b1d2c45"
+    },
+    {
+      "path": "docs/implementation/P03_PLAN.md",
+      "bytes": 1730,
+      "sha256": "3c5d400be01fb363457bc1a9a00f39a271008805dfd4f3f0e40111a7de91b166"
+    },
+    {
+      "path": "docs/implementation/P04_PLAN.md",
+      "bytes": 1620,
+      "sha256": "b1a948aecff206b98db1ac04bfc3a8dbf6295cbf4fc12af940ed3e1b6c3e9b6e"
+    },
+    {
+      "path": "docs/implementation/P05_PLAN.md",
+      "bytes": 1513,
+      "sha256": "702dc40132ad28b6f599f5e44e698083642064f27b009b8628c2334ff80d4abb"
+    },
+    {
+      "path": "docs/implementation/PROGRESS.md",
+      "bytes": 4003,
+      "sha256": "c48ec0c44fcaa6678a6a7c37cf0855e88e42debc2629fc2c4e3d57e56180eb59"
     },
     {
       "path": "docs/previews/AutoReels-Studio-Compact.html",
@@ -430,8 +477,8 @@
     },
     {
       "path": "docs/source-plan/v2/00_START_HERE.md",
-      "bytes": 5859,
-      "sha256": "f777f7dfcc90637f7dd995f982365acdc2fed0050bad81886c2faec05a3d909c"
+      "bytes": 5959,
+      "sha256": "226cb95382abc125d4b73a825293a12947d81b6d140e05d2d9a71d2ac2c5226c"
     },
     {
       "path": "docs/source-plan/v2/01_REVIEW_REPORT.md",
@@ -490,8 +537,8 @@
     },
     {
       "path": "docs/source-plan/v2/12_IMPLEMENTATION_START.md",
-      "bytes": 4155,
-      "sha256": "f1addad0f39fae3ba7fea2f217eac36755a1ed3df14fc604e2ac1858d4e5e53c"
+      "bytes": 4167,
+      "sha256": "289ef0aa8bb1ceddaf47a077063833448aa6c4cc6c950e01fb264f6e431eac8f"
     },
     {
       "path": "docs/source-plan/v2/13_MIGRATION_MAP.md",
@@ -510,8 +557,8 @@
     },
     {
       "path": "docs/source-plan/v2/16_MASTER_EXECUTION_PLAN.md",
-      "bytes": 16497,
-      "sha256": "06589ad7dde74f6c4add3ee9cebeee9e0b6ddc77ee5786cece5a3d729f007126"
+      "bytes": 16777,
+      "sha256": "df1d262bbf566e6882ddf164a2087d584f453411f7f7364a51fb2caf264817bd"
     },
     {
       "path": "docs/source-plan/v2/17_STEP_RUNBOOK.md",
@@ -520,8 +567,8 @@
     },
     {
       "path": "docs/source-plan/v2/18_READINESS_AND_RISKS.md",
-      "bytes": 5963,
-      "sha256": "a1feb5cd508f3aac8e8976b4ccd7a67e1b5357eae084ff61a350e237158060be"
+      "bytes": 6355,
+      "sha256": "00aee4c30d0af8495d934b2ae0edd4d1850c6e9a8cc74f11806cebd400cf63f1"
     },
     {
       "path": "docs/source-plan/v2/NODE_CATALOG.md",
@@ -570,8 +617,8 @@
     },
     {
       "path": "docs/source-plan/v2/evidence/execution-plan-validation.json",
-      "bytes": 503,
-      "sha256": "3faed18242fa590c7f9b7e2464509cf1f18b0af624bf2615a29c353c318f4cea"
+      "bytes": 529,
+      "sha256": "d33cbf590d669c98f6f0c589101bf6fcd182bbe548c6500ab8898293422e3824"
     },
     {
       "path": "docs/source-plan/v2/evidence/explorer-check.json",
@@ -580,8 +627,8 @@
     },
     {
       "path": "docs/source-plan/v2/evidence/plan-validation.json",
-      "bytes": 3343,
-      "sha256": "87e9751e7c5864c035a7d886c5d5553ed51796c9325cf249e2b9c51a8c56a8c3"
+      "bytes": 3369,
+      "sha256": "f359b35fe56af82fb2f9bbddaa26f420057888b103c9c516989bc5c103119e13"
     },
     {
       "path": "docs/source-plan/v2/evidence/prototype-audit.json",
@@ -730,13 +777,13 @@
     },
     {
       "path": "docs/source-plan/v2/tools/validate_execution_plan.py",
-      "bytes": 4219,
-      "sha256": "5c83bed0fbc1e9cfc80ab854b4c88fd56597c48ea5df285cbd168ee7bf541a2f"
+      "bytes": 4245,
+      "sha256": "3095a4886b7ddf1ea03bbb9d6a59d765b6ef440efcadee2ed612ae48047a8471"
     },
     {
       "path": "docs/source-plan/v2/tools/validate_plan.py",
-      "bytes": 8089,
-      "sha256": "3582dccee03ef194ffca59b4fccd69a89c3c39df7ea8e4127456620f55f1fe5b"
+      "bytes": 8115,
+      "sha256": "ad8a3df49f8a9692e18914c4de27d3a9b898e544fd62ab530cc76e7de5ea2354"
     },
     {
       "path": "docs/source-plan/v2/ui-actions.csv",
@@ -780,8 +827,8 @@
     },
     {
       "path": "tools/preview/package_review.py",
-      "bytes": 3309,
-      "sha256": "c634b458d3c5119156790c21805492c6f4c2887727ec4da2ca914a7ca9146dfd"
+      "bytes": 3596,
+      "sha256": "a4555f5e1d698d6d2f7f9d2b9aeae4b6c181dbdd635c1e76163dae2fd75d2bf4"
     },
     {
       "path": "tools/preview/test_compact.py",

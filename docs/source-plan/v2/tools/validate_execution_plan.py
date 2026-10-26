@@ -60,7 +60,7 @@ def validate():
               'taskCount': len(tasks), 'plannedScenarioCount': sum(len(s['testScenarios']) for s in steps.values()),
               'featureCount': len(mapped), 'mappingSizes': dict(Counter(len(f['plannedSteps']) for f in feature_map)),
               'dependencyGraph': 'ACYCLIC', 'recognitionAndGestureProviders': 'MAPPED_NOT_IMPLEMENTED',
-              'productionApplicationTests': 'NOT_RUN_NO_PRODUCTION_APP', 'windowsAndroidTests': 'NOT_RUN'}
+              'productionApplicationTests': 'NOT_EVALUATED_BY_PLAN_CHECKER', 'windowsAndroidTests': 'NOT_EVALUATED_BY_PLAN_CHECKER'}
     (ROOT / 'evidence/execution-plan-validation.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     print(json.dumps(report, ensure_ascii=False, indent=2))
 

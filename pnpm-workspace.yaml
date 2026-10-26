@@ -1,0 +1,10 @@
+packages:
+  - packages/*
+  - apps/*
+
+storeDir: .cache/pnpm-store
+cacheDir: .cache/pnpm-cache
+
+allowBuilds:
+  esbuild: true
+  electron: true

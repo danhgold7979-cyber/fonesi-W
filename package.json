@@ -1,0 +1,41 @@
+{
+  "name": "autoreels-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "pnpm": "11.25.0"
+  },
+  "scripts": {
+    "generate": "node tools/generate-contracts.mjs",
+    "check:generated": "node tools/generate-contracts.mjs --check",
+    "build": "tsc -b && node tools/copy-runtime.mjs && vite build --config apps/desktop/vite.config.ts",
+    "typecheck": "tsc -b --pretty false && node tools/copy-runtime.mjs && tsc -p apps/desktop/tsconfig.renderer.json",
+    "lint": "eslint \"packages/**/*.{ts,tsx}\" \"apps/**/*.{ts,tsx,cts}\" \"tools/**/*.mjs\" --no-warn-ignored",
+    "dev": "pnpm build && pnpm serve",
+    "serve": "node apps/desktop/dist/host/host/server.js",
+    "desktop": "pnpm build && electron apps/desktop",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "pnpm build && playwright test",
+    "check": "pnpm check:generated && pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "check:plan": "python docs/source-plan/v2/tools/validate_plan.py && python docs/source-plan/v2/tools/validate_execution_plan.py"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "@vitejs/plugin-react": "6.1.2",
+    "ajv": "8.20.0",
+    "electron": "45.0.0",
+    "eslint": "10.13.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

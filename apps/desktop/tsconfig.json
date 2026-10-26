@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist/host",
+    "tsBuildInfoFile": "dist/.host.tsbuildinfo"
+  },
+  "references": [
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/domain" },
+    { "path": "../../packages/database" },
+    { "path": "../../packages/editor" },
+    { "path": "../../packages/workflow-engine" }
+  ],
+  "include": ["src/host/**/*.ts", "src/main/**/*.ts", "src/preload.cts"]
+}

@@ -28,6 +28,9 @@ def package(destination):
                     plannedTaskCount=runbook['taskCount'],
                     plannedScenarioCount=sum(len(s['testScenarios']) for s in runbook['steps']),
                     previewChecksPassed=len(preview_report['checks']))
+    manifest.update(packageScope='REVIEW_DOCUMENTS_AND_PREVIEW_HELPERS_ONLY',
+                    productionApplication='IMPLEMENTATION_IN_PROGRESS' if (ROOT / 'package.json').exists() else 'NOT_IMPLEMENTED',
+                    implementationProgress='docs/implementation/PROGRESS.md')
     paths = [ROOT / p for p in ['README.md', 'AGENTS.md', '.gitignore']]
     paths += list((ROOT / 'docs').rglob('*')) + list((ROOT / 'tools/preview').rglob('*'))
     paths = sorted({p for p in paths if p.is_file() and not p.is_symlink()

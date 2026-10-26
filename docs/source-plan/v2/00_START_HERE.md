@@ -10,7 +10,7 @@ Baseline ngày 26/10/2026, múi giờ Việt Nam. Yêu cầu hiện tại: rà s
 
 - **Đã hoàn thành đầu vào phân tích:** ZIP V1.7 gồm 41 file và HTML Studio Workspace mới; 42 file reference được lưu nguyên byte và có checksum.
 - **Đã thực hiện browser audit:** 6 route, 101 trạng thái khảo sát, 124 lệnh UI xuất hiện trong dispatcher; có registry fields, gestures và 40 loại node.
-- **Chưa có source production:** chưa scaffold React/Electron, chưa có backend Android hoặc bằng chứng automation thật.
+- **Implementation đã bắt đầu:** có React/Electron, contracts/domain/SQLite và editor lưu thật; xem [tiến độ hiện tại](../../implementation/PROGRESS.md). Backend Android và automation thật chưa nghiệm thu.
 - **Kế hoạch mới:** 15 phase / 125 bước nghiệm thu, thay kế hoạch 9 phase / 60 bước lập cho phạm vi V1.7 cũ.
 - **HTML review đã có:** [Studio Compact](../../previews/AutoReels-Studio-Compact.html), có tiện ích thao tác gọn và dữ liệu minh họa; không phải app production.
 - **Có thể bắt đầu nền tảng:** P00–P07 phát triển/kiểm thử logic và authoring trên cloud; P08 trở đi cần Windows/Android cho nghiệm thu phần tương ứng.

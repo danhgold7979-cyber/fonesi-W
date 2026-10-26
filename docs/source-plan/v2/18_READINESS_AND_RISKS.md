@@ -2,6 +2,8 @@
 
 Ngày 26/10/2026. **Đã clear nghiệp vụ và bố cục để bắt đầu code; chưa có bằng chứng production/Windows/Android.** Các mục sau có owner, thời điểm kiểm tra và cách xử lý, không phải danh sách câu hỏi yêu cầu người dùng chốt lại những quyết định đã chấp thuận.
 
+Đây là risk register tại lúc lập plan. Toolchain và SQLite/Electron/Linux đã có implementation/checks ở checkpoint sau; xem [progress](../../implementation/PROGRESS.md) và [ADR lựa chọn driver/CSP](../../implementation/ADR-001-SQLITE-AND-CSP.md). Windows/Android và các capabilities chưa implement vẫn UNRUN; không reset source vì bảng trạng thái lịch sử.
+
 | ID | Trạng thái thực | Chặn phần nào | Kiểm chứng / xử lý | Owner bước |
 |---|---|---|---|---|
 | RD-01 | FULL-TRANSFER ZIP NOT_READ vì giới hạn 32 MiB | Claim kế thừa nội dung/source/DB trong gói đó | Baseline đã chốt xây mới từ nguồn đã đọc; nếu cần source cũ phải kiểm kê bổ sung trước ghi đè/migrate | S001/S003 |

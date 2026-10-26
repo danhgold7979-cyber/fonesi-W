@@ -1,6 +1,6 @@
 # Increment đầu tiên sau khi chuẩn hóa kế hoạch
 
-Current scope: source-plan V2.1 và HTML Compact review có tiện ích tương tác. App implementation chưa bắt đầu. Người dùng đã chốt C01–C12 và cho tiến hành code, yêu cầu chi tiết hóa toàn tool trước. Đọc [master execution plan](16_MASTER_EXECUTION_PLAN.md), [runbook](17_STEP_RUNBOOK.md) và [risks](18_READINESS_AND_RISKS.md); sau đó bắt đầu increment nền trong phạm vi đã ủy quyền, không hỏi chốt lại C01–C12. Không ghép HTML review vào Electron rồi coi xong.
+Implementation hiện đã bắt đầu; xem [tiến độ thật và phần còn thiếu](../../implementation/PROGRESS.md). Nội dung dưới giữ thứ tự increment nền đã chốt, không phải lệnh scaffold lại source đang có. Người dùng yêu cầu trước mỗi phase phải ghi plan chi tiết rồi code liên tục. Đọc master/runbook, plan trong `docs/implementation/` và kiểm kê code hiện tại trước khi tiếp tục; không hỏi chốt lại C01–C12. HTML review không là ứng dụng production.
 
 ## Increment A — repository/contracts baseline
 

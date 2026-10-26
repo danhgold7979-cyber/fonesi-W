@@ -1,0 +1,534 @@
+import { useEffect, useRef, useState } from 'react';
+import type {
+  AppDefinition,
+  WorkflowSummary,
+  ProcessDefinition,
+  ContentItem,
+  FieldDefinition,
+  JsonValue,
+} from '@autoreels/contracts';
+import { api } from './api.js';
+import { Dialog, Empty } from './components.js';
+
+interface Props {
+  apps: AppDefinition[];
+  workflows: WorkflowSummary[];
+  processes: ProcessDefinition[];
+  notify: (message: string) => void;
+  refresh: () => Promise<void>;
+  registerSave: (save: (() => Promise<unknown>) | null) => void;
+}
+function newProcess(appId: string): ProcessDefinition {
+  return {
+    id: 'process_' + crypto.randomUUID().replaceAll('-', ''),
+    name: 'Tiến trình mới',
+    appId,
+    workflowId: null,
+    workflowVersionId: null,
+    deviceId: null,
+    accountId: null,
+    targetId: null,
+    revision: 0,
+    archived: false,
+    schedule: {
+      timezone: 'Asia/Ho_Chi_Minh',
+      startDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      slots: ['08:00', '12:00', '19:00'],
+      weekdays: [1, 2, 3, 4, 5, 6, 7],
+      overduePolicy: 'NEXT_FUTURE_SLOT',
+      jitterMinutes: 0,
+    },
+  };
+}
+export function Processes(props: Props) {
+  const [current, setCurrent] = useState<ProcessDefinition | null>(null),
+    [rows, setRows] = useState<ContentItem[]>([]),
+    [schema, setSchema] = useState<FieldDefinition[]>([]),
+    [dirty, setDirty] = useState(false),
+    [isNew, setIsNew] = useState(false),
+    [versions, setVersions] = useState<Awaited<ReturnType<typeof api.versions>>>([]);
+  const [rowModal, setRowModal] = useState<ContentItem | null>(null),
+    [rowJson, setRowJson] = useState('{}'),
+    [filter, setFilter] = useState('');
+  const rowGeneration = useRef(0),
+    schemaGeneration = useRef(0),
+    edits = useRef(0),
+    context = useRef(current);
+  context.current = current;
+  const live = useRef({ current, dirty, isNew });
+  live.current = { current, dirty, isNew };
+  const saving = useRef<Promise<unknown> | null>(null);
+  const saveRef = useRef<() => Promise<unknown>>(async () => undefined);
+  async function save(): Promise<ProcessDefinition | null> {
+    if (saving.current) {
+      await saving.current;
+      return save();
+    }
+    const state = live.current;
+    if (!state.current || !state.dirty) return state.current;
+    const snapshot = state.current,
+      id = snapshot.id,
+      at = edits.current;
+    const promise = api
+      .saveProcess(snapshot, state.isNew ? null : snapshot.revision)
+      .then(async (result) => {
+        if (live.current.current?.id === id) {
+          const changed = edits.current !== at,
+            next = changed ? { ...live.current.current, revision: result.revision } : result;
+          live.current = { current: next, dirty: changed, isNew: false };
+          context.current = next;
+          setCurrent(next);
+          setDirty(changed);
+          setIsNew(false);
+        }
+        await props.refresh();
+        return result;
+      })
+      .finally(() => {
+        saving.current = null;
+      });
+    saving.current = promise;
+    const result = await promise;
+    return live.current.dirty ? save() : result;
+  }
+  saveRef.current = save;
+  useEffect(() => {
+    props.registerSave(() => saveRef.current());
+    return () => props.registerSave(null);
+  }, [props.registerSave]);
+  async function select(process: ProcessDefinition) {
+    try {
+      await save();
+      const token = ++rowGeneration.current;
+      context.current = process;
+      live.current = { current: process, dirty: false, isNew: false };
+      setCurrent(process);
+      setDirty(false);
+      setIsNew(false);
+      setRows([]);
+      const data = await api.content(process.id);
+      if (token === rowGeneration.current && context.current?.id === process.id) setRows(data);
+    } catch (e) {
+      props.notify(e instanceof Error ? e.message : 'Không thể đổi tiến trình.');
+    }
+  }
+  useEffect(() => {
+    const token = ++schemaGeneration.current;
+    if (!current?.workflowId) {
+      setSchema([]);
+      setVersions([]);
+      return;
+    }
+    void Promise.all([api.loadWorkflow(current.workflowId), api.versions(current.workflowId)])
+      .then(([draft, list]) => {
+        if (token !== schemaGeneration.current) return;
+        setVersions(list);
+        const pinned = list.find((v) => v.id === current.workflowVersionId);
+        setSchema((pinned?.bundle ?? draft.bundle).inputs.filter((f) => f.scope === 'row'));
+      })
+      .catch((e) => props.notify(String(e)));
+  }, [current?.workflowId, current?.workflowVersionId]);
+  function edit(patch: Partial<ProcessDefinition>) {
+    if (!live.current.current) return;
+    const next = { ...live.current.current, ...patch };
+    edits.current++;
+    live.current = { ...live.current, current: next, dirty: true };
+    context.current = next;
+    setCurrent(next);
+    setDirty(true);
+  }
+  const filtered = rows.filter((r) =>
+    JSON.stringify(r.fields).toLocaleLowerCase('vi').includes(filter.toLocaleLowerCase('vi')),
+  );
+  return (
+    <div className="page process-page">
+      <div className="page-heading">
+        <div>
+          <h1>Tiến trình</h1>
+          <p>Mỗi tiến trình có app, workflow, dữ liệu và lịch riêng.</p>
+        </div>
+        <div className="actions">
+          <button
+            onClick={() => {
+              void save().then(() => {
+                setCurrent(newProcess(props.apps[0]!.id));
+                setRows([]);
+                setIsNew(true);
+                setDirty(true);
+              });
+            }}
+          >
+            ＋ Tiến trình mới
+          </button>
+          <button
+            className="primary"
+            disabled={!current || !dirty}
+            onClick={() =>
+              void save()
+                .then(() => props.notify('Đã lưu tiến trình.'))
+                .catch((e) => props.notify(e instanceof Error ? e.message : 'Lưu lỗi.'))
+            }
+          >
+            ▣ Lưu tiến trình
+          </button>
+        </div>
+      </div>
+      <div className="process-selector">
+        <label>
+          Tiến trình
+          <select
+            aria-label="Chọn tiến trình"
+            value={current?.id ?? ''}
+            onChange={(e) => {
+              const p = props.processes.find((p) => p.id === e.target.value);
+              if (p) void select(p);
+            }}
+          >
+            <option value="">Chọn tiến trình</option>
+            {isNew && current && <option value={current.id}>{current.name} · mới</option>}
+            {props.processes.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className="badge">
+          {dirty ? 'Chưa lưu' : current ? 'Đã lưu r' + current.revision : 'Chưa chọn'}
+        </span>
+      </div>
+      {!current ? (
+        <Empty title="Chưa chọn tiến trình">
+          Tạo tiến trình để gán workflow, khai báo nguồn dữ liệu và cấu hình lịch. Có thể lưu draft
+          khi chưa gán điện thoại.
+        </Empty>
+      ) : (
+        <>
+          <div className="surface">
+            <div className="form-grid">
+              <label className="field">
+                <span>Tên tiến trình</span>
+                <input
+                  aria-label="Tên tiến trình"
+                  value={current.name}
+                  onChange={(e) => edit({ name: e.target.value })}
+                />
+              </label>
+              <label className="field">
+                <span>Ứng dụng</span>
+                <select
+                  value={current.appId}
+                  onChange={(e) =>
+                    edit({
+                      appId: e.target.value,
+                      workflowId: null,
+                      workflowVersionId: null,
+                      accountId: null,
+                      targetId: null,
+                    })
+                  }
+                >
+                  {props.apps.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Workflow</span>
+                <select
+                  aria-label="Workflow tiến trình"
+                  value={current.workflowId ?? ''}
+                  onChange={(e) =>
+                    edit({ workflowId: e.target.value || null, workflowVersionId: null })
+                  }
+                >
+                  <option value="">Chưa gán workflow</option>
+                  {props.workflows
+                    .filter((w) => w.appId === current.appId)
+                    .map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Phiên bản</span>
+                <select
+                  aria-label="Phiên bản tiến trình"
+                  value={current.workflowVersionId ?? ''}
+                  onChange={(e) => edit({ workflowVersionId: e.target.value || null })}
+                >
+                  <option value="">Draft · chưa dùng cho real job</option>
+                  {versions.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      v{v.number} · {v.hash.slice(0, 8)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Điện thoại</span>
+                <select disabled>
+                  <option>Chưa kết nối thiết bị</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Tài khoản / đích</span>
+                <input disabled value="Cần discovery/verification trên máy thật" />
+              </label>
+            </div>
+          </div>
+          <div className="section-heading">
+            <h2>Nội dung</h2>
+            <div className="actions">
+              <input
+                aria-label="Tìm nội dung"
+                placeholder="Tìm nội dung…"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+              <button
+                disabled={isNew || !current.workflowId}
+                onClick={() => {
+                  const fields: Record<string, JsonValue> = {};
+                  for (const f of schema)
+                    if (f.type === 'number') fields[f.key] = 0;
+                    else if (f.type === 'boolean') fields[f.key] = false;
+                    else if (f.type === 'text') fields[f.key] = '';
+                    else if (['list', 'file[]'].includes(f.type)) fields[f.key] = [];
+                  const row = {
+                    id: 'content_' + crypto.randomUUID().replaceAll('-', ''),
+                    processId: current.id,
+                    revision: 0,
+                    fields,
+                    assetIds: [],
+                    ignored: false,
+                  };
+                  setRowModal(row);
+                  setRowJson(JSON.stringify(fields, null, 2));
+                }}
+              >
+                ＋ Thêm nội dung
+              </button>
+              <button disabled title="Chọn thư mục chưa khả dụng trong phiên bản này.">
+                Chọn nguồn
+              </button>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nội dung ID</th>
+                  {schema.map((f) => (
+                    <th key={f.key}>{f.label ?? f.key}</th>
+                  ))}
+                  <th>Assets</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((row) => (
+                  <tr
+                    key={row.id}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setRowModal(row);
+                      setRowJson(JSON.stringify(row.fields, null, 2));
+                    }}
+                  >
+                    <td>
+                      <code>{row.id.slice(0, 18)}</code>
+                    </td>
+                    {schema.map((f) => (
+                      <td key={f.key}>
+                        {typeof row.fields[f.key] === 'object'
+                          ? JSON.stringify(row.fields[f.key])
+                          : String(row.fields[f.key] ?? '')}
+                      </td>
+                    ))}
+                    <td>{row.assetIds.length}</td>
+                    <td>
+                      <button
+                        aria-label={'Sửa ' + row.id}
+                        onClick={() => {
+                          setRowModal(row);
+                          setRowJson(JSON.stringify(row.fields, null, 2));
+                        }}
+                      >
+                        Sửa
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!rows.length && (
+              <div className="table-empty">
+                Chưa có nội dung. Fields được lấy từ schema workflow đã chọn.
+              </div>
+            )}
+          </div>
+          <div className="section-heading">
+            <h2>Cấu hình lịch riêng</h2>
+            <span className="muted">
+              Timezone: {current.schedule.timezone} · chưa áp thành jobs
+            </span>
+          </div>
+          <div className="surface">
+            <div className="form-grid">
+              <label className="field">
+                <span>Ngày bắt đầu</span>
+                <input
+                  type="date"
+                  value={current.schedule.startDate}
+                  onChange={(e) =>
+                    edit({ schedule: { ...current.schedule, startDate: e.target.value } })
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Timezone IANA</span>
+                <input
+                  value={current.schedule.timezone}
+                  onChange={(e) =>
+                    edit({ schedule: { ...current.schedule, timezone: e.target.value } })
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Khi bỏ lỡ giờ</span>
+                <select
+                  value={current.schedule.overduePolicy}
+                  onChange={(e) =>
+                    edit({
+                      schedule: {
+                        ...current.schedule,
+                        overduePolicy: e.target
+                          .value as ProcessDefinition['schedule']['overduePolicy'],
+                      },
+                    })
+                  }
+                >
+                  <option value="NEXT_FUTURE_SLOT">Chuyển slot tương lai</option>
+                  <option value="CATCH_UP">Xếp hàng chạy bù</option>
+                  <option value="SKIP">Bỏ lượt, giữ lý do</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Jitter tối đa (phút)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="1440"
+                  value={current.schedule.jitterMinutes}
+                  onChange={(e) =>
+                    edit({
+                      schedule: { ...current.schedule, jitterMinutes: Number(e.target.value) },
+                    })
+                  }
+                />
+              </label>
+            </div>
+            <div className="slot-list">
+              {current.schedule.slots.map((slot, i) => (
+                <label key={i}>
+                  Slot {i + 1}
+                  <input
+                    type="time"
+                    value={slot}
+                    onChange={(e) =>
+                      edit({
+                        schedule: {
+                          ...current.schedule,
+                          slots: current.schedule.slots.map((s, j) =>
+                            j === i ? e.target.value : s,
+                          ),
+                        },
+                      })
+                    }
+                  />
+                </label>
+              ))}
+              <button
+                onClick={() =>
+                  edit({
+                    schedule: { ...current.schedule, slots: [...current.schedule.slots, '20:00'] },
+                  })
+                }
+              >
+                ＋ Thêm slot
+              </button>
+            </div>
+            <div className="weekdays">
+              {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day, i) => (
+                <label key={day}>
+                  <input
+                    type="checkbox"
+                    checked={current.schedule.weekdays.includes(i + 1)}
+                    onChange={(e) =>
+                      edit({
+                        schedule: {
+                          ...current.schedule,
+                          weekdays: e.target.checked
+                            ? [...current.schedule.weekdays, i + 1].sort()
+                            : current.schedule.weekdays.filter((n) => n !== i + 1),
+                        },
+                      })
+                    }
+                  />
+                  {day}
+                </label>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+      {rowModal && (
+        <Dialog title="Dữ liệu nội dung" close={() => setRowModal(null)} wide>
+          <p className="muted">
+            Schema: {schema.map((f) => f.key + ' (' + f.type + ')').join(', ') || 'Chưa có fields'}.
+            file/file[] phải là asset refs đã đăng ký ở host.
+          </p>
+          <textarea
+            className="code-editor"
+            aria-label="Dữ liệu nội dung JSON"
+            value={rowJson}
+            onChange={(e) => setRowJson(e.target.value)}
+          />
+          <div className="dialog-actions">
+            <button onClick={() => setRowModal(null)}>Hủy</button>
+            <button
+              className="primary"
+              onClick={() => {
+                try {
+                  const fields = JSON.parse(rowJson) as Record<string, JsonValue>,
+                    original = rows.find((r) => r.id === rowModal.id),
+                    processId = rowModal.processId;
+                  void api
+                    .saveContent({ ...rowModal, fields }, original?.revision ?? null)
+                    .then(async () => {
+                      const data = await api.content(processId);
+                      if (context.current?.id === processId) setRows(data);
+                      setRowModal(null);
+                      props.notify('Đã lưu nội dung.');
+                    })
+                    .catch((e) =>
+                      props.notify(e instanceof Error ? e.message : 'Lưu nội dung thất bại.'),
+                    );
+                } catch {
+                  props.notify('JSON không hợp lệ.');
+                }
+              }}
+            >
+              Lưu nội dung
+            </button>
+          </div>
+        </Dialog>
+      )}
+    </div>
+  );
+}

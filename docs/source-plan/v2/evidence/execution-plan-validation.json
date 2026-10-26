@@ -15,6 +15,6 @@
   },
   "dependencyGraph": "ACYCLIC",
   "recognitionAndGestureProviders": "MAPPED_NOT_IMPLEMENTED",
-  "productionApplicationTests": "NOT_RUN_NO_PRODUCTION_APP",
-  "windowsAndroidTests": "NOT_RUN"
+  "productionApplicationTests": "NOT_EVALUATED_BY_PLAN_CHECKER",
+  "windowsAndroidTests": "NOT_EVALUATED_BY_PLAN_CHECKER"
 }

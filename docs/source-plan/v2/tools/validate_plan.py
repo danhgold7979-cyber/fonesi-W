@@ -88,7 +88,7 @@ def run():
         schema_status='PASS_SHAPE_CONFORMANCE_ONLY'
     else:
         checks.append({'name':'Optional JSON Schema conformance checks','status':'NOT_RUN','reason':'python jsonschema package unavailable; consistency checks remain distinct'})
-    result={'scope':'SOURCE_PLAN_CONSISTENCY_NOT_APPLICATION_ACCEPTANCE','planVersion':plan['version'],'status':'PASS','phaseCount':len(phases),'stepCount':len(steps),'commandCount':len(actions),'fieldSignatureCount':len(fields),'nodeCount':len(nodes),'eventFamilyCount':len(events),'traceabilityCount':len(cross),'findingsCount':len(findings),'browserStatesSurveyed':len(audit['scenarios']),'schemaChecks':schema_status,'checks':checks,'applicationTests':'NOT_RUN_NO_PRODUCTION_APP','hardwareTests':'NOT_RUN'}
+    result={'scope':'SOURCE_PLAN_CONSISTENCY_NOT_APPLICATION_ACCEPTANCE','planVersion':plan['version'],'status':'PASS','phaseCount':len(phases),'stepCount':len(steps),'commandCount':len(actions),'fieldSignatureCount':len(fields),'nodeCount':len(nodes),'eventFamilyCount':len(events),'traceabilityCount':len(cross),'findingsCount':len(findings),'browserStatesSurveyed':len(audit['scenarios']),'schemaChecks':schema_status,'checks':checks,'applicationTests':'NOT_EVALUATED_BY_PLAN_CHECKER','hardwareTests':'NOT_EVALUATED_BY_PLAN_CHECKER'}
     (ROOT/'evidence/plan-validation.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='checks'},ensure_ascii=False,indent=2))
 
