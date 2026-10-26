@@ -1182,3 +1182,157 @@ td {
 .editor-active > .app-footer {
   display: none;
 }
+
+.sources-panel {
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.source-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.source-toolbar > .actions {
+  margin-left: auto;
+}
+.source-toolbar label,
+.source-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.source-toolbar p,
+.sources-panel p {
+  margin: 6px 0;
+  font-size: 12px;
+}
+.source-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.source-summary {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+.source-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.source-options {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.asset-label {
+  max-width: 260px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.asset-state {
+  white-space: nowrap;
+  color: var(--muted);
+}
+.asset-state.changed,
+.asset-state.missing {
+  color: #b45309;
+}
+.content-fields {
+  display: grid;
+  gap: 10px;
+  max-height: 55vh;
+  overflow: auto;
+}
+.content-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.content-field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.content-field-label > label {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.content-field textarea,
+.content-field > input,
+.content-field > select {
+  width: 100%;
+}
+.content-json {
+  margin-top: 14px;
+}
+.content-json summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.datetime-input {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+}
+.list-input {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.list-input-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+}
+.list-input-row > textarea,
+.list-input-row > input,
+.list-input-row > select,
+.list-input-row > .datetime-input {
+  flex: 1;
+  min-width: 0;
+}
+.list-input-row button {
+  padding: 5px 9px;
+}
+.schedule-filters {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.schedule-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.schedule-filters select {
+  min-width: 160px;
+  max-width: 240px;
+}
+.timeline-timezone {
+  display: block;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.schedule-blocker {
+  border-left: 3px solid #d59b45;
+  padding-left: 8px;
+  font-size: 12px;
+}

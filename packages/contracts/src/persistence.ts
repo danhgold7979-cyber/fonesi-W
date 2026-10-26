@@ -40,7 +40,11 @@ export interface JobSnapshot {
   contentId: string;
   fields: Record<string, JsonValue>;
   assetIds: string[];
-  targetId: string;
+  targetId: string | null;
+  accountId?: string | null;
+  processRevision?: number;
+  scheduleProfile?: import('./models.js').ScheduleProfile;
+  assets?: import('./media.js').ContentAssetInfo[];
   networkProfileId: string | null;
 }
 export const jobSchema = z.strictObject({

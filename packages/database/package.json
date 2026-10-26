@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@autoreels/contracts": "workspace:*",
-    "@autoreels/domain": "workspace:*"
+    "@autoreels/domain": "workspace:*",
+    "@autoreels/scheduler": "workspace:*",
+    "@autoreels/workflow-engine": "workspace:*"
   }
 }

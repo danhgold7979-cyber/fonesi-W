@@ -12,3 +12,12 @@ S060–S068. Hiện chỉ có schedule profile persistence; chưa có job previe
 8. Unit/integration: timezone/DST/day bounds/weekdays/jitter/restart, stale/expired preview, apply twice, invalid item rollback, snapshot immutable, same-phone contention/different-phone independence, pending effect cannot reschedule/retry. E2E cấu hình/preview từ Process thật; apply gate unavailable device hiển thị lý do.
 
 Đầu ra: packages/scheduler, DB preview/job query APIs, service/main boundary, timeline/Process UI và receipts. Windows sleep/resume hooks và Android execution acceptance riêng, chưa chạy không claim.
+
+## Increment 004 — persisted preview/apply và lịch công việc
+
+- Migration 3 append-only: proposal/token/hash/expiry lưu SQLite, mapping token→jobs để apply idempotent qua restart. Public apply chỉ nhận token, không nhận times/snapshots từ renderer. Empty/duplicate/out-of-scope content reject.
+- Preview đóng băng Process revision, full immutable version, content revisions/fields/ordered assets + hash/probe/source state và existing jobs revisions. Chưa gán điện thoại/version vẫn xem preview nhưng trả blockers; apply cần thiết bị đã đăng ký/enabled, version hợp lệ, typed row/process inputs và media không changed/missing/foreign-host. Không tạo thiết bị/target/account giả.
+- Apply transaction kiểm token/hash/expiry/revisions và những dữ liệu nền đã đóng băng, chèn toàn bộ jobs + mapping; rollback toàn bộ khi một item không hợp lệ. Apply cùng token lần hai trả cùng IDs, không random lại. Một nội dung đã có job chưa kết thúc cần xử lý lịch đó trước khi tạo lịch mới.
+- Snapshot giữ bundle/version hash, row fields, asset metadata/hashes, Process bindings/profile và network profile nullable; workflow không dùng target được lưu target null. Chỉ tạo SCHEDULED, chưa dispatch hay chứng nhận automation.
+- DB private insert helper tránh nested transactions. Query jobs có giới hạn rõ, filters Process/phone/state/time, list timeline compact với timezone của Process. Reschedule/cancel cần expectedRevision, chỉ SCHEDULED và không pending effects, giữ nguyên snapshot/job ID. Full calendar drag/spread/claim/overdue runtime giữ lại cho increment sau.
+- Tests: token persisted/reopen/apply twice, stale Process/content/media/jobs, expiry, binding/typed inputs blockers, exact proposed timestamps/jitter preserved, immutable snapshots, rollback batch, reschedule revision/pending gates. UI preview disabled với lý do khi chưa có thiết bị; empty timeline thật, không demo jobs.

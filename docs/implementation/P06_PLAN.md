@@ -12,3 +12,12 @@ S050–S059. Shell Process/content đang dùng persistence P02 và có E2E scope
 8. Tests temp real filesystem: recursive/ignore/symlink/outside root/file mutation/hash/order, remove/reconcile/restart, actual probe nếu binary có; DB stale source callback không ghi Process khác; malformed import rollback. Native chooser/permissions cần Electron evidence; browser tests chỉ gọi routes được hỗ trợ.
 
 Đầu ra: packages/media, DB source/migration APIs, main grants + Process UI, import-export helpers và receipts. Hoàn thiện theo slice, ghi phần còn thiếu; không gọi full P06 accepted bằng một source button hoặc JSON editor.
+
+## Increment 003 — native source → coordinator → Process UI
+
+- Public DTO chỉ nhận Process/source ID, revision và lựa chọn folder/files/options. `rootPath`/`hostId` chỉ đi qua private host→DB-worker channel. Chọn nhiều files được canonicalize toàn bộ trước khi transaction đăng ký; kiểm tra lại Process revision sau dialog, cancel dialog không thay đổi DB.
+- Host ID lưu riêng trong data directory; DB từ máy khác chỉ hiển thị nguồn cần rebind. Browser không mở filesystem chooser. Native chooser ở Electron main, sender/frame/DTO vẫn được kiểm tra.
+- Coordinator tối đa 2 scans, dedupe theo source, progress có scan ID, abort và source-revision fencing. Chỉ finish/missing khi enumerate hoàn tất không lỗi/không cancel. Watch debounce 600ms + reconcile 10s, tái lập sau restart, đóng watcher/scans trước worker.
+- File mới sửa có stability check trước hash; hash/probe recheck như hiện tại. Nguồn lỗi hoặc bị đổi không ghi callback sang Process khác. File đổi chỉ đánh dấu CHANGED, không thay bytes cũ. Ignore không xóa file gốc.
+- UI typed form thay JSON mặc định, giữ 0/false/missing và thứ tự item nhiều dòng; file refs chỉ từ media cùng Process, identity chưa có discovery thì không bịa options. UI gọn: nguồn theo Process, chọn folder/files, recursive/watch, quét/hủy, progress và lỗi; tên media/trạng thái thay asset count đơn thuần. Chuyển Process dùng generation để loại response cũ. Phần thumbnails/import/bulk/virtualization để increment sau, không tuyên bố toàn P06 hoàn thành.
+- Kiểm chứng bằng real temp FS + SQLite: scan→ignore→reconcile→restart, đổi/mất bytes, cancel/error không mark missing, stale dialog/options, concurrency/dedupe/shutdown; browser unsupported/Process isolation và Electron sandbox smoke. Native dialog tương tác/Windows vẫn cần nghiệm thu desktop thật.

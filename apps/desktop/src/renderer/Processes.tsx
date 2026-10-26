@@ -6,14 +6,18 @@ import type {
   ContentItem,
   FieldDefinition,
   JsonValue,
+  ContentAssetInfo,
 } from '@autoreels/contracts';
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
+import { Sources } from './Sources.js';
+import { ContentFields } from './ContentFields.js';
 
 interface Props {
   apps: AppDefinition[];
   workflows: WorkflowSummary[];
   processes: ProcessDefinition[];
+  devices: { id: string; name: string; enabled: boolean }[];
   notify: (message: string) => void;
   refresh: () => Promise<void>;
   registerSave: (save: (() => Promise<unknown>) | null) => void;
@@ -41,9 +45,11 @@ function newProcess(appId: string): ProcessDefinition {
   };
 }
 export function Processes(props: Props) {
+  const [applying, setApplying] = useState(false);
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof api.previewSchedule>> | null>(
     null,
   );
+  const [assets, setAssets] = useState<ContentAssetInfo[]>([]);
   const [current, setCurrent] = useState<ProcessDefinition | null>(null),
     [rows, setRows] = useState<ContentItem[]>([]),
     [schema, setSchema] = useState<FieldDefinition[]>([]),
@@ -109,6 +115,9 @@ export function Processes(props: Props) {
       setDirty(false);
       setIsNew(false);
       setRows([]);
+      setAssets([]);
+      setPreview(null);
+      setRowModal(null);
       const data = await api.content(process.id);
       if (token === rowGeneration.current && context.current?.id === process.id) setRows(data);
     } catch (e) {
@@ -274,8 +283,23 @@ export function Processes(props: Props) {
               </label>
               <label className="field">
                 <span>Điện thoại</span>
-                <select disabled>
-                  <option>Chưa kết nối thiết bị</option>
+                <select
+                  aria-label="Điện thoại tiến trình"
+                  disabled={!props.devices.length}
+                  value={current.deviceId ?? ''}
+                  onChange={(e) =>
+                    edit({ deviceId: e.target.value || null, accountId: null, targetId: null })
+                  }
+                >
+                  <option value="">
+                    {props.devices.length ? 'Chưa gán điện thoại' : 'Chưa kết nối thiết bị'}
+                  </option>
+                  {props.devices.map((device) => (
+                    <option key={device.id} value={device.id} disabled={!device.enabled}>
+                      {device.name}
+                      {device.enabled ? '' : ' · đã tắt'}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="field">
@@ -316,11 +340,28 @@ export function Processes(props: Props) {
               >
                 ＋ Thêm nội dung
               </button>
-              <button disabled title="Chọn thư mục chưa khả dụng trong phiên bản này.">
-                Chọn nguồn
-              </button>
             </div>
           </div>
+          {!isNew && (
+            <Sources
+              key={current.id}
+              process={current}
+              save={save}
+              notify={props.notify}
+              onAssets={setAssets}
+              onContentChanged={() => {
+                const id = current.id,
+                  token = ++rowGeneration.current;
+                void api
+                  .content(id)
+                  .then((data) => {
+                    if (context.current?.id === id && token === rowGeneration.current)
+                      setRows(data);
+                  })
+                  .catch((e) => props.notify(String(e)));
+              }}
+            />
+          )}
           <div className="table-wrap">
             <table>
               <thead>
@@ -353,7 +394,28 @@ export function Processes(props: Props) {
                           : String(row.fields[f.key] ?? '')}
                       </td>
                     ))}
-                    <td>{row.assetIds.length}</td>
+                    <td>
+                      {row.assetIds.length
+                        ? assets
+                            .filter((a) => a.contentId === row.id)
+                            .map((a) => (
+                              <div key={a.id} className="asset-label" title={a.hash}>
+                                {a.relativePath}{' '}
+                                <small className={'asset-state ' + a.state.toLowerCase()}>
+                                  {
+                                    {
+                                      READY: 'Sẵn có',
+                                      CHANGED: 'File đã đổi',
+                                      MISSING: 'Mất file',
+                                      IGNORED: 'Bỏ qua',
+                                      UNTRACKED: 'Chưa theo dõi',
+                                    }[a.state]
+                                  }
+                                </small>
+                              </div>
+                            ))
+                        : 'Không có media'}
+                    </td>
                     <td>
                       <button
                         aria-label={'Sửa ' + row.id}
@@ -363,6 +425,22 @@ export function Processes(props: Props) {
                         }}
                       >
                         Sửa
+                      </button>
+                      <button
+                        aria-label={'Bỏ qua ' + row.id}
+                        title="Bỏ qua nội dung, giữ nguyên tệp gốc"
+                        onClick={() => {
+                          const id = row.processId;
+                          void api
+                            .ignoreContent(row.id, row.revision)
+                            .then(() => api.content(id))
+                            .then((data) => {
+                              if (context.current?.id === id) setRows(data);
+                            })
+                            .catch((e) => props.notify(String(e)));
+                        }}
+                      >
+                        Bỏ qua
                       </button>
                     </td>
                   </tr>
@@ -401,7 +479,7 @@ export function Processes(props: Props) {
               Xem trước lịch ({filtered.length})
             </button>
             <span className="muted">
-              Timezone: {current.schedule.timezone} · chưa áp thành jobs
+              Timezone: {current.schedule.timezone} · xem trước trước khi tạo lịch
             </span>
           </div>
           <div className="surface">
@@ -516,8 +594,13 @@ export function Processes(props: Props) {
       {preview && current && (
         <Dialog title="Xem trước lịch" close={() => setPreview(null)} wide>
           <p>
-            {preview.slots.length} nội dung · {current.schedule.timezone}
+            {preview.slots.length} nội dung · {preview.timezone}
           </p>
+          {preview.blockers.map((message) => (
+            <p key={message} className="schedule-blocker">
+              {message}
+            </p>
+          ))}
           {preview.warnings.map((message) => (
             <p key={message} className="muted">
               {message}
@@ -540,7 +623,7 @@ export function Processes(props: Props) {
                     </td>
                     <td>
                       {new Date(slot.scheduledUtc).toLocaleString('vi-VN', {
-                        timeZone: current.schedule.timezone,
+                        timeZone: preview.timezone,
                       })}
                       {slot.crossesLocalDay ? ' · Qua ngày' : ''}
                     </td>
@@ -555,8 +638,36 @@ export function Processes(props: Props) {
           </small>
           <div className="dialog-actions">
             <button onClick={() => setPreview(null)}>Đóng</button>
-            <button disabled title="Tạo job cần bindings hợp lệ và service apply đã nghiệm thu.">
-              Áp dụng chưa khả dụng
+            <button
+              className="primary"
+              disabled={
+                applying || !preview.canApply || Date.parse(preview.expiresAt) <= Date.now()
+              }
+              title={
+                preview.blockers.join(' ') || 'Lưu đúng lịch đã xem; chưa thực thi trên điện thoại.'
+              }
+              onClick={() => {
+                setApplying(true);
+                void api
+                  .applySchedule(preview.token)
+                  .then((result) => {
+                    setPreview(null);
+                    props.notify(
+                      'Đã lưu ' +
+                        result.jobIds.length +
+                        ' công việc' +
+                        (result.alreadyApplied
+                          ? ' từ lần áp dụng trước.'
+                          : '. Android runtime chưa khả dụng.'),
+                    );
+                  })
+                  .catch((e) =>
+                    props.notify(e instanceof Error ? e.message : 'Không áp dụng được lịch.'),
+                  )
+                  .finally(() => setApplying(false));
+              }}
+            >
+              {applying ? 'Đang lưu…' : 'Áp dụng lịch'}
             </button>
           </div>
         </Dialog>
@@ -564,15 +675,9 @@ export function Processes(props: Props) {
       {rowModal && (
         <Dialog title="Dữ liệu nội dung" close={() => setRowModal(null)} wide>
           <p className="muted">
-            Schema: {schema.map((f) => f.key + ' (' + f.type + ')').join(', ') || 'Chưa có fields'}.
-            file/file[] phải là asset refs đã đăng ký ở host.
+            Trường có dấu * là bắt buộc. “Chưa nhập” khác với số 0 hoặc trạng thái tắt.
           </p>
-          <textarea
-            className="code-editor"
-            aria-label="Dữ liệu nội dung JSON"
-            value={rowJson}
-            onChange={(e) => setRowJson(e.target.value)}
-          />
+          <ContentFields schema={schema} assets={assets} json={rowJson} change={setRowJson} />
           <div className="dialog-actions">
             <button onClick={() => setRowModal(null)}>Hủy</button>
             <button
@@ -582,8 +687,30 @@ export function Processes(props: Props) {
                   const fields = JSON.parse(rowJson) as Record<string, JsonValue>,
                     original = rows.find((r) => r.id === rowModal.id),
                     processId = rowModal.processId;
+                  const referenced: string[] = [];
+                  for (const field of schema) {
+                    const value = fields[field.key];
+                    if (
+                      field.type === 'file' &&
+                      value &&
+                      typeof value === 'object' &&
+                      !Array.isArray(value)
+                    )
+                      referenced.push(String(value.assetId));
+                    if (field.type === 'file[]' && Array.isArray(value))
+                      for (const ref of value)
+                        if (ref && typeof ref === 'object' && !Array.isArray(ref))
+                          referenced.push(String(ref.assetId));
+                  }
                   void api
-                    .saveContent({ ...rowModal, fields }, original?.revision ?? null)
+                    .saveContent(
+                      {
+                        ...rowModal,
+                        fields,
+                        assetIds: [...new Set([...rowModal.assetIds, ...referenced])],
+                      },
+                      original?.revision ?? null,
+                    )
                     .then(async () => {
                       const data = await api.content(processId);
                       if (context.current?.id === processId) setRows(data);

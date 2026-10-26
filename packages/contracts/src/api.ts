@@ -1,3 +1,10 @@
+import type { SchedulePreviewDto, JobQuery, ScheduledJobSummary } from './schedule.js';
+import type {
+  SourceState,
+  SourceDefinition,
+  SourceScanProgress,
+  ContentAssetInfo,
+} from './media.js';
 import type { AppDefinition, ProcessDefinition } from './models.js';
 import type { WorkflowBundle, JsonValue, ValidationIssue } from './types.js';
 import type { WorkflowDraft, WorkflowVersion, ContentItem } from './persistence.js';
@@ -26,20 +33,35 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
-  previewSchedule(
+  mediaCapabilities(): Promise<{ nativeChooser: boolean }>;
+  chooseSource(
     processId: string,
-    contentIds: string[],
-  ): Promise<{
-    token: string;
-    expiresAt: string;
-    slots: {
-      contentId: string;
-      scheduledUtc: string;
-      jitterMinutes: number;
-      crossesLocalDay: boolean;
-    }[];
-    warnings: string[];
-  }>;
+    expectedRevision: number,
+    kind: 'FOLDER' | 'FILE',
+    recursive: boolean,
+    watch: boolean,
+  ): Promise<{ cancelled: boolean; sources: SourceDefinition[] }>;
+  sources(processId: string): Promise<SourceState[]>;
+  scanSource(id: string): Promise<SourceScanProgress>;
+  cancelSourceScan(id: string): Promise<void>;
+  updateSource(
+    id: string,
+    expectedRevision: number,
+    options: { recursive: boolean; watch: boolean; active: boolean },
+  ): Promise<SourceDefinition>;
+  contentAssets(processId: string): Promise<ContentAssetInfo[]>;
+  ignoreContent(id: string, expectedRevision: number): Promise<void>;
+  previewSchedule(processId: string, contentIds: string[]): Promise<SchedulePreviewDto>;
+  applySchedule(token: string): Promise<{ jobIds: string[]; alreadyApplied: boolean }>;
+  jobs(query: JobQuery): Promise<{ jobs: ScheduledJobSummary[]; hasMore: boolean }>;
+  rescheduleJob(
+    id: string,
+    expectedRevision: number,
+    localDate: string,
+    localTime: string,
+    timezone: string,
+  ): Promise<void>;
+  cancelScheduledJob(id: string, expectedRevision: number): Promise<void>;
   bootstrap(): Promise<BootstrapData>;
   registerApp(input: AppDefinition): Promise<AppDefinition>;
   createWorkflow(appId: string, name: string): Promise<WorkflowDraft>;
@@ -65,6 +87,18 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'mediaCapabilities'
+  | 'chooseSource'
+  | 'sources'
+  | 'scanSource'
+  | 'cancelSourceScan'
+  | 'updateSource'
+  | 'contentAssets'
+  | 'ignoreContent'
+  | 'applySchedule'
+  | 'jobs'
+  | 'rescheduleJob'
+  | 'cancelScheduledJob'
   | 'previewSchedule'
   | 'bootstrap'
   | 'registerApp'
@@ -88,7 +122,23 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    mediaCapabilities: () => call('mediaCapabilities'),
+    chooseSource: (processId, expectedRevision, kind, recursive, watch) =>
+      call('chooseSource', { processId, expectedRevision, kind, recursive, watch }),
+    sources: (processId) => call('sources', { processId }),
+    scanSource: (id) => call('scanSource', { id }),
+    cancelSourceScan: (id) => call('cancelSourceScan', { id }),
+    updateSource: (id, expectedRevision, options) =>
+      call('updateSource', { id, expectedRevision, options }),
+    contentAssets: (processId) => call('contentAssets', { processId }),
+    ignoreContent: (id, expectedRevision) => call('ignoreContent', { id, expectedRevision }),
     previewSchedule: (processId, contentIds) => call('previewSchedule', { processId, contentIds }),
+    applySchedule: (token) => call('applySchedule', { token }),
+    jobs: (query) => call('jobs', { query }),
+    rescheduleJob: (id, expectedRevision, localDate, localTime, timezone) =>
+      call('rescheduleJob', { id, expectedRevision, localDate, localTime, timezone }),
+    cancelScheduledJob: (id, expectedRevision) =>
+      call('cancelScheduledJob', { id, expectedRevision }),
     bootstrap: () => call('bootstrap'),
     registerApp: (input) => call('registerApp', { app: input }),
     createWorkflow: (appId, name) => call('createWorkflow', { appId, name }),

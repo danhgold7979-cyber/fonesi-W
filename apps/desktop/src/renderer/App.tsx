@@ -8,6 +8,7 @@ import type {
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
 import { Processes } from './Processes.js';
+import { Schedule } from './Schedule.js';
 const Editor = lazy(() => import('./Editor.js').then((module) => ({ default: module.Editor })));
 
 const routes = [
@@ -411,6 +412,7 @@ export function App() {
         )}
         {view === 'processes' && (
           <Processes
+            devices={boot.devices}
             apps={boot.apps}
             workflows={boot.workflows}
             processes={boot.processes}
@@ -420,42 +422,14 @@ export function App() {
           />
         )}
         {view === 'schedule' && (
-          <div className="page">
-            <div className="page-heading">
-              <div>
-                <h1>Lịch đăng</h1>
-                <p>
-                  Lịch được cấu hình riêng cho từng tiến trình. Một điện thoại dùng chung một queue.
-                </p>
-              </div>
-              <button onClick={() => void go('processes')}>Mở cấu hình tiến trình</button>
-            </div>
-            <div className="schedule-cards">
-              {boot.processes.map((p) => (
-                <article className="surface" key={p.id}>
-                  <h3>{p.name}</h3>
-                  <p>
-                    {boot.apps.find((a) => a.id === p.appId)?.name} · {p.schedule.timezone}
-                  </p>
-                  <div className="slot-list">
-                    {p.schedule.slots.map((s) => (
-                      <span className="badge" key={s}>
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                  <small className="muted">
-                    {p.deviceId ? 'Đã gán thiết bị' : 'Chưa gán thiết bị'} ·{' '}
-                    {p.workflowVersionId ? 'Đã chọn version' : 'Chưa chọn version'}
-                  </small>
-                </article>
-              ))}
-            </div>
-            <Empty icon="▣" title="Cấu hình lịch được lưu; chưa tạo job tự động">
-              Bạn có thể lưu khung giờ riêng trong từng tiến trình. Tạo lịch công việc và hàng đợi
-              chưa khả dụng trong phiên bản này.
-            </Empty>
-          </div>
+          <Schedule
+            processes={boot.processes}
+            devices={boot.devices}
+            notify={notify}
+            openProcesses={() => {
+              void go('processes');
+            }}
+          />
         )}
         {view === 'history' && (
           <div className="page">

@@ -5,13 +5,16 @@ import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DbClient } from './db-client.js';
 import { envelopeSchema } from './service.js';
+import { HostMediaService, loadHostId } from './media-service.js';
 
 const root = fileURLToPath(new URL('../../../../../', import.meta.url));
 const renderer = resolve(fileURLToPath(new URL('../../renderer/', import.meta.url)));
-const db = new DbClient(
-  resolve(process.env.AUTOREELS_DATA_DIR ?? resolve(root, '.data'), 'studio.sqlite'),
-);
+const dataDirectory = resolve(process.env.AUTOREELS_DATA_DIR ?? resolve(root, '.data'));
+const hostId = await loadHostId(dataDirectory);
+const db = new DbClient(resolve(dataDirectory, 'studio.sqlite'), hostId);
+const media = new HostMediaService(db, hostId);
 await db.request('bootstrap');
+await media.ready();
 const token = randomBytes(32).toString('hex');
 const csp =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
@@ -58,7 +61,7 @@ const server = createServer(async (req, res) => {
         chunks.push(b);
       }
       const request = envelopeSchema.parse(JSON.parse(Buffer.concat(chunks).toString('utf8')));
-      const value = await db.request(request.command, request.input);
+      const value = await media.request(request.command, request.input);
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ ok: true, value }));
       return;
@@ -110,7 +113,10 @@ server.listen(Number(process.env.PORT ?? 4173), '127.0.0.1', () =>
 );
 const stop = (): void => {
   server.close(() => {
-    void db.close().then(() => process.exit(0));
+    void media
+      .close()
+      .then(() => db.close())
+      .then(() => process.exit(0));
   });
 };
 process.on('SIGTERM', stop);

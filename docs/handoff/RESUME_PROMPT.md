@@ -10,7 +10,7 @@ Trước tiên đọc `AGENTS.md`, `docs/handoff/START_HERE.md`, `docs/source-pl
 
 Baseline đã chốt V2.1: 15 phase, 125 bước, 375 đầu việc, giao diện Compact gọn, đa app bằng registry package mở. R1 cần Facebook Reels + TikTok có evidence thực; app còn lại có gates riêng. Dùng plan và step/feature IDs trong repo để triển khai theo increment.
 
-Tại snapshot ban đầu mới có plan/reference/HTML review, chưa có app production. Kiểm tra trạng thái hiện tại rồi làm increment chưa hoàn thành tiếp theo; tại checkpoint ban đầu đó là toolchain/checks/contracts/domain, tiếp theo SQLite/Electron smoke và workflow save/reload. Báo files đã sửa, tests thật đã chạy và phần chưa kiểm chứng. Đừng tính HTML demo hoặc plan checks thành Android automation đã PASS.
+Snapshot đầu tiên chỉ có tài liệu; repository mới đã có toolchain, contracts/domain, SQLite/Electron/editor, media-source coordinator và persisted scheduling. Đọc `docs/implementation/PROGRESS.md` và receipt mới nhất; tiếp tục các phần chưa hoàn thành, không dựng lại từ đầu. Báo files đã sửa, tests thật đã chạy và phần chưa kiểm chứng. Đừng tính HTML demo hoặc plan checks thành Android automation đã PASS.
 
 Giữ nguyên reference, bảo toàn dữ liệu người dùng và lịch sử. Editor/Process/test-device độc lập; một owner mỗi phone; job dùng snapshot; journal trước external effects; không publish lại mù khi kết quả chưa rõ. Chức năng chưa có backend phải hiện unavailable, không giả thành công.
 

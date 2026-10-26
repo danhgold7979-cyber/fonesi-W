@@ -53,12 +53,12 @@ python docs/source-plan/v2/tools/validate_execution_plan.py
 
 - 15 phase / 125 bước / 375 đầu việc / 250 tình huống dự kiến. 330 feature IDs đã có mapping cụ thể. Các con số này mô tả kế hoạch, không là production tests đã PASS.
 - Giao diện gọn theo Compact; bốn controls workflow chính. Các quyết định C01–C12 đã được ghi trong plan.
-- Increment đầu: repository/toolchain/lockfile/checks, contracts/domain, rồi native SQLite/Electron smoke và luồng workflow create/edit/save/reload. Không tạo mọi package rỗng hoặc biến HTML demo thành app production.
+- Đã có code toolchain/contracts/domain/SQLite/Electron/editor, native media sources và persisted scheduling. Đọc `docs/implementation/PROGRESS.md` cùng receipt mới nhất để biết increment tiếp theo; các phase vẫn chưa được nghiệm thu toàn bộ.
 - Authoring/editor, Process bindings và Inspector test device độc lập. Mỗi phone có một active owner/job, lịch riêng mỗi Process.
 - Giữ nguyên 42 reference files; `.gitattributes` giữ bytes reference khi checkout trên Windows/Linux.
 - FULL-TRANSFER ZIP quá giới hạn 32 MiB chưa đọc được và không có trong snapshot; không tuyên bố đã tích hợp nó. Baseline đã chọn xây mới từ V1.7 + HTML đã đọc.
 - Hardware/native/routing/OCR/publish verification/benchmark vẫn phải kiểm chứng. Từ S069/S070 cần điện thoại cho nghiệm thu kết nối; cloud không tự thấy USB/LAN ở nhà.
-- Lần push trước GitHub trả 403 cho tài khoản `sanfrankim`. Quyền ghi cần được giải quyết trước upload; code/test/commit local vẫn làm được.
+- GitHub feature-branch push đã hoạt động lại sau lỗi 403 trước đó; đọc receipt mới nhất. Không lấy receipt lỗi quyền cũ làm trạng thái hiện tại và không tự merge main.
 
 ## 5. Hai tài khoản cùng làm
 

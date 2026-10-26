@@ -1,3 +1,4 @@
+import { jobStates } from './job-states.js';
 import { z } from 'zod';
 
 export const idSchema = z
@@ -46,28 +47,6 @@ export const workflowReceiptSchema = z.strictObject({
   readyByUser: z.boolean(),
 });
 
-export const jobStates = [
-  'DRAFT',
-  'SCHEDULED',
-  'QUEUED',
-  'PREFLIGHT',
-  'RUNNING',
-  'POST_INTENT',
-  'POST_PENDING',
-  'POSTED',
-  'COMMENT_PENDING',
-  'SUCCESS',
-  'SUCCESS_WITH_WARNINGS',
-  'WAITING_DEVICE',
-  'WAITING_NETWORK',
-  'MEDIA_MISSING',
-  'MEDIA_CHANGED',
-  'TARGET_MISSING',
-  'NEEDS_REVIEW',
-  'FAILED',
-  'CANCELLED',
-  'SKIPPED',
-] as const;
 export const jobStateSchema = z.enum(jobStates);
 export type JobState = z.infer<typeof jobStateSchema>;
 export const effectStates = [

@@ -3,7 +3,23 @@ const { contextBridge, ipcRenderer } = require('electron') as typeof import('ele
 const send = <T,>(command: ApiCommand, input: unknown = {}): Promise<T> =>
   ipcRenderer.invoke('studio:request', { command, input }) as Promise<T>;
 const api: StudioApi = {
+  mediaCapabilities: () => send('mediaCapabilities'),
+  chooseSource: (processId, expectedRevision, kind, recursive, watch) =>
+    send('chooseSource', { processId, expectedRevision, kind, recursive, watch }),
+  sources: (processId) => send('sources', { processId }),
+  scanSource: (id) => send('scanSource', { id }),
+  cancelSourceScan: (id) => send('cancelSourceScan', { id }),
+  updateSource: (id, expectedRevision, options) =>
+    send('updateSource', { id, expectedRevision, options }),
+  contentAssets: (processId) => send('contentAssets', { processId }),
+  ignoreContent: (id, expectedRevision) => send('ignoreContent', { id, expectedRevision }),
   previewSchedule: (processId, contentIds) => send('previewSchedule', { processId, contentIds }),
+  applySchedule: (token) => send('applySchedule', { token }),
+  jobs: (query) => send('jobs', { query }),
+  rescheduleJob: (id, expectedRevision, localDate, localTime, timezone) =>
+    send('rescheduleJob', { id, expectedRevision, localDate, localTime, timezone }),
+  cancelScheduledJob: (id, expectedRevision) =>
+    send('cancelScheduledJob', { id, expectedRevision }),
   bootstrap: () => send('bootstrap'),
   registerApp: (app) => send('registerApp', { app }),
   createWorkflow: (appId, name) => send('createWorkflow', { appId, name }),

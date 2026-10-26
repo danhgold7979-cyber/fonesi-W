@@ -209,13 +209,28 @@ test('Process isolation and save acknowledgements preserve edits made while a re
   await page.locator('[data-route="processes"]').click();
   await selection.selectOption('process_B');
   await expect(name).toHaveValue('Edited during save');
+  await expect(page.getByRole('button', { name: 'Chọn thư mục', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Chọn tệp', exact: true })).toBeDisabled();
+  await expect(page.getByRole('region', { name: 'Nguồn media' })).toContainText('cần bản desktop');
+  expect(await request(page, 'mediaCapabilities')).toEqual({ nativeChooser: false });
   await selection.selectOption('process_A');
   await expect(page.locator('.table-wrap')).toContainText('ONLY_A');
   await expect(page.locator('.table-wrap')).not.toContainText('ONLY_B');
+  await page.getByRole('button', { name: 'Sửa content_process_A', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'caption', exact: true })).toHaveValue('ONLY_A');
+  await expect(
+    page.getByRole('textbox', { name: 'Dữ liệu nội dung JSON', exact: true }),
+  ).not.toBeVisible();
+  await page
+    .getByRole('textbox', { name: 'caption', exact: true })
+    .fill('ONLY_A\nGiữ nguyên dòng thứ hai');
+  await page.getByRole('button', { name: 'Lưu nội dung', exact: true }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.locator('.table-wrap')).toContainText('Giữ nguyên dòng thứ hai');
   await page.getByRole('button', { name: 'Xem trước lịch (1)', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Chưa gán điện thoại');
   await expect(page.getByRole('dialog').locator('tbody tr')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Áp dụng chưa khả dụng' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Áp dụng lịch' })).toBeDisabled();
 });
 
 test('loopback host rejects forged origins/tokens and privileged commands', async ({ page }) => {
@@ -236,4 +251,106 @@ test('loopback host rejects forged origins/tokens and privileged commands', asyn
     data: { operationId: 'op_bad', command: 'shell', input: { command: 'whoami' } },
   });
   expect(unknown.status()).toBe(400);
+  for (const [command, input] of [
+    ['source.register', { processId: 'process_A', rootPath: '/tmp' }],
+    [
+      'chooseSource',
+      {
+        processId: 'process_A',
+        expectedRevision: 0,
+        kind: 'FOLDER',
+        recursive: false,
+        watch: false,
+        rootPath: '/tmp',
+      },
+    ],
+    [
+      'chooseSource',
+      {
+        processId: 'process_A',
+        expectedRevision: 0,
+        kind: 'FOLDER',
+        recursive: false,
+        watch: false,
+      },
+    ],
+  ]) {
+    const blocked = await page.request.post('/api', {
+      headers: { Origin: 'http://127.0.0.1:4175', 'X-Studio-Token': token! },
+      data: { operationId: 'op_media_boundary', command, input },
+    });
+    expect(blocked.status()).toBe(400);
+  }
+});
+
+test('typed content form preserves zero, false, missing fields and ordered multiline list items', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const draft = await request<WorkflowDraft>(page, 'createWorkflow', {
+    appId: 'fb',
+    name: 'Typed content fixture',
+  });
+  draft.bundle.inputs = [
+    { key: 'count', type: 'number', scope: 'row', required: true },
+    { key: 'enabled', type: 'boolean', scope: 'row', required: true },
+    { key: 'caption', type: 'text', scope: 'row', required: false },
+    { key: 'tags', type: 'list', itemType: 'text', scope: 'row', required: false },
+    { key: 'link', type: 'url', scope: 'row', required: false },
+  ];
+  await request(page, 'saveWorkflow', { bundle: draft.bundle, expectedRevision: 0 });
+  await request(page, 'saveProcess', {
+    expectedRevision: null,
+    process: {
+      id: 'process_typed_form',
+      name: 'Typed content fixture',
+      appId: 'fb',
+      workflowId: draft.workflowId,
+      workflowVersionId: null,
+      deviceId: null,
+      accountId: null,
+      targetId: null,
+      revision: 0,
+      archived: false,
+      schedule: {
+        timezone: 'Asia/Ho_Chi_Minh',
+        startDate: '2026-10-26',
+        slots: ['08:00'],
+        weekdays: [1, 2, 3, 4, 5, 6, 7],
+        overduePolicy: 'NEXT_FUTURE_SLOT',
+        jitterMinutes: 0,
+      },
+    },
+  });
+  await page.reload();
+  await page.locator('[data-route="processes"]').click();
+  await page.getByRole('combobox', { name: 'Chọn tiến trình' }).selectOption('process_typed_form');
+  await page.getByRole('button', { name: '＋ Thêm nội dung', exact: true }).click();
+  await expect(page.getByRole('spinbutton', { name: 'count', exact: true })).toHaveValue('0');
+  await expect(page.getByRole('checkbox', { name: 'enabled', exact: true })).not.toBeChecked();
+  await expect(
+    page.getByRole('checkbox', { name: 'Dùng trường link', exact: true }),
+  ).not.toBeChecked();
+  await page.getByRole('textbox', { name: 'caption', exact: true }).fill('Văn bản\nnhiều dòng');
+  await page.getByRole('button', { name: '＋ Thêm mục tags', exact: true }).click();
+  await page.getByRole('button', { name: '＋ Thêm mục tags', exact: true }).click();
+  await page.getByRole('textbox', { name: 'tags mục 1', exact: true }).fill('Một\nitem nhiều dòng');
+  await page.getByRole('textbox', { name: 'tags mục 2', exact: true }).fill('Hai');
+  await page.getByRole('button', { name: 'Đưa lên tags mục 2', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'tags mục 1', exact: true })).toHaveValue('Hai');
+  await page.screenshot({ path: 'docs/evidence/implementation/ui/content-form-1600.png' });
+  await page.getByRole('button', { name: 'Lưu nội dung', exact: true }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  const rows = await request<{ fields: Record<string, unknown> }[]>(page, 'content', {
+    processId: 'process_typed_form',
+  });
+  expect(rows[0]?.fields).toEqual({
+    count: 0,
+    enabled: false,
+    caption: 'Văn bản\nnhiều dòng',
+    tags: ['Hai', 'Một\nitem nhiều dòng'],
+  });
+  await page.getByRole('button', { name: /^Bỏ qua content_/ }).click();
+  await expect(page.locator('.table-empty')).toBeVisible();
+  expect(await request(page, 'content', { processId: 'process_typed_form' })).toEqual([]);
 });

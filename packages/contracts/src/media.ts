@@ -48,3 +48,24 @@ export interface SourceScanReport {
   failed: number;
   errors: string[];
 }
+
+export interface SourceScanProgress extends Omit<SourceScanReport, 'status'> {
+  scanId: string;
+  status: 'QUEUED' | 'SCANNING' | SourceScanReport['status'];
+  updatedAt: string;
+}
+export interface SourceState {
+  source: SourceDefinition;
+  scan: SourceScanProgress | null;
+  watchWarning: string | null;
+}
+export interface ContentAssetInfo {
+  id: string;
+  contentId: string;
+  relativePath: string;
+  hash: string;
+  kind: 'image' | 'video';
+  bytes: number;
+  state: 'READY' | 'CHANGED' | 'MISSING' | 'IGNORED' | 'UNTRACKED';
+  probe: ScannedAsset['probe'] | null;
+}

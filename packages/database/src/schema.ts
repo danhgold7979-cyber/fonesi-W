@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -32,7 +32,14 @@ CREATE INDEX source_process ON sources(process_id,active);
 CREATE INDEX source_entry_content ON source_entries(content_id);
 `;
 
+export const scheduleMigration = `
+CREATE TABLE schedule_previews(token TEXT PRIMARY KEY,process_id TEXT NOT NULL REFERENCES processes(id),expires_at TEXT NOT NULL,payload TEXT NOT NULL,payload_hash TEXT NOT NULL,applied_at TEXT) STRICT;
+CREATE TABLE schedule_preview_jobs(token TEXT NOT NULL REFERENCES schedule_previews(token),ordinal INTEGER NOT NULL CHECK(ordinal>=0),job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id),PRIMARY KEY(token,ordinal)) STRICT;
+CREATE INDEX schedule_preview_expiry ON schedule_previews(expires_at);
+`;
+
 export const migrations = [
   { version: 1, sql: migration },
   { version: 2, sql: mediaMigration },
+  { version: 3, sql: scheduleMigration },
 ] as const;

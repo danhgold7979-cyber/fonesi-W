@@ -1,6 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import { randomUUID } from 'node:crypto';
 import type { ApiCommand } from '@autoreels/contracts';
+import type { InternalRequest } from './internal.js';
 
 export class DbClient {
   private worker: Worker;
@@ -10,8 +11,10 @@ export class DbClient {
     number,
     { resolve: (value: unknown) => void; reject: (error: Error) => void }
   >();
-  constructor(path: string) {
-    this.worker = new Worker(new URL('./db-worker.js', import.meta.url), { workerData: { path } });
+  constructor(path: string, hostId: string | null = null) {
+    this.worker = new Worker(new URL('./db-worker.js', import.meta.url), {
+      workerData: { path, hostId },
+    });
     this.worker.on(
       'message',
       (message: {
@@ -48,6 +51,14 @@ export class DbClient {
     this.pending.clear();
   }
   request(command: ApiCommand, input: unknown = {}): Promise<unknown> {
+    return this.enqueue({
+      request: { operationId: 'op_' + randomUUID().replaceAll('-', ''), command, input },
+    });
+  }
+  internal<T>(internal: InternalRequest): Promise<T> {
+    return this.enqueue({ internal }) as Promise<T>;
+  }
+  private enqueue(payload: { request?: unknown; internal?: InternalRequest }): Promise<unknown> {
     if (this.closed) return Promise.reject(new Error('Database worker is closed'));
     if (this.pending.size >= 128) return Promise.reject(new Error('Database queue is busy'));
     const id = ++this.sequence;
@@ -55,7 +66,7 @@ export class DbClient {
       this.pending.set(id, { resolve, reject });
       this.worker.postMessage({
         id,
-        request: { operationId: 'op_' + randomUUID().replaceAll('-', ''), command, input },
+        ...payload,
       });
     });
   }

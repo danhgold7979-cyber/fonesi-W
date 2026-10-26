@@ -11,6 +11,7 @@ import {
   SEED_APPS,
   validateWorkflowShape,
   assertJsonSafe,
+  validateTypedValues,
 } from '@autoreels/contracts';
 import type {
   AppDefinition,
@@ -27,6 +28,10 @@ import type {
   SourceGrant,
   SourceDefinition,
   ScannedAsset,
+  ContentAssetInfo,
+  SchedulePreviewDto,
+  JobQuery,
+  ScheduledJobSummary,
 } from '@autoreels/contracts';
 import {
   DomainError,
@@ -36,6 +41,13 @@ import {
   addApp,
   assertJobTransition,
 } from '@autoreels/domain';
+import { randomInt } from 'node:crypto';
+import {
+  createSchedulePreview,
+  assertPreviewCurrent,
+  type SchedulePreview,
+} from '@autoreels/scheduler';
+import { validateBundle } from '@autoreels/workflow-engine';
 import { migrations, SCHEMA_VERSION } from './schema.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
@@ -48,6 +60,24 @@ const requireBundle = (value: unknown): WorkflowBundle => {
   return result.value;
 };
 
+interface FrozenScheduleContext {
+  process: ProcessDefinition;
+  rows: ContentItem[];
+  version: WorkflowVersion | null;
+  assets: ContentAssetInfo[];
+  jobs: JobDefinition[];
+}
+interface StoredSchedule {
+  preview: SchedulePreview;
+  context: FrozenScheduleContext;
+}
+const terminalJobStates = new Set([
+  'SUCCESS',
+  'SUCCESS_WITH_WARNINGS',
+  'FAILED',
+  'CANCELLED',
+  'SKIPPED',
+]);
 /** Owned by one serialized host/DB worker. No SQL or filesystem API is exposed to renderer. */
 export class StudioDatabase {
   private db: DatabaseSync;
@@ -478,6 +508,9 @@ export class StudioDatabase {
     });
   }
   createJob(job: JobDefinition, snapshot: JobSnapshot): void {
+    this.transaction(() => this.insertJob(job, snapshot));
+  }
+  private insertJob(job: JobDefinition, snapshot: JobSnapshot): void {
     jobSchema.parse(job);
     requireBundle(snapshot.bundle);
     hashSchema.parse(snapshot.workflowHash);
@@ -492,37 +525,35 @@ export class StudioDatabase {
       snapshot.contentId !== job.contentId
     )
       throw new DomainError('SNAPSHOT_MISMATCH', 'Snapshot refs/hash do not match');
-    this.transaction(() => {
-      const content = this.db
-        .prepare('SELECT process_id FROM content_items WHERE id=?')
-        .get(job.contentId);
-      const process = this.getProcess(job.processId);
-      if (
-        content?.process_id !== job.processId ||
-        process.deviceId !== job.deviceId ||
-        process.workflowVersionId !== snapshot.workflowVersionId
-      )
-        throw new DomainError(
-          'JOB_BINDING_MISMATCH',
-          'Job bindings do not match Process/content/version',
-        );
-      this.db
-        .prepare('INSERT INTO jobs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
-        .run(
-          job.id,
-          job.occurrenceKey,
-          job.processId,
-          job.deviceId,
-          job.contentId,
-          job.scheduledUtc,
-          job.state,
-          job.revision,
-          job.priority,
-          canonicalJson(snapshot),
-          contentHash(snapshot),
-          now(),
-        );
-    });
+    const content = this.db
+      .prepare('SELECT process_id FROM content_items WHERE id=?')
+      .get(job.contentId);
+    const process = this.getProcess(job.processId);
+    if (
+      content?.process_id !== job.processId ||
+      process.deviceId !== job.deviceId ||
+      process.workflowVersionId !== snapshot.workflowVersionId
+    )
+      throw new DomainError(
+        'JOB_BINDING_MISMATCH',
+        'Job bindings do not match Process/content/version',
+      );
+    this.db
+      .prepare('INSERT INTO jobs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+      .run(
+        job.id,
+        job.occurrenceKey,
+        job.processId,
+        job.deviceId,
+        job.contentId,
+        new Date(job.scheduledUtc).toISOString(),
+        job.state,
+        job.revision,
+        job.priority,
+        canonicalJson(snapshot),
+        contentHash(snapshot),
+        now(),
+      );
   }
   getJob(id: string): { job: JobDefinition; snapshot: JobSnapshot; snapshotHash: string } {
     const r = this.db.prepare('SELECT * FROM jobs WHERE id=?').get(id);
@@ -727,43 +758,440 @@ export class StudioDatabase {
     }
   }
 
+  private scheduleContext(processId: string, contentIds: string[]): FrozenScheduleContext {
+    const process = this.getProcess(processId),
+      all = this.listContent(processId);
+    if (
+      !contentIds.length ||
+      contentIds.length > 1000 ||
+      new Set(contentIds).size !== contentIds.length ||
+      contentIds.some((id) => !all.some((row) => row.id === id))
+    )
+      throw new DomainError(
+        'INVALID_SCOPE',
+        'Chọn từ 1–1000 nội dung còn dùng trong đúng tiến trình.',
+      );
+    const selected = new Set(contentIds);
+    return {
+      process,
+      rows: contentIds.map((id) => all.find((row) => row.id === id)!),
+      version: process.workflowVersionId ? this.getVersion(process.workflowVersionId) : null,
+      assets: this.listContentAssets(processId).filter((asset) => selected.has(asset.contentId)),
+      jobs: this.db
+        .prepare('SELECT id FROM jobs WHERE process_id=? ORDER BY id')
+        .all(processId)
+        .map((row) => this.getJob(String(row.id)).job)
+        .filter((job) => selected.has(job.contentId)),
+    };
+  }
+  private scheduleBlockers(context: FrozenScheduleContext, hostId: string | null): string[] {
+    const { process, rows, version, assets, jobs } = context,
+      blockers = new Set<string>();
+    if (process.archived) blockers.add('Tiến trình đã lưu trữ.');
+    if (!process.deviceId) blockers.add('Chưa gán điện thoại.');
+    else if (!this.listDevices().some((device) => device.id === process.deviceId && device.enabled))
+      blockers.add('Điện thoại không còn được bật trong workspace.');
+    if (!version) blockers.add('Chưa chọn phiên bản workflow.');
+    else {
+      const invalid = validateBundle(version.bundle);
+      if (invalid.length) blockers.add('Workflow chưa hợp lệ: ' + invalid[0]!.message);
+      if (validateTypedValues(version.bundle.inputs, {}, 'process').length)
+        blockers.add('Workflow cần trường Process; phần gán giá trị Process chưa khả dụng.');
+      for (const row of rows) {
+        const issues = validateTypedValues(version.bundle.inputs, row.fields, 'row');
+        if (issues.length)
+          blockers.add('Nội dung ' + row.id + ': ' + issues[0]!.path + ' — ' + issues[0]!.message);
+        const fieldRefs: string[] = [];
+        for (const field of version.bundle.inputs.filter((field) => field.scope === 'row')) {
+          const value = row.fields[field.key];
+          if (field.type === 'file' && value && typeof value === 'object' && !Array.isArray(value))
+            fieldRefs.push(String(value.assetId));
+          if (field.type === 'file[]' && Array.isArray(value))
+            for (const ref of value)
+              if (ref && typeof ref === 'object' && !Array.isArray(ref))
+                fieldRefs.push(String(ref.assetId));
+        }
+        if (fieldRefs.some((id) => !row.assetIds.includes(id)))
+          blockers.add('Nội dung ' + row.id + ' có tham chiếu media chưa gắn vào snapshot.');
+      }
+    }
+    if (jobs.some((job) => !terminalJobStates.has(job.state)))
+      blockers.add('Có nội dung đã có lịch chưa kết thúc; xử lý lịch đó trước.');
+    for (const row of rows)
+      if (
+        this.db
+          .prepare(
+            "SELECT 1 FROM effects e JOIN jobs j ON j.id=e.job_id WHERE j.content_id=? AND e.state IN('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
+          )
+          .get(row.id)
+      )
+        blockers.add('Nội dung còn thao tác cần đối soát; chưa tạo lượt mới.');
+    for (const asset of assets) {
+      if (asset.state !== 'READY')
+        blockers.add('Media chưa sẵn có: ' + asset.relativePath + ' (' + asset.state + ').');
+      const source = this.db
+        .prepare(
+          'SELECT s.host_id,s.active,s.process_id FROM sources s JOIN assets a ON a.source_ref=s.id WHERE a.id=?',
+        )
+        .get(asset.id);
+      if (
+        !source ||
+        source.host_id !== hostId ||
+        !source.active ||
+        source.process_id !== process.id
+      )
+        blockers.add('Media cần được gắn lại với nguồn trên máy này: ' + asset.relativePath);
+    }
+    return [...blockers];
+  }
+  previewSchedule(
+    processId: string,
+    contentIds: string[],
+    hostId: string | null = null,
+    at = now(),
+    seed = randomInt(0, 2147483647),
+  ): SchedulePreviewDto {
+    return this.transaction(() => {
+      const context = this.scheduleContext(processId, contentIds),
+        blockers = this.scheduleBlockers(context, hostId);
+      const preview = createSchedulePreview({
+        processId,
+        processRevision: context.process.revision,
+        profile: context.process.schedule,
+        items: context.rows.map((row) => ({ id: row.id, revision: row.revision })),
+        nowUtc: at,
+        seed,
+      });
+      const payload: StoredSchedule = { preview, context };
+      this.db
+        .prepare('INSERT INTO schedule_previews VALUES(?,?,?,?,?,NULL)')
+        .run(
+          preview.token,
+          processId,
+          preview.expiresAt,
+          canonicalJson(payload),
+          contentHash(payload),
+        );
+      return {
+        token: preview.token,
+        expiresAt: preview.expiresAt,
+        timezone: context.process.schedule.timezone,
+        slots: preview.slots,
+        blockers,
+        canApply: blockers.length === 0,
+        warnings: [
+          'Áp dụng sẽ lưu lịch công việc. Android runtime chưa được triển khai; chưa có thao tác tự đăng.',
+          ...(context.assets.length
+            ? [
+                'Tệp sẽ được kiểm tra lại trước khi thực thi; snapshot giữ nguyên fingerprint đã xem.',
+              ]
+            : []),
+        ],
+      };
+    });
+  }
+  applySchedule(
+    token: string,
+    hostId: string | null = null,
+    at = now(),
+  ): { jobIds: string[]; alreadyApplied: boolean } {
+    idSchema.parse(token);
+    return this.transaction(() => {
+      const record = this.db.prepare('SELECT * FROM schedule_previews WHERE token=?').get(token);
+      if (!record) throw new DomainError('NOT_FOUND', 'Không tìm thấy bản xem trước.');
+      if (record.applied_at !== null)
+        return {
+          jobIds: this.db
+            .prepare('SELECT job_id FROM schedule_preview_jobs WHERE token=? ORDER BY ordinal')
+            .all(token)
+            .map((row) => String(row.job_id)),
+          alreadyApplied: true,
+        };
+      const frozen = parse<StoredSchedule>(record.payload);
+      if (contentHash(frozen) !== record.payload_hash)
+        throw new DomainError('PREVIEW_TAMPERED', 'Bản xem trước không khớp checksum.');
+      const context = this.scheduleContext(
+        frozen.context.process.id,
+        frozen.preview.items.map((item) => item.id),
+      );
+      assertPreviewCurrent(frozen.preview, {
+        processId: context.process.id,
+        revision: context.process.revision,
+        profile: context.process.schedule,
+        items: context.rows.map((row) => ({ id: row.id, revision: row.revision })),
+        nowUtc: at,
+      });
+      if (contentHash(context) !== contentHash(frozen.context))
+        throw new DomainError(
+          'PREVIEW_STALE',
+          'Dữ liệu, media hoặc lịch đã đổi; tạo bản xem trước mới.',
+        );
+      const blockers = this.scheduleBlockers(context, hostId);
+      if (blockers.length) throw new DomainError('SCHEDULE_BLOCKED', blockers.join(' '));
+      if (frozen.preview.slots.some((slot) => Date.parse(slot.scheduledUtc) <= Date.parse(at)))
+        throw new DomainError('PREVIEW_TIME_PASSED', 'Có giờ đã qua; tạo bản xem trước mới.');
+      const version = context.version!,
+        jobIds: string[] = [];
+      for (const [index, slot] of frozen.preview.slots.entries()) {
+        const row = context.rows[index]!;
+        if (row.id !== slot.contentId)
+          throw new DomainError('PREVIEW_TAMPERED', 'Preview item order mismatch');
+        const job: JobDefinition = {
+          id: makeId('job'),
+          occurrenceKey: contentHash({ token, contentId: row.id }),
+          processId: context.process.id,
+          deviceId: context.process.deviceId!,
+          contentId: row.id,
+          scheduledUtc: slot.scheduledUtc,
+          state: 'SCHEDULED',
+          revision: 0,
+          priority: 0,
+        };
+        const snapshot: JobSnapshot = {
+          workflowVersionId: version.id,
+          workflowHash: version.hash,
+          bundle: version.bundle,
+          contentId: row.id,
+          fields: row.fields,
+          assetIds: row.assetIds,
+          assets: context.assets.filter((asset) => asset.contentId === row.id),
+          accountId: context.process.accountId,
+          targetId: context.process.targetId,
+          networkProfileId: null,
+          processRevision: context.process.revision,
+          scheduleProfile: context.process.schedule,
+        };
+        this.insertJob(job, snapshot);
+        this.db
+          .prepare('INSERT INTO schedule_preview_jobs VALUES(?,?,?)')
+          .run(token, index, job.id);
+        jobIds.push(job.id);
+      }
+      this.db.prepare('UPDATE schedule_previews SET applied_at=? WHERE token=?').run(at, token);
+      return { jobIds, alreadyApplied: false };
+    });
+  }
+  listJobs(query: JobQuery = {}): { jobs: ScheduledJobSummary[]; hasMore: boolean } {
+    const limit = query.limit ?? 500;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
+      throw new DomainError('INVALID_QUERY', 'Limit must be between 1 and 1000');
+    const where: string[] = [],
+      params: (string | number)[] = [];
+    for (const [key, column] of [
+      ['processId', 'process_id'],
+      ['deviceId', 'device_id'],
+      ['state', 'state'],
+      ['fromUtc', 'scheduled_utc'],
+      ['toUtc', 'scheduled_utc'],
+    ] as const)
+      if (query[key]) {
+        where.push(
+          key === 'fromUtc'
+            ? 'julianday(scheduled_utc)>=julianday(?)'
+            : key === 'toUtc'
+              ? 'julianday(scheduled_utc)<julianday(?)'
+              : column + '=?',
+        );
+        params.push(query[key]!);
+      }
+    const records = this.db
+      .prepare(
+        'SELECT id FROM jobs' +
+          (where.length ? ' WHERE ' + where.join(' AND ') : '') +
+          ' ORDER BY julianday(scheduled_utc),priority DESC,created_at,id LIMIT ?',
+      )
+      .all(...params, limit + 1);
+    const devices = new Map(this.listDevices().map((device) => [device.id, device.name]));
+    const jobs = records.slice(0, limit).map((record) => {
+      const { job, snapshot, snapshotHash } = this.getJob(String(record.id)),
+        process = this.getProcess(job.processId);
+      return {
+        ...job,
+        processName: process.name,
+        deviceName: devices.get(job.deviceId) ?? job.deviceId,
+        timezone: snapshot.scheduleProfile?.timezone ?? process.schedule.timezone,
+        snapshotHash,
+      };
+    });
+    return { jobs, hasMore: records.length > limit };
+  }
+  private editableScheduledJob(id: string, expectedRevision: number): JobDefinition {
+    const { job } = this.getJob(id);
+    if (job.revision !== expectedRevision)
+      throw new DomainError('REVISION_CONFLICT', 'Lịch đã thay đổi; tải lại trước khi sửa.');
+    if (
+      job.state !== 'SCHEDULED' ||
+      this.db.prepare('SELECT 1 FROM effects WHERE job_id=?').get(id)
+    )
+      throw new DomainError(
+        'JOB_NOT_EDITABLE',
+        'Chỉ sửa lịch chưa bắt đầu và chưa có external intent.',
+      );
+    return job;
+  }
+  rescheduleJob(id: string, expectedRevision: number, scheduledUtc: string, at = now()): void {
+    if (!Number.isFinite(Date.parse(scheduledUtc)) || Date.parse(scheduledUtc) <= Date.parse(at))
+      throw new DomainError('INVALID_JOB_TIME', 'Chọn giờ trong tương lai.');
+    this.transaction(() => {
+      this.editableScheduledJob(id, expectedRevision);
+      this.db
+        .prepare('UPDATE jobs SET scheduled_utc=?,revision=revision+1 WHERE id=?')
+        .run(new Date(scheduledUtc).toISOString(), id);
+    });
+  }
+  cancelScheduledJob(id: string, expectedRevision: number): void {
+    this.transaction(() => {
+      this.editableScheduledJob(id, expectedRevision);
+      this.db.prepare("UPDATE jobs SET state='CANCELLED',revision=revision+1 WHERE id=?").run(id);
+    });
+  }
+
   /** Internal-only entrypoint: caller must obtain a native dialog grant before calling. */
   registerNativeSource(grant: Omit<SourceGrant, 'id' | 'revision' | 'active'>): SourceDefinition {
-    idSchema.parse(grant.processId);
-    this.getProcess(grant.processId);
-    if (!grant.rootPath || !grant.hostId || !['FOLDER', 'FILE'].includes(grant.kind))
-      throw new DomainError('INVALID_GRANT', 'Invalid host grant');
+    return this.transaction(() => this.insertNativeSource(grant));
+  }
+  /** Batch from one native dialog. No partial registration on stale Process or invalid grant. */
+  registerNativeSources(
+    processId: string,
+    expectedRevision: number,
+    grants: Omit<SourceGrant, 'id' | 'revision' | 'active'>[],
+  ): SourceDefinition[] {
     return this.transaction(() => {
+      const process = this.getProcess(processId);
+      if (process.archived || process.revision !== expectedRevision)
+        throw new DomainError(
+          'REVISION_CONFLICT',
+          'Tiến trình đã đổi trong lúc chọn nguồn; chọn lại.',
+        );
+      if (
+        !grants.length ||
+        grants.length > 128 ||
+        grants.some((g) => g.processId !== processId) ||
+        grants.filter((g) => g.kind === 'FOLDER').length > 1
+      )
+        throw new DomainError('INVALID_GRANT', 'Invalid native source batch');
+      return grants.map((grant) => this.insertNativeSource(grant));
+    });
+  }
+  private insertNativeSource(
+    grant: Omit<SourceGrant, 'id' | 'revision' | 'active'>,
+  ): SourceDefinition {
+    idSchema.parse(grant.processId);
+    if (
+      this.getProcess(grant.processId).archived ||
+      !grant.rootPath ||
+      !grant.hostId ||
+      !['FOLDER', 'FILE'].includes(grant.kind)
+    )
+      throw new DomainError('INVALID_GRANT', 'Invalid host grant');
+    const duplicate = this.listSources(grant.processId, grant.hostId).find(
+      (s) => !s.requiresRebind && s.kind === grant.kind && s.displayPath === grant.rootPath,
+    );
+    if (duplicate) {
+      if (
+        duplicate.active &&
+        duplicate.recursive === grant.recursive &&
+        duplicate.watch === grant.watch
+      )
+        return duplicate;
       if (grant.kind === 'FOLDER')
         this.db
           .prepare(
-            "UPDATE sources SET active=0,watch=0,revision=revision+1 WHERE process_id=? AND kind='FOLDER' AND active=1",
+            "UPDATE sources SET active=0,watch=0,revision=revision+1 WHERE process_id=? AND kind='FOLDER' AND active=1 AND id<>?",
           )
-          .run(grant.processId);
-      const id = makeId('source');
+          .run(grant.processId, duplicate.id);
       this.db
-        .prepare('INSERT INTO sources VALUES(?,?,?,?,?,?,0,1,?)')
-        .run(
-          id,
-          grant.processId,
-          grant.kind,
-          grant.rootPath,
-          Number(grant.recursive),
-          Number(grant.watch),
-          grant.hostId,
-        );
-      return {
+        .prepare('UPDATE sources SET recursive=?,watch=?,active=1,revision=revision+1 WHERE id=?')
+        .run(Number(grant.kind === 'FOLDER' && grant.recursive), Number(grant.watch), duplicate.id);
+      return this.listSources(grant.processId, grant.hostId).find((s) => s.id === duplicate.id)!;
+    }
+    if (grant.kind === 'FOLDER')
+      this.db
+        .prepare(
+          "UPDATE sources SET active=0,watch=0,revision=revision+1 WHERE process_id=? AND kind='FOLDER' AND active=1",
+        )
+        .run(grant.processId);
+    const id = makeId('source');
+    this.db
+      .prepare('INSERT INTO sources VALUES(?,?,?,?,?,?,0,1,?)')
+      .run(
         id,
-        processId: grant.processId,
-        kind: grant.kind,
-        displayPath: grant.rootPath,
-        recursive: grant.recursive,
-        watch: grant.watch,
-        revision: 0,
-        active: true,
-        requiresRebind: false,
-      };
+        grant.processId,
+        grant.kind,
+        grant.rootPath,
+        Number(grant.recursive),
+        Number(grant.watch),
+        grant.hostId,
+      );
+    return {
+      id,
+      processId: grant.processId,
+      kind: grant.kind,
+      displayPath: grant.rootPath,
+      recursive: grant.recursive,
+      watch: grant.watch,
+      revision: 0,
+      active: true,
+      requiresRebind: false,
+    };
+  }
+  activeSourceGrants(hostId: string): SourceGrant[] {
+    return this.db
+      .prepare(
+        'SELECT s.id FROM sources s JOIN processes p ON p.id=s.process_id WHERE s.host_id=? AND s.active=1 AND p.archived=0',
+      )
+      .all(hostId)
+      .map((r) => this.getSourceGrant(String(r.id), hostId));
+  }
+  updateSourceOptions(
+    id: string,
+    hostId: string,
+    expectedRevision: number,
+    options: { recursive: boolean; watch: boolean; active: boolean },
+  ): SourceDefinition {
+    return this.transaction(() => {
+      const row = this.db.prepare('SELECT process_id FROM sources WHERE id=?').get(id);
+      if (!row) throw new DomainError('NOT_FOUND', 'Source not found');
+      const source = this.listSources(String(row.process_id), hostId).find((s) => s.id === id)!;
+      if (source.requiresRebind && options.active)
+        throw new DomainError(
+          'SOURCE_REBIND_REQUIRED',
+          'Chọn lại nguồn trên host trước khi bật theo dõi.',
+        );
+      if (!source.active || source.revision !== expectedRevision)
+        throw new DomainError('SOURCE_CHANGED', 'Nguồn đã đổi; tải lại trước khi sửa.');
+      this.db
+        .prepare('UPDATE sources SET recursive=?,watch=?,active=?,revision=revision+1 WHERE id=?')
+        .run(
+          Number(source.kind === 'FOLDER' && options.recursive),
+          Number(options.active && options.watch),
+          Number(options.active),
+          id,
+        );
+      return this.listSources(source.processId, hostId).find((s) => s.id === id)!;
     });
+  }
+  listContentAssets(processId: string): ContentAssetInfo[] {
+    this.getProcess(processId);
+    return this.db
+      .prepare(
+        `SELECT a.*,ca.content_id,e.state,m.probe FROM assets a
+      JOIN content_assets ca ON ca.asset_id=a.id JOIN content_items c ON c.id=ca.content_id
+      LEFT JOIN source_entries e ON e.asset_id=a.id AND e.content_id=c.id
+      LEFT JOIN asset_metadata m ON m.asset_id=a.id
+      WHERE c.process_id=? AND c.ignored=0 ORDER BY c.rowid,ca.ordinal`,
+      )
+      .all(processId)
+      .map((r) => ({
+        id: String(r.id),
+        contentId: String(r.content_id),
+        relativePath: String(r.relative_path),
+        hash: String(r.hash),
+        kind: r.kind as 'image' | 'video',
+        bytes: Number(r.bytes),
+        state: (r.state ?? 'UNTRACKED') as ContentAssetInfo['state'],
+        probe: r.probe ? parse<ScannedAsset['probe']>(r.probe) : null,
+      }));
   }
   getSourceGrant(id: string, hostId: string): SourceGrant {
     const r = this.db.prepare('SELECT * FROM sources WHERE id=?').get(id);
@@ -778,7 +1206,7 @@ export class StudioDatabase {
       recursive: Boolean(r.recursive),
       watch: Boolean(r.watch),
       revision: Number(r.revision),
-      active: Boolean(r.active),
+      active: Boolean(r.active) && !this.getProcess(String(r.process_id)).archived,
       hostId,
     };
   }

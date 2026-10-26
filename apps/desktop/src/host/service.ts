@@ -5,18 +5,61 @@ import {
   appDefinitionSchema,
   assertJsonSafe,
   validateTypedValues,
+  jobStateSchema,
+  localDateSchema,
+  timezoneSchema,
 } from '@autoreels/contracts';
 import type { ContentItem } from '@autoreels/contracts';
 import { StudioDatabase } from '@autoreels/database';
 import { DomainError } from '@autoreels/domain';
 import { validateBundle, traceWorkflow } from '@autoreels/workflow-engine';
-import { createSchedulePreview } from '@autoreels/scheduler';
-import { randomInt } from 'node:crypto';
+import { localSlotToUtc } from '@autoreels/scheduler';
 
 const id = z.strictObject({ id: idSchema });
 const revision = z.number().int().nonnegative();
+export const mediaSchemas = {
+  mediaCapabilities: z.strictObject({}),
+  chooseSource: z.strictObject({
+    processId: idSchema,
+    expectedRevision: revision,
+    kind: z.enum(['FOLDER', 'FILE']),
+    recursive: z.boolean(),
+    watch: z.boolean(),
+  }),
+  sources: z.strictObject({ processId: idSchema }),
+  scanSource: id,
+  cancelSourceScan: id,
+  updateSource: id.extend({
+    expectedRevision: revision,
+    options: z.strictObject({ recursive: z.boolean(), watch: z.boolean(), active: z.boolean() }),
+  }),
+} as const;
 const schemas = {
-  previewSchedule: z.strictObject({ processId: idSchema, contentIds: z.array(idSchema) }),
+  ...mediaSchemas,
+  contentAssets: z.strictObject({ processId: idSchema }),
+  ignoreContent: id.extend({ expectedRevision: revision }),
+  previewSchedule: z.strictObject({
+    processId: idSchema,
+    contentIds: z.array(idSchema).min(1).max(1000),
+  }),
+  applySchedule: z.strictObject({ token: idSchema }),
+  jobs: z.strictObject({
+    query: z.strictObject({
+      processId: idSchema.optional(),
+      deviceId: idSchema.optional(),
+      state: jobStateSchema.optional(),
+      fromUtc: z.string().datetime().optional(),
+      toUtc: z.string().datetime().optional(),
+      limit: z.number().int().min(1).max(1000).optional(),
+    }),
+  }),
+  rescheduleJob: id.extend({
+    expectedRevision: revision,
+    localDate: localDateSchema,
+    localTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+    timezone: timezoneSchema,
+  }),
+  cancelScheduledJob: id.extend({ expectedRevision: revision }),
   bootstrap: z.strictObject({}),
   registerApp: z.strictObject({ app: appDefinitionSchema }),
   createWorkflow: z.strictObject({ appId: idSchema, name: z.string().trim().min(1).max(160) }),
@@ -40,7 +83,7 @@ const schemas = {
       revision,
       fields: z.record(z.string(), z.unknown()),
       assetIds: z.array(idSchema),
-      ignored: z.boolean(),
+      ignored: z.literal(false),
     }),
     expectedRevision: revision.nullable(),
   }),
@@ -50,38 +93,51 @@ export const envelopeSchema = z.strictObject({
   command: z.enum(Object.keys(schemas) as [keyof typeof schemas, ...Array<keyof typeof schemas>]),
   input: z.unknown(),
 });
-export async function dispatch(db: StudioDatabase, raw: unknown): Promise<unknown> {
+export async function dispatch(
+  db: StudioDatabase,
+  raw: unknown,
+  hostId: string | null = null,
+): Promise<unknown> {
   assertJsonSafe(raw);
   const request = envelopeSchema.parse(raw),
     input = schemas[request.command].parse(request.input);
   // Parse per case to retain exact static DTO types after runtime validation.
   switch (request.command) {
+    case 'mediaCapabilities':
+    case 'chooseSource':
+    case 'sources':
+    case 'scanSource':
+    case 'cancelSourceScan':
+    case 'updateSource':
+      throw new DomainError('HOST_REQUIRED', 'Thao tác nguồn cần media service của host.');
+    case 'contentAssets':
+      return db.listContentAssets(schemas.contentAssets.parse(input).processId);
+    case 'ignoreContent': {
+      const p = schemas.ignoreContent.parse(input);
+      db.ignoreContent(p.id, p.expectedRevision);
+      return null;
+    }
     case 'previewSchedule': {
-      const p = schemas.previewSchedule.parse(input),
-        process = db.getProcess(p.processId),
-        all = db.listContent(p.processId);
-      if (
-        new Set(p.contentIds).size !== p.contentIds.length ||
-        p.contentIds.some((id) => !all.some((row) => row.id === id))
-      )
-        throw new DomainError('INVALID_SCOPE', 'Content selection does not match the Process');
-      const selected = p.contentIds.map((id) => all.find((row) => row.id === id)!);
-      const preview = createSchedulePreview({
-        processId: process.id,
-        processRevision: process.revision,
-        profile: process.schedule,
-        items: selected.map((row) => ({ id: row.id, revision: row.revision })),
-        nowUtc: new Date().toISOString(),
-        seed: randomInt(0, 2147483647),
-      });
-      return {
-        ...preview,
-        warnings: [
-          !process.deviceId ? 'Chưa gán điện thoại.' : '',
-          !process.workflowVersionId ? 'Chưa chọn phiên bản workflow.' : '',
-          'Đây là bản xem trước; chưa tạo job hoặc gửi thao tác thiết bị.',
-        ].filter(Boolean),
-      };
+      const p = schemas.previewSchedule.parse(input);
+      return db.previewSchedule(p.processId, p.contentIds, hostId);
+    }
+    case 'applySchedule':
+      return db.applySchedule(schemas.applySchedule.parse(input).token, hostId);
+    case 'jobs':
+      return db.listJobs(schemas.jobs.parse(input).query);
+    case 'rescheduleJob': {
+      const p = schemas.rescheduleJob.parse(input);
+      db.rescheduleJob(
+        p.id,
+        p.expectedRevision,
+        localSlotToUtc(p.localDate, p.localTime, p.timezone),
+      );
+      return null;
+    }
+    case 'cancelScheduledJob': {
+      const p = schemas.cancelScheduledJob.parse(input);
+      db.cancelScheduledJob(p.id, p.expectedRevision);
+      return null;
     }
     case 'bootstrap':
       return {
@@ -167,6 +223,24 @@ export async function dispatch(db: StudioDatabase, raw: unknown): Promise<unknow
         if (errors.length)
           throw new DomainError('INVALID_CONTENT', errors[0]!.path + ': ' + errors[0]!.message);
       }
+      const allowedAssets = new Set(db.listContentAssets(p.item.processId).map((a) => a.id));
+      const fieldAssets: string[] = [];
+      for (const field of bundle?.inputs ?? []) {
+        const value = p.item.fields[field.key];
+        if (field.scope !== 'row') continue;
+        if (field.type === 'file' && value && typeof value === 'object' && !Array.isArray(value))
+          fieldAssets.push(String((value as { assetId: string }).assetId));
+        if (field.type === 'file[]' && Array.isArray(value))
+          for (const ref of value) fieldAssets.push(String((ref as { assetId: string }).assetId));
+      }
+      if (
+        p.item.assetIds.some((id) => !allowedAssets.has(id)) ||
+        fieldAssets.some((id) => !allowedAssets.has(id) || !p.item.assetIds.includes(id))
+      )
+        throw new DomainError(
+          'INVALID_ASSET_SCOPE',
+          'Chỉ chọn media đã đăng ký trong tiến trình này.',
+        );
       return db.saveContent(p.item as ContentItem, p.expectedRevision);
     }
   }

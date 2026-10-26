@@ -3,6 +3,7 @@ import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { setTimeout as delay } from 'node:timers/promises';
 import { basename, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import type { SourceGrant, ScannedAsset } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
@@ -165,6 +166,21 @@ export async function scanSource(
       const path = await resolveGrantedFile(grant, relativePath, hostId),
         kind = mediaKind(path);
       if (!kind) continue;
+      const before = await stat(path);
+      // Only recent writes need settling; do not delay every item in an old library.
+      if (Date.now() - before.mtimeMs < 1500) {
+        await delay(250, undefined, options.signal ? { signal: options.signal } : {});
+        const stable = await stat(path);
+        if (
+          stable.size !== before.size ||
+          stable.mtimeMs !== before.mtimeMs ||
+          stable.ino !== before.ino
+        )
+          throw new DomainError(
+            'FILE_NOT_STABLE',
+            'File đang được ghi; quét lại khi file ổn định.',
+          );
+      }
       const value = await fingerprint(path, options.signal);
       const probe = await probeMedia(path, options.probeExecutable ?? 'ffprobe', options.signal);
       const after = await stat(path);
@@ -178,3 +194,6 @@ export async function scanSource(
     }
   }
 }
+
+export { MediaCoordinator } from './coordinator.js';
+export type { MediaRepository } from './coordinator.js';
