@@ -176,29 +176,44 @@
       "sha256": "57629572d6162f9963cf5d838941e793bfecdedba7d385928495ca67071c9201"
     },
     {
+      "path": "docs/evidence/implementation/checkpoint-005.json",
+      "bytes": 4647,
+      "sha256": "9bd3a85933075517a0ecd98f8eb00f7dbeee28cf06466899d855e5cc6b86b54e"
+    },
+    {
       "path": "docs/evidence/implementation/ui/content-form-1600.png",
-      "bytes": 128569,
-      "sha256": "e47cd1729d5c3233c3df15711e27c11f4ca5c730b803d3cd1d0483ef183ec42a"
+      "bytes": 128396,
+      "sha256": "8fceabd92b67f296cd9386022e4c853e80c61ca9778162044832bec7182aa59a"
     },
     {
       "path": "docs/evidence/implementation/ui/content-preview-1600.png",
-      "bytes": 119744,
-      "sha256": "9560c877fa65791a9fa18c89251fa735e92257d679a2c4efb0250fc1feab9b1e"
+      "bytes": 119708,
+      "sha256": "979c204b8de1d41e0010a18568b2a1cb6bdc3208e5d7f8c6d50194b7e15e988a"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/device-controls-1600.png",
+      "bytes": 113125,
+      "sha256": "9b5f792b0fe504181bddfdd3dce727fe692d5347a127d6d611bea949bc948362"
     },
     {
       "path": "docs/evidence/implementation/ui/inspector-1600.png",
-      "bytes": 115604,
-      "sha256": "4d8e41978d41d4900fe0c147038091d2d89254414bd93c2d3dfb77976118055e"
+      "bytes": 119334,
+      "sha256": "1bff537d36b0371a68b36d66fd47cabe50e45acedbf3876b2306f6d48e2d5eab"
     },
     {
       "path": "docs/evidence/implementation/ui/schedule-1600.png",
-      "bytes": 61595,
-      "sha256": "638590ccd8d5cd04416e5e7f320926de77fc936bbdd922c8dc26bd362f4483aa"
+      "bytes": 61597,
+      "sha256": "747e513f557ad4f1fee9bc6b9bea8b7b77d12bcb8e7f33cb062d9ab9e0748ece"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/xml-inspector-1600.png",
+      "bytes": 118382,
+      "sha256": "07e0dccc96c43b4e5c72bd141790f3cad0956f5dd3cead5894176d2ca4e8c4db"
     },
     {
       "path": "docs/handoff/RESUME_PROMPT.md",
-      "bytes": 2148,
-      "sha256": "98eaa802a18ef317da6e8bcc17d1e0f2c0aededb40c1e2871b6f4a98f938bf69"
+      "bytes": 2478,
+      "sha256": "c00b65b7d64fd89fd0b7d17079e8420a88454a197f8af941c2c50ae153e6a496"
     },
     {
       "path": "docs/handoff/START_HERE.md",
@@ -216,6 +231,11 @@
       "sha256": "be323ce1afc917c3ce1ccd2cfa76f4a16df70751d539c0c2646b329f14803dcf"
     },
     {
+      "path": "docs/implementation/DEVICE_HOST_GUIDE.md",
+      "bytes": 3241,
+      "sha256": "9b0a9a3f682d1d55b9d038d72283c732f328090837eee351b47c48e16c9d7774"
+    },
+    {
       "path": "docs/implementation/INCREMENT-005_PLAN.md",
       "bytes": 8191,
       "sha256": "43e91b6682264201d5822bc45a5b6925bb06716377e6781b879cfedc1b5b4847"
@@ -224,6 +244,31 @@
       "path": "docs/implementation/INCREMENT-006_PLAN.md",
       "bytes": 3951,
       "sha256": "6fa583502e11924dcef532d2b2e651f442aabc927b79336127500d9bf659cd61"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-007_PLAN.md",
+      "bytes": 6045,
+      "sha256": "c797971e660db19257532cca3005c27611dc5f740b9d840a3b6dc1c5b7a116f1"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-008_PLAN.md",
+      "bytes": 2695,
+      "sha256": "af23cfec49fb83b80f207b6879203b2ce5a3cdba5e0d930e6a3463a20bd992a9"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-009_PLAN.md",
+      "bytes": 2993,
+      "sha256": "4ec7f8a94480562493b87531d72ce49eb74e49f97c97e33bd5c3fb1b47848995"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-010_PLAN.md",
+      "bytes": 1879,
+      "sha256": "ac7d8c63c2e3fefb4c8556af6c49701a539e73e90c47c30554fd0a15b097bc83"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-011_PLAN.md",
+      "bytes": 1996,
+      "sha256": "7d87b52fa5a7ed83764d260b2d070646836cb2cb490688f6737f7ce208be033e"
     },
     {
       "path": "docs/implementation/P00_PLAN.md",
@@ -266,9 +311,24 @@
       "sha256": "ef166ff8536c11bd236109f6cf612e15e1c2e7fee76ae00a98f9cca96b860dd6"
     },
     {
+      "path": "docs/implementation/P08_PLAN.md",
+      "bytes": 3219,
+      "sha256": "fe4ee39c99798073214ee519aa394c1ed7147cbacfa3c6e848be2d662a9dfc13"
+    },
+    {
+      "path": "docs/implementation/P09_PLAN.md",
+      "bytes": 2063,
+      "sha256": "7e4caa7246a9566d6c6e91b5ef67c18f56a117bfbaa257126bcff54599d229aa"
+    },
+    {
       "path": "docs/implementation/PROGRESS.md",
-      "bytes": 6662,
-      "sha256": "f24165f2b789168edc28c99fc263a50997116f462bb5741c274aaabbe96fb2de"
+      "bytes": 8318,
+      "sha256": "c381d410c9a2a42a7ec2f36b32e8900aa894d73d97dbfedf11831c2f1408f661"
+    },
+    {
+      "path": "docs/implementation/platform-tools-manifest.json",
+      "bytes": 1009,
+      "sha256": "b3ec707d05015188e464d6eef3bd8943d7a9a772f1c5d0434afdcf2b47a8165f"
     },
     {
       "path": "docs/previews/AutoReels-Studio-Compact.html",
