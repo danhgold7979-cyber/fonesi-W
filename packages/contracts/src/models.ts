@@ -102,6 +102,7 @@ export const processSchema = z.strictObject({
   revision: z.number().int().nonnegative(),
   archived: z.boolean(),
   schedule: scheduleProfileSchema,
+  fields: z.record(z.string(), z.json()).optional(),
 });
 export type ProcessDefinition = z.infer<typeof processSchema>;
 export const requestSchema = z.strictObject({

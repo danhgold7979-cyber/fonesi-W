@@ -6,16 +6,18 @@
   "main": "dist/host/main/index.js",
   "dependencies": {
     "@autoreels/contracts": "workspace:*",
-    "@autoreels/domain": "workspace:*",
     "@autoreels/database": "workspace:*",
+    "@autoreels/domain": "workspace:*",
     "@autoreels/editor": "workspace:*",
-    "@autoreels/workflow-engine": "workspace:*",
+    "@autoreels/import-export": "workspace:*",
+    "@autoreels/media": "workspace:*",
     "@autoreels/scheduler": "workspace:*",
+    "@autoreels/workflow-engine": "workspace:*",
+    "@tanstack/react-virtual": "3.14.22",
+    "@xyflow/react": "12.12.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "@xyflow/react": "12.12.0",
-    "zod": "4.6.7",
-    "@autoreels/media": "workspace:*"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

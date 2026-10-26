@@ -97,3 +97,34 @@ export function validateTypedValues(
       });
   return issues;
 }
+
+/** Call after type validation; preserves declared field and array order. */
+export function inputReferences(
+  fields: readonly FieldDefinition[],
+  values: Record<string, JsonValue>,
+  scope: FieldDefinition['scope'],
+): { assets: string[]; identities: string[] } {
+  const assets: string[] = [],
+    identities: string[] = [];
+  for (const field of fields) {
+    if (field.scope !== scope || !Object.hasOwn(values, field.key)) continue;
+    const value = values[field.key];
+    const refs =
+      field.type === 'file[]' || field.type === 'list'
+        ? Array.isArray(value)
+          ? value
+          : []
+        : [value];
+    for (const ref of refs)
+      if (ref && typeof ref === 'object' && !Array.isArray(ref)) {
+        if ((field.type === 'file' || field.type === 'file[]') && typeof ref.assetId === 'string')
+          assets.push(ref.assetId);
+        if (
+          (field.type === 'identity' || (field.type === 'list' && field.itemType === 'identity')) &&
+          typeof ref.identityId === 'string'
+        )
+          identities.push(ref.identityId);
+      }
+  }
+  return { assets, identities };
+}

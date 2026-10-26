@@ -21,3 +21,7 @@ S050–S059. Shell Process/content đang dùng persistence P02 và có E2E scope
 - File mới sửa có stability check trước hash; hash/probe recheck như hiện tại. Nguồn lỗi hoặc bị đổi không ghi callback sang Process khác. File đổi chỉ đánh dấu CHANGED, không thay bytes cũ. Ignore không xóa file gốc.
 - UI typed form thay JSON mặc định, giữ 0/false/missing và thứ tự item nhiều dòng; file refs chỉ từ media cùng Process, identity chưa có discovery thì không bịa options. UI gọn: nguồn theo Process, chọn folder/files, recursive/watch, quét/hủy, progress và lỗi; tên media/trạng thái thay asset count đơn thuần. Chuyển Process dùng generation để loại response cũ. Phần thumbnails/import/bulk/virtualization để increment sau, không tuyên bố toàn P06 hoàn thành.
 - Kiểm chứng bằng real temp FS + SQLite: scan→ignore→reconcile→restart, đổi/mất bytes, cancel/error không mark missing, stale dialog/options, concurrency/dedupe/shutdown; browser unsupported/Process isolation và Electron sandbox smoke. Native dialog tương tác/Windows vẫn cần nghiệm thu desktop thật.
+
+## Increment 005
+
+Kế hoạch chi tiết từng tiểu bước trước code: [INCREMENT-005_PLAN.md](INCREMENT-005_PLAN.md). 005A → 005B → 005C → 005D; Process fields và content preview/apply là phạm vi chính. Giữ phần còn thiếu trong progress và không biến content import thành workspace import.

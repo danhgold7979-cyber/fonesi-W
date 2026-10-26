@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 5;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -38,8 +38,20 @@ CREATE TABLE schedule_preview_jobs(token TEXT NOT NULL REFERENCES schedule_previ
 CREATE INDEX schedule_preview_expiry ON schedule_previews(expires_at);
 `;
 
+export const contentChangeMigration = `
+CREATE TABLE content_change_previews(token TEXT PRIMARY KEY,process_id TEXT NOT NULL REFERENCES processes(id),expires_at TEXT NOT NULL,payload TEXT NOT NULL,payload_hash TEXT NOT NULL,result TEXT) STRICT;
+CREATE INDEX content_preview_expiry ON content_change_previews(expires_at);
+`;
+export const queueClaimMigration = `
+CREATE TABLE job_claims(job_id TEXT PRIMARY KEY REFERENCES jobs(id),device_id TEXT NOT NULL REFERENCES devices(id),owner_id TEXT NOT NULL,generation INTEGER NOT NULL CHECK(generation>0),expires_at INTEGER NOT NULL) STRICT;
+CREATE INDEX job_claim_device ON job_claims(device_id,expires_at);
+CREATE TABLE queue_events(id TEXT PRIMARY KEY,job_id TEXT NOT NULL REFERENCES jobs(id),kind TEXT NOT NULL,detail TEXT NOT NULL,created_at TEXT NOT NULL) STRICT;
+CREATE INDEX queue_event_job ON queue_events(job_id,created_at);
+`;
 export const migrations = [
   { version: 1, sql: migration },
   { version: 2, sql: mediaMigration },
   { version: 3, sql: scheduleMigration },
+  { version: 4, sql: contentChangeMigration },
+  { version: 5, sql: queueClaimMigration },
 ] as const;

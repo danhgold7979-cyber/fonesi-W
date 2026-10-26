@@ -1336,3 +1336,90 @@ td {
   padding-left: 8px;
   font-size: 12px;
 }
+.process-inputs {
+  margin-top: 12px;
+  padding: 12px 16px;
+}
+.process-inputs > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.hidden-file-input {
+  display: none;
+}
+.data-menu {
+  position: relative;
+}
+.data-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.data-menu-options {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 5px);
+  min-width: 250px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--surface);
+  padding: 10px;
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 24px #26334b20;
+  border-radius: 8px;
+}
+.data-menu-options small {
+  padding: 3px 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.data-menu-options button {
+  text-align: left;
+}
+.import-preview-table {
+  max-height: 45vh;
+  overflow: auto;
+  margin-bottom: 12px;
+}
+.content-table-scroll {
+  max-height: 440px;
+  overflow: auto;
+  overflow-anchor: none;
+}
+.content-table-scroll thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.content-table-scroll th:first-child,
+.content-table-scroll td:first-child {
+  width: 34px;
+}
+.content-delta {
+  margin: 3px 0;
+  max-width: 480px;
+  overflow-wrap: anywhere;
+}
+.content-delta summary {
+  cursor: pointer;
+}
+.delta-values {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.delta-values pre {
+  flex: 1;
+  max-width: 220px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  padding: 7px;
+  background: var(--soft);
+  border-radius: 4px;
+}

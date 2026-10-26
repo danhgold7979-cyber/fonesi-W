@@ -27,3 +27,13 @@ export interface JobQuery {
   toUtc?: string | undefined;
   limit?: number | undefined;
 }
+
+export type QueueClaimResult =
+  | {
+      status: 'CLAIMED';
+      job: JobDefinition;
+      snapshot: import('./persistence.js').JobSnapshot;
+      snapshotHash: string;
+      lease: import('./persistence.js').DeviceLease;
+    }
+  | { status: 'EMPTY' | 'DEVICE_DISABLED' | 'DEVICE_BUSY' | 'NEEDS_REVIEW' };

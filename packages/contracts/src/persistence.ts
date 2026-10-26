@@ -43,6 +43,7 @@ export interface JobSnapshot {
   targetId: string | null;
   accountId?: string | null;
   processRevision?: number;
+  processFields?: Record<string, JsonValue>;
   scheduleProfile?: import('./models.js').ScheduleProfile;
   assets?: import('./media.js').ContentAssetInfo[];
   networkProfileId: string | null;

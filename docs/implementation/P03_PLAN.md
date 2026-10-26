@@ -11,3 +11,5 @@ Scope S022–S028, prerequisites SQLite/IPC core. Native smoke Linux có kết q
 7. E2E actual DB: empty workspace → create workflow → save/reload; navigate six routes; switch library filter không đổi editor app; input shortcuts không xóa nodes; no fake devices/posts.
 
 Giữ desktop min-window 1100×720, token styles/rail/header/footer theo UI spec. Windows DPI/multi-monitor/tray không ghi accepted khi chưa chạy host thật. Desktop security flags production không giảm chỉ để headless test chạy.
+
+Increment 005/006 Electron smoke bổ sung actual preload→DB worker→XLSX export/parse/preview/apply với 0/false/multiline fixtures trong data root riêng; kiểm tra private queue API không expose. Không mở dialog tự động hoặc giả Android.

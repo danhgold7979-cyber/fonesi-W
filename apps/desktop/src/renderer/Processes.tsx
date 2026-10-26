@@ -11,6 +11,8 @@ import type {
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
 import { Sources } from './Sources.js';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { ContentActions } from './ContentActions.js';
 import { ContentFields } from './ContentFields.js';
 
 interface Props {
@@ -45,14 +47,19 @@ function newProcess(appId: string): ProcessDefinition {
   };
 }
 export function Processes(props: Props) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const contentScroll = useRef<HTMLDivElement>(null);
   const [applying, setApplying] = useState(false);
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof api.previewSchedule>> | null>(
     null,
   );
+  const [processJson, setProcessJson] = useState('{}'),
+    [processJsonError, setProcessJsonError] = useState(false);
   const [assets, setAssets] = useState<ContentAssetInfo[]>([]);
   const [current, setCurrent] = useState<ProcessDefinition | null>(null),
     [rows, setRows] = useState<ContentItem[]>([]),
     [schema, setSchema] = useState<FieldDefinition[]>([]),
+    [processSchema, setProcessSchema] = useState<FieldDefinition[]>([]),
     [dirty, setDirty] = useState(false),
     [isNew, setIsNew] = useState(false),
     [versions, setVersions] = useState<Awaited<ReturnType<typeof api.versions>>>([]);
@@ -64,8 +71,8 @@ export function Processes(props: Props) {
     edits = useRef(0),
     context = useRef(current);
   context.current = current;
-  const live = useRef({ current, dirty, isNew });
-  live.current = { current, dirty, isNew };
+  const live = useRef({ current, dirty, isNew, validInputs: !processJsonError });
+  live.current = { current, dirty, isNew, validInputs: !processJsonError };
   const saving = useRef<Promise<unknown> | null>(null);
   const saveRef = useRef<() => Promise<unknown>>(async () => undefined);
   async function save(): Promise<ProcessDefinition | null> {
@@ -74,6 +81,7 @@ export function Processes(props: Props) {
       return save();
     }
     const state = live.current;
+    if (!state.validInputs) throw new Error('Sửa JSON trường tiến trình trước khi lưu.');
     if (!state.current || !state.dirty) return state.current;
     const snapshot = state.current,
       id = snapshot.id,
@@ -84,7 +92,12 @@ export function Processes(props: Props) {
         if (live.current.current?.id === id) {
           const changed = edits.current !== at,
             next = changed ? { ...live.current.current, revision: result.revision } : result;
-          live.current = { current: next, dirty: changed, isNew: false };
+          live.current = {
+            current: next,
+            dirty: changed,
+            isNew: false,
+            validInputs: live.current.validInputs,
+          };
           context.current = next;
           setCurrent(next);
           setDirty(changed);
@@ -110,11 +123,13 @@ export function Processes(props: Props) {
       await save();
       const token = ++rowGeneration.current;
       context.current = process;
-      live.current = { current: process, dirty: false, isNew: false };
+      live.current = { current: process, dirty: false, isNew: false, validInputs: true };
+      setProcessJsonError(false);
       setCurrent(process);
       setDirty(false);
       setIsNew(false);
       setRows([]);
+      setSelected(new Set());
       setAssets([]);
       setPreview(null);
       setRowModal(null);
@@ -128,6 +143,7 @@ export function Processes(props: Props) {
     const token = ++schemaGeneration.current;
     if (!current?.workflowId) {
       setSchema([]);
+      setProcessSchema([]);
       setVersions([]);
       return;
     }
@@ -137,9 +153,17 @@ export function Processes(props: Props) {
         setVersions(list);
         const pinned = list.find((v) => v.id === current.workflowVersionId);
         setSchema((pinned?.bundle ?? draft.bundle).inputs.filter((f) => f.scope === 'row'));
+        setProcessSchema(
+          (pinned?.bundle ?? draft.bundle).inputs.filter((f) => f.scope === 'process'),
+        );
       })
       .catch((e) => props.notify(String(e)));
   }, [current?.workflowId, current?.workflowVersionId]);
+  useEffect(() => {
+    // Reset on context switch; a save acknowledgement must preserve an in-progress JSON draft.
+    setProcessJson(JSON.stringify(current?.fields ?? {}, null, 2));
+    setProcessJsonError(false);
+  }, [current?.id]);
   function edit(patch: Partial<ProcessDefinition>) {
     if (!live.current.current) return;
     const next = { ...live.current.current, ...patch };
@@ -151,6 +175,28 @@ export function Processes(props: Props) {
   }
   const filtered = rows.filter((r) =>
     JSON.stringify(r.fields).toLocaleLowerCase('vi').includes(filter.toLocaleLowerCase('vi')),
+  );
+  const virtualRows = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => contentScroll.current,
+    estimateSize: () => 62,
+    getItemKey: (index) => filtered[index]!.id,
+    overscan: 8,
+  });
+  const visible = virtualRows.getVirtualItems();
+  useEffect(() => {
+    contentScroll.current?.scrollTo({ top: 0 });
+  }, [filter, current?.id]);
+  useEffect(() => {
+    setSelected((previous) => {
+      const ids = new Set(rows.map((row) => row.id)),
+        next = new Set([...previous].filter((id) => ids.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [rows]);
+  const dataScope = selected.size ? rows.filter((row) => selected.has(row.id)) : filtered;
+  const unknownProcessKeys = Object.keys(current?.fields ?? {}).filter(
+    (key) => !processSchema.some((field) => field.key === key),
   );
   return (
     <div className="page process-page">
@@ -206,7 +252,13 @@ export function Processes(props: Props) {
           </select>
         </label>
         <span className="badge">
-          {dirty ? 'Chưa lưu' : current ? 'Đã lưu r' + current.revision : 'Chưa chọn'}
+          {processJsonError
+            ? 'Dữ liệu chưa hợp lệ'
+            : dirty
+              ? 'Chưa lưu'
+              : current
+                ? 'Đã lưu r' + current.revision
+                : 'Chưa chọn'}
         </span>
       </div>
       {!current ? (
@@ -308,9 +360,77 @@ export function Processes(props: Props) {
               </label>
             </div>
           </div>
+          {(!!processSchema.length || !!unknownProcessKeys.length || processJsonError) && (
+            <details className="surface process-inputs" open>
+              <summary>Dữ liệu riêng của tiến trình · {processSchema.length} trường</summary>
+              {!!unknownProcessKeys.length && (
+                <div className="schedule-blocker">
+                  <p>
+                    Giá trị ngoài schema hiện tại: {unknownProcessKeys.join(', ')}. Dữ liệu được giữ
+                    để bạn kiểm tra trước khi đổi workflow.
+                  </p>
+                  <button
+                    disabled={processJsonError}
+                    onClick={() => {
+                      const fields = Object.fromEntries(
+                        Object.entries(current.fields ?? {}).filter(
+                          ([key]) => !unknownProcessKeys.includes(key),
+                        ),
+                      );
+                      setProcessJson(JSON.stringify(fields, null, 2));
+                      edit({ fields });
+                    }}
+                  >
+                    Bỏ giá trị không còn trong schema
+                  </button>
+                </div>
+              )}
+              <ContentFields
+                schema={processSchema}
+                assets={assets}
+                json={processJson}
+                change={(json) => {
+                  setProcessJson(json);
+                  try {
+                    const fields: unknown = JSON.parse(json);
+                    if (!fields || typeof fields !== 'object' || Array.isArray(fields))
+                      throw new Error('Expected field map');
+                    setProcessJsonError(false);
+                    edit({ fields: fields as Record<string, JsonValue> });
+                  } catch {
+                    setProcessJsonError(true);
+                  }
+                }}
+              />
+            </details>
+          )}
           <div className="section-heading">
             <h2>Nội dung</h2>
             <div className="actions">
+              <span className="muted">
+                {selected.size} chọn · {filtered.length} đang lọc
+              </span>
+              {!isNew && (
+                <ContentActions
+                  key={current.id}
+                  process={current}
+                  scope={dataScope}
+                  selected={selected.size > 0}
+                  schema={schema}
+                  assets={assets}
+                  save={save}
+                  notify={props.notify}
+                  changed={async () => {
+                    const id = current.id,
+                      token = ++rowGeneration.current;
+                    const data = await api.content(id);
+                    if (context.current?.id === id && token === rowGeneration.current) {
+                      setRows(data);
+                      setSelected(new Set());
+                    }
+                  }}
+                />
+              )}
               <input
                 aria-label="Tìm nội dung"
                 placeholder="Tìm nội dung…"
@@ -362,10 +482,26 @@ export function Processes(props: Props) {
               }}
             />
           )}
-          <div className="table-wrap">
+          <div className="table-wrap content-table-scroll" ref={contentScroll}>
             <table>
               <thead>
                 <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      aria-label={'Chọn toàn bộ ' + filtered.length + ' nội dung đang lọc'}
+                      checked={!!filtered.length && filtered.every((row) => selected.has(row.id))}
+                      onChange={(e) =>
+                        setSelected((previous) => {
+                          const next = new Set(previous);
+                          for (const row of filtered)
+                            if (e.target.checked) next.add(row.id);
+                            else next.delete(row.id);
+                          return next;
+                        })
+                      }
+                    />
+                  </th>
                   <th>Nội dung ID</th>
                   {schema.map((f) => (
                     <th key={f.key}>{f.label ?? f.key}</th>
@@ -375,76 +511,116 @@ export function Processes(props: Props) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => (
-                  <tr
-                    key={row.id}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      setRowModal(row);
-                      setRowJson(JSON.stringify(row.fields, null, 2));
-                    }}
-                  >
-                    <td>
-                      <code>{row.id.slice(0, 18)}</code>
-                    </td>
-                    {schema.map((f) => (
-                      <td key={f.key}>
-                        {typeof row.fields[f.key] === 'object'
-                          ? JSON.stringify(row.fields[f.key])
-                          : String(row.fields[f.key] ?? '')}
-                      </td>
-                    ))}
-                    <td>
-                      {row.assetIds.length
-                        ? assets
-                            .filter((a) => a.contentId === row.id)
-                            .map((a) => (
-                              <div key={a.id} className="asset-label" title={a.hash}>
-                                {a.relativePath}{' '}
-                                <small className={'asset-state ' + a.state.toLowerCase()}>
-                                  {
-                                    {
-                                      READY: 'Sẵn có',
-                                      CHANGED: 'File đã đổi',
-                                      MISSING: 'Mất file',
-                                      IGNORED: 'Bỏ qua',
-                                      UNTRACKED: 'Chưa theo dõi',
-                                    }[a.state]
-                                  }
-                                </small>
-                              </div>
-                            ))
-                        : 'Không có media'}
-                    </td>
-                    <td>
-                      <button
-                        aria-label={'Sửa ' + row.id}
-                        onClick={() => {
-                          setRowModal(row);
-                          setRowJson(JSON.stringify(row.fields, null, 2));
-                        }}
-                      >
-                        Sửa
-                      </button>
-                      <button
-                        aria-label={'Bỏ qua ' + row.id}
-                        title="Bỏ qua nội dung, giữ nguyên tệp gốc"
-                        onClick={() => {
-                          const id = row.processId;
-                          void api
-                            .ignoreContent(row.id, row.revision)
-                            .then(() => api.content(id))
-                            .then((data) => {
-                              if (context.current?.id === id) setRows(data);
-                            })
-                            .catch((e) => props.notify(String(e)));
-                        }}
-                      >
-                        Bỏ qua
-                      </button>
-                    </td>
+                {!!visible.length && visible[0]!.start > 0 && (
+                  <tr aria-hidden="true">
+                    <td
+                      colSpan={schema.length + 4}
+                      style={{ height: visible[0]!.start, padding: 0, border: 0 }}
+                    />
                   </tr>
-                ))}
+                )}
+                {visible.map((virtualRow) => {
+                  const row = filtered[virtualRow.index]!;
+                  return (
+                    <tr
+                      key={row.id}
+                      data-index={virtualRow.index}
+                      ref={virtualRows.measureElement}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setRowModal(row);
+                        setRowJson(JSON.stringify(row.fields, null, 2));
+                      }}
+                    >
+                      <td>
+                        <input
+                          type="checkbox"
+                          aria-label={'Chọn ' + row.id}
+                          checked={selected.has(row.id)}
+                          onChange={(e) =>
+                            setSelected((previous) => {
+                              const next = new Set(previous);
+                              if (e.target.checked) next.add(row.id);
+                              else next.delete(row.id);
+                              return next;
+                            })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <code>{row.id.slice(0, 18)}</code>
+                      </td>
+                      {schema.map((f) => (
+                        <td key={f.key}>
+                          {typeof row.fields[f.key] === 'object'
+                            ? JSON.stringify(row.fields[f.key])
+                            : String(row.fields[f.key] ?? '')}
+                        </td>
+                      ))}
+                      <td>
+                        {row.assetIds.length
+                          ? assets
+                              .filter((a) => a.contentId === row.id)
+                              .map((a) => (
+                                <div key={a.id} className="asset-label" title={a.hash}>
+                                  {a.relativePath}{' '}
+                                  <small className={'asset-state ' + a.state.toLowerCase()}>
+                                    {
+                                      {
+                                        READY: 'Sẵn có',
+                                        CHANGED: 'File đã đổi',
+                                        MISSING: 'Mất file',
+                                        IGNORED: 'Bỏ qua',
+                                        UNTRACKED: 'Chưa theo dõi',
+                                      }[a.state]
+                                    }
+                                  </small>
+                                </div>
+                              ))
+                          : 'Không có media'}
+                      </td>
+                      <td>
+                        <button
+                          aria-label={'Sửa ' + row.id}
+                          onClick={() => {
+                            setRowModal(row);
+                            setRowJson(JSON.stringify(row.fields, null, 2));
+                          }}
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          aria-label={'Bỏ qua ' + row.id}
+                          title="Bỏ qua nội dung, giữ nguyên tệp gốc"
+                          onClick={() => {
+                            const id = row.processId;
+                            void api
+                              .ignoreContent(row.id, row.revision)
+                              .then(() => api.content(id))
+                              .then((data) => {
+                                if (context.current?.id === id) setRows(data);
+                              })
+                              .catch((e) => props.notify(String(e)));
+                          }}
+                        >
+                          Bỏ qua
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {!!visible.length && virtualRows.getTotalSize() > visible.at(-1)!.end && (
+                  <tr aria-hidden="true">
+                    <td
+                      colSpan={schema.length + 4}
+                      style={{
+                        height: virtualRows.getTotalSize() - visible.at(-1)!.end,
+                        padding: 0,
+                        border: 0,
+                      }}
+                    />
+                  </tr>
+                )}
               </tbody>
             </table>
             {!rows.length && (

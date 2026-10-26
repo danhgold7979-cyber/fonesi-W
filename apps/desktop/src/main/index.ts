@@ -111,12 +111,27 @@ else {
       );
       await window.loadFile(rendererFile);
       if (process.argv.includes('--smoke')) {
-        const result: unknown = await window.webContents.executeJavaScript(
-          "(async()=>{for(let i=0;i<100&&document.querySelectorAll('[data-route]').length!==6;i++)await new Promise(r=>setTimeout(r,20));const api=window.studioApi;const original=await api.createWorkflow('fb','Electron smoke fixture');original.bundle.workflow.name='Electron saved fixture';const saved=await api.saveWorkflow(original.bundle,0);const loaded=await api.loadWorkflow(saved.workflowId);await api.archiveWorkflow(saved.workflowId);return{nativeChooser:(await api.mediaCapabilities()).nativeChooser,privateApi:typeof api.internal,api:typeof api.bootstrap==='function',node:typeof window.require,routes:document.querySelectorAll('[data-route]').length,saveReload:loaded.bundle.workflow.name==='Electron saved fixture'&&loaded.revision===1}})()",
-        );
+        const result: unknown = await window.webContents.executeJavaScript(`(async()=>{
+          for(let i=0;i<100&&document.querySelectorAll('[data-route]').length!==6;i++)await new Promise(r=>setTimeout(r,20));
+          const api=window.studioApi, suffix=crypto.randomUUID().replaceAll('-','');
+          const original=await api.createWorkflow('fb','Electron smoke fixture');
+          original.bundle.workflow.name='Electron saved fixture';
+          original.bundle.inputs=[{key:'caption',type:'text',scope:'row',required:true},{key:'count',type:'number',scope:'row',required:false},{key:'enabled',type:'boolean',scope:'row',required:false}];
+          const saved=await api.saveWorkflow(original.bundle,0),loaded=await api.loadWorkflow(saved.workflowId);
+          const process=await api.saveProcess({id:'process_'+suffix,name:'Electron XLSX fixture',appId:'fb',workflowId:saved.workflowId,workflowVersionId:null,deviceId:null,accountId:null,targetId:null,revision:0,archived:false,schedule:{timezone:'Asia/Ho_Chi_Minh',startDate:'2026-10-26',slots:['08:00'],weekdays:[1,2,3,4,5,6,7],overduePolicy:'NEXT_FUTURE_SLOT',jitterMinutes:0}},null);
+          const item=await api.saveContent({id:'content_'+suffix,processId:process.id,revision:0,fields:{caption:['Electron','XLSX'].join(String.fromCharCode(10)),count:0,enabled:false},assetIds:[],ignored:false},null);
+          const file=await api.exportContent(process.id,[item.id],'XLSX');
+          const preview=await api.previewContentImport(process.id,process.revision,'XLSX',file.data);
+          const applied=await api.applyContentPreview(preview.token);
+          const contentXlsxRoundTrip=preview.canApply&&preview.changes[0].action==='UNCHANGED'&&applied.updated===0&&applied.created===0;
+          await api.ignoreContent(item.id,item.revision);await api.saveProcess({...process,archived:true},process.revision);await api.archiveWorkflow(saved.workflowId);
+          return{contentXlsxRoundTrip,nativeChooser:(await api.mediaCapabilities()).nativeChooser,privateApi:typeof api.internal,privateQueueApi:typeof api.claimDueJob,api:typeof api.bootstrap==='function',node:typeof window.require,routes:document.querySelectorAll('[data-route]').length,saveReload:loaded.bundle.workflow.name==='Electron saved fixture'&&loaded.revision===1};
+        })()`);
         console.log(JSON.stringify({ scope: 'ELECTRON_RENDERER_SMOKE', result }));
         const check = result as {
           api?: boolean;
+          contentXlsxRoundTrip?: boolean;
+          privateQueueApi?: string;
           nativeChooser?: boolean;
           privateApi?: string;
           node?: string;
@@ -125,6 +140,8 @@ else {
         };
         if (
           !check.api ||
+          !check.contentXlsxRoundTrip ||
+          check.privateQueueApi !== 'undefined' ||
           !check.nativeChooser ||
           check.privateApi !== 'undefined' ||
           check.node !== 'undefined' ||

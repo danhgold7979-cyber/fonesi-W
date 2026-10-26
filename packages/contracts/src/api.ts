@@ -1,3 +1,10 @@
+import type {
+  ContentFormat,
+  ContentPreviewDto,
+  ContentApplyResult,
+  ContentDownload,
+  BulkContentRequest,
+} from './content-data.js';
 import type { SchedulePreviewDto, JobQuery, ScheduledJobSummary } from './schedule.js';
 import type {
   SourceState,
@@ -33,6 +40,23 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
+  previewContentImport(
+    processId: string,
+    expectedRevision: number,
+    format: ContentFormat,
+    data: string,
+  ): Promise<ContentPreviewDto>;
+  previewBulkContent(
+    processId: string,
+    expectedRevision: number,
+    request: BulkContentRequest,
+  ): Promise<ContentPreviewDto>;
+  applyContentPreview(token: string): Promise<ContentApplyResult>;
+  exportContent(
+    processId: string,
+    contentIds: string[],
+    format: ContentFormat,
+  ): Promise<ContentDownload>;
   mediaCapabilities(): Promise<{ nativeChooser: boolean }>;
   chooseSource(
     processId: string,
@@ -87,6 +111,10 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'previewContentImport'
+  | 'previewBulkContent'
+  | 'applyContentPreview'
+  | 'exportContent'
   | 'mediaCapabilities'
   | 'chooseSource'
   | 'sources'
@@ -122,6 +150,13 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    previewContentImport: (processId, expectedRevision, format, data) =>
+      call('previewContentImport', { processId, expectedRevision, format, data }),
+    previewBulkContent: (processId, expectedRevision, request) =>
+      call('previewBulkContent', { processId, expectedRevision, request }),
+    applyContentPreview: (token) => call('applyContentPreview', { token }),
+    exportContent: (processId, contentIds, format) =>
+      call('exportContent', { processId, contentIds, format }),
     mediaCapabilities: () => call('mediaCapabilities'),
     chooseSource: (processId, expectedRevision, kind, recursive, watch) =>
       call('chooseSource', { processId, expectedRevision, kind, recursive, watch }),

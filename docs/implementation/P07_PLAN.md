@@ -21,3 +21,11 @@ S060–S068. Hiện chỉ có schedule profile persistence; chưa có job previe
 - Snapshot giữ bundle/version hash, row fields, asset metadata/hashes, Process bindings/profile và network profile nullable; workflow không dùng target được lưu target null. Chỉ tạo SCHEDULED, chưa dispatch hay chứng nhận automation.
 - DB private insert helper tránh nested transactions. Query jobs có giới hạn rõ, filters Process/phone/state/time, list timeline compact với timezone của Process. Reschedule/cancel cần expectedRevision, chỉ SCHEDULED và không pending effects, giữ nguyên snapshot/job ID. Full calendar drag/spread/claim/overdue runtime giữ lại cho increment sau.
 - Tests: token persisted/reopen/apply twice, stale Process/content/media/jobs, expiry, binding/typed inputs blockers, exact proposed timestamps/jitter preserved, immutable snapshots, rollback batch, reschedule revision/pending gates. UI preview disabled với lý do khi chưa có thiết bị; empty timeline thật, không demo jobs.
+
+## Increment 005 — dependency closure
+
+005A trong [kế hoạch chi tiết](INCREMENT-005_PLAN.md) bổ sung Process inputs + snapshot/readiness. Queue claim/recovery không được nối timer fake posting; sẽ có tiểu kế hoạch riêng trước code S064/S068.
+
+## Increment 006 — queue claims
+
+[INCREMENT-006_PLAN.md](INCREMENT-006_PLAN.md) ghi thứ tự migration/contract → transactional claim/renew → conservative ownership recovery → concurrency tests. Public UI chưa dispatch Android; no production timer stand-in.

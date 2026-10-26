@@ -1,7 +1,10 @@
-import type { ScannedAsset, SourceGrant } from '@autoreels/contracts';
+import type { ScannedAsset, SourceGrant, DeviceLease } from '@autoreels/contracts';
 import type { StudioDatabase } from '@autoreels/database';
 /** This union is never exported through preload, HTTP or the public service dispatcher. */
 export type InternalRequest =
+  | { command: 'queue.claim'; deviceId: string; ownerId: string; at: number; ttl: number }
+  | { command: 'queue.renew'; jobId: string; lease: DeviceLease; at: number; ttl: number }
+  | { command: 'queue.recover'; deviceId: string; at: number }
   | {
       command: 'source.register';
       processId: string;
@@ -22,6 +25,12 @@ export type InternalRequest =
     };
 export function dispatchInternal(db: StudioDatabase, request: InternalRequest): unknown {
   switch (request.command) {
+    case 'queue.claim':
+      return db.claimDueJob(request.deviceId, request.ownerId, request.at, request.ttl);
+    case 'queue.renew':
+      return db.renewJobClaim(request.jobId, request.lease, request.at, request.ttl);
+    case 'queue.recover':
+      return db.recoverExpiredClaims(request.deviceId, request.at);
     case 'source.register':
       return db.registerNativeSources(request.processId, request.expectedRevision, request.grants);
     case 'source.grant':

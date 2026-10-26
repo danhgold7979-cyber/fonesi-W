@@ -11,17 +11,18 @@
   "scripts": {
     "generate": "node tools/generate-contracts.mjs",
     "check:generated": "node tools/generate-contracts.mjs --check",
-    "build": "tsc -b && node tools/copy-runtime.mjs && vite build --config apps/desktop/vite.config.ts",
-    "typecheck": "tsc -b --pretty false && node tools/copy-runtime.mjs && tsc -p apps/desktop/tsconfig.renderer.json",
+    "build": "pnpm build:host && vite build --config apps/desktop/vite.config.ts",
+    "typecheck": "tsc -b --pretty false && node tools/copy-runtime.mjs && tsc -p apps/desktop/tsconfig.renderer.json && tsc -p tests/tsconfig.ui.json",
     "lint": "eslint \"packages/**/*.{ts,tsx}\" \"apps/**/*.{ts,tsx,cts}\" \"tools/**/*.mjs\" --no-warn-ignored",
     "dev": "pnpm build && pnpm serve",
     "serve": "node apps/desktop/dist/host/host/server.js",
     "desktop": "pnpm build && electron apps/desktop",
-    "test": "vitest run",
+    "test": "pnpm build:host && vitest run",
     "test:watch": "vitest",
     "test:ui": "pnpm build && playwright test",
     "check": "pnpm check:generated && pnpm typecheck && pnpm lint && pnpm test && pnpm build",
-    "check:plan": "python docs/source-plan/v2/tools/validate_plan.py && python docs/source-plan/v2/tools/validate_execution_plan.py"
+    "check:plan": "python docs/source-plan/v2/tools/validate_plan.py && python docs/source-plan/v2/tools/validate_execution_plan.py",
+    "build:host": "tsc -b && node tools/copy-runtime.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

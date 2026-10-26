@@ -26,7 +26,14 @@
     },
     {
       "path": "../../packages/media"
+    },
+    {
+      "path": "../../packages/import-export"
     }
   ],
-  "include": ["src/host/**/*.ts", "src/main/**/*.ts", "src/preload.cts"]
+  "include": [
+    "src/host/**/*.ts",
+    "src/main/**/*.ts",
+    "src/preload.cts"
+  ]
 }

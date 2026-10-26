@@ -4,13 +4,14 @@ import {
   processSchema,
   appDefinitionSchema,
   assertJsonSafe,
-  validateTypedValues,
   jobStateSchema,
   localDateSchema,
   timezoneSchema,
 } from '@autoreels/contracts';
 import type { ContentItem } from '@autoreels/contracts';
 import { StudioDatabase } from '@autoreels/database';
+import { parseContentFile, exportContentFile } from '@autoreels/import-export';
+import { contentHash } from '@autoreels/domain';
 import { DomainError } from '@autoreels/domain';
 import { validateBundle, traceWorkflow } from '@autoreels/workflow-engine';
 import { localSlotToUtc } from '@autoreels/scheduler';
@@ -34,7 +35,30 @@ export const mediaSchemas = {
     options: z.strictObject({ recursive: z.boolean(), watch: z.boolean(), active: z.boolean() }),
   }),
 } as const;
+const formatSchema = z.enum(['JSON', 'CSV', 'XLSX']);
 const schemas = {
+  previewContentImport: z.strictObject({
+    processId: idSchema,
+    expectedRevision: revision,
+    format: formatSchema,
+    data: z.string().max(5592408),
+  }),
+  previewBulkContent: z.strictObject({
+    processId: idSchema,
+    expectedRevision: revision,
+    request: z.strictObject({
+      selection: z.array(id.extend({ revision })).min(1).max(1000),
+      fieldKey: z.string().max(160),
+      operation: z.enum(['SET', 'APPEND', 'PREPEND', 'REMOVE']),
+      value: z.json().optional(),
+    }),
+  }),
+  applyContentPreview: z.strictObject({ token: idSchema }),
+  exportContent: z.strictObject({
+    processId: idSchema,
+    contentIds: z.array(idSchema).min(1).max(1000),
+    format: formatSchema,
+  }),
   ...mediaSchemas,
   contentAssets: z.strictObject({ processId: idSchema }),
   ignoreContent: id.extend({ expectedRevision: revision }),
@@ -103,6 +127,28 @@ export async function dispatch(
     input = schemas[request.command].parse(request.input);
   // Parse per case to retain exact static DTO types after runtime validation.
   switch (request.command) {
+    case 'previewContentImport': {
+      const p = schemas.previewContentImport.parse(input),
+        process = db.getProcess(p.processId);
+      const schema = db.inputSchema(process)?.inputs.filter((field) => field.scope === 'row') ?? [];
+      const document = await parseContentFile(p.format, p.data, schema);
+      return db.previewContentImport(
+        p.processId,
+        p.expectedRevision,
+        document,
+        contentHash(schema),
+      );
+    }
+    case 'previewBulkContent': {
+      const p = schemas.previewBulkContent.parse(input);
+      return db.previewBulkContent(p.processId, p.expectedRevision, p.request);
+    }
+    case 'applyContentPreview':
+      return db.applyContentPreview(schemas.applyContentPreview.parse(input).token);
+    case 'exportContent': {
+      const p = schemas.exportContent.parse(input);
+      return exportContentFile(db.exportContent(p.processId, p.contentIds), p.format);
+    }
     case 'mediaCapabilities':
     case 'chooseSource':
     case 'sources':
@@ -207,41 +253,8 @@ export async function dispatch(
     case 'content':
       return db.listContent(schemas.content.parse(input).processId);
     case 'saveContent': {
-      const p = schemas.saveContent.parse(input),
-        process = db.getProcess(p.item.processId);
-      const bundle = process.workflowVersionId
-        ? db.getVersion(process.workflowVersionId).bundle
-        : process.workflowId
-          ? db.getDraft(process.workflowId).bundle
-          : null;
-      if (bundle) {
-        const errors = validateTypedValues(
-          bundle.inputs,
-          p.item.fields as Record<string, import('@autoreels/contracts').JsonValue>,
-          'row',
-        );
-        if (errors.length)
-          throw new DomainError('INVALID_CONTENT', errors[0]!.path + ': ' + errors[0]!.message);
-      }
-      const allowedAssets = new Set(db.listContentAssets(p.item.processId).map((a) => a.id));
-      const fieldAssets: string[] = [];
-      for (const field of bundle?.inputs ?? []) {
-        const value = p.item.fields[field.key];
-        if (field.scope !== 'row') continue;
-        if (field.type === 'file' && value && typeof value === 'object' && !Array.isArray(value))
-          fieldAssets.push(String((value as { assetId: string }).assetId));
-        if (field.type === 'file[]' && Array.isArray(value))
-          for (const ref of value) fieldAssets.push(String((ref as { assetId: string }).assetId));
-      }
-      if (
-        p.item.assetIds.some((id) => !allowedAssets.has(id)) ||
-        fieldAssets.some((id) => !allowedAssets.has(id) || !p.item.assetIds.includes(id))
-      )
-        throw new DomainError(
-          'INVALID_ASSET_SCOPE',
-          'Chỉ chọn media đã đăng ký trong tiến trình này.',
-        );
-      return db.saveContent(p.item as ContentItem, p.expectedRevision);
+      const p = schemas.saveContent.parse(input);
+      return db.saveContentValidated(p.item as ContentItem, p.expectedRevision);
     }
   }
 }

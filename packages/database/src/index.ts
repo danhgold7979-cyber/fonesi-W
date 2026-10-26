@@ -12,6 +12,7 @@ import {
   validateWorkflowShape,
   assertJsonSafe,
   validateTypedValues,
+  inputReferences,
 } from '@autoreels/contracts';
 import type {
   AppDefinition,
@@ -32,6 +33,13 @@ import type {
   SchedulePreviewDto,
   JobQuery,
   ScheduledJobSummary,
+  ContentImportDocument,
+  BulkContentRequest,
+  ContentPreviewDto,
+  ContentApplyResult,
+  ContentExportDocument,
+  ContentImportRecord,
+  QueueClaimResult,
 } from '@autoreels/contracts';
 import {
   DomainError,
@@ -48,6 +56,7 @@ import {
   type SchedulePreview,
 } from '@autoreels/scheduler';
 import { validateBundle } from '@autoreels/workflow-engine';
+import { bulkPatch } from '@autoreels/import-export';
 import { migrations, SCHEMA_VERSION } from './schema.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
@@ -60,6 +69,11 @@ const requireBundle = (value: unknown): WorkflowBundle => {
   return result.value;
 };
 
+interface StoredContentPreview {
+  contextHash: string;
+  dto: ContentPreviewDto;
+  mutations: { before: ContentItem | null; next: ContentItem }[];
+}
 interface FrozenScheduleContext {
   process: ProcessDefinition;
   rows: ContentItem[];
@@ -346,6 +360,7 @@ export class StudioDatabase {
     return processSchema.parse(parse(row.definition));
   }
   saveProcess(input: unknown, expectedRevision: number | null): ProcessDefinition {
+    assertJsonSafe(input);
     const process = processSchema.parse(input);
     return this.transaction(() => {
       const existing = this.db.prepare('SELECT revision FROM processes WHERE id=?').get(process.id);
@@ -384,6 +399,7 @@ export class StudioDatabase {
               'Identity does not match Process app/device',
             );
         }
+      this.assertInputValues(process, process.fields ?? {}, 'process', false);
       process.revision = existing ? Number(existing.revision) + 1 : 0;
       this.db
         .prepare(
@@ -427,6 +443,84 @@ export class StudioDatabase {
         .run(key, revision, canonicalJson(value));
       return { revision, value: structuredClone(value) };
     });
+  }
+
+  inputSchema(process: ProcessDefinition): WorkflowBundle | null {
+    return process.workflowVersionId
+      ? this.getVersion(process.workflowVersionId).bundle
+      : process.workflowId
+        ? this.getDraft(process.workflowId).bundle
+        : null;
+  }
+  assertInputValues(
+    process: ProcessDefinition,
+    values: Record<string, JsonValue>,
+    scope: 'row' | 'process',
+    requireAll = true,
+    cached?: { bundle: WorkflowBundle | null; allowed: Set<string> },
+  ): string[] {
+    assertJsonSafe(values);
+    const bundle = cached ? cached.bundle : this.inputSchema(process);
+    if (!bundle) {
+      if (Object.keys(values).length)
+        throw new DomainError(
+          'INPUT_SCHEMA_MISSING',
+          'Chọn workflow trước khi gán trường dữ liệu.',
+        );
+      return [];
+    }
+    const issues = validateTypedValues(bundle.inputs, values, scope).filter(
+      (issue) => requireAll || issue.code !== 'REQUIRED',
+    );
+    if (issues.length)
+      throw new DomainError('INVALID_INPUTS', issues[0]!.path + ': ' + issues[0]!.message);
+    const refs = inputReferences(bundle.inputs, values, scope),
+      allowed =
+        cached?.allowed ??
+        new Set(
+          refs.assets.length ? this.listContentAssets(process.id).map((asset) => asset.id) : [],
+        );
+    if (refs.assets.some((id) => !allowed.has(id)))
+      throw new DomainError(
+        'INVALID_ASSET_SCOPE',
+        'Chỉ chọn media đã đăng ký trong tiến trình này.',
+      );
+    for (const id of refs.identities) {
+      const identity = this.db
+        .prepare('SELECT app_id,device_id FROM identities WHERE id=?')
+        .get(id);
+      if (!identity || identity.app_id !== process.appId || identity.device_id !== process.deviceId)
+        throw new DomainError(
+          'IDENTITY_MISMATCH',
+          'Tài khoản tham chiếu không thuộc app/điện thoại của tiến trình.',
+        );
+    }
+    return refs.assets;
+  }
+  saveContentValidated(item: ContentItem, expectedRevision: number | null): ContentItem {
+    return this.transaction(() => {
+      this.assertContentItem(item);
+      return this.insertContent(item, expectedRevision);
+    });
+  }
+  private assertContentItem(
+    item: ContentItem,
+    cached?: { process: ProcessDefinition; bundle: WorkflowBundle | null; allowed: Set<string> },
+  ): void {
+    const process = cached?.process ?? this.getProcess(item.processId);
+    if (process.archived || item.ignored)
+      throw new DomainError('CONTENT_NOT_EDITABLE', 'Nội dung hoặc tiến trình không còn dùng.');
+    const refs = this.assertInputValues(process, item.fields, 'row', true, cached);
+    const allowed =
+      cached?.allowed ?? new Set(this.listContentAssets(process.id).map((asset) => asset.id));
+    if (
+      item.assetIds.some((id) => !allowed.has(id)) ||
+      refs.some((id) => !item.assetIds.includes(id))
+    )
+      throw new DomainError(
+        'INVALID_ASSET_SCOPE',
+        'Chỉ chọn media đã đăng ký trong tiến trình này và gắn đủ media vào nội dung.',
+      );
   }
 
   registerObservedDevice(id: string, name: string): void {
@@ -477,35 +571,36 @@ export class StudioDatabase {
       }));
   }
   saveContent(input: ContentItem, expectedRevision: number | null): ContentItem {
+    return this.transaction(() => this.insertContent(input, expectedRevision));
+  }
+  private insertContent(input: ContentItem, expectedRevision: number | null): ContentItem {
     idSchema.parse(input.id);
     idSchema.parse(input.processId);
     assertJsonSafe(input.fields);
-    return this.transaction(() => {
-      const r = this.db
-        .prepare('SELECT revision,process_id FROM content_items WHERE id=?')
-        .get(input.id);
-      if (
-        (r && (Number(r.revision) !== expectedRevision || r.process_id !== input.processId)) ||
-        (!r && expectedRevision !== null)
+    const r = this.db
+      .prepare('SELECT revision,process_id FROM content_items WHERE id=?')
+      .get(input.id);
+    if (
+      (r && (Number(r.revision) !== expectedRevision || r.process_id !== input.processId)) ||
+      (!r && expectedRevision !== null)
+    )
+      throw new DomainError('REVISION_CONFLICT', 'Content changed or belongs to another Process');
+    const item = { ...structuredClone(input), revision: r ? Number(r.revision) + 1 : 0 };
+    this.db
+      .prepare(
+        'INSERT INTO content_items VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,fields=excluded.fields,ignored=excluded.ignored',
       )
-        throw new DomainError('REVISION_CONFLICT', 'Content changed or belongs to another Process');
-      const item = { ...structuredClone(input), revision: r ? Number(r.revision) + 1 : 0 };
-      this.db
-        .prepare(
-          'INSERT INTO content_items VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,fields=excluded.fields,ignored=excluded.ignored',
-        )
-        .run(
-          item.id,
-          item.processId,
-          item.revision,
-          canonicalJson(item.fields),
-          Number(item.ignored),
-        );
-      this.db.prepare('DELETE FROM content_assets WHERE content_id=?').run(item.id);
-      for (const [index, assetId] of item.assetIds.entries())
-        this.db.prepare('INSERT INTO content_assets VALUES(?,?,?)').run(item.id, assetId, index);
-      return item;
-    });
+      .run(
+        item.id,
+        item.processId,
+        item.revision,
+        canonicalJson(item.fields),
+        Number(item.ignored),
+      );
+    this.db.prepare('DELETE FROM content_assets WHERE content_id=?').run(item.id);
+    for (const [index, assetId] of item.assetIds.entries())
+      this.db.prepare('INSERT INTO content_assets VALUES(?,?,?)').run(item.id, assetId, index);
+    return item;
   }
   createJob(job: JobDefinition, snapshot: JobSnapshot): void {
     this.transaction(() => this.insertJob(job, snapshot));
@@ -598,34 +693,48 @@ export class StudioDatabase {
     at: number,
     ttl = 30000,
   ): DeviceLease {
+    return this.transaction(() => this.insertLease(deviceId, ownerId, kind, at, ttl));
+  }
+  private insertLease(
+    deviceId: string,
+    ownerId: string,
+    kind: DeviceLease['ownerKind'],
+    at: number,
+    ttl: number,
+  ): DeviceLease {
     idSchema.parse(deviceId);
     idSchema.parse(ownerId);
-    if (!Number.isSafeInteger(at) || !Number.isSafeInteger(ttl) || ttl < 1 || ttl > 300000)
+    if (
+      !Number.isSafeInteger(at) ||
+      !Number.isSafeInteger(ttl) ||
+      !Number.isSafeInteger(at + ttl) ||
+      ttl < 1 ||
+      ttl > 300000
+    )
       throw new DomainError('INVALID_LEASE', 'Invalid lease duration/time');
-    return this.transaction(() => {
-      const current = this.db.prepare('SELECT * FROM leases WHERE device_id=?').get(deviceId);
-      if (current?.owner_id && Number(current.expires_at) > at)
-        throw new DomainError('DEVICE_BUSY', 'Device is owned by another operation');
-      if (
-        ['JOB', 'APK', 'NETWORK'].includes(kind) &&
-        this.db
-          .prepare(
-            "SELECT 1 FROM effects e JOIN jobs j ON e.job_id=j.id WHERE j.device_id=? AND e.state IN('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
-          )
-          .get(deviceId)
-      )
-        throw new DomainError('DEVICE_NEEDS_REVIEW', 'Uncertain device effects require review');
-      const generation = Number(current?.generation ?? 0) + 1,
-        expiresAt = at + ttl;
+    const current = this.db.prepare('SELECT * FROM leases WHERE device_id=?').get(deviceId);
+    if (current?.owner_id && Number(current.expires_at) > at)
+      throw new DomainError('DEVICE_BUSY', 'Device is owned by another operation');
+    if (
+      ['JOB', 'APK', 'NETWORK'].includes(kind) &&
       this.db
         .prepare(
-          'INSERT INTO leases VALUES(?,?,?,?,?) ON CONFLICT(device_id) DO UPDATE SET owner_id=excluded.owner_id,owner_kind=excluded.owner_kind,generation=excluded.generation,expires_at=excluded.expires_at',
+          "SELECT 1 FROM effects e JOIN jobs j ON e.job_id=j.id WHERE j.device_id=? AND e.state IN('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
         )
-        .run(deviceId, ownerId, kind, generation, expiresAt);
-      return { deviceId, ownerId, ownerKind: kind, generation, expiresAt };
-    });
+        .get(deviceId)
+    )
+      throw new DomainError('DEVICE_NEEDS_REVIEW', 'Uncertain device effects require review');
+    const generation = Number(current?.generation ?? 0) + 1,
+      expiresAt = at + ttl;
+    this.db
+      .prepare(
+        'INSERT INTO leases VALUES(?,?,?,?,?) ON CONFLICT(device_id) DO UPDATE SET owner_id=excluded.owner_id,owner_kind=excluded.owner_kind,generation=excluded.generation,expires_at=excluded.expires_at',
+      )
+      .run(deviceId, ownerId, kind, generation, expiresAt);
+    return { deviceId, ownerId, ownerKind: kind, generation, expiresAt };
   }
   assertLease(lease: DeviceLease, at: number): void {
+    if (!Number.isSafeInteger(at)) throw new DomainError('INVALID_LEASE', 'Invalid lease clock');
     const row = this.db.prepare('SELECT * FROM leases WHERE device_id=?').get(lease.deviceId);
     if (
       !row ||
@@ -643,6 +752,176 @@ export class StudioDatabase {
       )
       .run(lease.deviceId, lease.ownerId, lease.generation);
   }
+  private queueEvent(jobId: string, kind: string, detail: JsonValue, at: number): void {
+    this.db
+      .prepare('INSERT INTO queue_events VALUES(?,?,?,?,?)')
+      .run(makeId('queueEvent'), jobId, kind, canonicalJson(detail), new Date(at).toISOString());
+  }
+  claimDueJob(deviceId: string, ownerId: string, at: number, ttl = 30000): QueueClaimResult {
+    idSchema.parse(deviceId);
+    idSchema.parse(ownerId);
+    if (
+      !Number.isSafeInteger(at) ||
+      !Number.isSafeInteger(ttl) ||
+      !Number.isSafeInteger(at + ttl) ||
+      !Number.isFinite(new Date(at).getTime()) ||
+      ttl < 1 ||
+      ttl > 300000
+    )
+      throw new DomainError('INVALID_LEASE', 'Invalid queue clock/TTL');
+    return this.transaction(() => {
+      const device = this.db.prepare('SELECT enabled FROM devices WHERE id=?').get(deviceId);
+      if (!device?.enabled) return { status: 'DEVICE_DISABLED' };
+      if (
+        this.db
+          .prepare("SELECT 1 FROM jobs WHERE device_id=? AND state='NEEDS_REVIEW'")
+          .get(deviceId) ||
+        this.db
+          .prepare(
+            "SELECT 1 FROM effects e JOIN jobs j ON j.id=e.job_id WHERE j.device_id=? AND e.state IN('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
+          )
+          .get(deviceId)
+      )
+        return { status: 'NEEDS_REVIEW' };
+      const owner = this.db
+        .prepare('SELECT owner_id,expires_at FROM leases WHERE device_id=?')
+        .get(deviceId);
+      if (
+        (owner?.owner_id && Number(owner.expires_at) > at) ||
+        this.db
+          .prepare(
+            "SELECT 1 FROM jobs WHERE device_id=? AND state IN('PREFLIGHT','RUNNING','POST_INTENT','POST_PENDING','POSTED','COMMENT_PENDING')",
+          )
+          .get(deviceId)
+      )
+        return { status: 'DEVICE_BUSY' };
+      const due = this.db
+        .prepare(
+          "SELECT j.id FROM jobs j JOIN processes p ON p.id=j.process_id WHERE j.device_id=? AND j.state IN('SCHEDULED','QUEUED') AND p.archived=0 AND julianday(j.scheduled_utc)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM effects e WHERE e.job_id=j.id) ORDER BY julianday(j.scheduled_utc),j.priority DESC,j.created_at,j.id LIMIT 1",
+        )
+        .get(deviceId, new Date(at).toISOString());
+      if (!due) return { status: 'EMPTY' };
+      const original = this.getJob(String(due.id)),
+        lease = this.insertLease(deviceId, ownerId, 'JOB', at, ttl);
+      const steps = original.job.state === 'SCHEDULED' ? 2 : 1;
+      this.db
+        .prepare("UPDATE jobs SET state='PREFLIGHT',revision=revision+? WHERE id=?")
+        .run(steps, original.job.id);
+      this.db
+        .prepare(
+          'INSERT INTO job_claims VALUES(?,?,?,?,?) ON CONFLICT(job_id) DO UPDATE SET owner_id=excluded.owner_id,generation=excluded.generation,expires_at=excluded.expires_at',
+        )
+        .run(original.job.id, deviceId, ownerId, lease.generation, lease.expiresAt);
+      this.queueEvent(
+        original.job.id,
+        'CLAIMED',
+        { ownerId, generation: lease.generation, mode: 'PREFLIGHT_ONLY' },
+        at,
+      );
+      return { status: 'CLAIMED', ...this.getJob(original.job.id), lease };
+    });
+  }
+  renewJobClaim(jobId: string, lease: DeviceLease, at: number, ttl = 30000): DeviceLease {
+    if (!Number.isSafeInteger(ttl) || !Number.isSafeInteger(at + ttl) || ttl < 1 || ttl > 300000)
+      throw new DomainError('INVALID_LEASE', 'Invalid renewal TTL');
+    return this.transaction(() => {
+      this.assertLease(lease, at);
+      const claim = this.db.prepare('SELECT * FROM job_claims WHERE job_id=?').get(jobId),
+        job = this.getJob(jobId).job;
+      if (
+        !claim ||
+        lease.ownerKind !== 'JOB' ||
+        claim.device_id !== lease.deviceId ||
+        claim.owner_id !== lease.ownerId ||
+        Number(claim.generation) !== lease.generation ||
+        ![
+          'PREFLIGHT',
+          'RUNNING',
+          'POST_INTENT',
+          'POST_PENDING',
+          'POSTED',
+          'COMMENT_PENDING',
+        ].includes(job.state)
+      )
+        throw new DomainError('STALE_CLAIM', 'Job claim does not match active owner');
+      const expiresAt = Math.max(Number(claim.expires_at), at + ttl);
+      this.db
+        .prepare('UPDATE leases SET expires_at=? WHERE device_id=?')
+        .run(expiresAt, lease.deviceId);
+      this.db.prepare('UPDATE job_claims SET expires_at=? WHERE job_id=?').run(expiresAt, jobId);
+      this.queueEvent(jobId, 'LEASE_RENEWED', { generation: lease.generation, expiresAt }, at);
+      return { ...lease, expiresAt };
+    });
+  }
+  recoverExpiredClaims(deviceId: string, at: number): { requeued: string[]; review: string[] } {
+    idSchema.parse(deviceId);
+    if (!Number.isSafeInteger(at) || !Number.isFinite(new Date(at).getTime()))
+      throw new DomainError('INVALID_LEASE', 'Invalid recovery clock');
+    return this.transaction(() => {
+      const result: { requeued: string[]; review: string[] } = { requeued: [], review: [] };
+      for (const claim of this.db
+        .prepare('SELECT * FROM job_claims WHERE device_id=? ORDER BY job_id')
+        .all(deviceId)) {
+        const owner = this.db.prepare('SELECT * FROM leases WHERE device_id=?').get(deviceId),
+          matches =
+            owner?.owner_id === claim.owner_id &&
+            owner?.owner_kind === 'JOB' &&
+            Number(owner?.generation) === Number(claim.generation);
+        if (matches && Number(owner.expires_at) > at && Number(claim.expires_at) > at) continue;
+        const { job } = this.getJob(String(claim.job_id));
+        const hasEffect = Boolean(
+          this.db.prepare('SELECT 1 FROM effects WHERE job_id=?').get(job.id),
+        );
+        if (job.state === 'PREFLIGHT' && !hasEffect) {
+          this.db
+            .prepare("UPDATE jobs SET state='QUEUED',revision=revision+1 WHERE id=?")
+            .run(job.id);
+          result.requeued.push(job.id);
+          this.queueEvent(
+            job.id,
+            'PRECHECK_REQUEUED',
+            { lostGeneration: Number(claim.generation) },
+            at,
+          );
+        } else if (
+          [
+            'PREFLIGHT',
+            'RUNNING',
+            'POST_INTENT',
+            'POST_PENDING',
+            'POSTED',
+            'COMMENT_PENDING',
+          ].includes(job.state)
+        ) {
+          this.db
+            .prepare("UPDATE jobs SET state='NEEDS_REVIEW',revision=revision+1 WHERE id=?")
+            .run(job.id);
+          result.review.push(job.id);
+          this.queueEvent(
+            job.id,
+            'NEEDS_REVIEW',
+            { lostGeneration: Number(claim.generation), previousState: job.state, hasEffect },
+            at,
+          );
+        } else
+          this.queueEvent(
+            job.id,
+            'CLAIM_RELEASED',
+            { state: job.state, lostGeneration: Number(claim.generation) },
+            at,
+          );
+        if (matches)
+          this.db
+            .prepare(
+              'UPDATE leases SET owner_id=NULL,owner_kind=NULL,expires_at=0 WHERE device_id=?',
+            )
+            .run(deviceId);
+        this.db.prepare('DELETE FROM job_claims WHERE job_id=?').run(job.id);
+      }
+      return result;
+    });
+  }
+
   recordIntent(
     jobId: string,
     nodeId: string,
@@ -758,6 +1037,367 @@ export class StudioDatabase {
     }
   }
 
+  private contentDeltas(
+    before: ContentItem | null,
+    after: ContentItem,
+  ): NonNullable<ContentPreviewDto['changes'][number]['deltas']> {
+    const keys = [...new Set([...Object.keys(before?.fields ?? {}), ...Object.keys(after.fields)])];
+    const result: NonNullable<ContentPreviewDto['changes'][number]['deltas']> = [];
+    for (const key of keys) {
+      const beforePresent = Boolean(before && Object.hasOwn(before.fields, key)),
+        afterPresent = Object.hasOwn(after.fields, key);
+      if (
+        beforePresent === afterPresent &&
+        (!beforePresent || canonicalJson(before!.fields[key]) === canonicalJson(after.fields[key]))
+      )
+        continue;
+      result.push({
+        key,
+        beforePresent,
+        afterPresent,
+        ...(beforePresent ? { before: before!.fields[key]! } : {}),
+        ...(afterPresent ? { after: after.fields[key]! } : {}),
+      });
+    }
+    if (canonicalJson(before?.assetIds ?? []) !== canonicalJson(after.assetIds))
+      result.push({
+        key: 'Media',
+        beforePresent: Boolean(before),
+        afterPresent: true,
+        ...(before ? { before: before.assetIds } : {}),
+        after: after.assetIds,
+      });
+    return result;
+  }
+  private contentContext(processId: string) {
+    const process = this.getProcess(processId);
+    if (process.archived) throw new DomainError('PROCESS_ARCHIVED', 'Tiến trình đã lưu trữ.');
+    const schema = this.inputSchema(process)?.inputs.filter((field) => field.scope === 'row') ?? [];
+    const rows = this.listContent(processId),
+      assets = this.listContentAssets(processId);
+    const jobs = this.db
+      .prepare('SELECT id,content_id,revision,state FROM jobs WHERE process_id=? ORDER BY id')
+      .all(processId);
+    return { process, schema, rows, assets, jobs };
+  }
+  exportContent(processId: string, contentIds: string[]): ContentExportDocument {
+    const context = this.contentContext(processId);
+    this.validateContentSelection(context.rows, contentIds);
+    return {
+      format: 'autoreels-content',
+      version: 1,
+      processId,
+      schema: context.schema,
+      rows: contentIds.map((id) => {
+        const row = context.rows.find((row) => row.id === id)!;
+        return { contentId: row.id, fields: row.fields, assetIds: row.assetIds };
+      }),
+    };
+  }
+  private validateContentSelection(rows: ContentItem[], ids: string[]): void {
+    if (
+      !ids.length ||
+      ids.length > 1000 ||
+      new Set(ids).size !== ids.length ||
+      ids.some((id) => !rows.some((row) => row.id === id))
+    )
+      throw new DomainError(
+        'INVALID_SCOPE',
+        'Chọn 1–1000 nội dung còn dùng trong đúng tiến trình.',
+      );
+  }
+  previewContentImport(
+    processId: string,
+    expectedRevision: number,
+    document: ContentImportDocument,
+    expectedSchemaHash: string,
+    at = now(),
+  ): ContentPreviewDto {
+    return this.transaction(() =>
+      this.buildContentImportPreview(processId, expectedRevision, document, expectedSchemaHash, at),
+    );
+  }
+  private buildContentImportPreview(
+    processId: string,
+    expectedRevision: number,
+    document: ContentImportDocument,
+    expectedSchemaHash: string,
+    at: string,
+  ): ContentPreviewDto {
+    assertJsonSafe(document);
+    const context = this.contentContext(processId);
+    if (
+      context.process.revision !== expectedRevision ||
+      contentHash(context.schema) !== expectedSchemaHash
+    )
+      throw new DomainError('PREVIEW_STALE', 'Tiến trình hoặc schema đã đổi; xem trước lại.');
+    if (document.processId && document.processId !== processId)
+      throw new DomainError('INVALID_SCOPE', 'File thuộc tiến trình khác; không tự remap ID.');
+    if (document.schema && contentHash(document.schema) !== contentHash(context.schema))
+      throw new DomainError(
+        'SCHEMA_MISMATCH',
+        'Schema file khác workflow hiện tại; cần mapping rõ trước khi nhập.',
+      );
+    if (!document.records.length || document.records.length > 1000)
+      throw new DomainError('RESOURCE_BUDGET', 'Nhập 1–1000 nội dung mỗi lần.');
+    const validation = {
+      process: context.process,
+      bundle: this.inputSchema(context.process),
+      allowed: new Set(context.assets.map((asset) => asset.id)),
+    };
+    const seen = new Set<string>(),
+      mutations: StoredContentPreview['mutations'] = [],
+      changes: ContentPreviewDto['changes'] = [];
+    for (const [index, record] of document.records.entries()) {
+      let matched: ContentItem | null = null;
+      try {
+        if (record.errors?.length)
+          throw new DomainError('IMPORT_CELL_ERRORS', record.errors.join(' '));
+        let candidates: ContentItem[] = [];
+        if (Object.hasOwn(record, 'contentId'))
+          candidates = context.rows.filter((row) => row.id === record.contentId);
+        else if (Object.hasOwn(record, 'relativePath')) {
+          const ids = new Set(
+            context.assets
+              .filter(
+                (asset) =>
+                  asset.relativePath.replaceAll('\\', '/') ===
+                    record.relativePath!.replaceAll('\\', '/') &&
+                  (!record.sourceId ||
+                    this.db.prepare('SELECT source_ref FROM assets WHERE id=?').get(asset.id)
+                      ?.source_ref === record.sourceId),
+              )
+              .map((asset) => asset.contentId),
+          );
+          candidates = context.rows.filter((row) => ids.has(row.id));
+        } else if (Object.hasOwn(record, 'filename')) {
+          const ids = new Set(
+            context.assets
+              .filter((asset) => asset.relativePath.split(/[\\/]/).at(-1) === record.filename)
+              .map((asset) => asset.contentId),
+          );
+          candidates = context.rows.filter((row) => ids.has(row.id));
+        }
+        const hasSelector = ['contentId', 'sourceId', 'relativePath', 'filename'].some((key) =>
+          Object.hasOwn(record, key),
+        );
+        if (hasSelector && candidates.length !== 1)
+          throw new DomainError(
+            'IMPORT_MATCH',
+            candidates.length
+              ? 'Nhiều nội dung khớp; dùng contentId hoặc sourceId + relativePath.'
+              : 'Không có nội dung khớp selector; không fallback ID sai.',
+          );
+        matched = candidates[0] ?? null;
+        if (matched && seen.has(matched.id))
+          throw new DomainError('DUPLICATE_IMPORT', 'Nội dung xuất hiện nhiều lần trong file.');
+        if (matched) seen.add(matched.id);
+        const fields = { ...(matched?.fields ?? {}), ...record.fields },
+          refs = inputReferences(context.schema, fields, 'row').assets;
+        const next: ContentItem = {
+          id: matched?.id ?? makeId('content'),
+          processId,
+          revision: matched?.revision ?? 0,
+          fields,
+          assetIds: record.assetIds ?? [...new Set([...(matched?.assetIds ?? []), ...refs])],
+          ignored: false,
+        };
+        this.assertContentItem(next, validation);
+        const unchanged =
+          matched &&
+          contentHash({ fields: matched.fields, assetIds: matched.assetIds }) ===
+            contentHash({ fields: next.fields, assetIds: next.assetIds });
+        changes.push({
+          line: index + 1,
+          contentId: next.id,
+          action: unchanged ? 'UNCHANGED' : matched ? 'UPDATE' : 'CREATE',
+          fields: this.contentDeltas(matched, next).map((delta) => delta.key),
+          deltas: this.contentDeltas(matched, next),
+          errors: [],
+        });
+        if (!unchanged) mutations.push({ before: matched, next });
+      } catch (error) {
+        changes.push({
+          line: index + 1,
+          contentId: matched?.id ?? record.contentId ?? null,
+          action: 'ERROR',
+          fields: Object.keys(record.fields),
+          errors: [error instanceof Error ? error.message : 'Dữ liệu không hợp lệ.'],
+        });
+      }
+    }
+    return this.storeContentPreview(
+      processId,
+      contentHash(context),
+      mutations,
+      changes,
+      document.conversions,
+      context.jobs
+        .filter((job) => mutations.some((change) => change.before?.id === job.content_id))
+        .map((job) => String(job.id)),
+      at,
+    );
+  }
+  previewBulkContent(
+    processId: string,
+    expectedRevision: number,
+    request: BulkContentRequest,
+    at = now(),
+  ): ContentPreviewDto {
+    return this.transaction(() =>
+      this.buildBulkContentPreview(processId, expectedRevision, request, at),
+    );
+  }
+  private buildBulkContentPreview(
+    processId: string,
+    expectedRevision: number,
+    request: BulkContentRequest,
+    at: string,
+  ): ContentPreviewDto {
+    assertJsonSafe(request);
+    const context = this.contentContext(processId);
+    if (context.process.revision !== expectedRevision)
+      throw new DomainError('PREVIEW_STALE', 'Tiến trình đã đổi; xem trước lại.');
+    this.validateContentSelection(
+      context.rows,
+      request.selection.map((row) => row.id),
+    );
+    const records: ContentImportRecord[] = [];
+    for (const selected of request.selection) {
+      const row = context.rows.find((row) => row.id === selected.id)!;
+      if (row.revision !== selected.revision)
+        throw new DomainError(
+          'REVISION_CONFLICT',
+          'Có nội dung đã đổi; tải lại trước khi sửa hàng loạt.',
+        );
+      if (!context.schema.some((field) => field.key === request.fieldKey))
+        throw new DomainError('UNKNOWN_FIELD', 'Trường không thuộc schema nội dung.');
+      const next = bulkPatch(row.fields, request);
+      // A bulk REMOVE must remain a removal through the shared sparse-import representation.
+      records.push({ contentId: row.id, fields: next, assetIds: row.assetIds });
+    }
+    if (request.operation !== 'REMOVE')
+      return this.buildContentImportPreview(
+        processId,
+        expectedRevision,
+        { records, conversions: [] },
+        contentHash(context.schema),
+        at,
+      );
+    const validation = {
+      process: context.process,
+      bundle: this.inputSchema(context.process),
+      allowed: new Set(context.assets.map((asset) => asset.id)),
+    };
+    const changes: ContentPreviewDto['changes'] = [],
+      mutations: StoredContentPreview['mutations'] = [];
+    for (const [index, record] of records.entries()) {
+      const row = context.rows.find((row) => row.id === record.contentId)!,
+        next = { ...row, fields: record.fields };
+      try {
+        this.assertContentItem(next, validation);
+        const changed = contentHash(row.fields) !== contentHash(next.fields);
+        changes.push({
+          line: index + 1,
+          contentId: row.id,
+          action: changed ? 'UPDATE' : 'UNCHANGED',
+          fields: [request.fieldKey],
+          deltas: this.contentDeltas(row, next),
+          errors: [],
+        });
+        if (changed) mutations.push({ before: row, next });
+      } catch (error) {
+        changes.push({
+          line: index + 1,
+          contentId: row.id,
+          action: 'ERROR',
+          fields: [request.fieldKey],
+          errors: [error instanceof Error ? error.message : 'Không thể bỏ trường.'],
+        });
+      }
+    }
+    return this.storeContentPreview(
+      processId,
+      contentHash(context),
+      mutations,
+      changes,
+      [],
+      context.jobs
+        .filter((job) => mutations.some((m) => m.before?.id === job.content_id))
+        .map((job) => String(job.id)),
+      at,
+    );
+  }
+  private storeContentPreview(
+    processId: string,
+    contextHash: string,
+    mutations: StoredContentPreview['mutations'],
+    changes: ContentPreviewDto['changes'],
+    conversions: string[],
+    impactedJobIds: string[],
+    at: string,
+  ): ContentPreviewDto {
+    const dto: ContentPreviewDto = {
+      token: makeId('contentPreview'),
+      processId,
+      expiresAt: new Date(Date.parse(at) + 300000).toISOString(),
+      changes,
+      conversions,
+      impactedJobIds,
+      canApply: !changes.some((change) => change.action === 'ERROR'),
+    };
+    const payload: StoredContentPreview = { dto, contextHash, mutations };
+    this.db
+      .prepare('INSERT INTO content_change_previews VALUES(?,?,?,?,?,NULL)')
+      .run(dto.token, processId, dto.expiresAt, canonicalJson(payload), contentHash(payload));
+    return dto;
+  }
+  applyContentPreview(token: string, at = now()): ContentApplyResult {
+    idSchema.parse(token);
+    return this.transaction(() => {
+      const record = this.db
+        .prepare('SELECT * FROM content_change_previews WHERE token=?')
+        .get(token);
+      if (!record) throw new DomainError('NOT_FOUND', 'Không tìm thấy bản xem trước nội dung.');
+      if (record.result !== null)
+        return { ...parse<ContentApplyResult>(record.result), alreadyApplied: true };
+      const proposal = parse<StoredContentPreview>(record.payload);
+      if (contentHash(proposal) !== record.payload_hash)
+        throw new DomainError('PREVIEW_TAMPERED', 'Checksum bản xem trước không khớp.');
+      if (Date.parse(proposal.dto.expiresAt) <= Date.parse(at))
+        throw new DomainError('PREVIEW_EXPIRED', 'Bản xem trước đã hết hạn.');
+      if (!proposal.dto.canApply)
+        throw new DomainError(
+          'IMPORT_ERRORS',
+          'Sửa các lỗi trong bản xem trước trước khi áp dụng.',
+        );
+      const context = this.contentContext(String(record.process_id));
+      if (contentHash(context) !== proposal.contextHash)
+        throw new DomainError('PREVIEW_STALE', 'Dữ liệu/schema/media/lịch đã đổi; xem trước lại.');
+      const result: ContentApplyResult = {
+        contentIds: [],
+        created: 0,
+        updated: 0,
+        alreadyApplied: false,
+      };
+      const validation = {
+        process: context.process,
+        bundle: this.inputSchema(context.process),
+        allowed: new Set(context.assets.map((asset) => asset.id)),
+      };
+      for (const mutation of proposal.mutations) {
+        this.assertContentItem(mutation.next, validation);
+        const saved = this.insertContent(mutation.next, mutation.before?.revision ?? null);
+        result.contentIds.push(saved.id);
+        result[mutation.before ? 'updated' : 'created']++;
+      }
+      this.db
+        .prepare('UPDATE content_change_previews SET result=? WHERE token=?')
+        .run(canonicalJson(result), token);
+      return result;
+    });
+  }
+
   private scheduleContext(processId: string, contentIds: string[]): FrozenScheduleContext {
     const process = this.getProcess(processId),
       all = this.listContent(processId);
@@ -776,7 +1416,15 @@ export class StudioDatabase {
       process,
       rows: contentIds.map((id) => all.find((row) => row.id === id)!),
       version: process.workflowVersionId ? this.getVersion(process.workflowVersionId) : null,
-      assets: this.listContentAssets(processId).filter((asset) => selected.has(asset.contentId)),
+      assets: this.listContentAssets(processId).filter(
+        (asset) =>
+          selected.has(asset.contentId) ||
+          inputReferences(
+            this.inputSchema(process)?.inputs ?? [],
+            process.fields ?? {},
+            'process',
+          ).assets.includes(asset.id),
+      ),
       jobs: this.db
         .prepare('SELECT id FROM jobs WHERE process_id=? ORDER BY id')
         .all(processId)
@@ -795,8 +1443,13 @@ export class StudioDatabase {
     else {
       const invalid = validateBundle(version.bundle);
       if (invalid.length) blockers.add('Workflow chưa hợp lệ: ' + invalid[0]!.message);
-      if (validateTypedValues(version.bundle.inputs, {}, 'process').length)
-        blockers.add('Workflow cần trường Process; phần gán giá trị Process chưa khả dụng.');
+      try {
+        this.assertInputValues(process, process.fields ?? {}, 'process');
+      } catch (error) {
+        blockers.add(
+          'Trường tiến trình: ' + (error instanceof Error ? error.message : 'Chưa hợp lệ.'),
+        );
+      }
       for (const row of rows) {
         const issues = validateTypedValues(version.bundle.inputs, row.fields, 'row');
         if (issues.length)
@@ -953,8 +1606,23 @@ export class StudioDatabase {
           bundle: version.bundle,
           contentId: row.id,
           fields: row.fields,
-          assetIds: row.assetIds,
-          assets: context.assets.filter((asset) => asset.contentId === row.id),
+          assetIds: [
+            ...new Set([
+              ...row.assetIds,
+              ...inputReferences(version.bundle.inputs, context.process.fields ?? {}, 'process')
+                .assets,
+            ]),
+          ],
+          assets: context.assets.filter(
+            (asset) =>
+              asset.contentId === row.id ||
+              inputReferences(
+                version.bundle.inputs,
+                context.process.fields ?? {},
+                'process',
+              ).assets.includes(asset.id),
+          ),
+          processFields: context.process.fields ?? {},
           accountId: context.process.accountId,
           targetId: context.process.targetId,
           networkProfileId: null,

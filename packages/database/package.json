@@ -13,6 +13,7 @@
     "@autoreels/contracts": "workspace:*",
     "@autoreels/domain": "workspace:*",
     "@autoreels/scheduler": "workspace:*",
-    "@autoreels/workflow-engine": "workspace:*"
+    "@autoreels/workflow-engine": "workspace:*",
+    "@autoreels/import-export": "workspace:*"
   }
 }

@@ -17,8 +17,15 @@
     },
     {
       "path": "../workflow-engine"
+    },
+    {
+      "path": "../import-export"
     }
   ],
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
+  ]
 }
