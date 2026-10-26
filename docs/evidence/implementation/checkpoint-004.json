@@ -1,0 +1,126 @@
+{
+  "scope": "TYPED_DATA_IMPORT_AND_QUEUE_OWNERSHIP_NOT_ANDROID_ACCEPTANCE",
+  "revision": "55517f14d6f72163cee786d42d4791fa8f8a6eff",
+  "dateUtc": "2026-10-26T11:48:02.353408+00:00",
+  "plansReadBeforeCode": [
+    "docs/source-plan/v2/16_MASTER_EXECUTION_PLAN.md",
+    "docs/source-plan/v2/execution-runbook.json",
+    "docs/source-plan/v2/08_OPERATION_POLICIES.md",
+    "docs/source-plan/v2/10_ACCEPTANCE_GATES.md",
+    "docs/implementation/P06_PLAN.md",
+    "docs/implementation/P07_PLAN.md",
+    "docs/implementation/INCREMENT-005_PLAN.md",
+    "docs/implementation/INCREMENT-006_PLAN.md"
+  ],
+  "relatedSteps": [
+    "S051",
+    "S056",
+    "S057",
+    "S058",
+    "S063",
+    "S064",
+    "S068"
+  ],
+  "commands": {
+    "pnpm check": {
+      "status": "PASS",
+      "files": 13,
+      "tests": 125,
+      "includes": [
+        "generated contracts parity",
+        "strict host/renderer/E2E-source typecheck",
+        "lint",
+        "unit/integration/actual worker contention",
+        "host build",
+        "renderer production build"
+      ]
+    },
+    "pnpm exec playwright test": {
+      "status": "PASS",
+      "scenarios": 8,
+      "statistics": {
+        "startTime": "2026-10-26T11:42:11.565Z",
+        "duration": 36340.916,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "newCoverage": [
+        "typed Process inputs/save ACK race",
+        "CSV/JSON/XLSX preview/apply/export",
+        "bulk selected scope survives filters",
+        "wrong-ID/stale proposal no writes",
+        "1200 content rows/virtual DOM/stable-ID edit-selection",
+        "actual before/after deltas"
+      ]
+    },
+    "Electron sandbox renderer smoke": {
+      "status": "PASS",
+      "electron": "45.0.0",
+      "saveReload": true,
+      "contentXlsxRoundTrip": true,
+      "nodeIntegration": false,
+      "privateApi": "NOT_EXPOSED",
+      "privateQueueApi": "NOT_EXPOSED",
+      "nativeChooserCapability": true,
+      "interactiveNativeDialog": "NOT_RUN"
+    },
+    "node tools/smoke-media-host.mjs": {
+      "status": "PASS",
+      "nativePicker": "TEST_ADAPTER",
+      "filesystem": "REAL_TEMP_FILES",
+      "databaseWorker": "REAL"
+    },
+    "node tools/smoke-host.mjs": "PASS",
+    "pnpm install --offline --frozen-lockfile --ignore-scripts": "PASS",
+    "pnpm check:plan": "PASS"
+  },
+  "runner": {
+    "node": "v24.19.0",
+    "sqlite": "3.53.3",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "databaseSchemaVersion": 5,
+  "workspaceProjects": 10,
+  "githubPush": {
+    "status": "VERIFIED_REMOTE_FEATURE_BRANCH",
+    "repository": "danhgold7979-cyber/fonesi-W",
+    "branch": "feat/studio-workspace",
+    "sourceRevision": "55517f14d6f72163cee786d42d4791fa8f8a6eff",
+    "mainMerged": false
+  },
+  "contentFormats": {
+    "CSV": "csv-parse 7.0.3 / csv-stringify 6.9.0",
+    "XLSX": "read-excel-file 9.3.12 / write-excel-file 4.1.1",
+    "licenseMetadataAndPackageFiles": "MIT_VERIFIED",
+    "policy": "docs/implementation/ADR-002-CONTENT-FORMATS.md"
+  },
+  "queue": {
+    "workers": "TWO_PRODUCTION_DB_WORKERS_ONE_SQLITE_TEST_DB",
+    "claim": "PREFLIGHT_ONLY",
+    "lostPreflightWithoutEffects": "REQUEUE_AND_REDETECT",
+    "runningOrJournaledLostClaim": "NEEDS_REVIEW",
+    "inputDispatch": "NOT_IMPLEMENTED",
+    "pendingEffectsReplayed": false
+  },
+  "plannedAcceptanceUnitCount": 125,
+  "actualUnitIntegrationTestCount": 125,
+  "testCountIsIndependentOfPlannedUnitCount": true,
+  "fullPhaseAcceptance": false,
+  "windows": "NOT_RUN",
+  "android": "NOT_IMPLEMENTED_NOT_RUN",
+  "installerPublished": false,
+  "remaining": [
+    "thumbnails/cache/source rebind and changed-file adoption",
+    "Process clone/archive UI and schema migration mapping",
+    "server-side content query/cursor pagination and broader scale evidence",
+    "overdue slot policies/runtime auto-append/calendar/spread/power hooks",
+    "actual Android worker/control/stream/recognition/identity/preflight",
+    "advanced editor/compiler/dependency resolution/debugger",
+    "workspace import/backup/restore UI and lifecycle/retention",
+    "Facebook/TikTok actual app receipts/network/APK/installer"
+  ],
+  "progress": "docs/implementation/PROGRESS.md"
+}

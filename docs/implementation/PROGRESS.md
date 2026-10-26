@@ -28,6 +28,6 @@ Các lệnh/checks còn đang thay đổi được chạy lại khi scope code �
 
 P06 tiếp tục thumbnails, source adoption/rebind, Process clone/archive, migration mapping/inline/column helpers và server pagination. P07 tiếp tục actual worker/overdue recovery/calendar/spread; P04/P05 còn advanced editor/engine contracts. Các phần này làm tiếp trên cloud. P08 kết nối/control cần nghiệm thu Windows/Android thật; chưa có thiết bị thì không tự nhận discovery, vuốt, proxy hay posting thành công.
 
-GitHub đã xác minh remote `feat/studio-workspace` ở code commit `3a3e9cd1fb1d55e46540034a789bd7d5192b00a8`. Receipt [checkpoint-003](../evidence/implementation/checkpoint-003.json) ghi các checks trên revision này; commit tài liệu/ZIP có thể mới hơn code commit. Không merge main hoặc phát hành installer.
+GitHub đã xác minh remote `feat/studio-workspace` ở code commit `55517f14d6f72163cee786d42d4791fa8f8a6eff`. Receipt [checkpoint-004](../evidence/implementation/checkpoint-004.json) ghi checks trên revision này; commit tài liệu/ZIP có thể mới hơn. Không merge main hoặc phát hành installer.
 
 Kế hoạch đã đối chiếu trước code: [increment 005](INCREMENT-005_PLAN.md), [increment 006](INCREMENT-006_PLAN.md), [ADR format](ADR-002-CONTENT-FORMATS.md). Chưa đánh dấu toàn phase ACCEPTED.

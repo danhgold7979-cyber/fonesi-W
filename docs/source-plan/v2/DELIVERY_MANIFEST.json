@@ -171,14 +171,24 @@
       "sha256": "891f574d90ad41bcca88996ad84333caad41c1b30aaeb54d3a8b34d460a4bf30"
     },
     {
+      "path": "docs/evidence/implementation/checkpoint-004.json",
+      "bytes": 4195,
+      "sha256": "57629572d6162f9963cf5d838941e793bfecdedba7d385928495ca67071c9201"
+    },
+    {
       "path": "docs/evidence/implementation/ui/content-form-1600.png",
-      "bytes": 128397,
-      "sha256": "8b2aa4d14b15b444815258bd8badbea94d8a5a83714510cf0156bac8b07d3f8a"
+      "bytes": 128569,
+      "sha256": "e47cd1729d5c3233c3df15711e27c11f4ca5c730b803d3cd1d0483ef183ec42a"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/content-preview-1600.png",
+      "bytes": 119744,
+      "sha256": "9560c877fa65791a9fa18c89251fa735e92257d679a2c4efb0250fc1feab9b1e"
     },
     {
       "path": "docs/evidence/implementation/ui/inspector-1600.png",
-      "bytes": 115606,
-      "sha256": "d8c54f7c196f858b4cff37693beb450ef02055883b7920b79d17c2fac7cbd331"
+      "bytes": 115604,
+      "sha256": "4d8e41978d41d4900fe0c147038091d2d89254414bd93c2d3dfb77976118055e"
     },
     {
       "path": "docs/evidence/implementation/ui/schedule-1600.png",
@@ -201,9 +211,24 @@
       "sha256": "79b60b215e0f91ccab65888184d1bdad05a85f3c004b401f5b019ecf76d02cef"
     },
     {
+      "path": "docs/implementation/ADR-002-CONTENT-FORMATS.md",
+      "bytes": 3206,
+      "sha256": "be323ce1afc917c3ce1ccd2cfa76f4a16df70751d539c0c2646b329f14803dcf"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-005_PLAN.md",
+      "bytes": 8191,
+      "sha256": "43e91b6682264201d5822bc45a5b6925bb06716377e6781b879cfedc1b5b4847"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-006_PLAN.md",
+      "bytes": 3951,
+      "sha256": "6fa583502e11924dcef532d2b2e651f442aabc927b79336127500d9bf659cd61"
+    },
+    {
       "path": "docs/implementation/P00_PLAN.md",
-      "bytes": 1794,
-      "sha256": "1329ce7641213f223d70dcd236be6c3eac9ede99d3979b264bde643eca997eb7"
+      "bytes": 2328,
+      "sha256": "429de103e0de7781e1e4be46b851af7444f0ead6b7f03bd92f72103b18357b27"
     },
     {
       "path": "docs/implementation/P01_PLAN.md",
@@ -217,8 +242,8 @@
     },
     {
       "path": "docs/implementation/P03_PLAN.md",
-      "bytes": 1730,
-      "sha256": "3c5d400be01fb363457bc1a9a00f39a271008805dfd4f3f0e40111a7de91b166"
+      "bytes": 1990,
+      "sha256": "b6db9088f1672a6dab8739e64ec1a6c29d1a1ffdc34751e49b56785e5efb7ab8"
     },
     {
       "path": "docs/implementation/P04_PLAN.md",
@@ -232,18 +257,18 @@
     },
     {
       "path": "docs/implementation/P06_PLAN.md",
-      "bytes": 4871,
-      "sha256": "4604806d43e01616eb2864bb36339510f0239ee17b33481322f9d8a05d851960"
+      "bytes": 5194,
+      "sha256": "2c197b4b4ab3d564af6461dd638d9fc5b755c65acea2adea08b4647aa6b6b629"
     },
     {
       "path": "docs/implementation/P07_PLAN.md",
-      "bytes": 4584,
-      "sha256": "e8c9c6183738d3b1ddca92d3e0e4fc1b8300fea84154fb00a9990b314667df96"
+      "bytes": 5127,
+      "sha256": "ef166ff8536c11bd236109f6cf612e15e1c2e7fee76ae00a98f9cca96b860dd6"
     },
     {
       "path": "docs/implementation/PROGRESS.md",
-      "bytes": 5639,
-      "sha256": "e132ae86a801e0e0159e47f667f2bbb8743ddccb85fa76cc387b4ffe4f7a2e6f"
+      "bytes": 6662,
+      "sha256": "f24165f2b789168edc28c99fc263a50997116f462bb5741c274aaabbe96fb2de"
     },
     {
       "path": "docs/previews/AutoReels-Studio-Compact.html",
