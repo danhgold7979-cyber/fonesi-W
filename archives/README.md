@@ -1,11 +1,13 @@
 # Snapshot bàn giao
 
-Gói `AutoReels-Studio-Handoff-V2.1-2026-10-26.zip` lưu toàn bộ file được Git theo dõi tại commit nguồn, kèm `SNAPSHOT.json` và `SHA256SUMS` bên trong. ZIP cũ được loại khỏi nội dung để tránh archive lồng nhau.
+Bản mới nhất: **AutoReels-Studio-Code-Checkpoint-003-2026-10-26.zip**. Có source React/Electron/SQLite/editor, native media coordinator và persisted preview/apply/schedule UI. Đây là source checkpoint, chưa phải installer; Android automation và nghiệm thu Windows chưa hoàn thành. Xem `docs/implementation/PROGRESS.md` sau giải nén.
 
-- Tải ZIP, file `.sha256` và `-receipt.json` trong thư mục này. Trên GitHub chọn ZIP rồi **Download raw file**.
-- Đọc `docs/handoff/START_HERE.md` sau giải nén để tiếp tục bằng tài khoản khác.
-- Đây là snapshot source/plan/HTML review; app production và Android automation chưa triển khai tại checkpoint này.
-- Lịch sử Git được lưu bằng các commit trong repository; mỗi ZIP có commit nguồn chính xác trong metadata.
-- Quyền repository do GitHub quản lý. Tài khoản mới cần quyền đọc/ghi tương ứng; ZIP không chứa credentials và không chuyển lịch sử chat.
+| Gói | Phạm vi tại commit nguồn |
+|---|---|
+| `AutoReels-Studio-Code-Checkpoint-003-2026-10-26.zip` | Increment native media + persisted scheduling; 98 unit/integration tests, 5 browser scenarios tại code revision ghi trong receipt |
+| `AutoReels-Studio-Code-Checkpoint-2026-10-26.zip` | Checkpoint code trước đó: editor/ledger/readonly schedule preview |
+| `AutoReels-Studio-Handoff-V2.1-2026-10-26.zip` | Snapshot đầu: source-plan/reference/HTML review, chưa có app implementation ở commit đó |
 
-Snapshot local chỉ xuất hiện trên GitHub khi push thành công. Nếu nhận 403, cần cấp quyền Write hoặc kết nối tài khoản có quyền rồi push nhánh `feat/studio-workspace`.
+Mỗi ZIP chứa các file được Git theo dõi tại commit nguồn, thêm `SNAPSHOT.json` và `SHA256SUMS`. ZIP cũ bị loại khỏi nội dung để tránh lồng archive. Mỗi gói có `.zip.sha256` và `-receipt.json` cạnh bên; chọn ZIP trên GitHub rồi **Download raw file**.
+
+Đọc `docs/handoff/START_HERE.md` để tiếp tục bằng tài khoản khác. GitHub quản lý quyền đọc/ghi repository; ZIP không chứa credentials hoặc lịch sử chat. So sánh commit trước khi dùng: không giải nén snapshot cũ đè code mới hơn. Metadata và receipt ghi commit nguồn cùng phạm vi kiểm chứng; kiểm tra ZIP không đồng nghĩa kiểm thử điện thoại.
