@@ -1,0 +1,8 @@
+# Frozen inputs must retain their original bytes on Windows and Linux.
+docs/reference/** -text
+*.zip -text
+
+# Source snapshots must not recursively include older archive binaries.
+archives/*.zip export-ignore
+archives/*.sha256 export-ignore
+archives/*-receipt.json export-ignore

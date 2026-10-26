@@ -4,6 +4,8 @@ AutoReels Studio — workspace thiết kế workflow và quản lý tiến trìn
 
 Baseline hiện tại: [Source Plan V2.1](docs/source-plan/v2/00_START_HERE.md), được làm lại từ HTML Studio Workspace mới và runtime requirements của bộ V1.7.
 
+**Tiếp tục bằng tài khoản/phiên khác:** [hướng dẫn bàn giao](docs/handoff/START_HERE.md), [prompt tiếp tục](docs/handoff/RESUME_PROMPT.md), [ZIP snapshots](archives/README.md). Snapshot có commit nguồn và SHA-256; tài khoản mới cần quyền GitHub tương ứng.
+
 **Kế hoạch code toàn tool:** [master execution plan](docs/source-plan/v2/16_MASTER_EXECUTION_PLAN.md), [125 bước / 375 đầu việc](docs/source-plan/v2/17_STEP_RUNBOOK.md), [readiness và risks](docs/source-plan/v2/18_READINESS_AND_RISKS.md). Có 250 tình huống kiểm tra dự kiến; chưa phải số tests production đã chạy.
 
 **Xem giao diện trước:** [HTML Studio Compact đầy đủ](docs/previews/AutoReels-Studio-Compact.html), [30 tiện ích thao tác gọn](docs/source-plan/v2/15_COMPACT_UX_ADDITIONS.md). Mở HTML bằng Chrome/Edge; hardware/run trong bản này là minh họa.

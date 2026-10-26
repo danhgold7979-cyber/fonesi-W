@@ -30,8 +30,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 1851,
-      "sha256": "2647c80cfa298a27d79a82fcd541575931489234f76a92afe51dd5a5cfe949c1"
+      "bytes": 2146,
+      "sha256": "3f589436107dfe440fa1ed06f8c5f5f5f03a566df4b4d758819a4166f7b665bf"
     },
     {
       "path": "docs/analysis/autoreels-v1.7/ANALYSIS.md",
@@ -152,6 +152,16 @@
       "path": "docs/analysis/autoreels-v1.7/screenshots/contact-sheet.jpg",
       "bytes": 185108,
       "sha256": "38ad80b2c20a850975e4d839b513cccdaff38853c0eade2564b01c8557c5ce8f"
+    },
+    {
+      "path": "docs/handoff/RESUME_PROMPT.md",
+      "bytes": 2141,
+      "sha256": "5ccbbd20bd34be191fef838a4a8a5491bfac9e253628b1cb4fa279e5df9f8fc6"
+    },
+    {
+      "path": "docs/handoff/START_HERE.md",
+      "bytes": 6457,
+      "sha256": "446a56478962fed2eb799360c36a448902023356e9db3f1db2a4e9cd2ea14807"
     },
     {
       "path": "docs/previews/AutoReels-Studio-Compact.html",
