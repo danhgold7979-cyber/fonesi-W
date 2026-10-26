@@ -161,6 +161,11 @@
       "sha256": "d1eb3f7cfc4706ca4d2a35fa21037d51b681188812d23a61321dd4209748b8d2"
     },
     {
+      "path": "docs/evidence/implementation/checkpoint-002.json",
+      "bytes": 1446,
+      "sha256": "147b4a46700767742a91e0afb7abbf2b33cdabde6473af166c22daafaebf2d64"
+    },
+    {
       "path": "docs/evidence/implementation/ui/inspector-1600.png",
       "bytes": 115387,
       "sha256": "7c3fb902f62d47705d8ecd7944f198c321b2b4f2ab8c74a313487665515bf23f"
