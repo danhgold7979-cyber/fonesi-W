@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import type { ProcessDefinition, JobSnapshot, JobDefinition } from '@autoreels/contracts';
 import { contentHash } from '@autoreels/domain';
 import { StudioDatabase } from './index.js';
+import { DatabaseSync } from 'node:sqlite';
+import { migration } from './schema.js';
 
 let dir: string, db: StudioDatabase;
 const closes: StudioDatabase[] = [];
@@ -282,6 +284,17 @@ describe('snapshots, leases and effect durability', () => {
   });
 });
 describe('backup/restore', () => {
+  it('migrates a v1 database and restores an older backup through staging', async () => {
+    const path = join(dir, 'v1.sqlite'),
+      old = new DatabaseSync(path);
+    old.exec(migration);
+    old.prepare('INSERT INTO schema_migrations VALUES(1,?)').run(contentHash(migration));
+    old.exec('PRAGMA user_version=1');
+    old.close();
+    await db.restoreFrom(path);
+    expect(db.integrity()).toBe('ok');
+    expect(db.listSources('missing', 'host')).toEqual([]);
+  });
   it('backs up WAL consistently and restores workflow revisions without losing the previous DB', async () => {
     const draft = db.createWorkflow('fb', 'Before');
     const path = join(dir, 'backup.sqlite');
@@ -299,5 +312,62 @@ describe('backup/restore', () => {
     await expect(db.restoreFrom(path)).rejects.toThrow();
     expect(db.getDraft(draft.workflowId).bundle.workflow.name).toBe('Keep');
     expect(db.integrity()).toBe('ok');
+  });
+});
+
+describe('host source persistence', () => {
+  it('dedupes scans, preserves changed snapshots and keeps ignored media out after reconcile', () => {
+    db.saveProcess(processInput(), null);
+    const source = db.registerNativeSource({
+      processId: 'process_1',
+      kind: 'FOLDER',
+      rootPath: dir,
+      recursive: false,
+      watch: false,
+      hostId: 'host_test',
+    });
+    const asset = {
+      relativePath: 'video.mp4',
+      hash: contentHash('bytes'),
+      bytes: 5,
+      mtimeMs: 100,
+      kind: 'video' as const,
+      probe: { status: 'UNAVAILABLE' as const, reason: 'fixture' },
+    };
+    expect(db.applyScannedAsset(source.id, 'host_test', 0, 'scan1', asset)).toBe('added');
+    expect(db.applyScannedAsset(source.id, 'host_test', 0, 'scan2', asset)).toBe('unchanged');
+    expect(db.listContent('process_1')).toHaveLength(1);
+    expect(
+      db.applyScannedAsset(source.id, 'host_test', 0, 'scan3', {
+        ...asset,
+        hash: contentHash('changed'),
+      }),
+    ).toBe('changed');
+    const row = db.listContent('process_1')[0]!;
+    db.ignoreContent(row.id, 0);
+    expect(db.applyScannedAsset(source.id, 'host_test', 0, 'scan4', asset)).toBe('ignored');
+    expect(db.listContent('process_1')).toEqual([]);
+  });
+  it('rejects grants from another host and callbacks from a replaced source', () => {
+    db.saveProcess(processInput(), null);
+    const source = db.registerNativeSource({
+      processId: 'process_1',
+      kind: 'FOLDER',
+      rootPath: dir,
+      recursive: false,
+      watch: false,
+      hostId: 'host_test',
+    });
+    expect(() => db.getSourceGrant(source.id, 'different_host')).toThrow('another host');
+    expect(db.listSources('process_1', 'different_host')[0]?.requiresRebind).toBe(true);
+    db.registerNativeSource({
+      processId: 'process_1',
+      kind: 'FOLDER',
+      rootPath: dir,
+      recursive: true,
+      watch: false,
+      hostId: 'host_test',
+    });
+    expect(() => db.finishSourceScan(source.id, 'host_test', 0, 'late_scan')).toThrow('changed');
   });
 });

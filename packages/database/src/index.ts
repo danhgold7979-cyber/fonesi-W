@@ -24,6 +24,9 @@ import type {
   JobSnapshot,
   DeviceLease,
   JsonValue,
+  SourceGrant,
+  SourceDefinition,
+  ScannedAsset,
 } from '@autoreels/contracts';
 import {
   DomainError,
@@ -33,7 +36,7 @@ import {
   addApp,
   assertJobTransition,
 } from '@autoreels/domain';
-import { migration, SCHEMA_VERSION } from './schema.js';
+import { migrations, SCHEMA_VERSION } from './schema.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
 const now = (): string => new Date().toISOString();
@@ -69,20 +72,25 @@ export class StudioDatabase {
     const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version);
     if (version > SCHEMA_VERSION)
       throw new DomainError('NEWER_DATABASE', 'Database was created by a newer application');
-    const checksum = contentHash(migration);
-    if (version === 0)
-      this.transaction(() => {
-        this.db.exec(migration);
-        this.db.prepare('INSERT INTO schema_migrations VALUES(?,?)').run(SCHEMA_VERSION, checksum);
-        for (const app of SEED_APPS)
-          this.db.prepare('INSERT INTO apps VALUES(?,?)').run(app.id, canonicalJson(app));
-        this.db.exec('PRAGMA user_version=' + SCHEMA_VERSION);
-      });
-    else if (
-      this.db.prepare('SELECT checksum FROM schema_migrations WHERE version=?').get(version)
-        ?.checksum !== checksum
-    )
-      throw new DomainError('MIGRATION_MISMATCH', 'Migration checksum mismatch');
+    for (const item of migrations) {
+      const checksum = contentHash(item.sql);
+      if (item.version <= version) {
+        if (
+          this.db
+            .prepare('SELECT checksum FROM schema_migrations WHERE version=?')
+            .get(item.version)?.checksum !== checksum
+        )
+          throw new DomainError('MIGRATION_MISMATCH', 'Migration checksum mismatch');
+      } else
+        this.transaction(() => {
+          this.db.exec(item.sql);
+          this.db.prepare('INSERT INTO schema_migrations VALUES(?,?)').run(item.version, checksum);
+          if (item.version === 1)
+            for (const app of SEED_APPS)
+              this.db.prepare('INSERT INTO apps VALUES(?,?)').run(app.id, canonicalJson(app));
+          this.db.exec('PRAGMA user_version=' + item.version);
+        });
+    }
   }
   private transaction<T>(fn: () => T): T {
     this.db.exec('BEGIN IMMEDIATE');
@@ -116,9 +124,7 @@ export class StudioDatabase {
       return app;
     });
   }
-  listWorkflows(
-    includeArchived = false,
-  ): {
+  listWorkflows(includeArchived = false): {
     id: string;
     appId: string;
     name: string;
@@ -672,18 +678,27 @@ export class StudioDatabase {
     try {
       if (
         source.prepare('PRAGMA integrity_check').get()?.integrity_check !== 'ok' ||
-        Number(source.prepare('PRAGMA user_version').get()?.user_version) !== SCHEMA_VERSION ||
-        source.prepare('SELECT checksum FROM schema_migrations WHERE version=?').get(SCHEMA_VERSION)
-          ?.checksum !== contentHash(migration)
+        Number(source.prepare('PRAGMA user_version').get()?.user_version) < 1 ||
+        Number(source.prepare('PRAGMA user_version').get()?.user_version) > SCHEMA_VERSION ||
+        migrations
+          .filter(
+            (m) => m.version <= Number(source.prepare('PRAGMA user_version').get()?.user_version),
+          )
+          .some(
+            (m) =>
+              source
+                .prepare('SELECT checksum FROM schema_migrations WHERE version=?')
+                .get(m.version)?.checksum !== contentHash(m.sql),
+          )
       )
         throw new DomainError('INVALID_BACKUP', 'Backup integrity/schema mismatch');
       await backup(source, stage);
     } finally {
       source.close();
     }
-    const check = new DatabaseSync(stage, { readOnly: true });
+    const check = new StudioDatabase(stage);
     try {
-      if (check.prepare('PRAGMA integrity_check').get()?.integrity_check !== 'ok')
+      if (check.integrity() !== 'ok')
         throw new DomainError('INVALID_BACKUP', 'Staged restore integrity failed');
     } finally {
       check.close();
@@ -710,5 +725,196 @@ export class StudioDatabase {
       this.migrate();
       throw error;
     }
+  }
+
+  /** Internal-only entrypoint: caller must obtain a native dialog grant before calling. */
+  registerNativeSource(grant: Omit<SourceGrant, 'id' | 'revision' | 'active'>): SourceDefinition {
+    idSchema.parse(grant.processId);
+    this.getProcess(grant.processId);
+    if (!grant.rootPath || !grant.hostId || !['FOLDER', 'FILE'].includes(grant.kind))
+      throw new DomainError('INVALID_GRANT', 'Invalid host grant');
+    return this.transaction(() => {
+      if (grant.kind === 'FOLDER')
+        this.db
+          .prepare(
+            "UPDATE sources SET active=0,watch=0,revision=revision+1 WHERE process_id=? AND kind='FOLDER' AND active=1",
+          )
+          .run(grant.processId);
+      const id = makeId('source');
+      this.db
+        .prepare('INSERT INTO sources VALUES(?,?,?,?,?,?,0,1,?)')
+        .run(
+          id,
+          grant.processId,
+          grant.kind,
+          grant.rootPath,
+          Number(grant.recursive),
+          Number(grant.watch),
+          grant.hostId,
+        );
+      return {
+        id,
+        processId: grant.processId,
+        kind: grant.kind,
+        displayPath: grant.rootPath,
+        recursive: grant.recursive,
+        watch: grant.watch,
+        revision: 0,
+        active: true,
+        requiresRebind: false,
+      };
+    });
+  }
+  getSourceGrant(id: string, hostId: string): SourceGrant {
+    const r = this.db.prepare('SELECT * FROM sources WHERE id=?').get(id);
+    if (!r) throw new DomainError('NOT_FOUND', 'Source not found');
+    if (r.host_id !== hostId)
+      throw new DomainError('SOURCE_REBIND_REQUIRED', 'Source belongs to another host');
+    return {
+      id,
+      processId: String(r.process_id),
+      kind: r.kind as 'FOLDER' | 'FILE',
+      rootPath: String(r.root_path),
+      recursive: Boolean(r.recursive),
+      watch: Boolean(r.watch),
+      revision: Number(r.revision),
+      active: Boolean(r.active),
+      hostId,
+    };
+  }
+  listSources(processId: string, hostId: string): SourceDefinition[] {
+    return this.db
+      .prepare('SELECT * FROM sources WHERE process_id=? ORDER BY rowid DESC')
+      .all(processId)
+      .map((r) => ({
+        id: String(r.id),
+        processId,
+        kind: r.kind as 'FOLDER' | 'FILE',
+        displayPath: String(r.root_path),
+        recursive: Boolean(r.recursive),
+        watch: Boolean(r.watch),
+        revision: Number(r.revision),
+        active: Boolean(r.active),
+        requiresRebind: r.host_id !== hostId,
+      }));
+  }
+  applyScannedAsset(
+    sourceId: string,
+    hostId: string,
+    expectedRevision: number,
+    scanGeneration: string,
+    asset: ScannedAsset,
+  ): 'added' | 'unchanged' | 'changed' | 'ignored' {
+    assertJsonSafe(asset);
+    hashSchema.parse(asset.hash);
+    return this.transaction(() => {
+      const grant = this.getSourceGrant(sourceId, hostId);
+      if (!grant.active || grant.revision !== expectedRevision)
+        throw new DomainError('SOURCE_CHANGED', 'Source changed while scan was running');
+      const old = this.db
+        .prepare('SELECT * FROM source_entries WHERE source_id=? AND relative_path=?')
+        .get(sourceId, asset.relativePath);
+      const ignored = this.db
+        .prepare('SELECT 1 FROM source_ignores WHERE source_id=? AND relative_path=? AND hash=?')
+        .get(sourceId, asset.relativePath, asset.hash);
+      if (old) {
+        const state = ignored ? 'IGNORED' : old.hash === asset.hash ? 'READY' : 'CHANGED';
+        if (old.hash === asset.hash)
+          this.db
+            .prepare('UPDATE asset_metadata SET probe=? WHERE asset_id=?')
+            .run(canonicalJson(asset.probe), String(old.asset_id));
+        this.db
+          .prepare(
+            'UPDATE source_entries SET observed_hash=?,state=?,seen_generation=? WHERE source_id=? AND relative_path=?',
+          )
+          .run(asset.hash, state, scanGeneration, sourceId, asset.relativePath);
+        return ignored ? 'ignored' : state === 'READY' ? 'unchanged' : 'changed';
+      }
+      const assetId =
+          'asset_' +
+          contentHash({ sourceId, relativePath: asset.relativePath, hash: asset.hash }).slice(
+            0,
+            32,
+          ),
+        contentId = makeId('content');
+      this.db
+        .prepare('INSERT INTO assets VALUES(?,?,?,?,?,?,?)')
+        .run(
+          assetId,
+          sourceId,
+          asset.relativePath,
+          asset.hash,
+          asset.kind,
+          asset.bytes,
+          asset.mtimeMs,
+        );
+      this.db
+        .prepare('INSERT INTO asset_metadata VALUES(?,?)')
+        .run(assetId, canonicalJson(asset.probe));
+      const process = this.getProcess(grant.processId),
+        fields: Record<string, JsonValue> = {};
+      const bundle = process.workflowVersionId
+        ? this.getVersion(process.workflowVersionId).bundle
+        : process.workflowId
+          ? this.getDraft(process.workflowId).bundle
+          : null;
+      if (bundle?.inputs.some((f) => f.key === 'caption' && f.type === 'text' && f.scope === 'row'))
+        fields.caption = asset.relativePath
+          .split(/[\\/]/)
+          .at(-1)!
+          .replace(/\.[^.]+$/, '');
+      this.db
+        .prepare('INSERT INTO content_items VALUES(?,?,0,?,?)')
+        .run(contentId, grant.processId, canonicalJson(fields), Number(Boolean(ignored)));
+      this.db.prepare('INSERT INTO content_assets VALUES(?,?,0)').run(contentId, assetId);
+      this.db
+        .prepare('INSERT INTO source_entries VALUES(?,?,?,?,?,?,?,?)')
+        .run(
+          sourceId,
+          asset.relativePath,
+          asset.hash,
+          asset.hash,
+          assetId,
+          contentId,
+          ignored ? 'IGNORED' : 'READY',
+          scanGeneration,
+        );
+      return ignored ? 'ignored' : 'added';
+    });
+  }
+  finishSourceScan(
+    sourceId: string,
+    hostId: string,
+    expectedRevision: number,
+    generation: string,
+  ): number {
+    return this.transaction(() => {
+      const source = this.getSourceGrant(sourceId, hostId);
+      if (!source.active || source.revision !== expectedRevision)
+        throw new DomainError('SOURCE_CHANGED', 'Source changed before scan completion');
+      return Number(
+        this.db
+          .prepare(
+            "UPDATE source_entries SET state='MISSING' WHERE source_id=? AND seen_generation<>? AND state NOT IN('IGNORED','MISSING')",
+          )
+          .run(sourceId, generation).changes,
+      );
+    });
+  }
+  ignoreContent(id: string, expectedRevision: number): void {
+    this.transaction(() => {
+      const row = this.db.prepare('SELECT revision FROM content_items WHERE id=?').get(id);
+      if (!row || Number(row.revision) !== expectedRevision)
+        throw new DomainError('REVISION_CONFLICT', 'Content changed');
+      this.db.prepare('UPDATE content_items SET ignored=1,revision=revision+1 WHERE id=?').run(id);
+      for (const entry of this.db
+        .prepare('SELECT * FROM source_entries WHERE content_id=?')
+        .all(id)) {
+        this.db
+          .prepare('INSERT OR IGNORE INTO source_ignores VALUES(?,?,?)')
+          .run(String(entry.source_id), String(entry.relative_path), String(entry.hash));
+        this.db.prepare("UPDATE source_entries SET state='IGNORED' WHERE content_id=?").run(id);
+      }
+    });
   }
 }

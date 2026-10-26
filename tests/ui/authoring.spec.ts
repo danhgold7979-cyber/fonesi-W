@@ -100,13 +100,11 @@ test('actual authoring: create, insert, type-safe inputs, save/reload, subgraphs
   await expect(page.locator('.bottom-panel')).toContainText('COMPLETED');
   await page.locator('[data-route="library"]').click();
   bundle.workflow.name = 'Imported round-trip';
-  await page
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: 'workflow.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(bundle)),
-    });
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'workflow.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(bundle)),
+  });
   await expect(page.locator('.workflow-title')).toContainText('Imported round-trip');
   await expect(page.locator('.react-flow__node')).toHaveCount(3);
   await mkdir('docs/evidence/implementation/ui', { recursive: true });
@@ -214,6 +212,10 @@ test('Process isolation and save acknowledgements preserve edits made while a re
   await selection.selectOption('process_A');
   await expect(page.locator('.table-wrap')).toContainText('ONLY_A');
   await expect(page.locator('.table-wrap')).not.toContainText('ONLY_B');
+  await page.getByRole('button', { name: 'Xem trước lịch (1)', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Chưa gán điện thoại');
+  await expect(page.getByRole('dialog').locator('tbody tr')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Áp dụng chưa khả dụng' })).toBeDisabled();
 });
 
 test('loopback host rejects forged origins/tokens and privileged commands', async ({ page }) => {

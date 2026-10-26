@@ -10,10 +10,13 @@ import type { ContentItem } from '@autoreels/contracts';
 import { StudioDatabase } from '@autoreels/database';
 import { DomainError } from '@autoreels/domain';
 import { validateBundle, traceWorkflow } from '@autoreels/workflow-engine';
+import { createSchedulePreview } from '@autoreels/scheduler';
+import { randomInt } from 'node:crypto';
 
 const id = z.strictObject({ id: idSchema });
 const revision = z.number().int().nonnegative();
 const schemas = {
+  previewSchedule: z.strictObject({ processId: idSchema, contentIds: z.array(idSchema) }),
   bootstrap: z.strictObject({}),
   registerApp: z.strictObject({ app: appDefinitionSchema }),
   createWorkflow: z.strictObject({ appId: idSchema, name: z.string().trim().min(1).max(160) }),
@@ -53,6 +56,33 @@ export async function dispatch(db: StudioDatabase, raw: unknown): Promise<unknow
     input = schemas[request.command].parse(request.input);
   // Parse per case to retain exact static DTO types after runtime validation.
   switch (request.command) {
+    case 'previewSchedule': {
+      const p = schemas.previewSchedule.parse(input),
+        process = db.getProcess(p.processId),
+        all = db.listContent(p.processId);
+      if (
+        new Set(p.contentIds).size !== p.contentIds.length ||
+        p.contentIds.some((id) => !all.some((row) => row.id === id))
+      )
+        throw new DomainError('INVALID_SCOPE', 'Content selection does not match the Process');
+      const selected = p.contentIds.map((id) => all.find((row) => row.id === id)!);
+      const preview = createSchedulePreview({
+        processId: process.id,
+        processRevision: process.revision,
+        profile: process.schedule,
+        items: selected.map((row) => ({ id: row.id, revision: row.revision })),
+        nowUtc: new Date().toISOString(),
+        seed: randomInt(0, 2147483647),
+      });
+      return {
+        ...preview,
+        warnings: [
+          !process.deviceId ? 'Chưa gán điện thoại.' : '',
+          !process.workflowVersionId ? 'Chưa chọn phiên bản workflow.' : '',
+          'Đây là bản xem trước; chưa tạo job hoặc gửi thao tác thiết bị.',
+        ].filter(Boolean),
+      };
+    }
     case 'bootstrap':
       return {
         apps: db.listApps(),

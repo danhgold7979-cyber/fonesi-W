@@ -10,6 +10,7 @@
     "@autoreels/database": "workspace:*",
     "@autoreels/editor": "workspace:*",
     "@autoreels/workflow-engine": "workspace:*",
+    "@autoreels/scheduler": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "@xyflow/react": "12.12.0",

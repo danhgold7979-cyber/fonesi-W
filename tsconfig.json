@@ -6,6 +6,8 @@
     { "path": "packages/database" },
     { "path": "packages/editor" },
     { "path": "packages/workflow-engine" },
+    { "path": "packages/media" },
+    { "path": "packages/scheduler" },
     { "path": "apps/desktop" }
   ]
 }

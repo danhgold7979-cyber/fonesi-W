@@ -41,6 +41,9 @@ function newProcess(appId: string): ProcessDefinition {
   };
 }
 export function Processes(props: Props) {
+  const [preview, setPreview] = useState<Awaited<ReturnType<typeof api.previewSchedule>> | null>(
+    null,
+  );
   const [current, setCurrent] = useState<ProcessDefinition | null>(null),
     [rows, setRows] = useState<ContentItem[]>([]),
     [schema, setSchema] = useState<FieldDefinition[]>([]),
@@ -374,6 +377,29 @@ export function Processes(props: Props) {
           </div>
           <div className="section-heading">
             <h2>Cấu hình lịch riêng</h2>
+            <button
+              disabled={isNew || !rows.length}
+              onClick={() => {
+                const id = current.id;
+                void save()
+                  .then(() =>
+                    api.previewSchedule(
+                      id,
+                      filtered.map((row) => row.id),
+                    ),
+                  )
+                  .then((result) => {
+                    if (context.current?.id === id) setPreview(result);
+                  })
+                  .catch((error) =>
+                    props.notify(
+                      error instanceof Error ? error.message : 'Không tạo được preview.',
+                    ),
+                  );
+              }}
+            >
+              Xem trước lịch ({filtered.length})
+            </button>
             <span className="muted">
               Timezone: {current.schedule.timezone} · chưa áp thành jobs
             </span>
@@ -486,6 +512,54 @@ export function Processes(props: Props) {
             </div>
           </div>
         </>
+      )}
+      {preview && current && (
+        <Dialog title="Xem trước lịch" close={() => setPreview(null)} wide>
+          <p>
+            {preview.slots.length} nội dung · {current.schedule.timezone}
+          </p>
+          {preview.warnings.map((message) => (
+            <p key={message} className="muted">
+              {message}
+            </p>
+          ))}
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nội dung</th>
+                  <th>Giờ địa phương</th>
+                  <th>UTC</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.slots.map((slot) => (
+                  <tr key={slot.contentId}>
+                    <td>
+                      <code>{slot.contentId.slice(0, 20)}</code>
+                    </td>
+                    <td>
+                      {new Date(slot.scheduledUtc).toLocaleString('vi-VN', {
+                        timeZone: current.schedule.timezone,
+                      })}
+                      {slot.crossesLocalDay ? ' · Qua ngày' : ''}
+                    </td>
+                    <td>{slot.scheduledUtc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <small className="muted">
+            Hết hạn: {new Date(preview.expiresAt).toLocaleTimeString('vi-VN')}
+          </small>
+          <div className="dialog-actions">
+            <button onClick={() => setPreview(null)}>Đóng</button>
+            <button disabled title="Tạo job cần bindings hợp lệ và service apply đã nghiệm thu.">
+              Áp dụng chưa khả dụng
+            </button>
+          </div>
+        </Dialog>
       )}
       {rowModal && (
         <Dialog title="Dữ liệu nội dung" close={() => setRowModal(null)} wide>

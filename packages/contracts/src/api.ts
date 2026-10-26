@@ -26,6 +26,20 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
+  previewSchedule(
+    processId: string,
+    contentIds: string[],
+  ): Promise<{
+    token: string;
+    expiresAt: string;
+    slots: {
+      contentId: string;
+      scheduledUtc: string;
+      jitterMinutes: number;
+      crossesLocalDay: boolean;
+    }[];
+    warnings: string[];
+  }>;
   bootstrap(): Promise<BootstrapData>;
   registerApp(input: AppDefinition): Promise<AppDefinition>;
   createWorkflow(appId: string, name: string): Promise<WorkflowDraft>;
@@ -51,6 +65,7 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'previewSchedule'
   | 'bootstrap'
   | 'registerApp'
   | 'createWorkflow'
@@ -73,6 +88,7 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    previewSchedule: (processId, contentIds) => call('previewSchedule', { processId, contentIds }),
     bootstrap: () => call('bootstrap'),
     registerApp: (input) => call('registerApp', { app: input }),
     createWorkflow: (appId, name) => call('createWorkflow', { appId, name }),

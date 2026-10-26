@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron') as typeof import('ele
 const send = <T,>(command: ApiCommand, input: unknown = {}): Promise<T> =>
   ipcRenderer.invoke('studio:request', { command, input }) as Promise<T>;
 const api: StudioApi = {
+  previewSchedule: (processId, contentIds) => send('previewSchedule', { processId, contentIds }),
   bootstrap: () => send('bootstrap'),
   registerApp: (app) => send('registerApp', { app }),
   createWorkflow: (appId, name) => send('createWorkflow', { appId, name }),

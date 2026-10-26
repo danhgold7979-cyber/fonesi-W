@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -22,3 +22,17 @@ CREATE TABLE preferences(key TEXT PRIMARY KEY, revision INTEGER NOT NULL CHECK(r
 CREATE INDEX content_process ON content_items(process_id,ignored,id);
 CREATE INDEX effects_job ON effects(job_id,state);
 `;
+
+export const mediaMigration = `
+CREATE TABLE sources(id TEXT PRIMARY KEY, process_id TEXT NOT NULL REFERENCES processes(id), kind TEXT NOT NULL CHECK(kind IN('FOLDER','FILE')), root_path TEXT NOT NULL, recursive INTEGER NOT NULL CHECK(recursive IN(0,1)), watch INTEGER NOT NULL CHECK(watch IN(0,1)), revision INTEGER NOT NULL CHECK(revision>=0), active INTEGER NOT NULL CHECK(active IN(0,1)), host_id TEXT NOT NULL) STRICT;
+CREATE TABLE source_entries(source_id TEXT NOT NULL REFERENCES sources(id), relative_path TEXT NOT NULL, hash TEXT NOT NULL, observed_hash TEXT NOT NULL, asset_id TEXT NOT NULL REFERENCES assets(id), content_id TEXT NOT NULL REFERENCES content_items(id), state TEXT NOT NULL CHECK(state IN('READY','CHANGED','MISSING','IGNORED')), seen_generation TEXT NOT NULL, PRIMARY KEY(source_id,relative_path)) STRICT;
+CREATE TABLE source_ignores(source_id TEXT NOT NULL REFERENCES sources(id), relative_path TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY(source_id,relative_path,hash)) STRICT;
+CREATE TABLE asset_metadata(asset_id TEXT PRIMARY KEY REFERENCES assets(id), probe TEXT NOT NULL) STRICT;
+CREATE INDEX source_process ON sources(process_id,active);
+CREATE INDEX source_entry_content ON source_entries(content_id);
+`;
+
+export const migrations = [
+  { version: 1, sql: migration },
+  { version: 2, sql: mediaMigration },
+] as const;

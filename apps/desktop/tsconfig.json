@@ -10,7 +10,8 @@
     { "path": "../../packages/domain" },
     { "path": "../../packages/database" },
     { "path": "../../packages/editor" },
-    { "path": "../../packages/workflow-engine" }
+    { "path": "../../packages/workflow-engine" },
+    { "path": "../../packages/scheduler" }
   ],
   "include": ["src/host/**/*.ts", "src/main/**/*.ts", "src/preload.cts"]
 }

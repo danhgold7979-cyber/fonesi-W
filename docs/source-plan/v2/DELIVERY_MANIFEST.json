@@ -156,9 +156,14 @@
       "sha256": "38ad80b2c20a850975e4d839b513cccdaff38853c0eade2564b01c8557c5ce8f"
     },
     {
+      "path": "docs/evidence/implementation/checkpoint-001.json",
+      "bytes": 1231,
+      "sha256": "d1eb3f7cfc4706ca4d2a35fa21037d51b681188812d23a61321dd4209748b8d2"
+    },
+    {
       "path": "docs/evidence/implementation/ui/inspector-1600.png",
-      "bytes": 115489,
-      "sha256": "c26f2362cfe8d61bdd918d7ee15f5c57763417d130ed7a7845abb0b244dbf9ba"
+      "bytes": 115387,
+      "sha256": "7c3fb902f62d47705d8ecd7944f198c321b2b4f2ab8c74a313487665515bf23f"
     },
     {
       "path": "docs/handoff/RESUME_PROMPT.md",
@@ -206,9 +211,19 @@
       "sha256": "702dc40132ad28b6f599f5e44e698083642064f27b009b8628c2334ff80d4abb"
     },
     {
+      "path": "docs/implementation/P06_PLAN.md",
+      "bytes": 2845,
+      "sha256": "3e14bf18fde3deb8d36b3229d4e622e533998f3580ada22eae8ee8c5a93a687d"
+    },
+    {
+      "path": "docs/implementation/P07_PLAN.md",
+      "bytes": 2516,
+      "sha256": "ade8f5f2673b864424f0b081aa779705b8d3ed87ef50ef1ac8fd6849f1959e49"
+    },
+    {
       "path": "docs/implementation/PROGRESS.md",
-      "bytes": 4003,
-      "sha256": "c48ec0c44fcaa6678a6a7c37cf0855e88e42debc2629fc2c4e3d57e56180eb59"
+      "bytes": 4380,
+      "sha256": "989c1672928ce9b6f32b1076099c1e731a569c0d9923b95d4cea56948bbf16ed"
     },
     {
       "path": "docs/previews/AutoReels-Studio-Compact.html",

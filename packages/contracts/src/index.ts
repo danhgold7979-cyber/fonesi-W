@@ -4,4 +4,5 @@ export * from './models.js';
 export * from './typed-values.js';
 export * from './persistence.js';
 export * from './api.js';
+export * from './media.js';
 export * from './generated/node-registry.js';

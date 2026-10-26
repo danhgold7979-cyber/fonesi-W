@@ -4,6 +4,10 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   resolve: {
     alias: {
+      '@autoreels/media': fileURLToPath(new URL('./packages/media/src/index.ts', import.meta.url)),
+      '@autoreels/scheduler': fileURLToPath(
+        new URL('./packages/scheduler/src/index.ts', import.meta.url),
+      ),
       '@autoreels/contracts': fileURLToPath(
         new URL('./packages/contracts/src/index.ts', import.meta.url),
       ),
