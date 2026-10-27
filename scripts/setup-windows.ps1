@@ -16,6 +16,7 @@ try {
     $env:electron_config_cache = Join-Path $repositoryRoot '.cache\electron'
     $env:XDG_CACHE_HOME = Join-Path $repositoryRoot '.cache'
     $env:XDG_CONFIG_HOME = Join-Path $repositoryRoot '.cache\xdg-config'
+    $env:PYTHONUTF8 = '1'
     @($env:PNPM_HOME, $env:npm_config_cache, $env:electron_config_cache, $env:XDG_CONFIG_HOME) | ForEach-Object {
         New-Item -ItemType Directory -Path $_ -Force | Out-Null
     }

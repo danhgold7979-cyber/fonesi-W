@@ -10,6 +10,8 @@ Follow-up: remote run40458019916 đã qua generated/type/lint và chạy tests; 
 
 Linux runtime đã backup schema8 trước nâng, restart host bằng compiled source mới/schema11; functional health/renderer/bootstrap và live health/backup/idempotent retry PASS. Electron45.0.0 / bundled Node24.22.0 thực thi isolated SQLite-worker/status/backup smoke PASS qua RUN_AS_NODE; đây không là GUI/DPI/native-phone acceptance.
 
+Run40458413309 đã qua Windows full application checks và source launcher VerifyOnly; phần còn fail là Python plan validator đọc UTF-8 bằng default Windows code page. Đã bổ sung PYTHONUTF8=1, không sửa frozen source-plan/scripts để làm xanh CI. Remote full-workflow result chờ rerun.
+
 ## Increment021 / P02-S020 + P13-S116/S117 — health và verified local backup
 
 Đã có status allowlist từ SQLite quick_check/schema/counts, host memory/runtime và filesystem capacity/available thật. Panel header tải diagnostic JSON chỉ chứa DTO đã xem, không private names/fields/paths/serials/env. Backup lưu app-owned canonical directory, one-at-a-time + disk reserve, SQLite online copy chờ serialized worker hoàn tất, đóng WAL thành tệp độc lập và kiểm integrity/FK/schema/migration checksums rồi hash ngoài worker. No-replace publish + durable receipt, restart retry/copy bị đổi/mất được kiểm; final file thiếu receipt có thể recover. Không ghi đè prior backups/source files. UI save ACK trước backup, giữ ID khi retry; đóng host đợi/abort công việc đang chạy.

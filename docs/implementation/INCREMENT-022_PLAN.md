@@ -11,3 +11,5 @@ Plan trước code. Phát hiện read-only GitHub run40457121431 ở commit7b0cf
 ## Follow-up sau remote run40458019916
 
 Generated/type/lint đã qua trên Windows;8 tests fail (211 pass/1 pre-existing Unix-only skip): native fsync của read-only file handle EPERM, test temp root8.3 so với canonical long path, paging fixture1203 per-row durable transactions vượt10s. Mở owned backup partial bằng r+ để FlushFileBuffers hợp lệ (không bỏ sync), canonicalize test temp root bằng realpath như native chooser, batch seed paging rows trong một fixture transaction (giữ1203 rows/assertions; không tăng global timeout/skip). Sau sửa run full checks Linux/CI Windows lại. Native Windows10 GUI/Android vẫn riêng.
+
+Run40458413309 sau fixes đã qua Windows full application checks và start-windows -VerifyOnly; lỗi cuối nằm ở Python plan validator dùng default Windows code page đọc UTF-8. Đặt PYTHONUTF8=1 trong CI/Windows setup, giữ scripts/reference/source-plan nguyên byte. Chờ CI xác nhận toàn workflow.
