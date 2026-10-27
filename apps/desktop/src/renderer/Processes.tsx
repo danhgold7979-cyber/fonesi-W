@@ -15,6 +15,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ContentActions } from './ContentActions.js';
 import { ContentFields } from './ContentFields.js';
 import { ProcessArchive } from './ProcessArchive.js';
+import { ProcessClone } from './ProcessClone.js';
 
 interface Props {
   deviceScope?: string | null;
@@ -209,6 +210,16 @@ export function Processes(props: Props) {
           <p>Mỗi tiến trình có app, workflow, dữ liệu và lịch riêng.</p>
         </div>
         <div className="actions">
+          <ProcessClone
+            current={current}
+            isNew={isNew}
+            save={save}
+            refresh={props.refresh}
+            notify={props.notify}
+            created={(process, sourceId) => {
+              if (context.current?.id === sourceId) void select(process);
+            }}
+          />
           <ProcessArchive
             current={current}
             isNew={isNew}

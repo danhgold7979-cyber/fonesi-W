@@ -1,0 +1,12 @@
+# Increment017 — P06/S050 clone Process với preview và media scopes
+
+Plan trước code; baseline687ed80,193 unit/integration và17 browser. S050.2 còn thiếu thật, không tính archived flag hoặc workflow clone là Process clone.
+
+1. Named preview/apply API. Options: tên, copy active content, copy registered sources (chỉ khi copy content), giữ device có chủ đích. Account/target/identity fields và credential-shaped field keys luôn bỏ, liệt kê rõ trong preview;0/false/ordered lists/file refs giữ đúng kiểu. Clone không copy jobs/effects/history/lease/credentials. Giữ schedule profile chỉ là cấu hình, không tạo lịch chạy.
+2. Preview lưu token/hash/expiry/host/options và hash toàn context, không nhân thêm raw credential field values vào preview storage. Apply chỉ nhận token; transaction đọc lại context và reject stale Process/content/assets/source/schema. Result persisted để apply lặp hoặc sau restart trả cùng clone IDs. Scope/resource budget explicit, không truncate rows.
+3. New Process/content/source IDs; immutable asset IDs giữ nguyên. Clone nguồn từ DB grants đã đăng ký, không nhận path/host từ renderer. Copy source entries + ignore ledger về source IDs mới; giữ host binding và source options. Nguồn host khác tiếp tục requiresRebind, không tự cấp quyền. Không copy nguồn thì asset refs hiển thị UNTRACKED và bị chặn khi lên lịch.
+4. Sửa asset permission lookup theo source entry + Process scope thay vì assets.source_ref là origin bất biến. Manual content reuse cùng Process và cloned references phải có cùng nguồn/state; source khác Process không được dùng để vượt gate. Import matching sourceId dùng permission scope mới. Không thay hash/bytes của asset cũ hoặc snapshot job cũ.
+5. UI preview/confirm gọn trong Process actions; save trước preview, generation guard, mutation ACK trước chuyển Process. Apply idempotent, cancel preview không tạo dữ liệu; host refresh coordinator sau clone để watchers đi đúng source/Process mới.
+6. Tests sau code:0/false/list, identity removal, fresh IDs/asset order, source grants/foreign host, ignore/reconcile không duplicate, no jobs copied, stale schema/content/source/hash/expired/tampered token, rollback all-or-nothing/restart/apply twice. Browser actual text-only preview/apply/cancel và independent Process fields/content.
+
+Sau increment tiếp tục P06 adopt/rebind/thumbnail/query/migration UI. Không chuyển P06 ACCEPTED khi chỉ luồng clone qua tests; Windows/phones và các phase còn lại giữ trong tracker15 phases.

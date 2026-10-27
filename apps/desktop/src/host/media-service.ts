@@ -50,7 +50,7 @@ export class HostMediaService {
     await this.coordinator.refresh();
   }
   async request(command: ApiCommand, input: unknown): Promise<unknown> {
-    if (command === 'saveProcess') {
+    if (command === 'saveProcess' || command === 'applyProcessClone') {
       const result = await this.db.request(command, input);
       await this.coordinator.refresh();
       return result;

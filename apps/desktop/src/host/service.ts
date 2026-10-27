@@ -8,6 +8,7 @@ import {
   localDateSchema,
   timezoneSchema,
   packageNameSchema,
+  processCloneOptionsSchema,
 } from '@autoreels/contracts';
 import type { ContentItem } from '@autoreels/contracts';
 import { StudioDatabase } from '@autoreels/database';
@@ -97,6 +98,11 @@ export const debugSchemas = {
   }),
 } as const;
 const schemas = {
+  previewProcessClone: id.extend({
+    expectedRevision: revision,
+    options: processCloneOptionsSchema,
+  }),
+  applyProcessClone: z.strictObject({ token: idSchema }),
   ...debugSchemas,
   ...deviceSchemas,
   previewContentImport: z.strictObject({
@@ -191,6 +197,12 @@ export async function dispatch(
     input = schemas[request.command].parse(request.input);
   // Parse per case to retain exact static DTO types after runtime validation.
   switch (request.command) {
+    case 'previewProcessClone': {
+      const p = schemas.previewProcessClone.parse(input);
+      return db.previewProcessClone(p.id, p.expectedRevision, p.options, hostId);
+    }
+    case 'applyProcessClone':
+      return db.applyProcessClone(schemas.applyProcessClone.parse(input).token, hostId);
     case 'startDebug':
     case 'debugSnapshot':
     case 'controlDebug':

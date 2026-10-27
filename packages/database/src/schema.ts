@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -64,6 +64,10 @@ CREATE TRIGGER jobs_query_update AFTER UPDATE ON jobs BEGIN UPDATE query_epochs 
 CREATE TRIGGER jobs_query_delete AFTER DELETE ON jobs BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='jobs'; END;
 CREATE INDEX jobs_timeline_page ON jobs(julianday(scheduled_utc),-priority,created_at,id);
 `;
+export const processCloneMigration = `
+CREATE TABLE process_clone_previews(token TEXT PRIMARY KEY,process_id TEXT NOT NULL REFERENCES processes(id),host_id TEXT,payload TEXT NOT NULL,payload_hash TEXT NOT NULL,expires_at TEXT NOT NULL,result TEXT) STRICT;
+CREATE INDEX process_clone_expiry ON process_clone_previews(expires_at);
+`;
 export const migrations = [
   { version: 1, sql: migration },
   { version: 2, sql: mediaMigration },
@@ -73,4 +77,5 @@ export const migrations = [
   { version: 6, sql: deviceRegistryMigration },
   { version: 7, sql: endpointPolicyMigration },
   { version: 8, sql: timelinePagingMigration },
+  { version: 9, sql: processCloneMigration },
 ] as const;

@@ -13,6 +13,7 @@ import {
   assertJsonSafe,
   validateTypedValues,
   inputReferences,
+  processCloneOptionsSchema,
 } from '@autoreels/contracts';
 import type {
   AppDefinition,
@@ -20,6 +21,9 @@ import type {
   WorkflowDraft,
   WorkflowVersion,
   ProcessDefinition,
+  ProcessCloneOptions,
+  ProcessClonePreview,
+  ProcessCloneResult,
   ContentItem,
   MediaAsset,
   JobDefinition,
@@ -411,23 +415,273 @@ export class StudioDatabase {
         }
       this.assertInputValues(process, process.fields ?? {}, 'process', false);
       process.revision = existing ? Number(existing.revision) + 1 : 0;
-      this.db
-        .prepare(
-          'INSERT INTO processes VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET app_id=excluded.app_id,workflow_id=excluded.workflow_id,workflow_version_id=excluded.workflow_version_id,device_id=excluded.device_id,account_id=excluded.account_id,target_id=excluded.target_id,revision=excluded.revision,archived=excluded.archived,definition=excluded.definition',
-        )
-        .run(
-          process.id,
-          process.appId,
-          process.workflowId,
-          process.workflowVersionId,
-          process.deviceId,
-          process.accountId,
-          process.targetId,
-          process.revision,
-          Number(process.archived),
-          canonicalJson(process),
-        );
+      this.writeProcess(process);
       return process;
+    });
+  }
+  private writeProcess(process: ProcessDefinition): void {
+    this.db
+      .prepare(
+        'INSERT INTO processes VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET app_id=excluded.app_id,workflow_id=excluded.workflow_id,workflow_version_id=excluded.workflow_version_id,device_id=excluded.device_id,account_id=excluded.account_id,target_id=excluded.target_id,revision=excluded.revision,archived=excluded.archived,definition=excluded.definition',
+      )
+      .run(
+        process.id,
+        process.appId,
+        process.workflowId,
+        process.workflowVersionId,
+        process.deviceId,
+        process.accountId,
+        process.targetId,
+        process.revision,
+        Number(process.archived),
+        canonicalJson(process),
+      );
+  }
+  private processCloneContext(id: string, options: ProcessCloneOptions) {
+    const process = this.getProcess(id),
+      bundle = this.inputSchema(process);
+    const count = Number(
+      this.db
+        .prepare('SELECT COUNT(*) AS n FROM content_items WHERE process_id=? AND ignored=0')
+        .get(id)!.n,
+    );
+    if (options.includeContent && count > 5000)
+      throw new DomainError(
+        'RESOURCE_BUDGET',
+        'Nhân bản tối đa5000 nội dung trong một thao tác; có thể chỉ nhân bản cấu hình.',
+      );
+    const rows = options.includeContent ? this.listContent(id) : [];
+    const sources = options.includeSources
+      ? this.db
+          .prepare('SELECT * FROM sources WHERE process_id=? ORDER BY id')
+          .all(id)
+          .map((s) => ({
+            id: String(s.id),
+            kind: String(s.kind),
+            rootPath: String(s.root_path),
+            recursive: Boolean(s.recursive),
+            watch: Boolean(s.watch),
+            active: Boolean(s.active),
+            revision: Number(s.revision),
+            hostId: String(s.host_id),
+          }))
+      : [];
+    const entries = options.includeSources
+      ? this.db
+          .prepare(
+            'SELECT e.* FROM source_entries e JOIN sources s ON s.id=e.source_id WHERE s.process_id=? ORDER BY e.source_id,e.relative_path',
+          )
+          .all(id)
+          .map((e) => ({
+            sourceId: String(e.source_id),
+            relativePath: String(e.relative_path),
+            hash: String(e.hash),
+            observedHash: String(e.observed_hash),
+            assetId: String(e.asset_id),
+            contentId: String(e.content_id),
+            state: String(e.state),
+          }))
+      : [];
+    const ignores = options.includeSources
+      ? this.db
+          .prepare(
+            'SELECT i.* FROM source_ignores i JOIN sources s ON s.id=i.source_id WHERE s.process_id=? ORDER BY i.source_id,i.relative_path,i.hash',
+          )
+          .all(id)
+          .map((i) => ({
+            sourceId: String(i.source_id),
+            relativePath: String(i.relative_path),
+            hash: String(i.hash),
+          }))
+      : [];
+    return {
+      process,
+      rows,
+      sources,
+      entries,
+      ignores,
+      schema: bundle?.inputs ?? [],
+      assets: options.includeContent ? this.listContentAssets(id) : [],
+      workflowRevision: process.workflowVersionId
+        ? this.getVersion(process.workflowVersionId).hash
+        : process.workflowId
+          ? this.getDraft(process.workflowId).revision
+          : null,
+    };
+  }
+  private processCloneFields(
+    context: ReturnType<StudioDatabase['processCloneContext']>,
+    options: ProcessCloneOptions,
+  ) {
+    const removed = new Map<string, ProcessClonePreview['removedFields'][number]>();
+    const clean = (values: Record<string, JsonValue>, scope: 'row' | 'process') => {
+      const fields = structuredClone(values);
+      for (const key of Object.keys(fields)) {
+        const field = context.schema.find((f) => f.scope === scope && f.key === key);
+        const reason =
+          /password|passwd|secret|token|credential|authorization|cookie|twofactor|2fa|otp/i.test(
+            key,
+          )
+            ? 'Thông tin bảo mật'
+            : field?.type === 'identity' ||
+                (field?.type === 'list' && field.itemType === 'identity')
+              ? 'Liên kết tài khoản/đích'
+              : !options.includeContent && ['file', 'file[]'].includes(field?.type ?? '')
+                ? 'Không sao chép nội dung/media'
+                : null;
+        if (reason) {
+          delete fields[key];
+          removed.set(scope + ':' + key, { scope, key, reason });
+        }
+      }
+      const issues = validateTypedValues(context.schema, fields, scope).filter(
+        (i) => i.code !== 'REQUIRED',
+      );
+      if (issues.length)
+        throw new DomainError('INVALID_INPUTS', issues[0]!.path + ': ' + issues[0]!.message);
+      return fields;
+    };
+    const fields = clean(context.process.fields ?? {}, 'process');
+    const rows = context.rows.map((row) => ({ ...row, fields: clean(row.fields, 'row') }));
+    return { fields, rows, removedFields: [...removed.values()] };
+  }
+  previewProcessClone(
+    id: string,
+    expectedRevision: number,
+    rawOptions: ProcessCloneOptions,
+    hostId: string | null = null,
+    at = now(),
+  ): ProcessClonePreview {
+    assertJsonSafe(rawOptions);
+    const options = processCloneOptionsSchema.parse(rawOptions);
+    return this.transaction(() => {
+      const context = this.processCloneContext(id, options);
+      if (context.process.revision !== expectedRevision)
+        throw new DomainError('REVISION_CONFLICT', 'Tiến trình đã đổi; xem trước lại.');
+      const cleaned = this.processCloneFields(context, options),
+        token = makeId('clone');
+      const expiresAt = new Date(Date.parse(at) + 300000).toISOString();
+      const payload = { options, contextHash: contentHash(context) };
+      this.db
+        .prepare('INSERT INTO process_clone_previews VALUES(?,?,?,?,?,?,NULL)')
+        .run(token, id, hostId, canonicalJson(payload), contentHash(payload), expiresAt);
+      return {
+        token,
+        expiresAt,
+        sourceProcessId: id,
+        name: options.name,
+        contentCount: context.rows.length,
+        sourceCount: context.sources.length,
+        assetCount: new Set(context.rows.flatMap((r) => r.assetIds)).size,
+        keepDevice: options.keepDevice,
+        removedFields: cleaned.removedFields,
+        warnings: [
+          'Không sao chép jobs, lịch sử, tài khoản/đích hoặc thông tin đăng nhập. Khung giờ chỉ là cấu hình.',
+          ...(!options.includeSources && context.rows.some((r) => r.assetIds.length)
+            ? ['Media giữ ID nhưng cần gắn lại nguồn trước khi lên lịch.']
+            : []),
+          ...(context.sources.some((s) => s.hostId !== hostId)
+            ? ['Nguồn thuộc máy khác tiếp tục yêu cầu chọn lại trên host.']
+            : []),
+        ],
+      };
+    });
+  }
+  applyProcessClone(token: string, hostId: string | null = null, at = now()): ProcessCloneResult {
+    idSchema.parse(token);
+    return this.transaction(() => {
+      const record = this.db
+        .prepare('SELECT * FROM process_clone_previews WHERE token=?')
+        .get(token);
+      if (!record) throw new DomainError('NOT_FOUND', 'Không tìm thấy bản xem trước nhân bản.');
+      if (record.host_id !== hostId)
+        throw new DomainError('CLONE_HOST', 'Bản xem trước thuộc host khác.');
+      if (record.result !== null) {
+        const result = parse<{ processId: string; contentIds: string[] }>(record.result);
+        return {
+          process: this.getProcess(result.processId),
+          contentIds: result.contentIds,
+          alreadyApplied: true,
+        };
+      }
+      if (Date.parse(at) >= Date.parse(String(record.expires_at)))
+        throw new DomainError('PREVIEW_EXPIRED', 'Bản xem trước đã hết hạn.');
+      const payload = parse<{ options: ProcessCloneOptions; contextHash: string }>(record.payload);
+      if (contentHash(payload) !== record.payload_hash)
+        throw new DomainError('PREVIEW_TAMPERED', 'Checksum bản xem trước không khớp.');
+      const options = processCloneOptionsSchema.parse(payload.options);
+      const context = this.processCloneContext(String(record.process_id), options);
+      if (contentHash(context) !== payload.contextHash)
+        throw new DomainError(
+          'PREVIEW_STALE',
+          'Tiến trình, nội dung, schema hoặc nguồn đã đổi; xem trước lại.',
+        );
+      const cleaned = this.processCloneFields(context, options);
+      const process: ProcessDefinition = {
+        ...context.process,
+        id: makeId('process'),
+        name: options.name,
+        revision: 0,
+        archived: false,
+        deviceId: options.keepDevice ? context.process.deviceId : null,
+        accountId: null,
+        targetId: null,
+        fields: cleaned.fields,
+      };
+      this.writeProcess({ ...process, fields: {} });
+      const ids = new Map(cleaned.rows.map((r) => [r.id, makeId('content')]));
+      for (const row of cleaned.rows)
+        this.insertContent(
+          { ...row, id: ids.get(row.id)!, processId: process.id, revision: 0 },
+          null,
+        );
+      const sourceIds = new Map(context.sources.map((s) => [s.id, makeId('source')]));
+      for (const source of context.sources)
+        this.db
+          .prepare(
+            'INSERT INTO sources(id,process_id,kind,root_path,recursive,watch,revision,active,host_id) VALUES(?,?,?,?,?,?,?,?,?)',
+          )
+          .run(
+            sourceIds.get(source.id)!,
+            process.id,
+            source.kind,
+            source.rootPath,
+            Number(source.recursive),
+            Number(source.watch),
+            0,
+            Number(source.active),
+            source.hostId,
+          );
+      for (const entry of context.entries) {
+        const contentId =
+          ids.get(entry.contentId) ??
+          ids.get(cleaned.rows.find((r) => r.assetIds.includes(entry.assetId))?.id ?? '');
+        if (contentId)
+          this.db
+            .prepare('INSERT INTO source_entries VALUES(?,?,?,?,?,?,?,?)')
+            .run(
+              sourceIds.get(entry.sourceId)!,
+              entry.relativePath,
+              entry.hash,
+              entry.observedHash,
+              entry.assetId,
+              contentId,
+              entry.state,
+              'clone_' + token,
+            );
+      }
+      for (const ignore of context.ignores)
+        this.db
+          .prepare('INSERT INTO source_ignores VALUES(?,?,?)')
+          .run(sourceIds.get(ignore.sourceId)!, ignore.relativePath, ignore.hash);
+      this.assertInputValues(process, process.fields ?? {}, 'process', false);
+      for (const row of cleaned.rows) this.assertInputValues(process, row.fields, 'row', false);
+      this.writeProcess(process);
+      const contentIds = [...ids.values()];
+      this.db
+        .prepare('UPDATE process_clone_previews SET result=? WHERE token=?')
+        .run(canonicalJson({ processId: process.id, contentIds }), token);
+      return { process, contentIds, alreadyApplied: false };
     });
   }
   getPreference(key: string): { revision: number; value: JsonValue } | null {
@@ -1498,8 +1752,7 @@ export class StudioDatabase {
                   asset.relativePath.replaceAll('\\', '/') ===
                     record.relativePath!.replaceAll('\\', '/') &&
                   (!record.sourceId ||
-                    this.db.prepare('SELECT source_ref FROM assets WHERE id=?').get(asset.id)
-                      ?.source_ref === record.sourceId),
+                    this.assetSource(asset.id, processId)?.id === record.sourceId),
               )
               .map((asset) => asset.contentId),
           );
@@ -1816,11 +2069,7 @@ export class StudioDatabase {
     for (const asset of assets) {
       if (asset.state !== 'READY')
         blockers.add('Media chưa sẵn có: ' + asset.relativePath + ' (' + asset.state + ').');
-      const source = this.db
-        .prepare(
-          'SELECT s.host_id,s.active,s.process_id FROM sources s JOIN assets a ON a.source_ref=s.id WHERE a.id=?',
-        )
-        .get(asset.id);
+      const source = this.assetSource(asset.id, process.id);
       if (
         !source ||
         source.host_id !== hostId ||
@@ -2243,7 +2492,8 @@ export class StudioDatabase {
       .prepare(
         `SELECT a.*,ca.content_id,e.state,m.probe FROM assets a
       JOIN content_assets ca ON ca.asset_id=a.id JOIN content_items c ON c.id=ca.content_id
-      LEFT JOIN source_entries e ON e.asset_id=a.id AND e.content_id=c.id
+      LEFT JOIN source_entries e ON e.rowid=(SELECT e2.rowid FROM source_entries e2 JOIN sources s2 ON s2.id=e2.source_id
+        WHERE e2.asset_id=a.id AND s2.process_id=c.process_id ORDER BY s2.active DESC,e2.source_id,e2.relative_path LIMIT 1)
       LEFT JOIN asset_metadata m ON m.asset_id=a.id
       WHERE c.process_id=? AND c.ignored=0 ORDER BY c.rowid,ca.ordinal`,
       )
@@ -2258,6 +2508,13 @@ export class StudioDatabase {
         state: (r.state ?? 'UNTRACKED') as ContentAssetInfo['state'],
         probe: r.probe ? parse<ScannedAsset['probe']>(r.probe) : null,
       }));
+  }
+  private assetSource(assetId: string, processId: string) {
+    return this.db
+      .prepare(
+        'SELECT s.id,s.host_id,s.active,s.process_id FROM sources s JOIN source_entries e ON e.source_id=s.id WHERE e.asset_id=? AND s.process_id=? ORDER BY s.active DESC,s.id LIMIT 1',
+      )
+      .get(assetId, processId);
   }
   getSourceGrant(id: string, hostId: string): SourceGrant {
     const r = this.db.prepare('SELECT * FROM sources WHERE id=?').get(id);

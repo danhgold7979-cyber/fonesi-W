@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-27", "baselineRevision": "687ed80", "increment": "017", "phase": "P06", "steps": ["S050", "S054"],
+  "status": "TESTED_PROCESS_CLONE_SLICE_NOT_FULL_PHASE_ACCEPTANCE",
+  "checks": [
+    {"command": "pnpm check", "exitStatus": 0, "filesPassed": 21, "testsPassed": 201},
+    {"command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test", "exitStatus": 0, "passed": 18, "failed": 0, "skipped": 0, "flaky": 0}
+  ],
+  "verified": ["read-only clone preview/cancel", "transaction rollback and idempotency across restart", "fresh Process/content/source IDs and stable ordered asset refs", "typed zero/false/list preservation", "identity/credential removal without copying raw secrets into preview storage", "Process-scoped source permission and foreign-host blocking", "unchanged immutable job snapshots"],
+  "remaining": ["P06 native rebind/adopt/thumbnails/query/migration UI", "remaining phase scope in COMPLETION_PLAN.md", "Windows10 x64/20-300 physical Android/installer acceptance"]
+}

@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment017 / P06-S050 — Process clone có preview
+
+Đã thêm preview/apply persisted token/hash/expiry/host, stale context rejection và idempotency qua restart. Bản sao có Process/content/source IDs mới, giữ immutable asset refs và ordered typed values, bỏ account/target/identity/credential-shaped fields, không copy jobs/effects/history. Clone registered sources qua DB grants, giữ host binding; không cấp filesystem permission từ raw UI paths. Asset permission/state/import matching tra theo Process/source-entry, nên clone vẫn dùng nguồn riêng khi Process gốc archived; metadata/no-source/foreign-host không vượt schedule gate.
+
+Đã chạy `pnpm check`: **201 tests /21 files**, generated/type/lint/build PASS. Full browser: **18 passed /0 failed/skipped/flaky**. Các cases gồm rollback/restart/apply twice, stale fields/schema/observed bytes, ordered multi-asset refs/ignore ledger/reconcile,0/false/list, no credential values in preview storage, preview cancel và independent UI dataset. P06 tiếp theo: native rebind/adopt/thumbnail/content query/field migration. Chưa có Windows/Android physical acceptance.
+
 ## Mốc mới nhất — increment016 / P06-S050 archive lifecycle
 
 Đã bổ sung UI lưu trữ sau đúng save ACK/revision, kho archived records theo device scope và restore có ACK. Giữ nguyên typed content0/false, nguồn/tệp, job snapshots và history; archived Process không được claim mới, không tự cancel/replay pending/running effects. Host refresh media coordinator sau Process mutation để ngừng/tái lập watchers và scans theo grant hiện có.

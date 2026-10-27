@@ -1,5 +1,6 @@
 import type { InspectorSnapshot } from './inspector.js';
 import type { DebugAction, DebugSnapshot } from './debug.js';
+import type { ProcessCloneOptions, ProcessClonePreview, ProcessCloneResult } from './processes.js';
 import type { DeviceSnapshot, DeviceCapture, ManualDeviceAction } from './devices.js';
 import type {
   ContentFormat,
@@ -43,6 +44,12 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
+  previewProcessClone(
+    id: string,
+    expectedRevision: number,
+    options: ProcessCloneOptions,
+  ): Promise<ProcessClonePreview>;
+  applyProcessClone(token: string): Promise<ProcessCloneResult>;
   startDebug(bundle: WorkflowBundle, row: Record<string, JsonValue>): Promise<DebugSnapshot>;
   debugSnapshot(id: string): Promise<DebugSnapshot>;
   controlDebug(id: string, action: DebugAction): Promise<DebugSnapshot>;
@@ -139,6 +146,8 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'previewProcessClone'
+  | 'applyProcessClone'
   | 'resolveWorkflow'
   | 'startDebug'
   | 'debugSnapshot'
@@ -196,6 +205,9 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    previewProcessClone: (id, expectedRevision, options) =>
+      call('previewProcessClone', { id, expectedRevision, options }),
+    applyProcessClone: (token) => call('applyProcessClone', { token }),
     startDebug: (bundle, row) => call('startDebug', { bundle, row }),
     debugSnapshot: (id) => call('debugSnapshot', { id }),
     controlDebug: (id, action) => call('controlDebug', { id, action }),
