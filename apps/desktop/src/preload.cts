@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron') as typeof import('ele
 const send = <T,>(command: ApiCommand, input: unknown = {}): Promise<T> =>
   ipcRenderer.invoke('studio:request', { command, input }) as Promise<T>;
 const api: StudioApi = {
+  rebindSource: (id, expectedRevision) => send('rebindSource', { id, expectedRevision }),
   previewProcessClone: (id, expectedRevision, options) =>
     send('previewProcessClone', { id, expectedRevision, options }),
   applyProcessClone: (token) => send('applyProcessClone', { token }),

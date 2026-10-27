@@ -1,6 +1,6 @@
 import { DatabaseSync, backup } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, basename, isAbsolute } from 'node:path';
 import { mkdirSync, existsSync, renameSync, rmSync } from 'node:fs';
 import {
   appDefinitionSchema,
@@ -2490,7 +2490,7 @@ export class StudioDatabase {
     this.getProcess(processId);
     return this.db
       .prepare(
-        `SELECT a.*,ca.content_id,e.state,m.probe FROM assets a
+        `SELECT a.*,ca.content_id,e.state,e.relative_path AS bound_path,m.probe FROM assets a
       JOIN content_assets ca ON ca.asset_id=a.id JOIN content_items c ON c.id=ca.content_id
       LEFT JOIN source_entries e ON e.rowid=(SELECT e2.rowid FROM source_entries e2 JOIN sources s2 ON s2.id=e2.source_id
         WHERE e2.asset_id=a.id AND s2.process_id=c.process_id ORDER BY s2.active DESC,e2.source_id,e2.relative_path LIMIT 1)
@@ -2501,7 +2501,7 @@ export class StudioDatabase {
       .map((r) => ({
         id: String(r.id),
         contentId: String(r.content_id),
-        relativePath: String(r.relative_path),
+        relativePath: String(r.bound_path ?? r.relative_path),
         hash: String(r.hash),
         kind: r.kind as 'image' | 'video',
         bytes: Number(r.bytes),
@@ -2517,10 +2517,15 @@ export class StudioDatabase {
       .get(assetId, processId);
   }
   getSourceGrant(id: string, hostId: string): SourceGrant {
+    const grant = this.sourceBinding(id);
+    if (grant.hostId !== hostId)
+      throw new DomainError('SOURCE_REBIND_REQUIRED', 'Source belongs to another host');
+    return grant;
+  }
+  /** Private host metadata, exposed only by the main-to-worker internal transport. */
+  sourceBinding(id: string): SourceGrant {
     const r = this.db.prepare('SELECT * FROM sources WHERE id=?').get(id);
     if (!r) throw new DomainError('NOT_FOUND', 'Source not found');
-    if (r.host_id !== hostId)
-      throw new DomainError('SOURCE_REBIND_REQUIRED', 'Source belongs to another host');
     return {
       id,
       processId: String(r.process_id),
@@ -2530,8 +2535,49 @@ export class StudioDatabase {
       watch: Boolean(r.watch),
       revision: Number(r.revision),
       active: Boolean(r.active) && !this.getProcess(String(r.process_id)).archived,
-      hostId,
+      hostId: String(r.host_id),
     };
+  }
+  rebindSource(
+    id: string,
+    expectedRevision: number,
+    hostId: string,
+    rootPath: string,
+  ): SourceDefinition {
+    if (!isAbsolute(rootPath))
+      throw new DomainError('INVALID_SOURCE', 'Chọn nguồn qua hộp thoại native.');
+    return this.transaction(() => {
+      const source = this.sourceBinding(id);
+      if (source.revision !== expectedRevision || this.getProcess(source.processId).archived)
+        throw new DomainError(
+          'SOURCE_CHANGED',
+          'Nguồn hoặc tiến trình đã đổi; tải lại trước khi chọn lại.',
+        );
+      if (source.kind === 'FILE') {
+        const entries = this.db
+          .prepare('SELECT relative_path FROM source_entries WHERE source_id=?')
+          .all(id);
+        if (entries.length > 1)
+          throw new DomainError(
+            'SOURCE_AMBIGUOUS',
+            'Nguồn tệp có nhiều binding lịch sử; cần đối chiếu trước khi chọn lại.',
+          );
+        const name = basename(rootPath);
+        this.db
+          .prepare('UPDATE source_entries SET relative_path=? WHERE source_id=?')
+          .run(name, id);
+        this.db
+          .prepare('UPDATE source_ignores SET relative_path=? WHERE source_id=?')
+          .run(name, id);
+      }
+      this.db
+        .prepare("UPDATE source_entries SET state='MISSING' WHERE source_id=? AND state<>'IGNORED'")
+        .run(id);
+      this.db
+        .prepare('UPDATE sources SET root_path=?,host_id=?,active=1,revision=revision+1 WHERE id=?')
+        .run(rootPath, hostId, id);
+      return this.listSources(source.processId, hostId).find((s) => s.id === id)!;
+    });
   }
   listSources(processId: string, hostId: string): SourceDefinition[] {
     return this.db

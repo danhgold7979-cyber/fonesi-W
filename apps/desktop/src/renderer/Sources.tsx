@@ -141,101 +141,115 @@ export function Sources(props: Props) {
           Chưa có nguồn. Quét chỉ thêm nội dung; bỏ qua dòng sẽ giữ nguyên tệp gốc.
         </p>
       )}
-      {sources
-        .filter((s) => s.source.active)
-        .map(({ source, scan, watchWarning }) => {
-          const scanning = scan?.status === 'QUEUED' || scan?.status === 'SCANNING';
-          return (
-            <div className="source-row" key={source.id}>
-              <div className="source-summary">
-                <span className="source-path" title={source.displayPath}>
-                  {source.kind === 'FOLDER' ? '▤' : '▧'} {source.displayPath}
-                </span>
-                <small className="muted">
-                  {source.requiresRebind
+      {sources.map(({ source, scan, watchWarning }) => {
+        const scanning = scan?.status === 'QUEUED' || scan?.status === 'SCANNING';
+        return (
+          <div className="source-row" key={source.id}>
+            <div className="source-summary">
+              <span className="source-path" title={source.displayPath}>
+                {source.kind === 'FOLDER' ? '▤' : '▧'} {source.displayPath}
+              </span>
+              <small className="muted">
+                {!source.active
+                  ? 'Đã ngừng sử dụng — chọn lại để khôi phục.'
+                  : source.requiresRebind
                     ? 'Nguồn thuộc máy khác — chọn lại bằng các nút phía trên.'
                     : scan
                       ? `${scanLabels[scan.status]} · ${scan.scanned} tệp · mới ${scan.added} · đổi ${scan.changed} · mất ${scan.missing} · bỏ qua ${scan.ignored}`
                       : 'Chưa quét trên phiên này'}
-                </small>
-                {watchWarning && <small role="status">{watchWarning}</small>}
-                {!!scan?.errors.length && (
-                  <details>
-                    <summary>{scan.failed} lỗi đọc nguồn</summary>
-                    {scan.errors.map((message, index) => (
-                      <p key={index}>{message}</p>
-                    ))}
-                  </details>
-                )}
-              </div>
-              <div className="actions source-options">
-                {source.kind === 'FOLDER' && (
-                  <label>
-                    <input
-                      type="checkbox"
-                      aria-label={'Thư mục con ' + source.id}
-                      checked={source.recursive}
-                      disabled={busy || source.requiresRebind}
-                      onChange={(e) => {
-                        void act(() =>
-                          api.updateSource(source.id, source.revision, {
-                            recursive: e.target.checked,
-                            watch: source.watch,
-                            active: true,
-                          }),
-                        );
-                      }}
-                    />{' '}
-                    Thư mục con
-                  </label>
-                )}
+              </small>
+              {watchWarning && <small role="status">{watchWarning}</small>}
+              {!!scan?.errors.length && (
+                <details>
+                  <summary>{scan.failed} lỗi đọc nguồn</summary>
+                  {scan.errors.map((message, index) => (
+                    <p key={index}>{message}</p>
+                  ))}
+                </details>
+              )}
+            </div>
+            <div className="actions source-options">
+              <button
+                disabled={busy || !native}
+                onClick={() => {
+                  void act(async () => {
+                    const result = await api.rebindSource(source.id, source.revision);
+                    if (!result.cancelled)
+                      props.notify(
+                        'Đã gắn lại nguồn; đang đối chiếu media, giữ nguyên ID nội dung.',
+                      );
+                  });
+                }}
+              >
+                Chọn lại nguồn
+              </button>
+              {source.kind === 'FOLDER' && (
                 <label>
                   <input
                     type="checkbox"
-                    aria-label={'Tự đối chiếu ' + source.id}
-                    checked={source.watch}
-                    disabled={busy || source.requiresRebind}
+                    aria-label={'Thư mục con ' + source.id}
+                    checked={source.recursive}
+                    disabled={busy || source.requiresRebind || !source.active}
                     onChange={(e) => {
                       void act(() =>
                         api.updateSource(source.id, source.revision, {
-                          recursive: source.recursive,
-                          watch: e.target.checked,
+                          recursive: e.target.checked,
+                          watch: source.watch,
                           active: true,
                         }),
                       );
                     }}
                   />{' '}
-                  Tự đối chiếu
+                  Thư mục con
                 </label>
-                <button
-                  disabled={busy || source.requiresRebind}
-                  onClick={() => {
-                    void act(() =>
-                      scanning ? api.cancelSourceScan(source.id) : api.scanSource(source.id),
-                    );
-                  }}
-                >
-                  {scanning ? 'Hủy quét' : 'Quét lại'}
-                </button>
-                <button
-                  disabled={busy}
-                  title="Ngừng theo dõi, giữ nguyên nội dung và tệp gốc"
-                  onClick={() => {
+              )}
+              <label>
+                <input
+                  type="checkbox"
+                  aria-label={'Tự đối chiếu ' + source.id}
+                  checked={source.watch}
+                  disabled={busy || source.requiresRebind || !source.active}
+                  onChange={(e) => {
                     void act(() =>
                       api.updateSource(source.id, source.revision, {
                         recursive: source.recursive,
-                        watch: false,
-                        active: false,
+                        watch: e.target.checked,
+                        active: true,
                       }),
                     );
                   }}
-                >
-                  Ngừng dùng
-                </button>
-              </div>
+                />{' '}
+                Tự đối chiếu
+              </label>
+              <button
+                disabled={busy || source.requiresRebind || !source.active}
+                onClick={() => {
+                  void act(() =>
+                    scanning ? api.cancelSourceScan(source.id) : api.scanSource(source.id),
+                  );
+                }}
+              >
+                {scanning ? 'Hủy quét' : 'Quét lại'}
+              </button>
+              <button
+                disabled={busy || !source.active}
+                title="Ngừng theo dõi, giữ nguyên nội dung và tệp gốc"
+                onClick={() => {
+                  void act(() =>
+                    api.updateSource(source.id, source.revision, {
+                      recursive: source.recursive,
+                      watch: false,
+                      active: false,
+                    }),
+                  );
+                }}
+              >
+                Ngừng dùng
+              </button>
             </div>
-          );
-        })}
+          </div>
+        );
+      })}
     </section>
   );
 }

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtemp, writeFile, mkdir, realpath, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, mkdir, realpath, rm, readFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ProcessDefinition, SourceDefinition, SourceGrant } from '@autoreels/contracts';
@@ -71,7 +71,10 @@ async function source(kind: 'FOLDER' | 'FILE' = 'FOLDER', path = dir): Promise<S
     hostId,
   });
 }
-function host(picker?: (kind: 'FOLDER' | 'FILE') => Promise<string[] | null>): HostMediaService {
+function host(
+  picker?: (kind: 'FOLDER' | 'FILE') => Promise<string[] | null>,
+  identifier = hostId,
+): HostMediaService {
   const service = new HostMediaService(
     {
       request: async (command, input = {}) =>
@@ -79,13 +82,118 @@ function host(picker?: (kind: 'FOLDER' | 'FILE') => Promise<string[] | null>): H
       internal: async <T>(request: Parameters<typeof dispatchInternal>[1]) =>
         dispatchInternal(db, request) as T,
     },
-    hostId,
+    identifier,
     picker,
   );
   services.push(service);
   return service;
 }
 describe('native grants and host boundary', () => {
+  it('rebinds a relocated folder through the native picker without changing content/asset IDs or accepting stale scans', async () => {
+    const root = join(dir, 'original'),
+      moved = join(dir, 'moved');
+    await mkdir(root);
+    await writeFile(join(root, 'clip.mp4'), 'relocated fixture bytes');
+    const binding = await source('FOLDER', root),
+      service = host(async (kind) => {
+        expect(kind).toBe('FOLDER');
+        return [moved];
+      });
+    await service.coordinator.start(binding.id);
+    await service.coordinator.idle(binding.id);
+    const before = db.listContent(processInput.id),
+      assets = db.listContentAssets(processInput.id);
+    const oldGrant = db.getSourceGrant(binding.id, hostId);
+    await rename(root, moved);
+    const result = (await service.request('rebindSource', {
+      id: binding.id,
+      expectedRevision: binding.revision,
+    })) as { cancelled: boolean; source: SourceDefinition };
+    await service.coordinator.idle(binding.id);
+    expect(result).toMatchObject({
+      cancelled: false,
+      source: { id: binding.id, revision: 1, requiresRebind: false },
+    });
+    expect(db.listContent(processInput.id)).toEqual(before);
+    expect(db.listContentAssets(processInput.id)).toEqual(assets);
+    expect(db.getSourceGrant(binding.id, hostId).rootPath).toBe(moved);
+    await expect(
+      service.request('rebindSource', { id: binding.id, expectedRevision: 1, rootPath: root }),
+    ).rejects.toThrow();
+    expect(() =>
+      db.applyScannedAsset(binding.id, hostId, oldGrant.revision, 'stale', {
+        relativePath: 'clip.mp4',
+        hash: assets[0]!.hash,
+        bytes: assets[0]!.bytes,
+        mtimeMs: 1,
+        kind: 'video',
+        probe: { status: 'UNAVAILABLE', reason: 'fixture' },
+      }),
+    ).toThrow('changed');
+    expect(await readFile(join(moved, 'clip.mp4'), 'utf8')).toBe('relocated fixture bytes');
+  });
+  it('rebinds a foreign-host renamed file only after picker approval and leaves different bytes marked CHANGED', async () => {
+    const original = join(dir, 'old.mp4'),
+      relocated = join(dir, 'renamed.mp4');
+    await writeFile(original, 'original fingerprint');
+    await writeFile(relocated, 'original fingerprint');
+    const binding = await source('FILE', original),
+      oldService = host();
+    await oldService.coordinator.start(binding.id);
+    await oldService.coordinator.idle(binding.id);
+    const before = db.listContent(processInput.id),
+      originalAsset = db.listContentAssets(processInput.id)[0]!;
+    const service = host(async () => [relocated], 'host_rebound');
+    expect(db.listSources(processInput.id, 'host_rebound')[0]!.requiresRebind).toBe(true);
+    await service.request('rebindSource', { id: binding.id, expectedRevision: 0 });
+    await service.coordinator.idle(binding.id);
+    expect(db.listContent(processInput.id)).toEqual(before);
+    expect(db.listContentAssets(processInput.id)[0]).toMatchObject({
+      id: originalAsset.id,
+      hash: originalAsset.hash,
+      relativePath: 'renamed.mp4',
+      state: 'READY',
+    });
+    expect(() => db.getSourceGrant(binding.id, hostId)).toThrow('another host');
+    expect(db.getSourceGrant(binding.id, 'host_rebound').rootPath).toBe(relocated);
+    const different = join(dir, 'different.mp4');
+    await writeFile(different, 'new bytes need explicit adoption');
+    const movedAgain = host(async () => [different], 'host_rebound');
+    await movedAgain.request('rebindSource', { id: binding.id, expectedRevision: 1 });
+    await movedAgain.coordinator.idle(binding.id);
+    expect(db.listContentAssets(processInput.id)[0]).toMatchObject({
+      id: originalAsset.id,
+      hash: originalAsset.hash,
+      relativePath: 'different.mp4',
+      state: 'CHANGED',
+    });
+    expect(await readFile(original, 'utf8')).toBe('original fingerprint');
+  });
+  it('cancels a source chooser without mutation and rejects a binding changed while the picker was open', async () => {
+    const binding = await source(),
+      before = db.getSourceGrant(binding.id, hostId);
+    const cancelled = host(async () => null);
+    expect(
+      await cancelled.request('rebindSource', { id: binding.id, expectedRevision: 0 }),
+    ).toEqual({ cancelled: true, source: null });
+    expect(db.getSourceGrant(binding.id, hostId)).toEqual(before);
+    const stale = host(async () => {
+      db.updateSourceOptions(binding.id, hostId, 0, {
+        recursive: true,
+        watch: false,
+        active: true,
+      });
+      return [dir];
+    });
+    await expect(
+      stale.request('rebindSource', { id: binding.id, expectedRevision: 0 }),
+    ).rejects.toThrow('đã đổi');
+    expect(db.getSourceGrant(binding.id, hostId).rootPath).toBe(before.rootPath);
+    const withoutPicker = host();
+    await expect(
+      withoutPicker.request('rebindSource', { id: binding.id, expectedRevision: 1 }),
+    ).rejects.toThrow('desktop');
+  });
   it('stops source observation on archive and restores the original host grants without deleting source files', async () => {
     const path = join(dir, 'archive-media.mp4');
     await writeFile(path, 'fixture-media-bytes');

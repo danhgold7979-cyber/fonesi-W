@@ -44,6 +44,10 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
+  rebindSource(
+    id: string,
+    expectedRevision: number,
+  ): Promise<{ cancelled: boolean; source: SourceDefinition | null }>;
   previewProcessClone(
     id: string,
     expectedRevision: number,
@@ -146,6 +150,7 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'rebindSource'
   | 'previewProcessClone'
   | 'applyProcessClone'
   | 'resolveWorkflow'
@@ -205,6 +210,7 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    rebindSource: (id, expectedRevision) => call('rebindSource', { id, expectedRevision }),
     previewProcessClone: (id, expectedRevision, options) =>
       call('previewProcessClone', { id, expectedRevision, options }),
     applyProcessClone: (token) => call('applyProcessClone', { token }),

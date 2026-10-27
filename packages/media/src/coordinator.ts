@@ -68,7 +68,13 @@ export class MediaCoordinator {
     if (!grant.active || grant.hostId !== this.hostId)
       throw new DomainError('SOURCE_CHANGED', 'Nguồn không còn hoạt động trên host.');
     const previous = this.tasks.get(id);
-    if (previous) return structuredClone(previous.progress);
+    if (previous) {
+      if (previous.controller.signal.aborted) {
+        await previous.done;
+        return this.start(id);
+      }
+      return structuredClone(previous.progress);
+    }
     let resolve!: () => void;
     const done = new Promise<void>((r) => {
       resolve = r;

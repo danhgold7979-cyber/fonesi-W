@@ -74,6 +74,43 @@ export class HostMediaService {
           watchWarning: this.coordinator.watchWarning(source.id),
         }));
       }
+      case 'rebindSource': {
+        const p = mediaSchemas.rebindSource.parse(input);
+        if (!this.picker)
+          throw new DomainError(
+            'NATIVE_CHOOSER_UNAVAILABLE',
+            'Mở bản desktop để chọn lại nguồn trên máy.',
+          );
+        if (this.choosing) throw new DomainError('CHOOSER_BUSY', 'Đang có hộp thoại chọn nguồn.');
+        this.choosing = true;
+        try {
+          const binding = await this.db.internal<SourceGrant>({
+            command: 'source.binding',
+            id: p.id,
+          });
+          if (binding.revision !== p.expectedRevision)
+            throw new DomainError('SOURCE_CHANGED', 'Nguồn đã đổi; tải lại trước khi chọn lại.');
+          const paths = await this.picker(binding.kind);
+          if (!paths?.length) return { cancelled: true, source: null };
+          if (paths.length !== 1)
+            throw new DomainError('SOURCE_LIMIT', 'Chọn đúng một thư mục hoặc tệp thay thế.');
+          const rootPath = await approveNativeSource(paths[0]!, binding.kind);
+          this.coordinator.cancel(p.id);
+          await this.coordinator.idle(p.id);
+          const source = await this.db.internal<SourceDefinition>({
+            command: 'source.rebind',
+            id: p.id,
+            hostId: this.hostId,
+            expectedRevision: p.expectedRevision,
+            rootPath,
+          });
+          await this.coordinator.refresh();
+          await this.coordinator.start(p.id);
+          return { cancelled: false, source };
+        } finally {
+          this.choosing = false;
+        }
+      }
       case 'chooseSource': {
         const p = mediaSchemas.chooseSource.parse(input);
         if (!this.picker)

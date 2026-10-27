@@ -64,6 +64,14 @@ export type InternalRequest =
       grants: Omit<SourceGrant, 'id' | 'revision' | 'active'>[];
     }
   | { command: 'source.grant'; id: string; hostId: string }
+  | { command: 'source.binding'; id: string }
+  | {
+      command: 'source.rebind';
+      id: string;
+      hostId: string;
+      expectedRevision: number;
+      rootPath: string;
+    }
   | { command: 'source.active'; hostId: string }
   | { command: 'source.list'; processId: string; hostId: string }
   | { command: 'source.apply'; grant: SourceGrant; generation: string; asset: ScannedAsset }
@@ -131,6 +139,15 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.registerNativeSources(request.processId, request.expectedRevision, request.grants);
     case 'source.grant':
       return db.getSourceGrant(request.id, request.hostId);
+    case 'source.binding':
+      return db.sourceBinding(request.id);
+    case 'source.rebind':
+      return db.rebindSource(
+        request.id,
+        request.expectedRevision,
+        request.hostId,
+        request.rootPath,
+      );
     case 'source.active':
       return db.activeSourceGrants(request.hostId);
     case 'source.list':

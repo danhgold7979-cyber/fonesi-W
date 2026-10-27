@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment018 / P06-S052 — native source rebind
+
+Đã thêm chọn lại nguồn qua host dialog có canonical approval, không nhận paths/host/kind từ renderer. Giữ source/content/asset IDs khi chuyển thư mục/đổi tên tệp, remap bound basename/ignore ledger atomic, tăng revision/fence scan cũ và bắt buộc đối chiếu tệp thật trước READY. Khác bytes vẫn CHANGED; source inactive có thể chọn lại explicit, foreign-host chỉ đổi binding sau native approval. Không sửa immutable job snapshots. Scan restart sau cancel chờ task bị abort kết thúc trước khi tạo scan mới.
+
+`pnpm check` đạt **204 tests /21 files**, type/lint/generated/build PASS; full browser **18 passed /0 failed/skipped/flaky**. Native picker test adapter + actual temp filesystem xác minh folder relocation, foreign-host file rename, changed bytes, cancel/stale revision/raw-path rejection và callback fencing. Đây chưa là native Windows dialog acceptance. P06 tiếp theo: explicit media adoption, thumbnail/cache, query và field migration UI.
+
 ## Increment017 / P06-S050 — Process clone có preview
 
 Đã thêm preview/apply persisted token/hash/expiry/host, stale context rejection và idempotency qua restart. Bản sao có Process/content/source IDs mới, giữ immutable asset refs và ordered typed values, bỏ account/target/identity/credential-shaped fields, không copy jobs/effects/history. Clone registered sources qua DB grants, giữ host binding; không cấp filesystem permission từ raw UI paths. Asset permission/state/import matching tra theo Process/source-entry, nên clone vẫn dùng nguồn riêng khi Process gốc archived; metadata/no-source/foreign-host không vượt schedule gate.
