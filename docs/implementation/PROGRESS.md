@@ -1,5 +1,14 @@
 # Tiến độ implementation
 
+## Cập nhật 27/10/2026 — increment 012–013
+
+- **P04/S030–S037:** đã bổ sung group collapse/expand với crossing-port proxy giữ semantics, kéo group/members một transaction, dịch waypoint nội bộ, set/drag/cancel/reset reroute, align/distribute/layout theo kích thước thật và chuyển single-entry/single-exit selection thành local subflow atomic. Vùng có loop/local/effect cần mapping riêng bị từ chối rõ. Undo khôi phục graph navigation hợp lệ. Canvas có kích thước node xác định để nhấp đúp không mất target trong lúc đo lại node; properties là drawer không đổi viewport khi chọn.
+- **P05/S043–S047/S049 và S038:** đã có typed call input/output mappings, child local/output isolation, safe AST syntax validation và debugger TRACE thật. Initial pause, Continue, Pause, Step Into/Over/Out, breakpoints, Stop, call stack/local/event snapshots; host sessions tách DB worker, bounded concurrency/events/TTL/shutdown, named API/preload và UI. Log/snapshot che sensitive bindings. Đây chưa phải DEVICE_TEST/REAL_JOB executor.
+- Sau code đã chạy `pnpm check` thành công: **181 tests / 19 files**, generated-contract checks, typecheck, lint, host/renderer build. Browser suite: **14 passed / 0 failed / 0 skipped / 0 flaky**, gồm 3 scenarios mới P04/P05. Bug nhấp đúp sau reload đã được tái hiện bằng pointer-event trace và sửa bằng explicit view dimensions; không bỏ assertion.
+- **Còn mở:** P04 external clipboard dependency closure/layout preferences/command search và một số interaction gates; P05 pinned external resolver/IR/effect dominance và DEVICE_TEST gates. P06–P14 vẫn còn implementation theo bảng checkpoint dưới đây; Windows/Android/installer chưa nghiệm thu. Tổng scope vẫn 15 phases, không suy 181 tests thành 181 acceptance units hay 100% completion.
+
+Kế hoạch hiện hành: [COMPLETION_PLAN.md](COMPLETION_PLAN.md), [increment012](INCREMENT-012_PLAN.md), [increment013](INCREMENT-013_PLAN.md). Bảng dưới là checkpoint trước các bổ sung này, giữ lại để truy vết.
+
 Checkpoint ngày 26/10/2026. Baseline sản phẩm V2.1, 15 phase/125 bước; status PLANNED trong source-plan là định nghĩa ban đầu. File này ghi implementation thực và phần còn thiếu; không suy từ số dòng code ra phần trăm hoàn thành. 166 tests hiện chạy là test cases thực, độc lập với 125 đơn vị nghiệm thu trong master plan.
 
 | Phase | Đã có code/bằng chứng local | Chưa nghiệm thu toàn phase |

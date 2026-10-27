@@ -12,3 +12,4 @@ export * from './content-data.js';
 export * from './devices.js';
 
 export * from './inspector.js';
+export * from './debug.js';

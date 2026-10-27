@@ -1,6 +1,11 @@
 import { performance } from 'node:perf_hooks';
 import { setImmediate as yieldImmediate } from 'node:timers/promises';
-import { NODE_DEFINITIONS, validateWorkflowShape, isSafeKey } from '@autoreels/contracts';
+import {
+  NODE_DEFINITIONS,
+  validateWorkflowShape,
+  isSafeKey,
+  validateTypedValues,
+} from '@autoreels/contracts';
 import type {
   WorkflowBundle,
   WorkflowNode,
@@ -8,9 +13,10 @@ import type {
   JsonValue,
   Port,
 } from '@autoreels/contracts';
-import { evaluate, renderTemplate } from './dsl.js';
+import { evaluate, renderTemplate, validateExpression } from './dsl.js';
 import type { Bindings } from './dsl.js';
 export * from './dsl.js';
+export * from './debug.js';
 
 export function validateBundle(input: unknown): ValidationIssue[] {
   const shape = validateWorkflowShape(input);
@@ -147,6 +153,77 @@ export function validateBundle(input: unknown): ValidationIssue[] {
             graph.id,
             node.id,
           );
+        const child = bundle.graphs.find((g) => g.id === ref);
+        if (child) {
+          const input = mappingObject(node.config.inputMapping),
+            output = mappingObject(node.config.outputMapping);
+          for (const field of child.inputs)
+            if (field.required && !Object.hasOwn(input, field.key))
+              issue(
+                'MISSING_INPUT_MAPPING',
+                'Required subflow input: ' + field.key,
+                graph.id,
+                node.id,
+              );
+          for (const [key, expression] of Object.entries(input)) {
+            const field = child.inputs.find((f) => f.key === key);
+            if (!field || !isSafeKey(key)) {
+              issue('UNKNOWN_INPUT_MAPPING', 'Unknown subflow input: ' + key, graph.id, node.id);
+              continue;
+            }
+            try {
+              validateExpression(expression);
+              if (
+                expression &&
+                typeof expression === 'object' &&
+                !Array.isArray(expression) &&
+                expression.kind === 'literal'
+              ) {
+                if (validateTypedValues([field], { [key]: expression.value! }).length)
+                  issue(
+                    'INPUT_MAPPING_TYPE',
+                    'Subflow input type mismatch: ' + key,
+                    graph.id,
+                    node.id,
+                  );
+              }
+            } catch {
+              issue(
+                'INVALID_MAPPING_EXPRESSION',
+                'Invalid input expression: ' + key,
+                graph.id,
+                node.id,
+              );
+            }
+          }
+          const targets = new Set<string>();
+          for (const [key, target] of Object.entries(output)) {
+            const parts = typeof target === 'string' ? target.split('.') : [];
+            if (
+              !child.outputs.some((f) => f.key === key) ||
+              parts.length !== 2 ||
+              parts[0] !== 'local' ||
+              !isSafeKey(parts[1]!) ||
+              targets.has(String(target))
+            )
+              issue(
+                'INVALID_OUTPUT_MAPPING',
+                'Output must map a declared field to a unique local key',
+                graph.id,
+                node.id,
+              );
+            targets.add(String(target));
+          }
+        }
+      }
+      try {
+        if (node.type === 'condition' || node.type === 'setvar')
+          validateExpression(node.config.expression);
+        if (node.type === 'output')
+          for (const expression of Object.values(mappingObject(node.config.valueMapping)))
+            validateExpression(expression);
+      } catch {
+        issue('INVALID_EXPRESSION', 'Invalid expression AST', graph.id, node.id);
       }
       if (
         node.type === 'tap' &&
@@ -256,10 +333,28 @@ export interface TraceReport {
   outputs: Record<string, JsonValue>;
   issues: ValidationIssue[];
 }
+function mappingObject(value: JsonValue | undefined): Record<string, JsonValue> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+export interface TraceBoundary {
+  graphId: string;
+  nodeId: string;
+  depth: number;
+  stack: { graphId: string; nodeId: string }[];
+  bindings: Bindings;
+  breakpoint: boolean;
+}
+export interface TraceOptions {
+  maxSteps?: number;
+  maxDurationMs?: number;
+  signal?: AbortSignal;
+  beforeStep?: (boundary: TraceBoundary) => Promise<void>;
+  onEvent?: (event: TraceEvent) => void;
+}
 export async function traceWorkflow(
   bundle: WorkflowBundle,
   data: { row?: Record<string, JsonValue>; process?: Record<string, JsonValue> } = {},
-  options: { maxSteps?: number; maxDurationMs?: number; signal?: AbortSignal } = {},
+  options: TraceOptions = {},
 ): Promise<TraceReport> {
   const frozen = structuredClone(bundle),
     issues = validateBundle(frozen),
@@ -300,6 +395,12 @@ export async function traceWorkflow(
     return report;
   }
   const started = performance.now();
+  let suspended = 0;
+  const frames: { graphId: string; nodeId: string }[] = [];
+  const emit = (event: TraceEvent) => {
+    events.push(event);
+    options.onEvent?.(structuredClone(event));
+  };
   let depth = 0;
   let steps = 0;
   type Signal = 'RETURN' | 'BREAK' | 'CONTINUE' | 'STOP';
@@ -308,9 +409,11 @@ export async function traceWorkflow(
       depth--;
       throw new Error('Call depth budget exceeded');
     }
+    frames.push({ graphId, nodeId: entryId ?? '' });
     try {
       return await runFrame(graphId, loop, entryId);
     } finally {
+      frames.pop();
       depth--;
     }
   }
@@ -322,16 +425,30 @@ export async function traceWorkflow(
       : start;
     while (node) {
       if (steps && steps % 128 === 0) await yieldImmediate();
+      frames.at(-1)!.nodeId = node.id;
+      if (options.beforeStep) {
+        const waitingAt = performance.now();
+        await options.beforeStep({
+          graphId,
+          nodeId: node.id,
+          depth,
+          stack: structuredClone(frames),
+          bindings: structuredClone(bindings),
+          breakpoint: !!node.breakpoint,
+        });
+        suspended += performance.now() - waitingAt;
+      }
       if (options.signal?.aborted) {
         report.status = 'CANCELLED';
         return 'STOP';
       }
-      if (performance.now() - started > maxDurationMs) throw new Error('Time budget exceeded');
+      if (performance.now() - started - suspended > maxDurationMs)
+        throw new Error('Time budget exceeded');
       if (++steps > maxSteps) throw new Error('Step budget exceeded');
       const current = node;
       let port: Port = 'next';
       if (current.type === 'end') {
-        events.push({
+        emit({
           graphId,
           nodeId: current.id,
           type: current.type,
@@ -342,7 +459,7 @@ export async function traceWorkflow(
       }
       if (current.type === 'review') {
         report.status = 'REVIEW';
-        events.push({
+        emit({
           graphId,
           nodeId: current.id,
           type: current.type,
@@ -353,7 +470,7 @@ export async function traceWorkflow(
       }
       if (current.type === 'break' || current.type === 'continue') {
         if (!loop) throw new Error('Loop control outside loop');
-        events.push({
+        emit({
           graphId,
           nodeId: current.id,
           type: current.type,
@@ -372,15 +489,46 @@ export async function traceWorkflow(
           throw new Error('setvar requires a safe local key');
         bindings.local[path[1]!] = evaluate(current.config.expression, bindings);
       } else if (current.type === 'subflow') {
-        const callerLocal = bindings.local;
+        const caller = { ...bindings },
+          child = frozen.graphs.find((g) => g.id === current.config.graphRef)!;
+        const values: Record<string, JsonValue> = {};
+        for (const [key, expression] of Object.entries(mappingObject(current.config.inputMapping)))
+          values[key] = structuredClone(evaluate(expression, bindings));
+        const invalid = validateTypedValues(child.inputs, values);
+        if (invalid.length)
+          throw new Error('Subflow input ' + invalid[0]!.path + ': ' + invalid[0]!.message);
+        bindings.row = structuredClone(caller.row);
+        bindings.process = structuredClone(caller.process);
+        for (const field of child.inputs)
+          if (Object.hasOwn(values, field.key)) {
+            if (field.scope === 'output') throw new Error('Subflow input cannot have output scope');
+            bindings[field.scope][field.key] = values[field.key]!;
+          }
         bindings.local = {};
+        bindings.output = {};
         let signal: Signal;
+        let results: Record<string, JsonValue> = {};
         try {
           signal = await runGraph(String(current.config.graphRef));
+          if (signal !== 'STOP') {
+            const invalid = validateTypedValues(child.outputs, bindings.output);
+            if (child.outputs.length && invalid.length)
+              throw new Error('Subflow output ' + invalid[0]!.path + ': ' + invalid[0]!.message);
+            results = structuredClone(bindings.output);
+          }
         } finally {
-          bindings.local = callerLocal;
+          Object.assign(bindings, caller);
         }
         if (signal === 'STOP') return signal;
+        // Validate all return bindings before applying any of them to the caller.
+        const mapped = Object.entries(mappingObject(current.config.outputMapping)).map(
+          ([key, target]) => {
+            if (!Object.hasOwn(results, key))
+              throw new Error('Mapped subflow output is missing: ' + key);
+            return [String(target).split('.')[1]!, structuredClone(results[key]!)] as const;
+          },
+        );
+        for (const [key, value] of mapped) bindings.local[key] = value;
       } else if (current.type === 'loop') {
         const body = graph.edges.find((e) => e.source === current.id && e.port === 'body'),
           bodyRef = current.config.bodyGraphRef;
@@ -415,7 +563,7 @@ export async function traceWorkflow(
           }
       } else if (!['start', 'wait', 'row', 'log'].includes(current.type)) {
         report.status = 'UNSUPPORTED';
-        events.push({
+        emit({
           graphId,
           nodeId: current.id,
           type: current.type,
@@ -427,11 +575,11 @@ export async function traceWorkflow(
       }
       const detail =
         current.type === 'log'
-          ? renderTemplate(String(current.config.messageTemplate ?? ''), bindings)
+          ? renderTemplate(String(current.config.messageTemplate ?? ''), bindings, true)
           : current.type === 'wait'
             ? 'TRACE records the wait; no device action'
             : 'Trace ' + current.type;
-      events.push({ graphId, nodeId: current.id, type: current.type, status: 'DONE', detail });
+      emit({ graphId, nodeId: current.id, type: current.type, status: 'DONE', detail });
       const edge = graph.edges.find((e) => e.source === current.id && e.port === port);
       if (!edge) throw new Error('Missing execution port: ' + port);
       node = graph.nodes.find((n) => n.id === edge.target);
@@ -442,7 +590,7 @@ export async function traceWorkflow(
     await runGraph(frozen.mainGraphId);
   } catch (error) {
     report.status = 'ERROR';
-    events.push({
+    emit({
       graphId: '',
       nodeId: '',
       type: 'runtime',

@@ -30,6 +30,11 @@ import {
   pasteSelection,
   createGroup,
   removeGroup,
+  toggleGroup,
+  moveNodes,
+  rerouteEdge,
+  alignNodes,
+  selectionToSubgraph,
 } from '@autoreels/editor';
 import type { GraphClipboard } from '@autoreels/editor';
 import { api } from './api.js';
@@ -37,6 +42,7 @@ import { EditorDevicePanel } from './EditorDevicePanel.js';
 import { Canvas } from './Canvas.js';
 import type { CanvasMenu } from './Canvas.js';
 import { Dialog, Empty, Field } from './components.js';
+import { DebugPanel } from './DebugPanel.js';
 
 export function downloadJson(name: string, value: unknown) {
   const url = URL.createObjectURL(
@@ -56,7 +62,7 @@ interface Props {
   registerSave: (save: (() => Promise<unknown>) | null) => void;
   clone: (id: string) => void;
 }
-type Modal = null | 'inputs' | 'advanced' | 'subflow' | 'versions';
+type Modal = null | 'inputs' | 'advanced' | 'subflow' | 'convert' | 'versions';
 export function Editor(props: Props) {
   const history = useRef(new EditorHistory(props.initial.bundle)),
     revision = useRef(props.initial.revision),
@@ -102,11 +108,18 @@ export function Editor(props: Props) {
       setDirty(true);
       setStatus('modified');
       setIssues([]);
+      return true;
     } catch (e) {
       props.notify(e instanceof Error ? e.message : 'Thao tác không hợp lệ.');
+      return false;
     }
   }
   function replace(next: WorkflowBundle) {
+    setStack((previous) => {
+      const retained = previous.filter((id) => next.graphs.some((g) => g.id === id));
+      return retained.length ? retained : [next.mainGraphId];
+    });
+    setSelected([]);
     setBundle(next);
     generation.current++;
     setDirty(true);
@@ -308,14 +321,19 @@ export function Editor(props: Props) {
       } else if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
         e.preventDefault();
         const amount = e.shiftKey ? 10 : 1;
-        a.apply((b) =>
-          graphById(b, a.graphId)
-            .nodes.filter((n) => ids.includes(n.id))
-            .forEach((n) => {
-              n.x += e.key === 'ArrowLeft' ? -amount : e.key === 'ArrowRight' ? amount : 0;
-              n.y += e.key === 'ArrowUp' ? -amount : e.key === 'ArrowDown' ? amount : 0;
-            }),
-        );
+        a.apply((b) => {
+          const graph = graphById(b, a.graphId);
+          moveNodes(
+            graph,
+            graph.nodes
+              .filter((n) => ids.includes(n.id))
+              .map((n) => ({
+                id: n.id,
+                x: n.x + (e.key === 'ArrowLeft' ? -amount : e.key === 'ArrowRight' ? amount : 0),
+                y: n.y + (e.key === 'ArrowUp' ? -amount : e.key === 'ArrowDown' ? amount : 0),
+              })),
+          );
+        });
       }
     };
     window.addEventListener('keydown', key);
@@ -440,6 +458,14 @@ export function Editor(props: Props) {
         </div>
         {more && (
           <div className="dropdown workflow-more">
+            <button
+              onClick={() => {
+                setTab('debug');
+                setMore(false);
+              }}
+            >
+              Debug TRACE
+            </button>
             <button
               onClick={() => {
                 setFields(structuredClone(bundle.inputs));
@@ -621,15 +647,9 @@ export function Editor(props: Props) {
             graph={graph}
             selected={selected}
             select={setSelected}
-            move={(positions) =>
-              apply((b) => {
-                for (const p of positions)
-                  Object.assign(
-                    graphById(b, graphId).nodes.find((n) => n.id === p.id)!,
-                    { x: p.x, y: p.y },
-                  );
-              })
-            }
+            move={(positions) => {
+              apply((b) => moveNodes(graphById(b, graphId), positions));
+            }}
             resize={(id, p) =>
               apply((b) =>
                 Object.assign(
@@ -641,6 +661,12 @@ export function Editor(props: Props) {
             connect={(source, port, target) =>
               apply((b) => connect(graphById(b, graphId), source, port, target))
             }
+            toggleGroup={(id) => {
+              apply((b) => toggleGroup(graphById(b, graphId), id));
+            }}
+            reroute={(id, point) => {
+              apply((b) => rerouteEdge(graphById(b, graphId), id, point));
+            }}
             menu={setMenu}
             openNode={openNode}
             addAt={(type, p) => {
@@ -657,6 +683,7 @@ export function Editor(props: Props) {
               ['tree', 'Cây UI'],
               ['variables', 'Biến'],
               ['trace', 'Nhật ký TRACE'],
+              ['debug', 'Debug TRACE'],
               ['validation', 'Kiểm tra'],
             ].map(([id, label]) => (
               <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id!)}>
@@ -667,6 +694,26 @@ export function Editor(props: Props) {
           </div>
           {(tab !== 'properties' || node || graph.groups?.length || selected.length > 1) && (
             <div className={'bottom-panel ' + (tab === 'properties' ? 'properties-panel' : '')}>
+              {tab === 'debug' && (
+                <DebugPanel
+                  bundle={bundle}
+                  notify={props.notify}
+                  select={(id, nodeId) => {
+                    if (
+                      !bundle.graphs.some(
+                        (g) => g.id === id && g.nodes.some((n) => n.id === nodeId),
+                      )
+                    ) {
+                      props.notify(
+                        'Node thuộc bản chụp debug và không còn trong thiết kế hiện tại.',
+                      );
+                      return;
+                    }
+                    setStack(id === bundle.mainGraphId ? [id] : [bundle.mainGraphId, id]);
+                    setSelected([nodeId]);
+                  }}
+                />
+              )}
               {tab === 'properties' && !!graph.groups?.length && (
                 <div className="editor-groups">
                   {graph.groups.map((group) => (
@@ -687,6 +734,11 @@ export function Editor(props: Props) {
                       />
                       <button onClick={() => setSelected(group.nodeIds)}>
                         Chọn nhóm ({group.nodeIds.length})
+                      </button>
+                      <button
+                        onClick={() => apply((b) => toggleGroup(graphById(b, graphId), group.id))}
+                      >
+                        {group.collapsed ? 'Mở nhóm' : 'Thu nhóm'}
                       </button>
                       <button
                         onClick={() => apply((b) => removeGroup(graphById(b, graphId), group.id))}
@@ -931,6 +983,36 @@ export function Editor(props: Props) {
               <button
                 role="menuitem"
                 onClick={() => {
+                  setSubName('');
+                  setModal('convert');
+                  setMenu(null);
+                }}
+              >
+                Chuyển vùng chọn thành quy trình con
+              </button>
+              {(
+                [
+                  ['left', 'Căn trái'],
+                  ['top', 'Căn trên'],
+                  ['horizontal', 'Giãn đều ngang'],
+                  ['vertical', 'Giãn đều dọc'],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  role="menuitem"
+                  disabled={selected.length < (mode === 'left' || mode === 'top' ? 2 : 3)}
+                  onClick={() => {
+                    apply((b) => alignNodes(graphById(b, graphId), selected, mode));
+                    setMenu(null);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+              <button
+                role="menuitem"
+                onClick={() => {
                   openNode(menu.id!);
                   setMenu(null);
                 }}
@@ -985,6 +1067,26 @@ export function Editor(props: Props) {
           )}
           {menu.kind === 'edge' && (
             <>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  if (menu.world)
+                    apply((b) => rerouteEdge(graphById(b, graphId), menu.id!, menu.world!));
+                  setMenu(null);
+                }}
+              >
+                Đặt điểm bẻ dây tại đây
+              </button>
+              <button
+                role="menuitem"
+                disabled={!graph.edges.find((e) => e.id === menu.id)?.reroute}
+                onClick={() => {
+                  apply((b) => rerouteEdge(graphById(b, graphId), menu.id!, null));
+                  setMenu(null);
+                }}
+              >
+                Xóa điểm bẻ dây
+              </button>
               <button
                 role="menuitem"
                 onClick={() => {
@@ -1286,28 +1388,53 @@ export function Editor(props: Props) {
           </div>
         </Dialog>
       )}
-      {modal === 'subflow' && (
-        <Dialog title="Tạo quy trình con" close={() => setModal(null)}>
+      {(modal === 'subflow' || modal === 'convert') && (
+        <Dialog
+          title={modal === 'convert' ? 'Chuyển vùng chọn thành quy trình con' : 'Tạo quy trình con'}
+          close={() => setModal(null)}
+        >
+          {modal === 'convert' && (
+            <p className="muted">
+              Chọn vùng độc lập có một điểm vào và một đường ra next. Biến local, loop và giao dịch
+              cần mapping riêng nên không được tự chuyển.
+            </p>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              apply((b) => {
-                const id = createSubgraph(b, subName);
-                setStack((s) => [...s, id]);
-                setSelected([]);
-              });
-              setModal(null);
+              let created: string | undefined;
+              if (
+                apply((b) => {
+                  if (modal === 'convert')
+                    created = selectionToSubgraph(b, graphId, selected, subName).nodeId;
+                  else created = createSubgraph(b, subName);
+                })
+              ) {
+                if (modal === 'convert') setSelected([created!]);
+                else {
+                  setStack((s) => [...s, created!]);
+                  setSelected([]);
+                }
+                setModal(null);
+              }
             }}
           >
             <label className="field">
               <span>Tên quy trình con</span>
-              <input required value={subName} onChange={(e) => setSubName(e.target.value)} />
+              <input
+                required
+                maxLength={120}
+                value={subName}
+                onChange={(e) => setSubName(e.target.value)}
+              />
             </label>
             <div className="dialog-actions">
               <button type="button" onClick={() => setModal(null)}>
                 Hủy
               </button>
-              <button className="primary">Tạo quy trình con</button>
+              <button className="primary">
+                {modal === 'convert' ? 'Chuyển vùng chọn' : 'Tạo quy trình con'}
+              </button>
             </div>
           </form>
         </Dialog>

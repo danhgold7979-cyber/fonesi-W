@@ -89,7 +89,15 @@ export const deviceSchemas = {
   }),
 } as const;
 const formatSchema = z.enum(['JSON', 'CSV', 'XLSX']);
+export const debugSchemas = {
+  startDebug: z.strictObject({ bundle: z.unknown(), row: z.record(z.string(), z.json()) }),
+  debugSnapshot: id,
+  controlDebug: id.extend({
+    action: z.enum(['CONTINUE', 'PAUSE', 'STEP_INTO', 'STEP_OVER', 'STEP_OUT', 'STOP']),
+  }),
+} as const;
 const schemas = {
+  ...debugSchemas,
   ...deviceSchemas,
   previewContentImport: z.strictObject({
     processId: idSchema,
@@ -181,6 +189,10 @@ export async function dispatch(
     input = schemas[request.command].parse(request.input);
   // Parse per case to retain exact static DTO types after runtime validation.
   switch (request.command) {
+    case 'startDebug':
+    case 'debugSnapshot':
+    case 'controlDebug':
+      throw new DomainError('HOST_REQUIRED', 'Debug cần session service của host.');
     case 'deviceSnapshot':
     case 'scanDevices':
     case 'cancelDeviceScan':

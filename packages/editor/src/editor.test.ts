@@ -14,6 +14,13 @@ import {
   createGroup,
   removeGroup,
   groupBounds,
+  moveNodes,
+  moveGroup,
+  toggleGroup,
+  rerouteEdge,
+  alignNodes,
+  selectionToSubgraph,
+  layoutGraph,
 } from './index.js';
 
 const bundle = (): WorkflowBundle => ({
@@ -150,5 +157,111 @@ describe('selection clipboard and visual groups', () => {
     const bounds = groupBounds(g, g.groups![0]!)!;
     expect(bounds).toMatchObject({ x: -70, y: -32 });
     expect(bounds.width).toBe(700);
+  });
+});
+
+describe('group movement, layout and routed wires', () => {
+  it('collapses visually, moves every member and its internal waypoint in one reversible action', () => {
+    const h = new EditorHistory(bundle());
+    h.mutate((b) => {
+      const g = b.graphs[0]!;
+      createGroup(g, ['start', 'end']);
+      rerouteEdge(g, 'e', { x: 300, y: 40 });
+    });
+    const before = h.bundle,
+      groupId = before.graphs[0]!.groups![0]!.id;
+    h.mutate((b) => {
+      toggleGroup(b.graphs[0]!, groupId);
+      moveGroup(b.graphs[0]!, groupId, -40, 70);
+    });
+    expect(h.bundle.graphs[0]!.groups![0]!.collapsed).toBe(true);
+    expect(h.bundle.graphs[0]!.nodes.map((n) => [n.x, n.y])).toEqual([
+      [-40, 70],
+      [360, 70],
+    ]);
+    expect(h.bundle.graphs[0]!.edges[0]!.reroute).toEqual({ x: 260, y: 110 });
+    expect(h.undo()).toEqual(before);
+  });
+  it('keeps crossing waypoints fixed and rejects invalid coordinates before mutation', () => {
+    const g = bundle().graphs[0]!;
+    rerouteEdge(g, 'e', { x: 100, y: 50 });
+    moveNodes(g, [{ id: 'start', x: 20, y: 20 }]);
+    expect(g.edges[0]!.reroute).toEqual({ x: 100, y: 50 });
+    const before = structuredClone(g);
+    expect(() =>
+      moveNodes(g, [
+        { id: 'end', x: 100, y: 100 },
+        { id: 'missing', x: 1, y: 1 },
+      ]),
+    ).toThrow();
+    expect(g).toEqual(before);
+    expect(() => rerouteEdge(g, 'e', { x: Infinity, y: 0 })).toThrow();
+    rerouteEdge(g, 'e', null);
+    expect(g.edges[0]).not.toHaveProperty('reroute');
+  });
+  it('aligns and distributes using actual widths and lays out large nodes without overlap', () => {
+    const g = bundle().graphs[0]!;
+    const third = addNode(g, 'wait', 900, 200);
+    g.nodes[0]!.w = 500;
+    g.nodes[1]!.w = 100;
+    g.nodes[2]!.w = 200;
+    alignNodes(g, ['start', 'end', third], 'horizontal');
+    const [a, b, c] = g.nodes;
+    expect(b!.x - a!.x - a!.w!).toBe(c!.x - b!.x - b!.w!);
+    alignNodes(g, ['start', 'end', third], 'top');
+    expect(new Set(g.nodes.map((n) => n.y)).size).toBe(1);
+    rerouteEdge(g, 'e', { x: 100, y: 100 });
+    layoutGraph(g);
+    expect(g.nodes[1]!.x).toBeGreaterThan(g.nodes[0]!.x + 500);
+    expect(g.edges[0]).not.toHaveProperty('reroute');
+    createGroup(g, ['start', 'end']);
+    expect(() => createGroup(g, ['end', third])).toThrow('nhóm');
+  });
+});
+
+describe('atomic selection extraction', () => {
+  function chain() {
+    const b = bundle(),
+      g = b.graphs[0]!;
+    const first = insertOnEdge(g, 'e', 'wait');
+    const last = insertOnEdge(g, g.edges.find((e) => e.source === first)!.id, 'log');
+    g.nodes.find((n) => n.id === last)!.config = { messageTemplate: '{{row.caption}}' };
+    return { b, g, first, last };
+  }
+  it('extracts the full selected closure and reconnects external wires with one undo step', () => {
+    const { b, first, last } = chain(),
+      h = new EditorHistory(b);
+    let created: ReturnType<typeof selectionToSubgraph> | undefined;
+    h.mutate((next) => {
+      created = selectionToSubgraph(next, 'main', [first, last], 'Child');
+    });
+    const parent = h.bundle.graphs[0]!,
+      child = h.bundle.graphs[1]!;
+    expect(parent.nodes.map((n) => n.type)).toEqual(['start', 'end', 'subflow']);
+    expect(parent.edges.some((e) => e.source === 'start' && e.target === created!.nodeId)).toBe(
+      true,
+    );
+    expect(parent.edges.some((e) => e.source === created!.nodeId && e.target === 'end')).toBe(true);
+    expect(child.nodes.filter((n) => [first, last].includes(n.id))).toHaveLength(2);
+    expect(child.edges).toHaveLength(3);
+    expect(validateWorkflowShape(h.bundle).ok).toBe(true);
+    expect(h.undo()).toEqual(b);
+    expect(h.redo().graphs).toHaveLength(2);
+  });
+  it('rejects a branched exit, disconnected nodes and local-dependent code without changing its input', () => {
+    const { b, g, first, last } = chain();
+    const before = structuredClone(b);
+    expect(() => selectionToSubgraph(b, 'main', [first, 'end'], 'Bad')).toThrow();
+    expect(b).toEqual(before);
+    const node = g.nodes.find((n) => n.id === last)!;
+    node.config.messageTemplate = '{{local.value}}';
+    const local = structuredClone(b);
+    expect(() => selectionToSubgraph(b, 'main', [first, last], 'Bad')).toThrow('local');
+    expect(b).toEqual(local);
+    node.config.messageTemplate = 'Safe';
+    g.edges.push({ id: 'error', source: last, target: 'end', port: 'error' });
+    const branched = structuredClone(b);
+    expect(() => selectionToSubgraph(b, 'main', [first, last], 'Bad')).toThrow('đường ra');
+    expect(b).toEqual(branched);
   });
 });

@@ -7,6 +7,41 @@ export interface Bindings {
   local: Record<string, JsonValue>;
   output: Record<string, JsonValue>;
 }
+/** Validate syntax without evaluating user bindings or executing application code. */
+export function validateExpression(expression: JsonValue | undefined, depth = 0): void {
+  if (depth > 32 || !expression || typeof expression !== 'object' || Array.isArray(expression))
+    throw new Error('Invalid expression AST');
+  const e = expression,
+    keys = Object.keys(e);
+  if (e.kind === 'literal' && Object.hasOwn(e, 'value') && keys.length === 2) {
+    assertJsonSafe(e.value);
+    return;
+  }
+  if (e.kind === 'path' && typeof e.path === 'string' && keys.length === 2) {
+    const [root, ...parts] = e.path.split('.');
+    if (
+      !['row', 'process', 'local', 'output'].includes(root!) ||
+      !parts.length ||
+      parts.some((k) => !isSafeKey(k) && !/^(0|[1-9]\d*)$/.test(k))
+    )
+      throw new Error('Unsafe binding path');
+    return;
+  }
+  if (e.kind === 'not' && keys.length === 2 && Object.hasOwn(e, 'value')) {
+    validateExpression(e.value, depth + 1);
+    return;
+  }
+  if (
+    e.kind === 'binary' &&
+    keys.length === 4 &&
+    ['and', 'or', 'eq', 'neq', 'gt', 'gte', 'lt', 'lte'].includes(String(e.op))
+  ) {
+    validateExpression(e.left, depth + 1);
+    validateExpression(e.right, depth + 1);
+    return;
+  }
+  throw new Error('Unknown AST operation');
+}
 export function resolvePath(path: string, bindings: Bindings): JsonValue {
   const parts = path.split('.'),
     root = parts.shift();
@@ -84,9 +119,20 @@ export function evaluate(
       throw new Error('Unknown comparison operator');
   }
 }
-export function renderTemplate(template: string, bindings: Bindings): string {
+export function renderTemplate(
+  template: string,
+  bindings: Bindings,
+  redactSensitive = false,
+): string {
   return template.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_match, path: string) => {
     const value = resolvePath(path.trim(), bindings);
+    if (
+      redactSensitive &&
+      path
+        .split('.')
+        .some((key) => /password|secret|token|authorization|cookie|credential/i.test(key))
+    )
+      return '[REDACTED]';
     if (value !== null && typeof value === 'object')
       throw new Error('Template requires a scalar value');
     return String(value ?? '');
