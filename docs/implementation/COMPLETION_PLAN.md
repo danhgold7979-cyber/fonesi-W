@@ -36,4 +36,6 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 
 ## Thông tin cần cho nghiệm thu cuối
 
+Người dùng xác nhận ngày 27/10/2026: **Windows 10 64-bit; 20 điện thoại ban đầu, có thể tăng khoảng 300; registry đa app, ưu tiên Facebook**. Đây là workload/target cần thiết kế và đo, không là số máy đã được kiểm nghiệm hay hard cap nghiệp vụ. Queue/device ownership, paging, workers/streams/backpressure phải tách tổng số registered devices khỏi số tác vụ đồng thời. Nghiệm thu scale P13 cần ma trận 20→100→300 trên host/USB/LAN thực; chưa có benchmark không hứa throughput hoặc bật 300 stream cùng lúc. Facebook đi trước không loại TikTok/custom app/các app còn lại khỏi scope.
+
 Máy Windows có GUI và ít nhất hai Android được cấp quyền, exact model/OS/app versions/locale, test account/target có chủ đích và kết nối USB/LAN thực. Cloud hiện chỉ chứng minh authoring/Linux/fixture integration; không thấy USB của PC người dùng. Chưa có thông tin này vẫn tiếp tục code độc lập, nhưng không thể chứng nhận sản phẩm 100% hoặc release Windows bằng cloud tests.

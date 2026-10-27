@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import type { WorkflowBundle, WorkflowDraft } from '@autoreels/contracts';
+import type { WorkflowVersion, TraceReportDto } from '@autoreels/contracts';
 
 async function request<T>(page: Page, command: string, input: unknown = {}): Promise<T> {
   const token = await page.locator('meta[name="studio-token"]').getAttribute('content');
@@ -140,4 +141,106 @@ test('debug controls operate a frozen TRACE session and resume past a breakpoint
   await debug.getByRole('button', { name: 'Tiếp tục', exact: true }).click();
   await expect(debug).toContainText('Kết quả debug: COMPLETED');
   await expect(debug.getByRole('button', { name: 'Dừng debug', exact: true })).toBeDisabled();
+});
+
+test('immutable external version closure resolves typed inputs in authoring TRACE and the actual host debugger', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const child = await request<WorkflowDraft>(page, 'createWorkflow', {
+    appId: 'fb',
+    name: 'Pinned child',
+  });
+  child.bundle.inputs = [{ key: 'count', type: 'number', scope: 'row', required: true }];
+  child.bundle.outputs = [{ key: 'result', type: 'number', scope: 'output', required: true }];
+  const cg = child.bundle.graphs[0]!,
+    end = cg.nodes.find((n) => n.type === 'end')!;
+  cg.nodes.push({
+    id: 'return_value',
+    type: 'output',
+    name: 'Return count',
+    x: 100,
+    y: 100,
+    config: { valueMapping: { result: { kind: 'path', path: 'row.count' } } },
+  });
+  cg.edges[0]!.target = 'return_value';
+  cg.edges.push({ id: 'child_return', source: 'return_value', target: end.id, port: 'next' });
+  const savedChild = await request<WorkflowDraft>(page, 'saveWorkflow', {
+    bundle: child.bundle,
+    expectedRevision: 0,
+  });
+  const childVersion = await request<WorkflowVersion>(page, 'createVersion', {
+    id: child.workflowId,
+    expectedRevision: savedChild.revision,
+  });
+  const parent = await request<WorkflowDraft>(page, 'createWorkflow', {
+    appId: 'fb',
+    name: 'Pinned debugger parent',
+  });
+  const g = parent.bundle.graphs[0]!,
+    pin = { id: child.workflowId, versionId: childVersion.id, hash: childVersion.hash };
+  parent.bundle.dependencies = [pin];
+  g.nodes = [
+    { id: 'start', type: 'start', name: 'Start', x: 0, y: 100, config: {} },
+    {
+      id: 'external_call',
+      type: 'subflow',
+      name: 'Pinned call',
+      x: 270,
+      y: 100,
+      config: {
+        workflowVersionRef: { ...pin },
+        inputMapping: { count: { kind: 'literal', value: 0 } },
+        outputMapping: { result: 'local.returned' },
+      },
+    },
+    {
+      id: 'after_call',
+      type: 'log',
+      name: 'After call',
+      x: 540,
+      y: 100,
+      config: { messageTemplate: 'Returned {{local.returned}}' },
+    },
+    { id: 'end', type: 'end', name: 'End', x: 810, y: 100, config: {} },
+  ];
+  g.edges = [
+    { id: 'a', source: 'start', target: 'external_call', port: 'next' },
+    { id: 'b', source: 'external_call', target: 'after_call', port: 'next' },
+    { id: 'c', source: 'after_call', target: 'end', port: 'next' },
+  ];
+  const saved = await request<WorkflowDraft>(page, 'saveWorkflow', {
+    bundle: parent.bundle,
+    expectedRevision: 0,
+  });
+  const parentVersion = await request<WorkflowVersion>(page, 'createVersion', {
+    id: parent.workflowId,
+    expectedRevision: saved.revision,
+  });
+  expect(parentVersion.bundle.graphs).toHaveLength(2);
+  const report = await request<TraceReportDto>(page, 'traceWorkflow', {
+    bundle: parent.bundle,
+    row: {},
+  });
+  expect(report.status).toBe('COMPLETED');
+  expect(report.events.find((e) => e.nodeId === 'after_call')!.detail).toBe('Returned 0');
+  child.bundle.workflow.name = 'Changed child draft';
+  await request(page, 'saveWorkflow', {
+    bundle: child.bundle,
+    expectedRevision: savedChild.revision,
+  });
+  await page.reload();
+  await page.locator('[data-route="library"]').click();
+  await page.getByRole('button', { name: /^Pinned debugger parent/ }).click();
+  await page.getByRole('button', { name: 'Menu workflow', exact: true }).click();
+  await page
+    .locator('.workflow-more')
+    .getByRole('button', { name: 'Debug TRACE', exact: true })
+    .click();
+  const debug = page.getByRole('region', { name: 'Debug TRACE' });
+  await debug.getByRole('button', { name: 'Bắt đầu Debug TRACE', exact: true }).click();
+  await expect(debug).toContainText('PAUSED');
+  await debug.getByRole('button', { name: 'Tiếp tục', exact: true }).click();
+  await expect(debug).toContainText('Kết quả debug: COMPLETED');
+  await expect(debug).toContainText('Returned 0');
 });

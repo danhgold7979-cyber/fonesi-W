@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-27",
+  "baselineRevision": "6ecb7a6",
+  "increment": "014",
+  "phase": "P05",
+  "status": "TESTED_COMPILER_SLICE_NOT_FULL_PHASE_ACCEPTANCE",
+  "checks": [
+    {"command": "pnpm install --lockfile-only && pnpm install --frozen-lockfile", "exitStatus": 0, "dependencyChange": "internal workspace engine -> domain only"},
+    {"command": "pnpm check", "exitStatus": 0, "filesPassed": 20, "testsPassed": 189},
+    {"command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test", "exitStatus": 0, "passed": 15, "failed": 0, "skipped": 0, "flaky": 0}
+  ],
+  "verified": ["nested immutable version closure", "namespace isolation and content hash verification", "deep-frozen IR/source maps/routes", "TRACE consumes compiled routes", "SQLite version transaction and draft/restart isolation", "host debugger resolves typed pinned external calls"],
+  "limitations": ["comprehensive effect dominance/provider execution remains incomplete", "P06-P14 still have implementation work", "Windows10 x64 and physical 20-300-device workload NOT_RUN", "no release/installer/Android certification claim"]
+}

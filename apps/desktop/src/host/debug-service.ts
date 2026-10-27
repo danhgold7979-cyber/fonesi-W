@@ -1,7 +1,7 @@
 import { assertJsonSafe, validateWorkflowShape } from '@autoreels/contracts';
-import type { ApiCommand } from '@autoreels/contracts';
+import type { ApiCommand, WorkflowBundle } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
-import { TraceDebugSession, validateBundle } from '@autoreels/workflow-engine';
+import { TraceDebugSession, compileWorkflow, CompilationError } from '@autoreels/workflow-engine';
 import { debugSchemas } from './service.js';
 
 /** Debug controls never wait behind a paused run in the serialized SQLite worker. */
@@ -9,6 +9,11 @@ export class HostDebugService {
   private sessions = new Map<string, TraceDebugSession>();
   private timer = setInterval(() => this.expire(), 30000).unref();
   private closed = false;
+  constructor(
+    private readonly resolveBundle: (bundle: WorkflowBundle) => Promise<WorkflowBundle> = async (
+      bundle,
+    ) => compileWorkflow(bundle).bundle,
+  ) {}
   handles(command: ApiCommand): boolean {
     return Object.hasOwn(debugSchemas, command);
   }
@@ -20,15 +25,22 @@ export class HostDebugService {
       const p = debugSchemas.startDebug.parse(input),
         shape = validateWorkflowShape(p.bundle);
       if (!shape.ok) throw new DomainError('INVALID_WORKFLOW', shape.issues[0]!.message);
-      const issues = validateBundle(shape.value);
-      if (issues.length) throw new DomainError('INVALID_WORKFLOW', issues[0]!.message);
+      let resolved: WorkflowBundle;
+      try {
+        resolved = await this.resolveBundle(shape.value);
+      } catch (error) {
+        if (error instanceof CompilationError)
+          throw new DomainError('INVALID_WORKFLOW', error.message);
+        throw error;
+      }
+      if (this.closed) throw new DomainError('DEBUG_CLOSED', 'Debug service đã đóng.');
       if ([...this.sessions.values()].filter((s) => !s.finished).length >= 4)
         throw new DomainError('DEBUG_BUSY', 'Tối đa 4 phiên debug hoạt động; dừng phiên cũ trước.');
       if (this.sessions.size >= 16) {
         const oldest = [...this.sessions.values()].find((s) => s.finished);
         if (oldest) this.sessions.delete(oldest.id);
       }
-      const session = new TraceDebugSession(shape.value, p.row);
+      const session = new TraceDebugSession(resolved, p.row);
       this.sessions.set(session.id, session);
       return session.snapshot;
     }

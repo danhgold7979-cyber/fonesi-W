@@ -8,6 +8,67 @@ import { StudioDatabase } from './index.js';
 import { DatabaseSync } from 'node:sqlite';
 import { migration } from './schema.js';
 
+describe('immutable external workflow closure', () => {
+  it('pins full dependency bytes in the stored parent version and keeps them after child edits/restart', () => {
+    const child = db.createWorkflow('fb', 'Reusable child'),
+      childVersion = db.createVersion(child.workflowId, 0);
+    const parent = db.createWorkflow('fb', 'Parent'),
+      graph = parent.bundle.graphs[0]!;
+    const pin = { id: child.workflowId, versionId: childVersion.id, hash: childVersion.hash };
+    parent.bundle.dependencies = [pin];
+    const end = graph.nodes.find((n) => n.type === 'end')!;
+    graph.nodes.push({
+      id: 'external_call',
+      type: 'subflow',
+      name: 'Reusable call',
+      x: 100,
+      y: 0,
+      config: { workflowVersionRef: { ...pin }, inputMapping: {}, outputMapping: {} },
+    });
+    graph.edges[0]!.target = 'external_call';
+    graph.edges.push({ id: 'return_call', source: 'external_call', target: end.id, port: 'next' });
+    const saved = db.saveDraft(parent.bundle, 0),
+      pinned = db.createVersion(parent.workflowId, saved.revision);
+    expect(pinned.bundle.graphs).toHaveLength(2);
+    expect(
+      pinned.bundle.graphs[0]!.nodes.find((n) => n.id === 'external_call')!.config
+        .workflowVersionRef,
+    ).toBeUndefined();
+    expect(
+      db.getDraft(parent.workflowId).bundle.graphs[0]!.nodes.find((n) => n.id === 'external_call')!
+        .config.workflowVersionRef,
+    ).toEqual(pin);
+    child.bundle.workflow.name = 'Changed child draft';
+    db.saveDraft(child.bundle, 0);
+    db.close();
+    db = new StudioDatabase(join(dir, 'studio.sqlite'));
+    closes.push(db);
+    expect(db.getVersion(pinned.id)).toEqual(pinned);
+    expect(db.resolveWorkflow(JSON.parse(JSON.stringify(pinned.bundle)))).toEqual(pinned.bundle);
+  });
+  it('rejects a missing pin before creating an immutable version and leaves the draft unchanged', () => {
+    const draft = db.createWorkflow('fb', 'Missing dependency'),
+      g = draft.bundle.graphs[0]!;
+    const end = g.nodes.find((n) => n.type === 'end')!;
+    const pin = { id: 'wf_missing', versionId: 'ver_missing', hash: 'a'.repeat(64) };
+    draft.bundle.dependencies = [pin];
+    g.nodes.push({
+      id: 'call_missing',
+      type: 'subflow',
+      name: 'Missing',
+      x: 100,
+      y: 0,
+      config: { workflowVersionRef: pin },
+    });
+    g.edges[0]!.target = 'call_missing';
+    g.edges.push({ id: 'back', source: 'call_missing', target: end.id, port: 'next' });
+    const saved = db.saveDraft(draft.bundle, 0);
+    expect(() => db.createVersion(draft.workflowId, saved.revision)).toThrow('unavailable');
+    expect(db.listVersions(draft.workflowId)).toEqual([]);
+    expect(db.getDraft(draft.workflowId)).toEqual(saved);
+  });
+});
+
 let dir: string, db: StudioDatabase;
 const closes: StudioDatabase[] = [];
 beforeEach(() => {

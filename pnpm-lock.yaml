@@ -201,6 +201,9 @@ importers:
       '@autoreels/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@autoreels/domain':
+        specifier: workspace:*
+        version: link:../domain
 
 packages:
 

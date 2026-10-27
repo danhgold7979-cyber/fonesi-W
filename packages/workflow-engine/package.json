@@ -10,6 +10,7 @@
     }
   },
   "dependencies": {
-    "@autoreels/contracts": "workspace:*"
+    "@autoreels/contracts": "workspace:*",
+    "@autoreels/domain": "workspace:*"
   }
 }

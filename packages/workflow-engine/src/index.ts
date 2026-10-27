@@ -15,8 +15,10 @@ import type {
 } from '@autoreels/contracts';
 import { evaluate, renderTemplate, validateExpression } from './dsl.js';
 import type { Bindings } from './dsl.js';
+import { compileWorkflow } from './compiler.js';
 export * from './dsl.js';
 export * from './debug.js';
+export * from './compiler.js';
 
 export function validateBundle(input: unknown): ValidationIssue[] {
   const shape = validateWorkflowShape(input);
@@ -376,6 +378,11 @@ export async function traceWorkflow(
     report.status = 'ERROR';
     return report;
   }
+  const compiled = compileWorkflow(frozen);
+  const graphLookup = new Map(compiled.bundle.graphs.map((g) => [g.id, g]));
+  const instructionLookup = new Map(
+    compiled.graphs.map((g) => [g.id, new Map(g.instructions.map((i) => [i.nodeId, i]))]),
+  );
   const maxSteps = options.maxSteps ?? 5000,
     maxDurationMs = options.maxDurationMs ?? 10000;
   if (
@@ -418,7 +425,7 @@ export async function traceWorkflow(
     }
   }
   async function runFrame(graphId: string, loop = false, entryId?: string): Promise<Signal> {
-    const graph = frozen.graphs.find((g) => g.id === graphId)!,
+    const graph = graphLookup.get(graphId)!,
       start = graph.nodes.find((n) => n.type === 'start')!;
     let node: WorkflowNode | undefined = entryId
       ? graph.nodes.find((n) => n.id === entryId)
@@ -490,7 +497,7 @@ export async function traceWorkflow(
         bindings.local[path[1]!] = evaluate(current.config.expression, bindings);
       } else if (current.type === 'subflow') {
         const caller = { ...bindings },
-          child = frozen.graphs.find((g) => g.id === current.config.graphRef)!;
+          child = graphLookup.get(String(current.config.graphRef))!;
         const values: Record<string, JsonValue> = {};
         for (const [key, expression] of Object.entries(mappingObject(current.config.inputMapping)))
           values[key] = structuredClone(evaluate(expression, bindings));
@@ -530,7 +537,7 @@ export async function traceWorkflow(
         );
         for (const [key, value] of mapped) bindings.local[key] = value;
       } else if (current.type === 'loop') {
-        const body = graph.edges.find((e) => e.source === current.id && e.port === 'body'),
+        const body = instructionLookup.get(graphId)!.get(current.id)!.routes.body,
           bodyRef = current.config.bodyGraphRef;
         if (!body && !bodyRef) throw new Error('Loop body is not connected');
         const key = String(current.config.itemBinding ?? 'item');
@@ -543,7 +550,7 @@ export async function traceWorkflow(
             const signal = await runGraph(
               bodyRef ? String(bodyRef) : graphId,
               true,
-              bodyRef ? undefined : body!.target,
+              bodyRef ? undefined : body!,
             );
             if (signal === 'STOP') return signal;
             if (signal === 'BREAK') break;
@@ -580,9 +587,9 @@ export async function traceWorkflow(
             ? 'TRACE records the wait; no device action'
             : 'Trace ' + current.type;
       emit({ graphId, nodeId: current.id, type: current.type, status: 'DONE', detail });
-      const edge = graph.edges.find((e) => e.source === current.id && e.port === port);
-      if (!edge) throw new Error('Missing execution port: ' + port);
-      node = graph.nodes.find((n) => n.id === edge.target);
+      const target = instructionLookup.get(graphId)!.get(current.id)!.routes[port];
+      if (!target) throw new Error('Missing execution port: ' + port);
+      node = instructionLookup.get(graphId)!.get(target)?.node;
     }
     throw new Error('Missing target node');
   }

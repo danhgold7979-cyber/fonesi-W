@@ -1,5 +1,13 @@
 # Tiến độ implementation
 
+## Cập nhật tiếp — increment 014 / P05
+
+Pinned external subflows đã resolve theo immutable version/workflow/hash và canonical bytes; reject missing/undeclared/conflicting pins, app mismatch, namespace escapes và resource excess. Compiler tạo deep-frozen IR/source maps/routes; TRACE interpreter dùng routes đã compile. SQLite createVersion đóng full graph closure trong transaction, giữ draft refs nguyên và không bị child draft edit/restart làm đổi. Validate/TRACE/debug host dùng cùng DB resolver; paused debugger vẫn ngoài DB worker.
+
+Sau code: `pnpm check` đạt **189 tests / 20 files**, type/lint/generated/build; browser **15 passed / 0 failed/skipped/flaky**, thêm actual API + SQLite + host debugger với external typed pinned call. Dependency declaration nội bộ engine→domain được cập nhật bằng pnpm; lockfile chỉ thêm workspace link, frozen install đã qua. Còn mở P05: comprehensive effect dominance, provider/DEVICE_TEST execution gates; không coi structural IR là automation certification. P04 còn các mục ghi bên dưới, P06–P14 tiếp tục theo tracker.
+
+Target người dùng: Windows 10 x64, 20 phones ban đầu, dự kiến tăng khoảng300, đa app và Facebook ưu tiên. Đây là mục tiêu thiết kế/đo ở P08–P14, chưa phải scale/hardware evidence.
+
 ## Cập nhật 27/10/2026 — increment 012–013
 
 - **P04/S030–S037:** đã bổ sung group collapse/expand với crossing-port proxy giữ semantics, kéo group/members một transaction, dịch waypoint nội bộ, set/drag/cancel/reset reroute, align/distribute/layout theo kích thước thật và chuyển single-entry/single-exit selection thành local subflow atomic. Vùng có loop/local/effect cần mapping riêng bị từ chối rõ. Undo khôi phục graph navigation hợp lệ. Canvas có kích thước node xác định để nhấp đúp không mất target trong lúc đo lại node; properties là drawer không đổi viewport khi chọn.

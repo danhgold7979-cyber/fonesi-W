@@ -1,0 +1,11 @@
+# Increment 014 — P05 pinned closure và immutable compiler IR
+
+Plan trước code, sau checkpoint006 (181 unit/integration và14 browser). Scope S043/S045/S046; không coi structural compile là hardware certification hoặc full effect execution.
+
+1. Resolve `workflowVersionRef={id,versionId,hash}` theo declaration tương ứng trong dependencies, tuyệt đối không lấy latest draft. Verify returned version ID/workflow ID/hash và canonical bundle bytes. Cùng ID mà pin khác, app mismatch, missing version, recursive version closure và resource excess đều reject trước mutation.
+2. Local graphs giữ scope; imported graphs namespaced bằng version fingerprint, graphRef/loop body refs được remap; IDs trong graph giữ nguyên. Reuse một imported version cho nhiều call, preserve full child graphs/schema/dependency manifest. External main graph nhận typed bundle inputs/outputs. Explicit graphRef trong external version phải tồn tại. Không tùy tiện sửa reference schema.
+3. Compile resolved validated bundle thành immutable IR: source/closure hash, entry IDs, instruction source-map và explicit routes/default STOP_FOR_REVIEW. Deep-freeze inputs/config/routes; cancellation/device eligibility vẫn tách khỏi compile. Existing conservative declared-effect validation giữ nguyên; chưa tuyên bố comprehensive dominance/provider certification.
+4. SQLite createVersion resolve/freeze full closure trong transaction trước write; draft giữ original refs. Sửa child draft sau đó không thay version/snapshot. Host validate/trace và debug start dùng cùng resolver theo immutable DB versions. Debug điều khiển vẫn không bị xếp sau một paused DB job; public transport chỉ thêm named read-only resolve command, không callback/shell/ arbitrary version source.
+5. Tests sau code: nested child subgraphs, repeated refs/no collisions, pin/hash/body mismatch, tampered/missing/undeclared/app mismatch/recursion/resource bounds, immutable IR/source maps, actual SQLite create/reopen + child draft edits + export round-trip. Re-run affected application/browser regression; ghi exactly counts và limitations.
+
+Giữ P05 PARTIAL nếu effect dominance, full handler providers hay DEVICE_TEST còn thiếu; tiếp theo P06/P07 vẫn theo completion tracker.

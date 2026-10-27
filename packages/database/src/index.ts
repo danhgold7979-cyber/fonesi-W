@@ -59,7 +59,7 @@ import {
   assertPreviewCurrent,
   type SchedulePreview,
 } from '@autoreels/scheduler';
-import { validateBundle } from '@autoreels/workflow-engine';
+import { validateBundle, compileWorkflow } from '@autoreels/workflow-engine';
 import { deviceFingerprint, parseEndpoint } from '@autoreels/devices';
 import { bulkPatch } from '@autoreels/import-export';
 import { migrations, SCHEMA_VERSION } from './schema.js';
@@ -299,6 +299,7 @@ export class StudioDatabase {
       const draft = this.getDraft(workflowId);
       if (draft.revision !== expectedRevision)
         throw new DomainError('REVISION_CONFLICT', 'Draft changed before version creation');
+      const resolved = this.resolveWorkflow(draft.bundle);
       const number = Number(
         this.db
           .prepare(
@@ -310,8 +311,8 @@ export class StudioDatabase {
         id: makeId('ver'),
         workflowId,
         number,
-        hash: bundleHash(draft.bundle),
-        bundle: draft.bundle,
+        hash: bundleHash(resolved),
+        bundle: resolved,
         createdAt: now(),
       };
       this.db
@@ -351,6 +352,10 @@ export class StudioDatabase {
       bundle: requireBundle(parse(r.bundle)),
       createdAt: String(r.created_at),
     };
+  }
+  resolveWorkflow(input: unknown): WorkflowBundle {
+    const bundle = requireBundle(input);
+    return structuredClone(compileWorkflow(bundle, (id) => this.getVersion(id)).bundle);
   }
 
   listProcesses(includeArchived = false): ProcessDefinition[] {

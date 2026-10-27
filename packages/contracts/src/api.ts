@@ -139,6 +139,7 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'resolveWorkflow'
   | 'startDebug'
   | 'debugSnapshot'
   | 'controlDebug'

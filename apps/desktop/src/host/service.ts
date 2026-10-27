@@ -14,7 +14,7 @@ import { StudioDatabase } from '@autoreels/database';
 import { parseContentFile, exportContentFile } from '@autoreels/import-export';
 import { contentHash } from '@autoreels/domain';
 import { DomainError } from '@autoreels/domain';
-import { validateBundle, traceWorkflow } from '@autoreels/workflow-engine';
+import { CompilationError, traceWorkflow } from '@autoreels/workflow-engine';
 import { localSlotToUtc } from '@autoreels/scheduler';
 
 const id = z.strictObject({ id: idSchema });
@@ -156,6 +156,7 @@ const schemas = {
   createVersion: id.extend({ expectedRevision: revision }),
   versions: id,
   importWorkflow: z.strictObject({ bundle: z.unknown() }),
+  resolveWorkflow: z.strictObject({ bundle: z.unknown() }),
   validateWorkflow: z.strictObject({ bundle: z.unknown() }),
   traceWorkflow: z.strictObject({ bundle: z.unknown(), row: z.record(z.string(), z.unknown()) }),
   savePreference: z.strictObject({ value: z.unknown(), expectedRevision: revision }),
@@ -296,26 +297,49 @@ export async function dispatch(
       db.archiveWorkflow(id.parse(input).id);
       return null;
     case 'createVersion': {
-      const p = schemas.createVersion.parse(input),
-        draft = db.getDraft(p.id),
-        issues = validateBundle(draft.bundle);
-      if (issues.length) throw new DomainError('INVALID_WORKFLOW', issues[0]!.message);
-      return db.createVersion(p.id, p.expectedRevision);
+      const p = schemas.createVersion.parse(input);
+      try {
+        return db.createVersion(p.id, p.expectedRevision);
+      } catch (error) {
+        if (error instanceof CompilationError)
+          throw new DomainError('INVALID_WORKFLOW', error.message);
+        throw error;
+      }
     }
     case 'versions':
       return db.listVersions(id.parse(input).id);
     case 'importWorkflow':
       return db.importWorkflow(schemas.importWorkflow.parse(input).bundle);
-    case 'validateWorkflow':
-      return validateBundle(schemas.validateWorkflow.parse(input).bundle);
+    case 'resolveWorkflow': {
+      try {
+        return db.resolveWorkflow(schemas.resolveWorkflow.parse(input).bundle);
+      } catch (error) {
+        if (error instanceof CompilationError)
+          throw new DomainError('INVALID_WORKFLOW', error.message);
+        throw error;
+      }
+    }
+    case 'validateWorkflow': {
+      try {
+        db.resolveWorkflow(schemas.validateWorkflow.parse(input).bundle);
+        return [];
+      } catch (error) {
+        if (error instanceof CompilationError) return error.issues;
+        throw error;
+      }
+    }
     case 'traceWorkflow': {
-      const p = schemas.traceWorkflow.parse(input),
-        issues = validateBundle(p.bundle);
-      if (issues.length) return { mode: 'TRACE', status: 'ERROR', events: [], outputs: {}, issues };
-      const bundle = dbSafeBundle(p.bundle);
-      return traceWorkflow(bundle, {
-        row: p.row as Record<string, import('@autoreels/contracts').JsonValue>,
-      });
+      const p = schemas.traceWorkflow.parse(input);
+      try {
+        const bundle = db.resolveWorkflow(p.bundle);
+        return traceWorkflow(bundle, {
+          row: p.row as Record<string, import('@autoreels/contracts').JsonValue>,
+        });
+      } catch (error) {
+        if (error instanceof CompilationError)
+          return { mode: 'TRACE', status: 'ERROR', events: [], outputs: {}, issues: error.issues };
+        throw error;
+      }
     }
     case 'savePreference': {
       const p = schemas.savePreference.parse(input);
@@ -338,10 +362,4 @@ export async function dispatch(
       return db.saveContentValidated(p.item as ContentItem, p.expectedRevision);
     }
   }
-}
-import { validateWorkflowShape } from '@autoreels/contracts';
-function dbSafeBundle(value: unknown): import('@autoreels/contracts').WorkflowBundle {
-  const result = validateWorkflowShape(value);
-  if (!result.ok) throw new DomainError('INVALID_WORKFLOW', 'Invalid workflow');
-  return result.value;
 }
