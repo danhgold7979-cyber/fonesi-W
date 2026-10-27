@@ -10,14 +10,14 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 
 | Phase | Phạm vi | Công việc tiếp theo / điều kiện đóng |
 |---|---|---|
-| P00 | Toolchain/repository | Giữ frozen install; đã fix forced-autocrlf parity, chờ Windows CI script/check evidence; environment publication riêng |
+| P00 | Toolchain/repository | Frozen install/forced-autocrlf và Ubuntu/Windows CI PASS ở49dcb77; environment publication và Win10 host acceptance riêng |
 | P01 | Contracts | Hoàn thiện contracts theo services, immutable dependency closure/event ordering |
 | P02 | Persistence | Đã test verified local online backup/receipt/restart; còn workspace import preview/atomic restore UI, vận hành schema và Windows acceptance |
 | P03 | Shell | Diagnostics, lifecycle, navigation/accessibility; Windows DPI/multi-monitor |
 | P04 | Workflow editor | Đã test thêm group/collapse/drag, convert local subflow, routing/align/layout; còn external clipboard closure/preferences/command search và interaction gates |
 | P05 | Compiler/engine | Đã test typed mapping/pinned closure/immutable IR/debugger/UI; còn comprehensive effect dominance/providers/DEVICE_TEST |
 | P06 | Process/media | Đã test archive/restore, clone preview/scoped ownership, rebind và explicit adoption; còn thumbnails/cache, query/migration UI gaps |
-| P07 | Scheduler | Đã test paging/virtual timeline và scoped spread/cancel preview/apply; còn dispatch/recovery/overdue, auto-append/calendar/drag |
+| P07 | Scheduler | Đã test app/snapshot filter, local day/week/month, paging/virtual timeline và scoped spread/cancel; còn dispatch/recovery/overdue, auto-append/drag/sleep-resume |
 | P08 | Device/worker | Identity conflicts, worker coordination và physical Windows/Android receipts |
 | P09 | Stream/Inspector | Real stream decoder/control, richer selectors/OCR/Unicode/gestures, correlation |
 | P10 | Technical risk | Verify exact devices/app versions/locale/USB/LAN; owned staging, identity, publish signals, routing |
@@ -28,7 +28,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 
 ## Thứ tự và cách báo tiến độ
 
-Mốc lưu mới nhất: increment021 / checkpoint014. Current source checks:220 unit/integration tests và21 browser scenarios qua. Linux host cần restart compiled output sau đợt increments mới; không tính host cũ là code mới đang phục vụ. GitHub Windows CI ở020 fail generated-file parity/CRLF; next work022 sửa checkout/tooling, không gọi remote CI xanh trước evidence. **Không có phase nào được tự đổi thành ACCEPTED**: bảng trên phân biệt lát đã test và phần còn lại. Không có tiến trình coding nền tự tiếp tục sau khi phiên chat kết thúc; giữ các commits đã kiểm tra.
+Mốc lưu mới nhất: increment023 / checkpoint016. Current source checks:226 unit/integration tests và22 browser scenarios qua. Cloud host đã được backup/migrate schema12/restart và functional readiness + isolated Electron SQLite-worker/backup PASS. GitHub CI022 ở49dcb77 xanh cả Ubuntu và Windows (220 pass Linux;219 pass/1 Unix-only fixture skip Windows), gồm Windows setup/launcher VerifyOnly và hai plan validators. CI cho023 cần đối chiếu source commit mới. **Không có phase nào được tự đổi thành ACCEPTED**: bảng trên phân biệt lát đã test và phần còn lại. Không có tiến trình coding nền tự tiếp tục sau khi phiên chat kết thúc; resume từ gaps P06/P07/P08–P14, giữ các commits đã kiểm tra. Source Windows launcher/hướng dẫn đã có; chưa publish installer.
 
 1. Hoàn thiện các lát P04 → P05 → P06 → P07 theo dependency; bổ sung P01–P03 khi lát đó cần contracts/persistence/shell.
 2. P08/P09 providers → P10 risk evidence → P11 effects → P12 adapters. Không hard-code app selectors hoặc tạo evidence giả khi chưa có profiles thật.

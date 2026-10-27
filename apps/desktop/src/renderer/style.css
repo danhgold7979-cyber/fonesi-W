@@ -1775,3 +1775,52 @@ td {
 .editor-groups button {
   padding: 5px 8px;
 }
+.calendar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+.calendar-controls label {
+  display: grid;
+  gap: 4px;
+}
+.calendar-scroll {
+  max-height: 60vh;
+  overflow: auto;
+  min-height: 220px;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(160px, 1fr));
+  gap: 8px;
+}
+.calendar-cell {
+  border: 1px solid var(--line, #dfe4ef);
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 120px;
+}
+.calendar-day-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.calendar-job {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.calendar-job small {
+  color: var(--muted);
+}
+.calendar-job span,
+.calendar-job small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

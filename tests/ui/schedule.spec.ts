@@ -337,3 +337,113 @@ test('selected schedule spread previews crossing-day changes and cancellation pr
     page.getByRole('checkbox', { name: 'Chọn lịch job_batch_ui_b', exact: true }),
   ).toBeDisabled();
 });
+
+test('calendar queries local days across UTC midnight, caps month cards, opens full day and scopes multiple apps', async ({
+  page,
+}) => {
+  const db = new StudioDatabase(join(directory, 'studio.sqlite'));
+  try {
+    const source = db.getProcess('process_schedule_ui');
+    for (const appId of ['fb', 'tt']) {
+      const draft = db.createWorkflow(appId, 'Calendar ' + appId),
+        version = db.createVersion(draft.workflowId, 0);
+      const process = {
+        ...source,
+        id: 'process_calendar_' + appId,
+        name: 'Calendar ' + appId,
+        appId,
+        workflowId: draft.workflowId,
+        workflowVersionId: version.id,
+        revision: 0,
+        schedule: { ...source.schedule, timezone: 'America/New_York' },
+      };
+      db.saveProcess(process, null);
+      const contentId = 'content_calendar_' + appId;
+      db.saveContent(
+        {
+          id: contentId,
+          processId: process.id,
+          fields: {},
+          assetIds: [],
+          revision: 0,
+          ignored: false,
+        },
+        null,
+      );
+      const ids =
+        appId === 'fb' ? ['a', 'b', ...Array.from({ length: 24 }, (_, i) => String(i))] : ['b'];
+      for (const id of ids)
+        db.createJob(
+          {
+            id: 'job_calendar_' + appId + '_' + id,
+            occurrenceKey: contentHash({ calendarUi: appId, id }),
+            processId: process.id,
+            deviceId: process.deviceId!,
+            contentId,
+            scheduledUtc:
+              id === 'a'
+                ? '2042-01-01T16:59:00.000Z'
+                : id === 'b'
+                  ? '2042-01-01T17:01:00.000Z'
+                  : '2042-01-01T17:03:00.000Z',
+            state: 'SCHEDULED',
+            revision: 0,
+            priority: 0,
+          },
+          {
+            workflowVersionId: version.id,
+            workflowHash: version.hash,
+            bundle: version.bundle,
+            contentId,
+            fields: {},
+            assetIds: [],
+            targetId: null,
+            networkProfileId: null,
+            scheduleProfile: process.schedule,
+          },
+        );
+    }
+  } finally {
+    db.close();
+  }
+  await page.goto('http://127.0.0.1:4176/');
+  await page.locator('[data-route="schedule"]').click();
+  await page.getByRole('combobox', { name: 'Chế độ xem lịch' }).selectOption('MONTH');
+  await page.getByLabel('Ngày mốc lịch', { exact: true }).fill('2042-01-02');
+  await page.getByRole('combobox', { name: 'Lọc lịch theo ứng dụng' }).selectOption('fb');
+  const day = page.getByRole('region', { name: 'Lịch ngày 2042-01-02', exact: true });
+  await expect(day).toContainText('25 đã tải');
+  await expect(day.locator('.calendar-job')).toHaveCount(3);
+  await page.screenshot({ path: '.cache/increment-023-calendar-month.png' });
+  await expect(
+    page.getByRole('region', { name: 'Lịch ngày 2042-01-01', exact: true }),
+  ).toContainText('1 đã tải');
+  await day.getByRole('button', { name: 'Xem ngày 2042-01-02', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: 'Chế độ xem lịch' })).toHaveValue('DAY');
+  await expect(page.locator('.schedule-page')).toContainText('Đã tải 25 công việc');
+  await expect(
+    page.getByRole('button', { name: 'Sửa lịch job_calendar_fb_a', exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'Sửa lịch job_calendar_fb_b', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('America/New_York');
+  await expect(page.getByLabel('Ngày chạy mới', { exact: true })).toHaveValue('2042-01-01');
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  await page.getByRole('combobox', { name: 'Lọc lịch theo ứng dụng' }).selectOption('tt');
+  await expect(page.locator('.schedule-page')).toContainText('Đã tải 1 công việc');
+  await expect(
+    page.getByRole('button', { name: 'Sửa lịch job_calendar_tt_b', exact: true }),
+  ).toBeVisible();
+  await page.getByLabel('Múi giờ hiển thị lịch', { exact: true }).fill('UTC');
+  await expect(
+    page.getByRole('heading', { name: 'Chưa có công việc trong phạm vi này' }),
+  ).toBeVisible();
+  await page.getByLabel('Ngày mốc lịch', { exact: true }).fill('2042-01-01');
+  await expect(
+    page.getByRole('button', { name: 'Sửa lịch job_calendar_tt_b', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('combobox', { name: 'Chế độ xem lịch' }).selectOption('WEEK');
+  await expect(page.locator('.calendar-cell')).toHaveCount(7);
+  await expect(
+    page.getByRole('button', { name: 'Sửa lịch job_calendar_tt_b', exact: true }),
+  ).toBeVisible();
+});

@@ -146,6 +146,7 @@ const schemas = {
   jobs: z.strictObject({
     query: z.strictObject({
       cursor: z.string().min(1).max(4096).optional(),
+      appId: idSchema.optional(),
       processId: idSchema.optional(),
       deviceId: idSchema.optional(),
       state: jobStateSchema.optional(),

@@ -9,9 +9,11 @@ import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
 import { Processes } from './Processes.js';
 import { Devices } from './Devices.js';
-import { Schedule } from './Schedule.js';
 import { WorkspacePanel } from './WorkspacePanel.js';
 const Editor = lazy(() => import('./Editor.js').then((module) => ({ default: module.Editor })));
+const Schedule = lazy(() =>
+  import('./Schedule.js').then((module) => ({ default: module.Schedule })),
+);
 
 const routes = [
   { id: 'devices', name: 'Điện thoại', icon: '▦' },
@@ -417,14 +419,17 @@ export function App() {
           />
         )}
         {view === 'schedule' && (
-          <Schedule
-            processes={boot.processes}
-            devices={boot.devices}
-            notify={notify}
-            openProcesses={() => {
-              void go('processes');
-            }}
-          />
+          <Suspense fallback={<p role="status">Đang tải lịch…</p>}>
+            <Schedule
+              apps={boot.apps}
+              processes={boot.processes}
+              devices={boot.devices}
+              notify={notify}
+              openProcesses={() => {
+                void go('processes');
+              }}
+            />
+          </Suspense>
         )}
         {view === 'history' && (
           <div className="page">

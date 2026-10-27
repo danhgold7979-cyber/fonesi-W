@@ -44,7 +44,7 @@ describe('workspace operations with real serialized SQLite worker and filesystem
     const status = (await host().request('workspaceStatus')) as WorkspaceStatus;
     expect(status.database).toMatchObject({
       integrity: 'ok',
-      schemaVersion: 11,
+      schemaVersion: 12,
       counts: { workflows: 1, jobs: 0, devices: 0, pendingEffects: 0 },
     });
     expect(status.host).toMatchObject({
@@ -66,7 +66,7 @@ describe('workspace operations with real serialized SQLite worker and filesystem
     })) as WorkspaceBackupResult;
     expect(created).toMatchObject({
       alreadyCreated: false,
-      receipt: { id, integrity: 'ok', schemaVersion: 11 },
+      receipt: { id, integrity: 'ok', schemaVersion: 12 },
     });
     const path = join(directory, 'backups', id + '.sqlite');
     expect((await fingerprint(path)).hash).toBe(created.receipt.sha256);

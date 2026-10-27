@@ -2319,12 +2319,18 @@ export class StudioDatabase {
       );
     const revision = epoch();
     const fingerprint = contentHash({
+      appId: query.appId ?? null,
       processId: query.processId ?? null,
       deviceId: query.deviceId ?? null,
       state: query.state ?? null,
       fromUtc: query.fromUtc ?? null,
       toUtc: query.toUtc ?? null,
     });
+    if (query.appId) {
+      idSchema.parse(query.appId);
+      where.push("json_extract(snapshot,'$.bundle.workflow.appId')=?");
+      params.push(query.appId);
+    }
     for (const [key, column] of [
       ['processId', 'process_id'],
       ['deviceId', 'device_id'],

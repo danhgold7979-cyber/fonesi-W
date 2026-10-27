@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -89,6 +89,12 @@ export const migrations = [
 CREATE TABLE job_change_previews(token TEXT PRIMARY KEY,host_id TEXT,payload TEXT NOT NULL,payload_hash TEXT NOT NULL,expires_at TEXT NOT NULL,result TEXT) STRICT;
 CREATE INDEX job_change_expiry ON job_change_previews(expires_at);
 CREATE INDEX jobs_device_instant ON jobs(device_id,julianday(scheduled_utc));
+`,
+  },
+  {
+    version: 12,
+    sql: `
+CREATE INDEX jobs_app_timeline ON jobs(json_extract(snapshot,'$.bundle.workflow.appId'),julianday(scheduled_utc),-priority,created_at,id);
 `,
   },
 ] as const;

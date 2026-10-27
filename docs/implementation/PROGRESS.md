@@ -1,5 +1,15 @@
 # Tiến độ implementation
 
+## Increment023 / P07-S065 — calendar và app filter theo snapshot
+
+Đã có LIST/DAY/WEEK/MONTH, local date/IANA timezone ranges dùng Temporal với exclusive UTC end, DST23/25h/leap/week-year rollover và invalid/skipped local-day rejection. App filter/cursor scope dùng immutable snapshot app, không đổi khi Process được rebind. Migration12 thêm indexed app/time/order query. DAY dùng bảng virtualized, WEEK/MONTH giới hạn6/3 cards mỗi ngày và nút Xem ngày, count ghi rõ đã tải và giữ keyset load-more; không truncate tổng records hoặc suy jobs từ Process đang mở. Calendar hiển thị timezone riêng, edit giữ snapshot timezone. Lazy-load Schedule/Temporal giữ initial entry411.93kB thay607.45kB trong bản eager thử đầu.
+
+`pnpm check` core đạt **226 tests /24 files**, generated/type/lint/unit/build PASS; sau compact layout lại chạy type/lint/build và **full browser22 passed /0 failed/skipped/flaky**. Frozen install PASS, hai Python plan validators PASS,42 reference files nguyên byte. Browser kiểm local midnight,3-card month→full25-job day, pinned edit timezone, multi-app filtering và UTC/week switch. Core test còn kiểm Process rebind không đổi app của scheduled snapshots. Screenshot tháng ở `.cache/increment-023-calendar-month.png`; baseline PNG test outputs giữ riêng trong cache.
+
+Đã backup schema11 trước khi nâng cloud DB12, restart host và functional health/renderer/bootstrap/current-schema smoke PASS. Readiness mới bắt được host cũ11 thay vì coi port mở là code mới. Isolated Electron45.0.0/bundled Node24.22.0 thực thi real DB-worker/status/verified backup trên schema12 PASS. Remote CI đã xanh ở022/49dcb77; CI cho023 cần xác nhận theo source commit sau push. Windows10 GUI/physical phones vẫn NOT_RUN.
+
+P07 còn drag/auto-append/overdue/actual dispatch/sleep-resume. P06 còn thumbnail/cache/server content query/schema migration UI; P04/P05 và P08–P14 giữ gaps theo tracker. **Tổng15 phases chưa100%**; không dùng226 tests hoặc hosted Windows CI thay cho runtime/app/hardware acceptance.
+
 ## Increment022 / P00-S005 + P14-S119 — Windows source checkout/launcher
 
 Đã tái hiện core.autocrlf=true làm generated node-registry.ts chuyển CRLF; thêm default LF cho source, giữ override frozen reference/binaries và CMD CRLF. Forced-autocrlf checkout sau sửa khớp44/44 files, gồm42 reference files nguyên byte và generated/schema. Không regenerate contracts hoặc renormalize frozen data. Strict generated check + hai plan validators PASS. App source vẫn ở mốc220 unit/integration +21 browser đã qua021.
@@ -11,6 +21,8 @@ Follow-up: remote run40458019916 đã qua generated/type/lint và chạy tests; 
 Linux runtime đã backup schema8 trước nâng, restart host bằng compiled source mới/schema11; functional health/renderer/bootstrap và live health/backup/idempotent retry PASS. Electron45.0.0 / bundled Node24.22.0 thực thi isolated SQLite-worker/status/backup smoke PASS qua RUN_AS_NODE; đây không là GUI/DPI/native-phone acceptance.
 
 Run40458413309 đã qua Windows full application checks và source launcher VerifyOnly; phần còn fail là Python plan validator đọc UTF-8 bằng default Windows code page. Đã bổ sung PYTHONUTF8=1, không sửa frozen source-plan/scripts để làm xanh CI. Remote full-workflow result chờ rerun.
+
+Đã xác nhận run40458714335 ở49dcb77 **SUCCESS cả Ubuntu và Windows**, gồm frozen install, Windows PowerShell setup/launcher VerifyOnly, generated/type/lint/unit/build và hai Python validators. Ubuntu220 passed; Windows219 passed/1 pre-existing Unix executable SDK fixture skipped. Không gọi skip này là Windows native SDK acceptance. Win10 GUI/DPI/physical phones và installer vẫn NOT_RUN. Chi tiết ở checkpoint015.
 
 ## Increment021 / P02-S020 + P13-S116/S117 — health và verified local backup
 

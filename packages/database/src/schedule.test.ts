@@ -366,6 +366,51 @@ describe('persisted schedule proposals and atomic apply', () => {
   });
 });
 describe('saved job queries and safe schedule edits', () => {
+  it('filters all workspace jobs by app independently of Process and binds keyset cursors to that app scope', () => {
+    const fb = db.applySchedule(preview().token, null, at);
+    const draft = db.createWorkflow('tt', 'Other app calendar'),
+      version = db.createVersion(draft.workflowId, 0);
+    const process = {
+      ...processInput,
+      id: 'process_tiktok_calendar',
+      appId: 'tt',
+      deviceId: 'device_fixture',
+      workflowId: draft.workflowId,
+      workflowVersionId: version.id,
+    };
+    db.saveProcess(process, null);
+    db.saveContent(
+      {
+        id: 'content_tiktok_calendar',
+        processId: process.id,
+        fields: {},
+        assetIds: [],
+        revision: 0,
+        ignored: false,
+      },
+      null,
+    );
+    const tt = db.applySchedule(
+      db.previewSchedule(process.id, ['content_tiktok_calendar'], null, at, 12).token,
+      null,
+      at,
+    );
+    expect(db.listJobs({ appId: 'fb' }).jobs.map((j) => j.id)).toEqual(fb.jobIds);
+    expect(db.listJobs({ appId: 'tt' }).jobs.map((j) => j.id)).toEqual(tt.jobIds);
+    expect(db.listJobs({ appId: 'tt', processId: processInput.id }).jobs).toHaveLength(0);
+    const rebound = db.getProcess(processInput.id);
+    db.saveProcess(
+      { ...rebound, appId: 'tt', workflowId: draft.workflowId, workflowVersionId: version.id },
+      rebound.revision,
+    );
+    expect(db.listJobs({ appId: 'fb' }).jobs.map((j) => j.id)).toEqual(fb.jobIds);
+    expect(db.listJobs({ appId: 'tt' }).jobs.map((j) => j.id)).toEqual(tt.jobIds);
+    const first = db.listJobs({ appId: 'fb', limit: 1 });
+    expect(() => db.listJobs({ appId: 'tt', cursor: first.nextCursor! })).toThrow('Bộ lọc');
+    expect(db.listJobs({ appId: 'fb', cursor: first.nextCursor! }).jobs.map((j) => j.id)).toEqual(
+      fb.jobIds.slice(1),
+    );
+  });
   it('pages more than a thousand tied instants by stable keys without duplicates or omissions', () => {
     const applied = db.applySchedule(preview().token, null, at);
     const fixture = db.getJob(applied.jobIds[0]!);

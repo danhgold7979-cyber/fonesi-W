@@ -5,11 +5,14 @@ import type {
   ScheduledJobSummary,
   JobDefinition,
   JobQuery,
+  AppDefinition,
 } from '@autoreels/contracts';
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { JobBatchActions } from './JobBatchActions.js';
+import { calendarRange, localToday, moveCalendar, type CalendarView } from './calendar.js';
+import { ScheduleCalendar } from './ScheduleCalendar.js';
 
 const stateLabels: Record<JobDefinition['state'], string> = {
   DRAFT: 'Nháp',
@@ -34,12 +37,17 @@ const stateLabels: Record<JobDefinition['state'], string> = {
   SKIPPED: 'Đã bỏ lượt',
 };
 interface Props {
+  apps: AppDefinition[];
   processes: ProcessDefinition[];
   devices: { id: string; name: string; enabled: boolean }[];
   notify: (message: string) => void;
   openProcesses: () => void;
 }
 export function Schedule(props: Props) {
+  const [appId, setAppId] = useState(''),
+    [view, setView] = useState<CalendarView>('LIST'),
+    [timezone, setTimezone] = useState('Asia/Ho_Chi_Minh'),
+    [anchor, setAnchor] = useState(() => localToday('Asia/Ho_Chi_Minh'));
   const [processId, setProcessId] = useState(''),
     [deviceId, setDeviceId] = useState(''),
     [state, setState] = useState('');
@@ -68,6 +76,15 @@ export function Schedule(props: Props) {
     overscan: 8,
   });
   const visible = virtual.getVirtualItems();
+  let range: ReturnType<typeof calendarRange> | null = null,
+    rangeError = '';
+  if (view !== 'LIST') {
+    try {
+      range = calendarRange(anchor, view, timezone);
+    } catch (e) {
+      rangeError = e instanceof Error ? e.message : 'Ngày hoặc múi giờ không hợp lệ.';
+    }
+  }
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -76,13 +93,16 @@ export function Schedule(props: Props) {
     };
   }, []);
   function query(cursor?: string): JobQuery {
+    if (rangeError) throw new Error(rangeError);
     return {
+      ...(appId ? { appId } : {}),
       ...(cursor ? { cursor } : {}),
       ...(processId ? { processId } : {}),
       ...(deviceId ? { deviceId } : {}),
       ...(state ? { state: state as JobDefinition['state'] } : {}),
-      ...(from ? { fromUtc: new Date(from + 'T00:00:00Z').toISOString() } : {}),
-      ...(to
+      ...(view !== 'LIST' && range ? { fromUtc: range.fromUtc, toUtc: range.toUtc } : {}),
+      ...(view === 'LIST' && from ? { fromUtc: new Date(from + 'T00:00:00Z').toISOString() } : {}),
+      ...(view === 'LIST' && to
         ? { toUtc: new Date(new Date(to + 'T00:00:00Z').getTime() + 86400000).toISOString() }
         : {}),
       limit: 500,
@@ -97,8 +117,8 @@ export function Schedule(props: Props) {
     setSelected(null);
     setSelection(new Set());
     scroll.current?.scrollTo({ top: 0 });
-    void api
-      .jobs(query())
+    void Promise.resolve()
+      .then(() => api.jobs(query()))
       .then((result) => {
         if (token !== generation.current) return;
         setJobs(result.jobs);
@@ -112,7 +132,15 @@ export function Schedule(props: Props) {
       .finally(() => {
         if (token === generation.current) setLoading(false);
       });
-  }, [processId, deviceId, state, from, to, revision]);
+  }, [appId, processId, deviceId, state, from, to, revision, view, timezone, anchor]);
+  function toggle(id: string, checked: boolean) {
+    setSelection((previous) => {
+      const next = new Set(previous);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
   async function more(): Promise<void> {
     if (!nextCursor || loadingMore) return;
     const token = generation.current;
@@ -177,6 +205,24 @@ export function Schedule(props: Props) {
       </div>
       <div className="surface schedule-filters">
         <label>
+          Ứng dụng
+          <select
+            aria-label="Lọc lịch theo ứng dụng"
+            value={appId}
+            onChange={(e) => {
+              setAppId(e.target.value);
+              setProcessId('');
+            }}
+          >
+            <option value="">Tất cả</option>
+            {props.apps.map((app) => (
+              <option key={app.id} value={app.id}>
+                {app.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           Tiến trình
           <select
             aria-label="Lọc lịch theo tiến trình"
@@ -184,11 +230,13 @@ export function Schedule(props: Props) {
             onChange={(e) => setProcessId(e.target.value)}
           >
             <option value="">Tất cả</option>
-            {props.processes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+            {props.processes
+              .filter((p) => !appId || p.appId === appId)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
           </select>
         </label>
         <label>
@@ -221,29 +269,112 @@ export function Schedule(props: Props) {
             ))}
           </select>
         </label>
+        {view === 'LIST' && (
+          <label>
+            Từ ngày (UTC)
+            <input
+              aria-label="Lọc lịch từ ngày UTC"
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </label>
+        )}
+        {view === 'LIST' && (
+          <label>
+            Đến ngày (UTC)
+            <input
+              aria-label="Lọc lịch đến ngày UTC"
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
+          </label>
+        )}
+      </div>
+      <div className="surface calendar-controls">
         <label>
-          Từ ngày (UTC)
-          <input
-            aria-label="Lọc lịch từ ngày UTC"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
+          Chế độ xem
+          <select
+            aria-label="Chế độ xem lịch"
+            value={view}
+            onChange={(e) => setView(e.target.value as CalendarView)}
+          >
+            <option value="LIST">Danh sách</option>
+            <option value="DAY">Ngày</option>
+            <option value="WEEK">Tuần</option>
+            <option value="MONTH">Tháng</option>
+          </select>
         </label>
-        <label>
-          Đến ngày (UTC)
-          <input
-            aria-label="Lọc lịch đến ngày UTC"
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
-        </label>
+        {view !== 'LIST' && (
+          <>
+            <button
+              aria-label="Khoảng lịch trước"
+              disabled={!!rangeError}
+              onClick={() => setAnchor(moveCalendar(anchor, view, -1))}
+            >
+              ←
+            </button>
+            <label>
+              Ngày mốc
+              <input
+                aria-label="Ngày mốc lịch"
+                type="date"
+                value={anchor}
+                onChange={(e) => setAnchor(e.target.value)}
+              />
+            </label>
+            <button
+              aria-label="Khoảng lịch sau"
+              disabled={!!rangeError}
+              onClick={() => setAnchor(moveCalendar(anchor, view, 1))}
+            >
+              →
+            </button>
+            <button
+              onClick={() => {
+                try {
+                  setAnchor(localToday(timezone));
+                } catch (e) {
+                  props.notify(String(e));
+                }
+              }}
+            >
+              Hôm nay
+            </button>
+            <label>
+              Múi giờ hiển thị
+              <input
+                aria-label="Múi giờ hiển thị lịch"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                spellCheck={false}
+              />
+            </label>
+            <small>Giờ trong thẻ theo múi giờ hiển thị; sửa lịch theo múi giờ công việc.</small>
+          </>
+        )}
       </div>
       {error ? (
         <Empty title="Không tải được lịch">{error}</Empty>
       ) : loading ? (
         <p role="status">Đang tải lịch…</p>
+      ) : (view === 'WEEK' || view === 'MONTH') && range ? (
+        <ScheduleCalendar
+            cardsPerDay={view === 'MONTH' ? 3 : 6}
+          range={range}
+          jobs={jobs}
+          timezone={timezone}
+          hasMore={hasMore}
+          selection={selection}
+          toggle={toggle}
+          open={open}
+          labels={stateLabels}
+          showDay={(day) => {
+            setAnchor(day);
+            setView('DAY');
+          }}
+        />
       ) : !jobs.length ? (
         <Empty icon="▣" title="Chưa có công việc trong phạm vi này">
           Chọn nội dung trong Tiến trình, xem trước giờ và áp dụng để lưu lịch. Cần điện thoại đã
@@ -271,7 +402,9 @@ export function Schedule(props: Props) {
                     }
                   />
                 </th>
-                <th>Giờ chạy · múi giờ tiến trình</th>
+                <th>
+                  {view === 'DAY' ? 'Giờ chạy · ' + timezone : 'Giờ chạy · múi giờ tiến trình'}
+                </th>
                 <th>Tiến trình</th>
                 <th>Điện thoại</th>
                 <th>Nội dung</th>
@@ -308,7 +441,7 @@ export function Schedule(props: Props) {
                     <td>
                       <strong>
                         {new Date(job.scheduledUtc).toLocaleString('vi-VN', {
-                          timeZone: job.timezone,
+                          timeZone: view === 'DAY' ? timezone : job.timezone,
                         })}
                       </strong>
                       <small className="timeline-timezone">{job.timezone}</small>

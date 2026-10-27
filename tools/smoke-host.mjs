@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../packages/database/dist/schema.js';
 const origin = process.argv[2] ?? 'http://127.0.0.1:4173';
 const url = new URL(origin);
 if (url.hostname !== '127.0.0.1')
@@ -23,6 +24,16 @@ if (
   !Array.isArray(body.value.processes)
 )
   throw new Error('Functional bootstrap request failed');
+const metadata = await fetch(origin + '/api', {
+  method: 'POST',
+  headers: { Origin: origin, 'Content-Type': 'application/json', 'X-Studio-Token': token },
+  body: JSON.stringify({ command: 'workspaceStatus', input: {}, operationId: 'op_readiness' }),
+});
+const status = await metadata.json();
+if (!metadata.ok || !status.ok || status.value.database.integrity !== 'ok')
+  throw new Error('Current workspace API/integrity readiness failed');
+if (status.value.database.schemaVersion !== SCHEMA_VERSION)
+  throw new Error('Host schema ' + status.value.database.schemaVersion + ' differs from compiled schema ' + SCHEMA_VERSION + '; restart the task-owned host with the current build.');
 console.log(
   JSON.stringify({
     scope: 'LOCAL_AUTHORING_HOST_READINESS',
@@ -30,5 +41,6 @@ console.log(
     database: 'ready',
     catalogAvailable: true,
     rendererAvailable: true,
+    schemaVersion: SCHEMA_VERSION,
   }),
 );

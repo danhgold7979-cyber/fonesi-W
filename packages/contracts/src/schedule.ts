@@ -65,6 +65,7 @@ export interface ScheduledJobSummary extends JobDefinition {
   snapshotHash: string;
 }
 export interface JobQuery {
+  appId?: string | undefined;
   cursor?: string | undefined;
   processId?: string | undefined;
   deviceId?: string | undefined;
