@@ -6,6 +6,10 @@
 
 Thêm setup Windows PowerShell5.1 (pinned Node/pnpm, local caches, frozen install, official Electron verifier, exit propagation), launcher CMD/start script và hướng dẫn tải đúng feature branch/ZIP. CI Windows chạy scripts thực, full checks; tắt matrix fail-fast để lấy đủ lỗi cả hai OS. Remote Windows result đang chờ commit/push mới; chưa ghi PASS. Đây là source launcher, không installer/offline bundle hay Win10/Android certification.
 
+Follow-up: remote run40458019916 đã qua generated/type/lint và chạy tests; lộ8 failures (211 pass/1 Unix-only skip). Đã sửa flush owned backup bằng write-capable handle r+ cho Windows, canonicalize media fixture temp roots và batch seed paging1203 records trong một fixture transaction; giữ nguyên assertions/timeout. `pnpm check` lại đạt220/23 files; targeted backup browser PASS. Chờ remote rerun xác nhận các sửa này.
+
+Linux runtime đã backup schema8 trước nâng, restart host bằng compiled source mới/schema11; functional health/renderer/bootstrap và live health/backup/idempotent retry PASS. Electron45.0.0 / bundled Node24.22.0 thực thi isolated SQLite-worker/status/backup smoke PASS qua RUN_AS_NODE; đây không là GUI/DPI/native-phone acceptance.
+
 ## Increment021 / P02-S020 + P13-S116/S117 — health và verified local backup
 
 Đã có status allowlist từ SQLite quick_check/schema/counts, host memory/runtime và filesystem capacity/available thật. Panel header tải diagnostic JSON chỉ chứa DTO đã xem, không private names/fields/paths/serials/env. Backup lưu app-owned canonical directory, one-at-a-time + disk reserve, SQLite online copy chờ serialized worker hoàn tất, đóng WAL thành tệp độc lập và kiểm integrity/FK/schema/migration checksums rồi hash ngoài worker. No-replace publish + durable receipt, restart retry/copy bị đổi/mất được kiểm; final file thiếu receipt có thể recover. Không ghi đè prior backups/source files. UI save ACK trước backup, giữ ID khi retry; đóng host đợi/abort công việc đang chạy.

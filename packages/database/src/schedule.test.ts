@@ -369,16 +369,25 @@ describe('saved job queries and safe schedule edits', () => {
   it('pages more than a thousand tied instants by stable keys without duplicates or omissions', () => {
     const applied = db.applySchedule(preview().token, null, at);
     const fixture = db.getJob(applied.jobIds[0]!);
-    for (let index = 0; index < 1201; index++)
-      db.createJob(
-        {
-          ...fixture.job,
-          id: 'job_page_' + String(index).padStart(4, '0'),
-          occurrenceKey: contentHash({ paging: index }),
-          priority: index % 3,
-        },
-        fixture.snapshot,
-      );
+    // Seed a validated snapshot in one fixture transaction: this test measures paging,
+    // while createJob's individual durable commits are covered by persistence tests.
+    const connection = raw();
+    try {
+      connection.exec('BEGIN IMMEDIATE');
+      const insert = connection.prepare(`INSERT INTO jobs
+        SELECT ?,?,process_id,device_id,content_id,scheduled_utc,state,0,?,snapshot,snapshot_hash,created_at
+        FROM jobs WHERE id=?`);
+      for (let index = 0; index < 1201; index++)
+        insert.run(
+          'job_page_' + String(index).padStart(4, '0'),
+          contentHash({ paging: index }),
+          index % 3,
+          fixture.job.id,
+        );
+      connection.exec('COMMIT');
+    } finally {
+      connection.close();
+    }
     const ids: string[] = [];
     let cursor: string | undefined;
     do {

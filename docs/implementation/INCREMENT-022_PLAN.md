@@ -7,3 +7,7 @@ Plan trước code. Phát hiện read-only GitHub run40457121431 ở commit7b0cf
 3. CI fail-fast false để có đủ kết quả hai OS. Windows dùng setup script thực rồi full `pnpm check` và Python plan validators; Linux giữ frozen install. Không auto deploy/merge/publish installer.
 4. Docs tải branch chính xác/ZIP/setup/desktop/data/Android SDK và limitations, sửa lỗi thường gặp bằng mã lỗi. Source launcher không được gọi là installer/portable/offline bundle.
 5. Local strict generation/plan/tests/build + git forced-autocrlf checkout parity/reference hashes. Commit/push authorized branch; đọc Windows CI log thực, sửa lần lượt lỗi platform tiếp theo nếu lộ ra. Chỉ ghi Windows CI PASS sau remotejob hoàn thành; Win10 GUI/phones vẫn NOT_RUN.
+
+## Follow-up sau remote run40458019916
+
+Generated/type/lint đã qua trên Windows;8 tests fail (211 pass/1 pre-existing Unix-only skip): native fsync của read-only file handle EPERM, test temp root8.3 so với canonical long path, paging fixture1203 per-row durable transactions vượt10s. Mở owned backup partial bằng r+ để FlushFileBuffers hợp lệ (không bỏ sync), canonicalize test temp root bằng realpath như native chooser, batch seed paging rows trong một fixture transaction (giữ1203 rows/assertions; không tăng global timeout/skip). Sau sửa run full checks Linux/CI Windows lại. Native Windows10 GUI/Android vẫn riêng.

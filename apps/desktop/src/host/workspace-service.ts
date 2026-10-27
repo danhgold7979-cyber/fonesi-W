@@ -225,7 +225,8 @@ export class HostWorkspaceService {
       if (this.closed) throw new DomainError('CANCELLED', 'Đã dừng sao lưu khi đóng workspace.');
       await this.db.internal({ command: 'workspace.backup', path: partial });
       if (this.closed) throw new DomainError('CANCELLED', 'Đã dừng sao lưu khi đóng workspace.');
-      const completed = await open(partial, 'r');
+      // Windows FlushFileBuffers requires a write-capable handle.
+      const completed = await open(partial, 'r+');
       try {
         await completed.sync();
       } finally {

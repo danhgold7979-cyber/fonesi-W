@@ -41,7 +41,7 @@ const processInput: ProcessDefinition = {
   },
 };
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'autoreels-media-service-'));
+  dir = await realpath(await mkdtemp(join(tmpdir(), 'autoreels-media-service-')));
   db = new StudioDatabase(join(dir, 'studio.sqlite'));
   db.saveProcess(processInput, null);
 });
