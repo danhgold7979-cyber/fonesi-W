@@ -9,6 +9,7 @@ import type {
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { JobBatchActions } from './JobBatchActions.js';
 
 const stateLabels: Record<JobDefinition['state'], string> = {
   DRAFT: 'Nháp',
@@ -51,6 +52,7 @@ export function Schedule(props: Props) {
     [loading, setLoading] = useState(true),
     [error, setError] = useState('');
   const [revision, setRevision] = useState(0),
+    [selection, setSelection] = useState<Set<string>>(new Set()),
     [selected, setSelected] = useState<ScheduledJobSummary | null>(null),
     [date, setDate] = useState(''),
     [time, setTime] = useState(''),
@@ -93,6 +95,7 @@ export function Schedule(props: Props) {
     setNextCursor(null);
     setLoadingMore(false);
     setSelected(null);
+    setSelection(new Set());
     scroll.current?.scrollTo({ top: 0 });
     void api
       .jobs(query())
@@ -251,6 +254,23 @@ export function Schedule(props: Props) {
           <table>
             <thead>
               <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    aria-label="Chọn lịch chưa bắt đầu đã tải"
+                    checked={
+                      jobs.some((j) => j.state === 'SCHEDULED') &&
+                      jobs.filter((j) => j.state === 'SCHEDULED').every((j) => selection.has(j.id))
+                    }
+                    onChange={(e) =>
+                      setSelection(
+                        e.target.checked
+                          ? new Set(jobs.filter((j) => j.state === 'SCHEDULED').map((j) => j.id))
+                          : new Set(),
+                      )
+                    }
+                  />
+                </th>
                 <th>Giờ chạy · múi giờ tiến trình</th>
                 <th>Tiến trình</th>
                 <th>Điện thoại</th>
@@ -262,13 +282,29 @@ export function Schedule(props: Props) {
             <tbody>
               {!!visible.length && visible[0]!.start > 0 && (
                 <tr aria-hidden="true">
-                  <td colSpan={6} style={{ height: visible[0]!.start, padding: 0, border: 0 }} />
+                  <td colSpan={7} style={{ height: visible[0]!.start, padding: 0, border: 0 }} />
                 </tr>
               )}
               {visible.map((row) => {
                 const job = jobs[row.index]!;
                 return (
                   <tr key={job.id} data-index={row.index} ref={virtual.measureElement}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        aria-label={'Chọn lịch ' + job.id}
+                        disabled={job.state !== 'SCHEDULED'}
+                        checked={selection.has(job.id)}
+                        onChange={(e) =>
+                          setSelection((previous) => {
+                            const next = new Set(previous);
+                            if (e.target.checked) next.add(job.id);
+                            else next.delete(job.id);
+                            return next;
+                          })
+                        }
+                      />
+                    </td>
                     <td>
                       <strong>
                         {new Date(job.scheduledUtc).toLocaleString('vi-VN', {
@@ -300,7 +336,7 @@ export function Schedule(props: Props) {
               {!!visible.length && virtual.getTotalSize() > visible.at(-1)!.end && (
                 <tr aria-hidden="true">
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     style={{
                       height: virtual.getTotalSize() - visible.at(-1)!.end,
                       padding: 0,
@@ -315,6 +351,13 @@ export function Schedule(props: Props) {
       )}
       {!loading && !error && (
         <div className="section-heading">
+          <div className="actions">
+            <JobBatchActions
+              jobs={jobs.filter((job) => selection.has(job.id))}
+              notify={props.notify}
+              committed={() => setRevision((value) => value + 1)}
+            />
+          </div>
           <p className="muted">
             Đã tải {jobs.length} công việc
             {hasMore ? ' · còn trang tiếp theo' : ' · hết phạm vi lọc'}.

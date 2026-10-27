@@ -49,6 +49,8 @@ const api: StudioApi = {
   previewSchedule: (processId, contentIds) => send('previewSchedule', { processId, contentIds }),
   applySchedule: (token) => send('applySchedule', { token }),
   jobs: (query) => send('jobs', { query }),
+  previewJobChanges: (request) => send('previewJobChanges', { request }),
+  applyJobChanges: (token) => send('applyJobChanges', { token }),
   rescheduleJob: (id, expectedRevision, localDate, localTime, timezone) =>
     send('rescheduleJob', { id, expectedRevision, localDate, localTime, timezone }),
   cancelScheduledJob: (id, expectedRevision) =>

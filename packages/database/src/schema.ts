@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -83,4 +83,12 @@ export const migrations = [
   { version: 8, sql: timelinePagingMigration },
   { version: 9, sql: processCloneMigration },
   { version: 10, sql: mediaAdoptionMigration },
+  {
+    version: 11,
+    sql: `
+CREATE TABLE job_change_previews(token TEXT PRIMARY KEY,host_id TEXT,payload TEXT NOT NULL,payload_hash TEXT NOT NULL,expires_at TEXT NOT NULL,result TEXT) STRICT;
+CREATE INDEX job_change_expiry ON job_change_previews(expires_at);
+CREATE INDEX jobs_device_instant ON jobs(device_id,julianday(scheduled_utc));
+`,
+  },
 ] as const;

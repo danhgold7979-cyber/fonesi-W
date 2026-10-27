@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment020 / P07-S066/S067 — scoped spread/cancel preview
+
+Đã có named API, persisted proposal/checksum/expiry/host/epoch, exact apply và idempotency qua restart cho giãn lịch60–120 phút hoặc hủy nhóm đã chọn. Seed/gaps theo từng điện thoại, giữ anchor và chỉ dịch lịch về sau, cảnh báo crossing-day theo snapshot timezone. Chặn wrong revision, non-SCHEDULED/external intent, archived Process và same-device/same-instant ngoài scope; không đoán duration. Transaction giữ ID/snapshot/priority/bindings/history, không sửa jobs ngoài lựa chọn. UI chọn stable IDs, phân biệt scope đã tải, preview/hủy/apply/retry và reset selection khi filters/reload đổi.
+
+`pnpm check`: **215 tests /22 files**, generated/type/lint/build PASS. Full browser: **20 passed /0 failed/skipped/flaky**. SQLite restart/apply twice/rollback/stale epoch/new intent/collision/expiry/tamper và browser selected subset/cross-day/cancel đã qua. P07 còn calendar/drag, overdue/auto-append/actual dispatch và Windows sleep/resume. Next independent slice P02/P13 workspace health/verified local backup; các runtime P08–P12 vẫn chưa nghiệm thu.
+
 ## Increment019 / P06-S054 — tiếp nhận media đã đổi
 
 Đã có preview/apply từ ID có scoped host grant, hash/probe tệp thật ngoài DB worker, giới hạn hai lượt đọc đồng thời và abort khi đóng host. Preview lưu descriptor/checksum/context hash/expiry, apply kiểm tra lại tệp và context rồi remap typed file/file[]/ordered asset refs atomically sang immutable asset ID mới. Giữ ContentItem IDs, asset records cũ, Process khác và mọi job snapshot. Retry cùng token qua restart trả kết quả cũ kể cả source file đã mất sau commit. UI có preview/hủy/xác nhận và giữ pending Process edits khi nhận ACK.

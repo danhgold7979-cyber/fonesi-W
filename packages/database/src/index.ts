@@ -15,6 +15,7 @@ import {
   inputReferences,
   processCloneOptionsSchema,
   replaceAssetReferences,
+  jobChangeRequestSchema,
 } from '@autoreels/contracts';
 import type {
   AppDefinition,
@@ -40,6 +41,9 @@ import type {
   ScannedAsset,
   ContentAssetInfo,
   SchedulePreviewDto,
+  JobChangeRequest,
+  JobChangePreview,
+  JobChangeResult,
   JobQuery,
   JobPage,
   ContentImportDocument,
@@ -66,6 +70,7 @@ import { randomInt } from 'node:crypto';
 import {
   createSchedulePreview,
   assertPreviewCurrent,
+  spreadJobs,
   type SchedulePreview,
 } from '@autoreels/scheduler';
 import { validateBundle, compileWorkflow } from '@autoreels/workflow-engine';
@@ -2348,6 +2353,182 @@ export class StudioDatabase {
         'Chỉ sửa lịch chưa bắt đầu và chưa có external intent.',
       );
     return job;
+  }
+  private jobChangeContext(selection: JobChangeRequest['jobs']) {
+    return selection.map((selected) => {
+      const { job, snapshot, snapshotHash } = this.getJob(selected.id),
+        process = this.getProcess(job.processId);
+      return {
+        selected,
+        job,
+        snapshotHash,
+        timezone: snapshot.scheduleProfile?.timezone ?? process.schedule.timezone,
+        archived: process.archived,
+        hasEffect: Boolean(this.db.prepare('SELECT 1 FROM effects WHERE job_id=?').get(job.id)),
+      };
+    });
+  }
+  previewJobChanges(
+    input: JobChangeRequest,
+    hostId: string | null = null,
+    at = now(),
+    seed = randomInt(0, 4294967296),
+  ): JobChangePreview {
+    assertJsonSafe(input);
+    const request = jobChangeRequestSchema.parse(input),
+      scope = new Set(request.jobs.map((j) => j.id));
+    if (scope.size !== request.jobs.length)
+      throw new DomainError('DUPLICATE_JOB', 'Chọn mỗi công việc đúng một lần.');
+    return this.transaction(() => {
+      const context = this.jobChangeContext(request.jobs),
+        blockers: JobChangePreview['blockers'] = [];
+      for (const item of context) {
+        if (item.job.revision !== item.selected.revision)
+          blockers.push({
+            jobId: item.job.id,
+            code: 'REVISION_CONFLICT',
+            message: 'Lịch đã đổi; tải lại trước khi chọn.',
+          });
+        if (item.job.state !== 'SCHEDULED' || item.hasEffect)
+          blockers.push({
+            jobId: item.job.id,
+            code: 'JOB_NOT_EDITABLE',
+            message: 'Công việc đã bắt đầu hoặc có external intent.',
+          });
+        if (item.archived)
+          blockers.push({
+            jobId: item.job.id,
+            code: 'PROCESS_ARCHIVED',
+            message: 'Tiến trình đã lưu trữ; khôi phục trước khi sửa lịch.',
+          });
+      }
+      const slots =
+        request.operation === 'SPREAD'
+          ? spreadJobs(
+              context.map((item) => ({ ...item.job, timezone: item.timezone })),
+              request.minGapMinutes,
+              request.maxGapMinutes,
+              seed,
+            )
+          : context.map((item) => ({
+              jobId: item.job.id,
+              deviceId: item.job.deviceId,
+              timezone: item.timezone,
+              previousUtc: item.job.scheduledUtc,
+              proposedUtc: item.job.scheduledUtc,
+              gapMinutes: 0,
+              crossesLocalDay: false,
+            }));
+      if (request.operation === 'SPREAD')
+        for (const slot of slots) {
+          if (Date.parse(slot.proposedUtc) <= Date.parse(at))
+            blockers.push({
+              jobId: slot.jobId,
+              code: 'INVALID_JOB_TIME',
+              message: 'Giờ đề xuất đã qua; sửa anchor sang tương lai trước.',
+            });
+          // At most 1000 selected IDs can hide an external conflict; the next record suffices.
+          const conflict = this.db
+            .prepare(
+              "SELECT id FROM jobs WHERE device_id=? AND julianday(scheduled_utc)=julianday(?) AND state NOT IN ('CANCELLED','SKIPPED','FAILED','SUCCESS','SUCCESS_WITH_WARNINGS') LIMIT 1001",
+            )
+            .all(slot.deviceId, slot.proposedUtc)
+            .find((j) => !scope.has(String(j.id)));
+          if (conflict)
+            blockers.push({
+              jobId: slot.jobId,
+              code: 'TIME_CONFLICT',
+              message:
+                'Cùng điện thoại/cùng thời điểm với ' + String(conflict.id) + ' ngoài lựa chọn.',
+            });
+        }
+      const token = makeId('jobchange'),
+        expiresAt = new Date(Date.parse(at) + 300000).toISOString();
+      const warnings =
+        request.operation === 'SPREAD'
+          ? [
+              'Mỗi điện thoại giữ giờ đầu làm mốc; chỉ dịch các công việc đã chọn về sau. Khoảng cách hiện có lớn hơn khoảng giãn được giữ nguyên.',
+              'Chỉ kiểm tra trùng thời điểm; chưa có ước lượng thời lượng chạy để giữ chỗ. Queue vẫn khóa một công việc trên mỗi điện thoại.',
+            ]
+          : ['Chỉ hủy công việc đã chọn chưa bắt đầu; giữ nguyên snapshot và lịch sử.'];
+      const crossing = slots.filter((slot) => slot.crossesLocalDay).length;
+      if (crossing)
+        warnings.push(crossing + ' công việc chuyển sang ngày khác theo múi giờ của công việc.');
+      const preview: JobChangePreview = {
+        token,
+        expiresAt,
+        operation: request.operation,
+        seed,
+        slots,
+        warnings,
+        blockers,
+        canApply: blockers.length === 0,
+      };
+      const epoch = Number(
+        this.db.prepare("SELECT revision FROM query_epochs WHERE name='jobs'").get()!.revision,
+      );
+      const payload = { request, contextHash: contentHash(context), epoch, preview };
+      this.db
+        .prepare('INSERT INTO job_change_previews VALUES(?,?,?,?,?,NULL)')
+        .run(token, hostId, canonicalJson(payload), contentHash(payload), expiresAt);
+      return preview;
+    });
+  }
+  applyJobChanges(token: string, hostId: string | null = null, at = now()): JobChangeResult {
+    idSchema.parse(token);
+    return this.transaction(() => {
+      const record = this.db.prepare('SELECT * FROM job_change_previews WHERE token=?').get(token);
+      if (!record) throw new DomainError('NOT_FOUND', 'Không tìm thấy bản xem trước lịch.');
+      if (record.host_id !== hostId)
+        throw new DomainError('PREVIEW_HOST', 'Bản xem trước thuộc host khác.');
+      if (record.result !== null)
+        return { ...parse<JobChangeResult>(record.result), alreadyApplied: true };
+      if (Date.parse(at) >= Date.parse(String(record.expires_at)))
+        throw new DomainError('PREVIEW_EXPIRED', 'Bản xem trước lịch đã hết hạn.');
+      const payload = parse<{
+        request: JobChangeRequest;
+        contextHash: string;
+        epoch: number;
+        preview: JobChangePreview;
+      }>(record.payload);
+      if (contentHash(payload) !== record.payload_hash)
+        throw new DomainError('PREVIEW_TAMPERED', 'Checksum bản xem trước lịch không khớp.');
+      if (!payload.preview.canApply)
+        throw new DomainError('PREVIEW_BLOCKED', 'Giải quyết các lý do chặn rồi xem trước lại.');
+      const epoch = Number(
+        this.db.prepare("SELECT revision FROM query_epochs WHERE name='jobs'").get()!.revision,
+      );
+      if (
+        epoch !== payload.epoch ||
+        contentHash(this.jobChangeContext(payload.request.jobs)) !== payload.contextHash
+      )
+        throw new DomainError(
+          'PREVIEW_STALE',
+          'Lịch hoặc quyền sửa đã đổi; tải lại và xem trước lại.',
+        );
+      for (const selected of payload.request.jobs)
+        this.editableScheduledJob(selected.id, selected.revision);
+      for (const slot of payload.preview.slots) {
+        if (payload.request.operation === 'SPREAD') {
+          if (Date.parse(slot.proposedUtc) <= Date.parse(at))
+            throw new DomainError('INVALID_JOB_TIME', 'Giờ đề xuất đã qua; xem trước lại.');
+          this.db
+            .prepare('UPDATE jobs SET scheduled_utc=?,revision=revision+1 WHERE id=?')
+            .run(new Date(slot.proposedUtc).toISOString(), slot.jobId);
+        } else
+          this.db
+            .prepare("UPDATE jobs SET state='CANCELLED',revision=revision+1 WHERE id=?")
+            .run(slot.jobId);
+      }
+      const result: JobChangeResult = {
+        jobIds: payload.request.jobs.map((j) => j.id),
+        alreadyApplied: false,
+      };
+      this.db
+        .prepare('UPDATE job_change_previews SET result=? WHERE token=?')
+        .run(canonicalJson(result), token);
+      return result;
+    });
   }
   rescheduleJob(id: string, expectedRevision: number, scheduledUtc: string, at = now()): void {
     if (!Number.isFinite(Date.parse(scheduledUtc)) || Date.parse(scheduledUtc) <= Date.parse(at))

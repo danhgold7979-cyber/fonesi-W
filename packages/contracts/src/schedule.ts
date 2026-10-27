@@ -1,4 +1,49 @@
 import type { JobDefinition } from './persistence.js';
+import { z } from 'zod';
+import { idSchema } from './models.js';
+
+const jobSelectionSchema = z
+  .array(z.strictObject({ id: idSchema, revision: z.number().int().nonnegative() }))
+  .min(1)
+  .max(1000);
+export const jobChangeRequestSchema = z
+  .discriminatedUnion('operation', [
+    z.strictObject({
+      operation: z.literal('SPREAD'),
+      jobs: jobSelectionSchema,
+      minGapMinutes: z.number().int().min(60).max(120),
+      maxGapMinutes: z.number().int().min(60).max(120),
+    }),
+    z.strictObject({ operation: z.literal('CANCEL'), jobs: jobSelectionSchema }),
+  ])
+  .refine(
+    (request) => request.operation !== 'SPREAD' || request.minGapMinutes <= request.maxGapMinutes,
+    'Khoảng giãn tối thiểu phải nhỏ hơn hoặc bằng tối đa.',
+  );
+export type JobChangeRequest = z.infer<typeof jobChangeRequestSchema>;
+export interface JobChangeSlot {
+  jobId: string;
+  deviceId: string;
+  timezone: string;
+  previousUtc: string;
+  proposedUtc: string;
+  gapMinutes: number;
+  crossesLocalDay: boolean;
+}
+export interface JobChangePreview {
+  token: string;
+  operation: JobChangeRequest['operation'];
+  expiresAt: string;
+  seed: number;
+  slots: JobChangeSlot[];
+  blockers: { jobId: string; code: string; message: string }[];
+  warnings: string[];
+  canApply: boolean;
+}
+export interface JobChangeResult {
+  jobIds: string[];
+  alreadyApplied: boolean;
+}
 export interface SchedulePreviewDto {
   token: string;
   expiresAt: string;

@@ -10,7 +10,14 @@ import type {
   ContentDownload,
   BulkContentRequest,
 } from './content-data.js';
-import type { SchedulePreviewDto, JobQuery, JobPage } from './schedule.js';
+import type {
+  SchedulePreviewDto,
+  JobQuery,
+  JobPage,
+  JobChangeRequest,
+  JobChangePreview,
+  JobChangeResult,
+} from './schedule.js';
 import type {
   SourceState,
   SourceDefinition,
@@ -120,6 +127,8 @@ export interface StudioApi {
   previewSchedule(processId: string, contentIds: string[]): Promise<SchedulePreviewDto>;
   applySchedule(token: string): Promise<{ jobIds: string[]; alreadyApplied: boolean }>;
   jobs(query: JobQuery): Promise<JobPage>;
+  previewJobChanges(request: JobChangeRequest): Promise<JobChangePreview>;
+  applyJobChanges(token: string): Promise<JobChangeResult>;
   rescheduleJob(
     id: string,
     expectedRevision: number,
@@ -191,6 +200,8 @@ export type ApiCommand =
   | 'applySchedule'
   | 'jobs'
   | 'rescheduleJob'
+  | 'previewJobChanges'
+  | 'applyJobChanges'
   | 'cancelScheduledJob'
   | 'previewSchedule'
   | 'bootstrap'
@@ -261,6 +272,8 @@ export function createStudioApi(transport: Transport): StudioApi {
     previewSchedule: (processId, contentIds) => call('previewSchedule', { processId, contentIds }),
     applySchedule: (token) => call('applySchedule', { token }),
     jobs: (query) => call('jobs', { query }),
+    previewJobChanges: (request) => call('previewJobChanges', { request }),
+    applyJobChanges: (token) => call('applyJobChanges', { token }),
     rescheduleJob: (id, expectedRevision, localDate, localTime, timezone) =>
       call('rescheduleJob', { id, expectedRevision, localDate, localTime, timezone }),
     cancelScheduledJob: (id, expectedRevision) =>

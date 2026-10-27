@@ -69,6 +69,153 @@ function raw(): DatabaseSync {
   return new DatabaseSync(join(dir, 'studio.sqlite'));
 }
 
+describe('scoped batch schedule preview/apply', () => {
+  function fixture() {
+    const applied = db.applySchedule(preview().token, null, at);
+    const connection = raw();
+    connection.exec("UPDATE jobs SET scheduled_utc='2030-01-01T16:30:00.000Z'");
+    connection.close();
+    const source = db.getJob(applied.jobIds[0]!);
+    db.createJob(
+      {
+        ...source.job,
+        id: 'job_outside',
+        occurrenceKey: contentHash('outside'),
+        scheduledUtc: '2030-01-05T00:00:00.000Z',
+      },
+      source.snapshot,
+    );
+    return {
+      jobs: applied.jobIds.map((id) => ({ id, revision: 0 })),
+      outside: db.getJob('job_outside'),
+    };
+  }
+  it('persists exact seeded proposal, immutable snapshots, selection scope and idempotency across restart', () => {
+    const { jobs, outside } = fixture(),
+      originals = jobs.map((j) => db.getJob(j.id));
+    const proposal = db.previewJobChanges(
+      { operation: 'SPREAD', jobs, minGapMinutes: 90, maxGapMinutes: 90 },
+      'host_a',
+      at,
+      123,
+    );
+    expect(proposal).toMatchObject({ canApply: true, seed: 123 });
+    expect(proposal.slots[1]!.crossesLocalDay).toBe(true);
+    expect(jobs.map((j) => db.getJob(j.id))).toEqual(originals);
+    db.close();
+    db = new StudioDatabase(join(dir, 'studio.sqlite'));
+    expect(db.applyJobChanges(proposal.token, 'host_a', at)).toEqual({
+      jobIds: jobs.map((j) => j.id),
+      alreadyApplied: false,
+    });
+    for (const slot of proposal.slots) {
+      const saved = db.getJob(slot.jobId),
+        old = originals.find((o) => o.job.id === slot.jobId)!;
+      expect(saved.job).toEqual({
+        ...old.job,
+        revision: 1,
+        scheduledUtc: new Date(slot.proposedUtc).toISOString(),
+      });
+      expect(saved.snapshotHash).toBe(old.snapshotHash);
+      expect(saved.snapshot).toEqual(old.snapshot);
+    }
+    expect(db.getJob(outside.job.id)).toEqual(outside);
+    db.close();
+    db = new StudioDatabase(join(dir, 'studio.sqlite'));
+    expect(
+      db.applyJobChanges(proposal.token, 'host_a', '2035-01-01T00:00:00Z').alreadyApplied,
+    ).toBe(true);
+    expect(jobs.map((j) => db.getJob(j.id).job.revision)).toEqual([1, 1]);
+  });
+  it('blocks external collisions and unsafe states/revisions/intents without modifying jobs outside scope', () => {
+    const { jobs } = fixture();
+    const connection = raw();
+    connection
+      .prepare('UPDATE jobs SET scheduled_utc=? WHERE id=?')
+      .run('2030-01-01T18:00:00Z', 'job_outside');
+    connection.close();
+    const proposal = db.previewJobChanges(
+      { operation: 'SPREAD', jobs, minGapMinutes: 90, maxGapMinutes: 90 },
+      null,
+      at,
+      1,
+    );
+    expect(proposal.blockers.some((b) => b.code === 'TIME_CONFLICT')).toBe(true);
+    expect(() => db.applyJobChanges(proposal.token, null, at)).toThrow('lý do chặn');
+    db.transitionJob(jobs[0]!.id, 'QUEUED', 0);
+    db.recordIntent(
+      jobs[1]!.id,
+      'node_fixture',
+      'PUBLISH',
+      contentHash('batch-effect'),
+      contentHash('payload'),
+    );
+    const unsafe = db.previewJobChanges({ operation: 'CANCEL', jobs }, null, at);
+    expect(unsafe.blockers.filter((b) => b.code === 'JOB_NOT_EDITABLE')).toHaveLength(2);
+    expect(unsafe.blockers.some((b) => b.code === 'REVISION_CONFLICT')).toBe(true);
+    expect(() => db.applyJobChanges(unsafe.token, null, at)).toThrow();
+    expect(db.getJob(jobs[1]!.id).job.state).toBe('SCHEDULED');
+  });
+  it('rejects stale epoch, newly durable effects, expired/foreign/tampered proposals and invalid scope', () => {
+    const { jobs } = fixture();
+    const prepare = () => db.previewJobChanges({ operation: 'CANCEL', jobs }, 'host_a', at);
+    const first = prepare();
+    db.rescheduleJob('job_outside', 0, '2030-01-06T00:00:00Z', at);
+    expect(() => db.applyJobChanges(first.token, 'host_a', at)).toThrow('đã đổi');
+    const effects = prepare();
+    db.recordIntent(
+      jobs[0]!.id,
+      'node_fixture',
+      'PUBLISH',
+      contentHash('new-intent'),
+      contentHash('payload'),
+    );
+    expect(() => db.applyJobChanges(effects.token, 'host_a', at)).toThrow('đã đổi');
+    const other = db.previewJobChanges({ operation: 'CANCEL', jobs: [jobs[1]!] }, 'host_a', at);
+    expect(() => db.applyJobChanges(other.token, 'host_b', at)).toThrow('host khác');
+    expect(() => db.applyJobChanges(other.token, 'host_a', other.expiresAt)).toThrow('hết hạn');
+    const connection = raw();
+    connection
+      .prepare('UPDATE job_change_previews SET payload=? WHERE token=?')
+      .run('{}', other.token);
+    connection.close();
+    expect(() => db.applyJobChanges(other.token, 'host_a', at)).toThrow('Checksum');
+    expect(() =>
+      db.previewJobChanges({ operation: 'CANCEL', jobs: [jobs[1]!, jobs[1]!] }, null, at),
+    ).toThrow('đúng một lần');
+    expect(() =>
+      db.previewJobChanges(
+        { operation: 'SPREAD', jobs, minGapMinutes: 120, maxGapMinutes: 60 },
+        null,
+        at,
+      ),
+    ).toThrow();
+  });
+  it('rolls back a failing multi-job cancellation and safely retries with history intact', () => {
+    const { jobs, outside } = fixture(),
+      before = jobs.map((j) => db.getJob(j.id));
+    const proposal = db.previewJobChanges({ operation: 'CANCEL', jobs }, null, at);
+    const connection = raw();
+    connection.exec(
+      "CREATE TRIGGER fail_batch BEFORE UPDATE ON jobs WHEN OLD.id='" +
+        jobs[1]!.id +
+        "' BEGIN SELECT RAISE(ABORT,'batch fixture failure'); END;",
+    );
+    expect(() => db.applyJobChanges(proposal.token, null, at)).toThrow('batch fixture failure');
+    expect(jobs.map((j) => db.getJob(j.id))).toEqual(before);
+    connection.exec('DROP TRIGGER fail_batch');
+    connection.close();
+    expect(db.applyJobChanges(proposal.token, null, at).alreadyApplied).toBe(false);
+    expect(db.applyJobChanges(proposal.token, null, at).alreadyApplied).toBe(true);
+    for (const job of before)
+      expect(db.getJob(job.job.id)).toEqual({
+        ...job,
+        job: { ...job.job, state: 'CANCELLED', revision: 1 },
+      });
+    expect(db.getJob(outside.job.id)).toEqual(outside);
+  });
+});
+
 describe('persisted schedule proposals and atomic apply', () => {
   it('applies the exact instants after restart, pins full snapshots, and returns the same IDs on repeated apply', () => {
     const p = preview();

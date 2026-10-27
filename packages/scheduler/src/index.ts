@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { scheduleProfileSchema, idSchema } from '@autoreels/contracts';
 import type { ScheduleProfile } from '@autoreels/contracts';
 import { contentHash, DomainError } from '@autoreels/domain';
+export { spreadJobs } from './spread.js';
 
 export interface PreviewItem {
   id: string;

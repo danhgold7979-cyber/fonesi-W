@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { once } from 'node:events';
 import { StudioDatabase } from '../../packages/database/dist/index.js';
 import { contentHash } from '../../packages/domain/dist/index.js';
+import type { JobChangePreview, ScheduledJobSummary } from '@autoreels/contracts';
 
 async function request<T>(page: Page, command: string, input: unknown): Promise<T> {
   const origin = new URL(page.url()).origin;
@@ -225,4 +226,114 @@ test('timeline loads beyond the first 500 jobs while keeping DOM rows bounded an
   await expect(
     page.getByRole('heading', { name: 'Chưa có công việc trong phạm vi này' }),
   ).toBeVisible();
+});
+
+test('selected schedule spread previews crossing-day changes and cancellation preserves jobs outside scope', async ({
+  page,
+}) => {
+  const db = new StudioDatabase(join(directory, 'studio.sqlite'));
+  try {
+    const source = db.getProcess('process_schedule_ui'),
+      process = { ...source, id: 'process_batch_ui', name: 'Batch schedule UI', revision: 0 };
+    db.saveProcess(process, null);
+    db.saveContent(
+      {
+        id: 'content_batch_ui',
+        processId: process.id,
+        revision: 0,
+        fields: { caption: 'Batch UI' },
+        assetIds: [],
+        ignored: false,
+      },
+      null,
+    );
+    const version = db.getVersion(process.workflowVersionId!);
+    for (const id of ['a', 'b', 'outside'])
+      db.createJob(
+        {
+          id: 'job_batch_ui_' + id,
+          occurrenceKey: contentHash({ batchUi: id }),
+          processId: process.id,
+          deviceId: process.deviceId!,
+          contentId: 'content_batch_ui',
+          scheduledUtc: id === 'outside' ? '2040-01-05T00:00:00.000Z' : '2040-01-01T16:30:00.000Z',
+          state: 'SCHEDULED',
+          revision: 0,
+          priority: 0,
+        },
+        {
+          workflowVersionId: version.id,
+          workflowHash: version.hash,
+          bundle: version.bundle,
+          contentId: 'content_batch_ui',
+          fields: { caption: 'Batch UI' },
+          assetIds: [],
+          targetId: null,
+          networkProfileId: null,
+        },
+      );
+  } finally {
+    db.close();
+  }
+  await page.goto('http://127.0.0.1:4176/');
+  await page.locator('[data-route="schedule"]').click();
+  await page
+    .getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
+    .selectOption('process_batch_ui');
+  await expect(page.locator('.schedule-page tbody tr[data-index]')).toHaveCount(3);
+  const before = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+    query: { processId: 'process_batch_ui' },
+  });
+  for (const id of ['a', 'b'])
+    await page.getByRole('checkbox', { name: 'Chọn lịch job_batch_ui_' + id, exact: true }).check();
+  await page.getByRole('button', { name: 'Giãn lịch đã chọn', exact: true }).click();
+  await page.getByLabel('Khoảng giãn tối thiểu', { exact: true }).fill('90');
+  await page.getByLabel('Khoảng giãn tối đa', { exact: true }).fill('90');
+  await page.getByRole('button', { name: 'Xem trước thay đổi lịch', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Sang ngày khác');
+  expect(
+    (
+      await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+        query: { processId: 'process_batch_ui' },
+      })
+    ).jobs,
+  ).toEqual(before.jobs);
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  await page.getByRole('button', { name: 'Giãn lịch đã chọn', exact: true }).click();
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api') &&
+      response.request().postDataJSON()?.command === 'previewJobChanges',
+  );
+  await page.getByRole('button', { name: 'Xem trước thay đổi lịch', exact: true }).click();
+  const proposed = ((await (await responsePromise).json()) as { value: JobChangePreview }).value;
+  await page.getByRole('button', { name: 'Áp dụng thay đổi lịch', exact: true }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.locator('.schedule-page')).toContainText('Đã chọn 0 công việc');
+  const after = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+    query: { processId: 'process_batch_ui' },
+  });
+  for (const slot of proposed.slots) {
+    const saved = after.jobs.find((job) => job.id === slot.jobId)!;
+    expect(Date.parse(saved.scheduledUtc)).toBe(Date.parse(slot.proposedUtc));
+    expect(saved.snapshotHash).toBe(before.jobs.find((job) => job.id === slot.jobId)!.snapshotHash);
+  }
+  expect(after.jobs.find((job) => job.id === 'job_batch_ui_outside')).toEqual(
+    before.jobs.find((job) => job.id === 'job_batch_ui_outside'),
+  );
+  await page.getByRole('checkbox', { name: 'Chọn lịch job_batch_ui_b', exact: true }).check();
+  await page.getByRole('button', { name: 'Hủy lịch đã chọn', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem trước thay đổi lịch', exact: true }).click();
+  await page.getByRole('button', { name: 'Áp dụng thay đổi lịch', exact: true }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  const final = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+    query: { processId: 'process_batch_ui' },
+  });
+  expect(final.jobs.find((job) => job.id === 'job_batch_ui_b')?.state).toBe('CANCELLED');
+  expect(final.jobs.find((job) => job.id === 'job_batch_ui_outside')).toEqual(
+    before.jobs.find((job) => job.id === 'job_batch_ui_outside'),
+  );
+  await expect(
+    page.getByRole('checkbox', { name: 'Chọn lịch job_batch_ui_b', exact: true }),
+  ).toBeDisabled();
 });
