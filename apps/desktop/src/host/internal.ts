@@ -8,6 +8,9 @@ import type {
 import type { StudioDatabase } from '@autoreels/database';
 /** This union is never exported through preload, HTTP or the public service dispatcher. */
 export type InternalRequest =
+  | { command: 'workspace.status' }
+  | { command: 'workspace.backup'; path: string }
+  | { command: 'workspace.validateBackup'; path: string }
   | { command: 'asset.binding'; processId: string; assetId: string; hostId: string }
   | { command: 'asset.adoptPreview'; binding: MediaAssetBinding; scanned: ScannedAsset }
   | { command: 'asset.adoptPlan'; token: string; hostId: string }
@@ -90,6 +93,12 @@ export type InternalRequest =
     };
 export function dispatchInternal(db: StudioDatabase, request: InternalRequest): unknown {
   switch (request.command) {
+    case 'workspace.status':
+      return db.workspaceStatus();
+    case 'workspace.backup':
+      return db.backupVerified(request.path);
+    case 'workspace.validateBackup':
+      return db.validateBackup(request.path);
     case 'asset.binding':
       return db.mediaAssetBinding(request.processId, request.assetId, request.hostId);
     case 'asset.adoptPreview':

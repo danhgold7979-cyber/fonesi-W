@@ -1,4 +1,5 @@
 import type { InspectorSnapshot } from './inspector.js';
+import type { WorkspaceStatus, WorkspaceBackupResult } from './workspace.js';
 import type { MediaAdoptionPreview, MediaAdoptionResult } from './media.js';
 import type { DebugAction, DebugSnapshot } from './debug.js';
 import type { ProcessCloneOptions, ProcessClonePreview, ProcessCloneResult } from './processes.js';
@@ -52,6 +53,8 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
+  workspaceStatus(): Promise<WorkspaceStatus>;
+  createWorkspaceBackup(backupId: string): Promise<WorkspaceBackupResult>;
   previewMediaAdoption(processId: string, assetId: string): Promise<MediaAdoptionPreview>;
   applyMediaAdoption(token: string): Promise<MediaAdoptionResult>;
   rebindSource(
@@ -162,6 +165,8 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'workspaceStatus'
+  | 'createWorkspaceBackup'
   | 'previewMediaAdoption'
   | 'applyMediaAdoption'
   | 'rebindSource'
@@ -226,6 +231,8 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    workspaceStatus: () => call('workspaceStatus'),
+    createWorkspaceBackup: (backupId) => call('createWorkspaceBackup', { backupId }),
     previewMediaAdoption: (processId, assetId) =>
       call('previewMediaAdoption', { processId, assetId }),
     applyMediaAdoption: (token) => call('applyMediaAdoption', { token }),

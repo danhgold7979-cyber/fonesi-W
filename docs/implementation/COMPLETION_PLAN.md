@@ -12,7 +12,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 |---|---|---|
 | P00 | Toolchain/repository | Giữ frozen install; CI Windows/remote và environment publication còn riêng |
 | P01 | Contracts | Hoàn thiện contracts theo services, immutable dependency closure/event ordering |
-| P02 | Persistence | Workspace import preview/atomic restore, vận hành schema và Windows acceptance |
+| P02 | Persistence | Đã test verified local online backup/receipt/restart; còn workspace import preview/atomic restore UI, vận hành schema và Windows acceptance |
 | P03 | Shell | Diagnostics, lifecycle, navigation/accessibility; Windows DPI/multi-monitor |
 | P04 | Workflow editor | Đã test thêm group/collapse/drag, convert local subflow, routing/align/layout; còn external clipboard closure/preferences/command search và interaction gates |
 | P05 | Compiler/engine | Đã test typed mapping/pinned closure/immutable IR/debugger/UI; còn comprehensive effect dominance/providers/DEVICE_TEST |
@@ -23,12 +23,12 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 | P10 | Technical risk | Verify exact devices/app versions/locale/USB/LAN; owned staging, identity, publish signals, routing |
 | P11 | Execution/effects | Journal-first executor, independent comments, uncertainty/review/recovery/owned cleanup |
 | P12 | App adapters | Profile-specific Facebook Reels + TikTok trước; Lite/Instagram/Threads/photo theo evidence |
-| P13 | Operations | APK/network adapters, secrets/redaction, diagnostics/retention/power/resource bounds |
+| P13 | Operations | Đã test health/allowlisted diagnostic + verified local backups; còn APK/network, secrets, run logs/retention/power/staging resource bounds |
 | P14 | Packaging | Windows installer/offline notices, clean-machine/upgrade/rollback/completeness; publication riêng |
 
 ## Thứ tự và cách báo tiến độ
 
-Mốc lưu mới nhất: increment020 / checkpoint013. Current source checks:215 unit/integration tests và20 browser scenarios qua. Linux host cần restart compiled output sau đợt increments mới; không tính host cũ là code mới đang phục vụ. **Không có phase nào được tự đổi thành ACCEPTED**: bảng trên phân biệt lát đã test và phần còn lại. Không có tiến trình coding nền tự tiếp tục sau khi phiên chat kết thúc; next independent work P02/P13 workspace health/backup, giữ các commits đã kiểm tra.
+Mốc lưu mới nhất: increment021 / checkpoint014. Current source checks:220 unit/integration tests và21 browser scenarios qua. Linux host cần restart compiled output sau đợt increments mới; không tính host cũ là code mới đang phục vụ. GitHub Windows CI ở020 fail generated-file parity/CRLF; next work022 sửa checkout/tooling, không gọi remote CI xanh trước evidence. **Không có phase nào được tự đổi thành ACCEPTED**: bảng trên phân biệt lát đã test và phần còn lại. Không có tiến trình coding nền tự tiếp tục sau khi phiên chat kết thúc; giữ các commits đã kiểm tra.
 
 1. Hoàn thiện các lát P04 → P05 → P06 → P07 theo dependency; bổ sung P01–P03 khi lát đó cần contracts/persistence/shell.
 2. P08/P09 providers → P10 risk evidence → P11 effects → P12 adapters. Không hard-code app selectors hoặc tạo evidence giả khi chưa có profiles thật.

@@ -9,6 +9,7 @@ import { envelopeSchema } from '../host/service.js';
 import { HostMediaService, loadHostId } from '../host/media-service.js';
 import { HostDeviceService } from '../host/device-service.js';
 import { HostServices } from '../host/services.js';
+import { HostWorkspaceService } from '../host/workspace-service.js';
 
 app.setName('AutoReels Studio');
 if (process.argv.includes('--smoke') && !process.env.AUTOREELS_DATA_DIR)
@@ -94,7 +95,11 @@ else {
           ...(process.env.AUTOREELS_ADB ? { path: process.env.AUTOREELS_ADB } : {}),
         },
       );
-      services = new HostServices(media, devices);
+      services = new HostServices(
+        media,
+        devices,
+        new HostWorkspaceService(db, app.getPath('userData')),
+      );
       await services.ready();
       const request = z.strictObject({ command: z.string(), input: z.unknown() });
       ipcMain.handle('studio:request', async (event, raw: unknown) => {

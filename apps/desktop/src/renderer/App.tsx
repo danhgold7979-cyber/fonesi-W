@@ -10,6 +10,7 @@ import { Dialog, Empty } from './components.js';
 import { Processes } from './Processes.js';
 import { Devices } from './Devices.js';
 import { Schedule } from './Schedule.js';
+import { WorkspacePanel } from './WorkspacePanel.js';
 const Editor = lazy(() => import('./Editor.js').then((module) => ({ default: module.Editor })));
 
 const routes = [
@@ -29,9 +30,9 @@ export function App() {
   const [active, setActive] = useState<WorkflowDraft | null>(null),
     [libraryApp, setLibraryApp] = useState('all'),
     [filter, setFilter] = useState('');
-  const [modal, setModal] = useState<null | 'create' | 'app' | 'help' | 'archive' | 'palette'>(
-      null,
-    ),
+  const [modal, setModal] = useState<
+      null | 'create' | 'app' | 'help' | 'archive' | 'palette' | 'workspace'
+    >(null),
     [toast, setToast] = useState('');
   const [workflowName, setWorkflowName] = useState(''),
     [workflowApp, setWorkflowApp] = useState('fb'),
@@ -222,6 +223,9 @@ export function App() {
           <span>{routes.find((r) => r.id === view)?.name}</span>
         </div>
         <div className="header-right">
+          <button aria-label="Chẩn đoán và sao lưu workspace" onClick={() => setModal('workspace')}>
+            Chẩn đoán / Sao lưu
+          </button>
           <button
             className="command-button"
             onClick={() => {
@@ -618,6 +622,15 @@ export function App() {
             ))}
           </div>
         </Dialog>
+      )}
+      {modal === 'workspace' && (
+        <WorkspacePanel
+          close={() => setModal(null)}
+          save={async () => {
+            await saveAction.current?.();
+            await refresh();
+          }}
+        />
       )}
       {modal === 'help' && (
         <Dialog title="Thao tác nhanh" close={() => setModal(null)} wide>

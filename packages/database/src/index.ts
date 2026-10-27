@@ -19,6 +19,7 @@ import {
 } from '@autoreels/contracts';
 import type {
   AppDefinition,
+  WorkspaceDatabaseStatus,
   WorkflowBundle,
   WorkflowDraft,
   WorkflowVersion,
@@ -171,6 +172,80 @@ export class StudioDatabase {
   }
   integrity(): string {
     return String(this.db.prepare('PRAGMA integrity_check').get()?.integrity_check);
+  }
+  workspaceStatus(): WorkspaceDatabaseStatus {
+    return this.transaction(() => {
+      const count = (table: 'workflows' | 'processes' | 'content_items' | 'jobs' | 'devices') =>
+        Number(this.db.prepare('SELECT COUNT(*) AS n FROM ' + table).get()!.n);
+      return {
+        schemaVersion: Number(this.db.prepare('PRAGMA user_version').get()!.user_version),
+        integrity:
+          this.db.prepare('PRAGMA quick_check').get()?.quick_check === 'ok' ? 'ok' : 'error',
+        counts: {
+          workflows: count('workflows'),
+          processes: count('processes'),
+          contentItems: count('content_items'),
+          jobs: count('jobs'),
+          devices: count('devices'),
+          pendingEffects: Number(
+            this.db
+              .prepare(
+                "SELECT COUNT(*) AS n FROM effects WHERE state IN ('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
+              )
+              .get()!.n,
+          ),
+        },
+      };
+    });
+  }
+  validateBackup(path: string): { schemaVersion: number } {
+    let candidate: DatabaseSync | undefined;
+    try {
+      candidate = new DatabaseSync(path, { readOnly: true });
+      const source = candidate;
+      const schemaVersion = Number(candidate.prepare('PRAGMA user_version').get()?.user_version);
+      if (
+        schemaVersion < 1 ||
+        schemaVersion > SCHEMA_VERSION ||
+        !Number.isInteger(schemaVersion) ||
+        candidate.prepare('PRAGMA integrity_check').get()?.integrity_check !== 'ok' ||
+        candidate.prepare('PRAGMA foreign_key_check').get() ||
+        migrations
+          .filter((m) => m.version <= schemaVersion)
+          .some(
+            (m) =>
+              source
+                .prepare('SELECT checksum FROM schema_migrations WHERE version=?')
+                .get(m.version)?.checksum !== contentHash(m.sql),
+          )
+      )
+        throw new DomainError(
+          'INVALID_BACKUP',
+          'Bản sao lưu không đạt integrity/schema/migration checks.',
+        );
+      return { schemaVersion };
+    } catch (error) {
+      if (error instanceof DomainError) throw error;
+      throw new DomainError('INVALID_BACKUP', 'Không đọc được cơ sở dữ liệu sao lưu hợp lệ.');
+    } finally {
+      candidate?.close();
+    }
+  }
+  async backupVerified(path: string): Promise<{ schemaVersion: number }> {
+    await this.backupTo(path);
+    // A completed portable backup must not depend on WAL/SHM sidecars.
+    const completed = new DatabaseSync(path);
+    try {
+      const checkpoint = completed.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get();
+      if (
+        Number(checkpoint?.busy) !== 0 ||
+        completed.prepare('PRAGMA journal_mode=DELETE').get()?.journal_mode !== 'delete'
+      )
+        throw new DomainError('BACKUP_BUSY', 'Chưa thể đóng WAL của bản sao lưu.');
+    } finally {
+      completed.close();
+    }
+    return this.validateBackup(path);
   }
 
   listApps(): AppDefinition[] {

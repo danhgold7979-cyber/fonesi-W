@@ -18,7 +18,7 @@ parentPort?.on(
       }
       try {
         const value = message.internal
-          ? dispatchInternal(db, message.internal)
+          ? await dispatchInternal(db, message.internal)
           : await dispatch(
               db,
               message.request,

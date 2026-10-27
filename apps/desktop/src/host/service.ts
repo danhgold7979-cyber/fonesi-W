@@ -18,6 +18,7 @@ import { contentHash } from '@autoreels/domain';
 import { DomainError } from '@autoreels/domain';
 import { CompilationError, traceWorkflow } from '@autoreels/workflow-engine';
 import { localSlotToUtc } from '@autoreels/scheduler';
+import { workspaceSchemas } from './workspace-service.js';
 
 const id = z.strictObject({ id: idSchema });
 const revision = z.number().int().nonnegative();
@@ -132,6 +133,7 @@ const schemas = {
     format: formatSchema,
   }),
   ...mediaSchemas,
+  ...workspaceSchemas,
   contentAssets: z.strictObject({ processId: idSchema }),
   ignoreContent: id.extend({ expectedRevision: revision }),
   previewSchedule: z.strictObject({
@@ -203,6 +205,12 @@ export async function dispatch(
     input = schemas[request.command].parse(request.input);
   // Parse per case to retain exact static DTO types after runtime validation.
   switch (request.command) {
+    case 'workspaceStatus':
+    case 'createWorkspaceBackup':
+      throw new DomainError(
+        'HOST_REQUIRED',
+        'Sao lưu và chẩn đoán cần workspace service của host.',
+      );
     case 'previewProcessClone': {
       const p = schemas.previewProcessClone.parse(input);
       return db.previewProcessClone(p.id, p.expectedRevision, p.options, hostId);

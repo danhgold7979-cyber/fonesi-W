@@ -1,5 +1,13 @@
 # Tiến độ implementation
 
+## Increment021 / P02-S020 + P13-S116/S117 — health và verified local backup
+
+Đã có status allowlist từ SQLite quick_check/schema/counts, host memory/runtime và filesystem capacity/available thật. Panel header tải diagnostic JSON chỉ chứa DTO đã xem, không private names/fields/paths/serials/env. Backup lưu app-owned canonical directory, one-at-a-time + disk reserve, SQLite online copy chờ serialized worker hoàn tất, đóng WAL thành tệp độc lập và kiểm integrity/FK/schema/migration checksums rồi hash ngoài worker. No-replace publish + durable receipt, restart retry/copy bị đổi/mất được kiểm; final file thiếu receipt có thể recover. Không ghi đè prior backups/source files. UI save ACK trước backup, giữ ID khi retry; đóng host đợi/abort công việc đang chạy.
+
+`pnpm check`: **220 tests /23 files**, generated/type/lint/build PASS. Full browser sau sửa fixture schema: **21 passed /0 failed/skipped/flaky**. Actual worker/FS tests xác minh backup contents/hash/restart/receipt recovery/corrupt/missing/path/symlink/low disk/concurrency/shutdown. Cả hai Python validators PASS. Chưa có restore/quiesce UI, structured run logs/retention/tray/power/staging disk enforcement hoặc Windows/Android acceptance.
+
+Read-only GitHub kiểm tra phát hiện CI Windows ở7b0cfc7 fail `check:generated` do checkout line endings; Ubuntu checks đã qua nhưng matrix bị fail-fast. Lỗi này chưa sửa trong021; tiếp tục P00/P14 với kế hoạch022, không báo toàn remote CI PASS.
+
 ## Increment020 / P07-S066/S067 — scoped spread/cancel preview
 
 Đã có named API, persisted proposal/checksum/expiry/host/epoch, exact apply và idempotency qua restart cho giãn lịch60–120 phút hoặc hủy nhóm đã chọn. Seed/gaps theo từng điện thoại, giữ anchor và chỉ dịch lịch về sau, cảnh báo crossing-day theo snapshot timezone. Chặn wrong revision, non-SCHEDULED/external intent, archived Process và same-device/same-instant ngoài scope; không đoán duration. Transaction giữ ID/snapshot/priority/bindings/history, không sửa jobs ngoài lựa chọn. UI chọn stable IDs, phân biệt scope đã tải, preview/hủy/apply/retry và reset selection khi filters/reload đổi.
