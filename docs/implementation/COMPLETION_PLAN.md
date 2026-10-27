@@ -16,7 +16,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 | P03 | Shell | Diagnostics, lifecycle, navigation/accessibility; Windows DPI/multi-monitor |
 | P04 | Workflow editor | Đã test thêm group/collapse/drag, convert local subflow, routing/align/layout; còn external clipboard closure/preferences/command search và interaction gates |
 | P05 | Compiler/engine | Đã test typed mapping/pinned closure/immutable IR/debugger/UI; còn comprehensive effect dominance/providers/DEVICE_TEST |
-| P06 | Process/media | Đã test archive/restore + source lifecycle; **tiếp theo:** clone preview/media ownership, adopt/rebind, thumbnails, query/migration UI gaps |
+| P06 | Process/media | Đã test archive/restore, clone preview/scoped ownership, rebind và explicit adoption; còn thumbnails/cache, query/migration UI gaps |
 | P07 | Scheduler | Đã test keyset paging/stale epoch/virtual timeline; còn dispatch/recovery/overdue, spread/auto-append/calendar |
 | P08 | Device/worker | Identity conflicts, worker coordination và physical Windows/Android receipts |
 | P09 | Stream/Inspector | Real stream decoder/control, richer selectors/OCR/Unicode/gestures, correlation |
@@ -28,7 +28,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 
 ## Thứ tự và cách báo tiến độ
 
-Mốc lưu mới nhất: increment016 / checkpoint009, sau012–015. Current source checks:193 unit/integration tests và17 browser scenarios qua; Linux authoring host đã restart với compiler/debugger và smoke API thật. **Không có phase nào được tự đổi thành ACCEPTED**: bảng trên phân biệt lát đã test và phần còn lại. Không có tiến trình coding nền tự tiếp tục sau khi phiên chat kết thúc; resume từ next work P06 trong bảng, giữ các commits đã kiểm tra.
+Mốc lưu mới nhất: increment019 / checkpoint012. Current source checks:208 unit/integration tests và19 browser scenarios qua. Linux host cần restart compiled output sau đợt increments mới; không tính host cũ là code mới đang phục vụ. **Không có phase nào được tự đổi thành ACCEPTED**: bảng trên phân biệt lát đã test và phần còn lại. Không có tiến trình coding nền tự tiếp tục sau khi phiên chat kết thúc; next work P07-S066/S067, giữ các commits đã kiểm tra.
 
 1. Hoàn thiện các lát P04 → P05 → P06 → P07 theo dependency; bổ sung P01–P03 khi lát đó cần contracts/persistence/shell.
 2. P08/P09 providers → P10 risk evidence → P11 effects → P12 adapters. Không hard-code app selectors hoặc tạo evidence giả khi chưa có profiles thật.

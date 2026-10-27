@@ -69,3 +69,34 @@ export interface ContentAssetInfo {
   state: 'READY' | 'CHANGED' | 'MISSING' | 'IGNORED' | 'UNTRACKED';
   probe: ScannedAsset['probe'] | null;
 }
+export interface MediaAdoptionPreview {
+  token: string;
+  expiresAt: string;
+  processId: string;
+  assetId: string;
+  relativePath: string;
+  previousHash: string;
+  nextHash: string;
+  bytes: number;
+  contentCount: number;
+  warnings: string[];
+}
+export interface MediaAdoptionResult {
+  process: import('./models.js').ProcessDefinition;
+  oldAssetId: string;
+  assetId: string;
+  contentIds: string[];
+  alreadyApplied: boolean;
+}
+/** Private host-only read capability. Never expose grant/rootPath to adoption requests. */
+export interface MediaAssetBinding {
+  grant: SourceGrant;
+  assetId: string;
+  relativePath: string;
+  expectedHash: string;
+  observedHash: string;
+  state: ContentAssetInfo['state'];
+}
+export type MediaAdoptionPlan =
+  | { status: 'APPLIED'; result: MediaAdoptionResult }
+  | { status: 'PENDING'; binding: MediaAssetBinding; scanned: ScannedAsset };

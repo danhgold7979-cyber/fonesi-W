@@ -21,6 +21,8 @@ import { localSlotToUtc } from '@autoreels/scheduler';
 const id = z.strictObject({ id: idSchema });
 const revision = z.number().int().nonnegative();
 export const mediaSchemas = {
+  previewMediaAdoption: z.strictObject({ processId: idSchema, assetId: idSchema }),
+  applyMediaAdoption: z.strictObject({ token: idSchema }),
   rebindSource: z.strictObject({ id: idSchema, expectedRevision: revision }),
   mediaCapabilities: z.strictObject({}),
   chooseSource: z.strictObject({
@@ -246,6 +248,8 @@ export async function dispatch(
       return exportContentFile(db.exportContent(p.processId, p.contentIds), p.format);
     }
     case 'mediaCapabilities':
+    case 'previewMediaAdoption':
+    case 'applyMediaAdoption':
     case 'rebindSource':
     case 'chooseSource':
     case 'sources':

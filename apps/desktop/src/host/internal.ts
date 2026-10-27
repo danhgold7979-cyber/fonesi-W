@@ -1,5 +1,6 @@
 import type {
   ScannedAsset,
+  MediaAssetBinding,
   SourceGrant,
   DeviceLease,
   TransportObservation,
@@ -7,6 +8,10 @@ import type {
 import type { StudioDatabase } from '@autoreels/database';
 /** This union is never exported through preload, HTTP or the public service dispatcher. */
 export type InternalRequest =
+  | { command: 'asset.binding'; processId: string; assetId: string; hostId: string }
+  | { command: 'asset.adoptPreview'; binding: MediaAssetBinding; scanned: ScannedAsset }
+  | { command: 'asset.adoptPlan'; token: string; hostId: string }
+  | { command: 'asset.adoptApply'; token: string; hostId: string; scanned: ScannedAsset }
   | { command: 'endpoint.list'; hostId: string }
   | {
       command: 'endpoint.set';
@@ -85,6 +90,21 @@ export type InternalRequest =
     };
 export function dispatchInternal(db: StudioDatabase, request: InternalRequest): unknown {
   switch (request.command) {
+    case 'asset.binding':
+      return db.mediaAssetBinding(request.processId, request.assetId, request.hostId);
+    case 'asset.adoptPreview':
+      return db.previewMediaAdoption(
+        request.binding.grant.processId,
+        request.binding.assetId,
+        request.binding.grant.hostId,
+        request.scanned,
+        undefined,
+        request.binding,
+      );
+    case 'asset.adoptPlan':
+      return db.mediaAdoptionPlan(request.token, request.hostId);
+    case 'asset.adoptApply':
+      return db.applyMediaAdoption(request.token, request.hostId, request.scanned);
     case 'endpoint.list':
       return db.deviceEndpoints(request.hostId);
     case 'endpoint.set':

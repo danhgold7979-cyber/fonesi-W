@@ -1,4 +1,5 @@
 import type { InspectorSnapshot } from './inspector.js';
+import type { MediaAdoptionPreview, MediaAdoptionResult } from './media.js';
 import type { DebugAction, DebugSnapshot } from './debug.js';
 import type { ProcessCloneOptions, ProcessClonePreview, ProcessCloneResult } from './processes.js';
 import type { DeviceSnapshot, DeviceCapture, ManualDeviceAction } from './devices.js';
@@ -44,6 +45,8 @@ export interface TraceReportDto {
   issues: ValidationIssue[];
 }
 export interface StudioApi {
+  previewMediaAdoption(processId: string, assetId: string): Promise<MediaAdoptionPreview>;
+  applyMediaAdoption(token: string): Promise<MediaAdoptionResult>;
   rebindSource(
     id: string,
     expectedRevision: number,
@@ -150,6 +153,8 @@ export interface StudioApi {
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
+  | 'previewMediaAdoption'
+  | 'applyMediaAdoption'
   | 'rebindSource'
   | 'previewProcessClone'
   | 'applyProcessClone'
@@ -210,6 +215,9 @@ export function createStudioApi(transport: Transport): StudioApi {
   const call = <T>(command: ApiCommand, input: unknown = {}): Promise<T> =>
     transport(command, input) as Promise<T>;
   return {
+    previewMediaAdoption: (processId, assetId) =>
+      call('previewMediaAdoption', { processId, assetId }),
+    applyMediaAdoption: (token) => call('applyMediaAdoption', { token }),
     rebindSource: (id, expectedRevision) => call('rebindSource', { id, expectedRevision }),
     previewProcessClone: (id, expectedRevision, options) =>
       call('previewProcessClone', { id, expectedRevision, options }),

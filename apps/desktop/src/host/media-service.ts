@@ -1,7 +1,21 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { approveNativeSource, MediaCoordinator } from '@autoreels/media';
+import {
+  approveNativeSource,
+  MediaCoordinator,
+  resolveGrantedFile,
+  fingerprint,
+  probeMedia,
+  mediaKind,
+} from '@autoreels/media';
+import type {
+  MediaAssetBinding,
+  MediaAdoptionPlan,
+  MediaAdoptionResult,
+  MediaAdoptionPreview,
+  ScannedAsset,
+} from '@autoreels/contracts';
 import type { ApiCommand, SourceDefinition, SourceGrant } from '@autoreels/contracts';
 import { assertJsonSafe } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
@@ -28,6 +42,50 @@ export async function loadHostId(directory: string): Promise<string> {
   return id;
 }
 export class HostMediaService {
+  private closed = false;
+  private mediaReads = new Set<Promise<unknown>>();
+  private readControllers = new Set<AbortController>();
+  private withMediaRead<T>(work: (signal: AbortSignal) => Promise<T>): Promise<T> {
+    if (this.closed)
+      return Promise.reject(new DomainError('MEDIA_CLOSED', 'Media service đã đóng.'));
+    if (this.mediaReads.size >= 2)
+      return Promise.reject(
+        new DomainError('MEDIA_BUSY', 'Đang đọc fingerprint; đợi thao tác hiện tại hoàn tất.'),
+      );
+    const controller = new AbortController(),
+      task = work(controller.signal);
+    this.readControllers.add(controller);
+    this.mediaReads.add(task);
+    void task
+      .finally(() => {
+        this.readControllers.delete(controller);
+        this.mediaReads.delete(task);
+      })
+      .catch(() => undefined);
+    return task;
+  }
+  private async readMedia(binding: MediaAssetBinding, signal: AbortSignal): Promise<ScannedAsset> {
+    if (signal.aborted) throw new DomainError('CANCELLED', 'Đã hủy đọc media.');
+    const path = await resolveGrantedFile(binding.grant, binding.relativePath, this.hostId);
+    const before = await stat(path),
+      kind = mediaKind(path);
+    if (!kind) throw new DomainError('INVALID_MEDIA', 'Loại media không được hỗ trợ.');
+    const value = await fingerprint(path, signal),
+      probe = await probeMedia(path, 'ffprobe', signal);
+    const after = await stat(path);
+    if (
+      before.ino !== after.ino ||
+      after.size !== value.bytes ||
+      after.mtimeMs !== value.mtimeMs ||
+      (await resolveGrantedFile(binding.grant, binding.relativePath, this.hostId)) !== path
+    )
+      throw new DomainError(
+        'FILE_CHANGED_DURING_READ',
+        'Tệp thay đổi trong khi đọc; xem trước lại.',
+      );
+    if (signal.aborted) throw new DomainError('CANCELLED', 'Đã hủy đọc media.');
+    return { ...value, kind, relativePath: binding.relativePath, probe };
+  }
   readonly coordinator: MediaCoordinator;
   private choosing = false;
   constructor(
@@ -58,6 +116,40 @@ export class HostMediaService {
     if (!Object.hasOwn(mediaSchemas, command)) return this.db.request(command, input);
     assertJsonSafe(input);
     switch (command) {
+      case 'previewMediaAdoption': {
+        const p = mediaSchemas.previewMediaAdoption.parse(input);
+        return this.withMediaRead(async (signal) => {
+          const binding = await this.db.internal<MediaAssetBinding>({
+            command: 'asset.binding',
+            ...p,
+            hostId: this.hostId,
+          });
+          const scanned = await this.readMedia(binding, signal);
+          return this.db.internal<MediaAdoptionPreview>({
+            command: 'asset.adoptPreview',
+            binding,
+            scanned,
+          });
+        });
+      }
+      case 'applyMediaAdoption': {
+        const p = mediaSchemas.applyMediaAdoption.parse(input);
+        return this.withMediaRead(async (signal) => {
+          const plan = await this.db.internal<MediaAdoptionPlan>({
+            command: 'asset.adoptPlan',
+            token: p.token,
+            hostId: this.hostId,
+          });
+          if (plan.status === 'APPLIED') return plan.result;
+          const scanned = await this.readMedia(plan.binding, signal);
+          return this.db.internal<MediaAdoptionResult>({
+            command: 'asset.adoptApply',
+            token: p.token,
+            hostId: this.hostId,
+            scanned,
+          });
+        });
+      }
       case 'mediaCapabilities':
         mediaSchemas.mediaCapabilities.parse(input);
         return { nativeChooser: Boolean(this.picker) };
@@ -176,6 +268,9 @@ export class HostMediaService {
     throw new DomainError('INVALID_REQUEST', 'Unsupported media operation');
   }
   async close(): Promise<void> {
+    this.closed = true;
+    for (const controller of this.readControllers) controller.abort();
+    await Promise.allSettled([...this.mediaReads]);
     await this.coordinator.close();
   }
 }

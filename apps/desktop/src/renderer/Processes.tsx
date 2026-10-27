@@ -16,6 +16,7 @@ import { ContentActions } from './ContentActions.js';
 import { ContentFields } from './ContentFields.js';
 import { ProcessArchive } from './ProcessArchive.js';
 import { ProcessClone } from './ProcessClone.js';
+import { replaceAssetReferences } from '@autoreels/contracts';
 
 interface Props {
   deviceScope?: string | null;
@@ -519,6 +520,35 @@ export function Processes(props: Props) {
               save={save}
               notify={props.notify}
               onAssets={setAssets}
+              onAdopted={async (result) => {
+                const state = live.current;
+                if (state.current?.id === result.process.id) {
+                  const next = state.dirty
+                    ? {
+                        ...state.current,
+                        revision: result.process.revision,
+                        fields: replaceAssetReferences(
+                          processSchema,
+                          state.current.fields ?? {},
+                          'process',
+                          result.oldAssetId,
+                          result.assetId,
+                        ),
+                      }
+                    : result.process;
+                  live.current = { ...state, current: next };
+                  context.current = next;
+                  setCurrent(next);
+                  if (state.validInputs) setProcessJson(JSON.stringify(next.fields ?? {}, null, 2));
+                  setPreview(null);
+                }
+                await props.refresh();
+                props.notify(
+                  result.alreadyApplied
+                    ? 'Phiên bản media đã được tiếp nhận; không tạo thêm.'
+                    : 'Đã tiếp nhận media mới và giữ nguyên lịch sử cũ.',
+                );
+              }}
               onContentChanged={() => {
                 const id = current.id,
                   token = ++rowGeneration.current;

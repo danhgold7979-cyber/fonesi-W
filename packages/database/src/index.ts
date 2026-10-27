@@ -14,6 +14,7 @@ import {
   validateTypedValues,
   inputReferences,
   processCloneOptionsSchema,
+  replaceAssetReferences,
 } from '@autoreels/contracts';
 import type {
   AppDefinition,
@@ -24,6 +25,10 @@ import type {
   ProcessCloneOptions,
   ProcessClonePreview,
   ProcessCloneResult,
+  MediaAssetBinding,
+  MediaAdoptionPreview,
+  MediaAdoptionResult,
+  MediaAdoptionPlan,
   ContentItem,
   MediaAsset,
   JobDefinition,
@@ -2515,6 +2520,244 @@ export class StudioDatabase {
         'SELECT s.id,s.host_id,s.active,s.process_id FROM sources s JOIN source_entries e ON e.source_id=s.id WHERE e.asset_id=? AND s.process_id=? ORDER BY s.active DESC,s.id LIMIT 1',
       )
       .get(assetId, processId);
+  }
+  /** Main-only file capability lookup; public adoption calls accept IDs instead of paths. */
+  mediaAssetBinding(processId: string, assetId: string, hostId: string): MediaAssetBinding {
+    const process = this.getProcess(processId);
+    if (process.archived) throw new DomainError('PROCESS_ARCHIVED', 'Tiến trình đã lưu trữ.');
+    const asset = this.listContentAssets(processId).find((a) => a.id === assetId);
+    const source = this.assetSource(assetId, processId);
+    if (!asset || !source)
+      throw new DomainError(
+        'INVALID_ASSET_SCOPE',
+        'Media không có nguồn đã đăng ký trong tiến trình.',
+      );
+    const grant = this.getSourceGrant(String(source.id), hostId);
+    if (!grant.active) throw new DomainError('SOURCE_INACTIVE', 'Nguồn đã ngừng sử dụng.');
+    const entries = this.db
+      .prepare(
+        'SELECT e.* FROM source_entries e JOIN sources s ON s.id=e.source_id WHERE e.asset_id=? AND s.process_id=? AND s.active=1',
+      )
+      .all(assetId, processId);
+    if (entries.length !== 1)
+      throw new DomainError(
+        'MEDIA_AMBIGUOUS',
+        'Media có nhiều source bindings; đối chiếu nguồn trước.',
+      );
+    const entry = entries[0]!;
+    if (entry.state === 'IGNORED') throw new DomainError('MEDIA_IGNORED', 'Media đã bị bỏ qua.');
+    return {
+      grant,
+      assetId,
+      relativePath: String(entry.relative_path),
+      expectedHash: asset.hash,
+      observedHash: String(entry.observed_hash),
+      state: entry.state as ContentAssetInfo['state'],
+    };
+  }
+  private mediaAdoptionContext(processId: string, assetId: string, hostId: string) {
+    const binding = this.mediaAssetBinding(processId, assetId, hostId),
+      process = this.getProcess(processId);
+    const schema = this.inputSchema(process)?.inputs ?? [];
+    const rows = this.listContent(processId).filter(
+      (row) =>
+        row.assetIds.includes(assetId) ||
+        inputReferences(schema, row.fields, 'row').assets.includes(assetId),
+    );
+    if (rows.length > 5000)
+      throw new DomainError(
+        'RESOURCE_BUDGET',
+        'Tiếp nhận tối đa5000 nội dung tham chiếu trong một thao tác.',
+      );
+    return {
+      binding,
+      process,
+      rows,
+      schema,
+      workflowRevision: process.workflowVersionId
+        ? this.getVersion(process.workflowVersionId).hash
+        : process.workflowId
+          ? this.getDraft(process.workflowId).revision
+          : null,
+    };
+  }
+  previewMediaAdoption(
+    processId: string,
+    assetId: string,
+    hostId: string,
+    scanned: ScannedAsset,
+    at = now(),
+    expected?: MediaAssetBinding,
+  ): MediaAdoptionPreview {
+    assertJsonSafe(scanned);
+    hashSchema.parse(scanned.hash);
+    return this.transaction(() => {
+      const context = this.mediaAdoptionContext(processId, assetId, hostId);
+      if (
+        expected &&
+        (contentHash(expected.grant) !== contentHash(context.binding.grant) ||
+          expected.expectedHash !== context.binding.expectedHash ||
+          expected.relativePath !== context.binding.relativePath)
+      )
+        throw new DomainError(
+          'SOURCE_CHANGED',
+          'Nguồn đã đổi trong khi đọc fingerprint; xem trước lại.',
+        );
+      if (scanned.relativePath !== context.binding.relativePath)
+        throw new DomainError('INVALID_ASSET_SCOPE', 'Fingerprint thuộc binding khác.');
+      if (scanned.hash === context.binding.expectedHash)
+        throw new DomainError(
+          'MEDIA_UNCHANGED',
+          'Tệp vẫn khớp hash đã lưu; quét lại nguồn để cập nhật trạng thái.',
+        );
+      const token = makeId('adopt'),
+        expiresAt = new Date(Date.parse(at) + 300000).toISOString();
+      const payload = { contextHash: contentHash(context), scanned };
+      this.db
+        .prepare('INSERT INTO media_adoption_previews VALUES(?,?,?,?,?,?,?,NULL)')
+        .run(
+          token,
+          processId,
+          assetId,
+          hostId,
+          canonicalJson(payload),
+          contentHash(payload),
+          expiresAt,
+        );
+      return {
+        token,
+        expiresAt,
+        processId,
+        assetId,
+        relativePath: scanned.relativePath,
+        previousHash: context.binding.expectedHash,
+        nextHash: scanned.hash,
+        bytes: scanned.bytes,
+        contentCount: context.rows.length,
+        warnings: [
+          'Cập nhật tham chiếu trong tiến trình này; giữ nguyên ID nội dung.',
+          'Jobs và snapshot đã tạo tiếp tục giữ hash cũ. Không tự đăng lại hoặc sửa kết quả đã có.',
+        ],
+      };
+    });
+  }
+  mediaAdoptionPlan(token: string, hostId: string, at = now()): MediaAdoptionPlan {
+    idSchema.parse(token);
+    const record = this.db
+      .prepare('SELECT * FROM media_adoption_previews WHERE token=?')
+      .get(token);
+    if (!record) throw new DomainError('NOT_FOUND', 'Không tìm thấy bản xem trước media.');
+    if (record.host_id !== hostId)
+      throw new DomainError('ADOPTION_HOST', 'Bản xem trước thuộc host khác.');
+    if (record.result !== null) {
+      const result = parse<{
+        processId: string;
+        oldAssetId: string;
+        assetId: string;
+        contentIds: string[];
+      }>(record.result);
+      return {
+        status: 'APPLIED',
+        result: {
+          process: this.getProcess(result.processId),
+          oldAssetId: result.oldAssetId,
+          assetId: result.assetId,
+          contentIds: result.contentIds,
+          alreadyApplied: true,
+        },
+      };
+    }
+    if (Date.parse(at) >= Date.parse(String(record.expires_at)))
+      throw new DomainError('PREVIEW_EXPIRED', 'Bản xem trước media đã hết hạn.');
+    const payload = parse<{ contextHash: string; scanned: ScannedAsset }>(record.payload);
+    if (contentHash(payload) !== record.payload_hash)
+      throw new DomainError('PREVIEW_TAMPERED', 'Checksum media preview không khớp.');
+    const context = this.mediaAdoptionContext(
+      String(record.process_id),
+      String(record.asset_id),
+      hostId,
+    );
+    if (contentHash(context) !== payload.contextHash)
+      throw new DomainError('PREVIEW_STALE', 'Nguồn, nội dung hoặc schema đã đổi; xem trước lại.');
+    return { status: 'PENDING', binding: context.binding, scanned: payload.scanned };
+  }
+  applyMediaAdoption(
+    token: string,
+    hostId: string,
+    actual: ScannedAsset,
+    at = now(),
+  ): MediaAdoptionResult {
+    assertJsonSafe(actual);
+    hashSchema.parse(actual.hash);
+    return this.transaction(() => {
+      const plan = this.mediaAdoptionPlan(token, hostId, at);
+      if (plan.status === 'APPLIED') return plan.result;
+      if (
+        actual.hash !== plan.scanned.hash ||
+        actual.bytes !== plan.scanned.bytes ||
+        actual.mtimeMs !== plan.scanned.mtimeMs ||
+        actual.relativePath !== plan.scanned.relativePath ||
+        actual.kind !== plan.scanned.kind
+      )
+        throw new DomainError(
+          'MEDIA_CHANGED_AGAIN',
+          'Tệp đã đổi thêm sau xem trước; chưa cập nhật dữ liệu.',
+        );
+      const oldAssetId = plan.binding.assetId,
+        processId = plan.binding.grant.processId;
+      const context = this.mediaAdoptionContext(processId, oldAssetId, hostId),
+        assetId = makeId('asset');
+      this.db
+        .prepare('INSERT INTO assets VALUES(?,?,?,?,?,?,?)')
+        .run(
+          assetId,
+          plan.binding.grant.id,
+          actual.relativePath,
+          actual.hash,
+          actual.kind,
+          actual.bytes,
+          actual.mtimeMs,
+        );
+      this.db
+        .prepare('INSERT INTO asset_metadata VALUES(?,?)')
+        .run(assetId, canonicalJson(actual.probe));
+      this.db
+        .prepare(
+          "UPDATE source_entries SET asset_id=?,hash=?,observed_hash=?,state='READY' WHERE source_id=? AND asset_id=?",
+        )
+        .run(assetId, actual.hash, actual.hash, plan.binding.grant.id, oldAssetId);
+      const contentIds: string[] = [];
+      for (const row of context.rows) {
+        this.insertContent(
+          {
+            ...row,
+            fields: replaceAssetReferences(context.schema, row.fields, 'row', oldAssetId, assetId),
+            assetIds: row.assetIds.map((id) => (id === oldAssetId ? assetId : id)),
+          },
+          row.revision,
+        );
+        contentIds.push(row.id);
+      }
+      const process: ProcessDefinition = {
+        ...context.process,
+        revision: context.process.revision + 1,
+        fields: replaceAssetReferences(
+          context.schema,
+          context.process.fields ?? {},
+          'process',
+          oldAssetId,
+          assetId,
+        ),
+      };
+      this.assertInputValues(process, process.fields ?? {}, 'process', false);
+      for (const row of this.listContent(processId).filter((r) => contentIds.includes(r.id)))
+        this.assertInputValues(process, row.fields, 'row', false);
+      this.writeProcess(process);
+      this.db
+        .prepare('UPDATE media_adoption_previews SET result=? WHERE token=?')
+        .run(canonicalJson({ processId, oldAssetId, assetId, contentIds }), token);
+      return { process, oldAssetId, assetId, contentIds, alreadyApplied: false };
+    });
   }
   getSourceGrant(id: string, hostId: string): SourceGrant {
     const grant = this.sourceBinding(id);

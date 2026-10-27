@@ -2,10 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, writeFile, mkdir, realpath, rm, readFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { ProcessDefinition, SourceDefinition, SourceGrant } from '@autoreels/contracts';
+import type {
+  MediaAdoptionPreview,
+  MediaAdoptionResult,
+  ProcessDefinition,
+  SourceDefinition,
+  SourceGrant,
+} from '@autoreels/contracts';
+import { DatabaseSync } from 'node:sqlite';
 import { StudioDatabase } from '@autoreels/database';
 import { DomainError } from '@autoreels/domain';
-import { MediaCoordinator, type MediaRepository } from '@autoreels/media';
+import { MediaCoordinator, fingerprint, type MediaRepository } from '@autoreels/media';
 import { HostMediaService, loadHostId } from '../apps/desktop/src/host/media-service.js';
 import { dispatchInternal } from '../apps/desktop/src/host/internal.js';
 import { dispatch } from '../apps/desktop/src/host/service.js';
@@ -89,6 +96,256 @@ function host(
   return service;
 }
 describe('native grants and host boundary', () => {
+  async function changedMedia() {
+    const filename = join(dir, 'changed.mp4');
+    await writeFile(filename, 'original immutable media');
+    const s = await source('FILE', filename),
+      c = coordinator();
+    await c.start(s.id);
+    await c.idle(s.id);
+    const row = db.listContent(processInput.id)[0]!,
+      assetId = row.assetIds[0]!;
+    await writeFile(filename, 'new bytes for explicit adoption');
+    await c.start(s.id);
+    await c.idle(s.id);
+    expect(db.listContentAssets(processInput.id)[0]?.state).toBe('CHANGED');
+    return { filename, s, row, assetId, service: host() };
+  }
+  it('adopts actual changed bytes atomically with stable content IDs, ordered typed refs and immutable old snapshots', async () => {
+    const { filename, row, assetId, service } = await changedMedia();
+    const draft = db.createWorkflow('fb', 'Adoption schema');
+    draft.bundle.inputs = [
+      { key: 'file', type: 'file', scope: 'row', required: false },
+      { key: 'files', type: 'file[]', scope: 'row', required: false },
+      { key: 'cover', type: 'file', scope: 'process', required: false },
+      { key: 'text', type: 'text', scope: 'row', required: false },
+    ];
+    db.saveDraft(draft.bundle, 0);
+    const version = db.createVersion(draft.workflowId, 1);
+    db.registerObservedDevice('device_adopt_fixture', 'Adopt fixture');
+    const process = db.saveProcess(
+      {
+        ...processInput,
+        deviceId: 'device_adopt_fixture',
+        workflowId: draft.workflowId,
+        workflowVersionId: version.id,
+        fields: { cover: { assetId } },
+      },
+      0,
+    );
+    db.saveContent(
+      { ...row, fields: { file: { assetId }, files: [{ assetId }, { assetId }], text: assetId } },
+      row.revision,
+    );
+    const snapshot = {
+      workflowVersionId: version.id,
+      workflowHash: version.hash,
+      bundle: version.bundle,
+      contentId: row.id,
+      fields: { file: { assetId } },
+      assetIds: [assetId],
+      targetId: null,
+      networkProfileId: null,
+    };
+    db.createJob(
+      {
+        id: 'job_adopt_fixture',
+        occurrenceKey: 'a'.repeat(64),
+        processId: process.id,
+        deviceId: process.deviceId!,
+        contentId: row.id,
+        scheduledUtc: '2035-01-01T00:00:00.000Z',
+        state: 'SCHEDULED',
+        revision: 0,
+        priority: 0,
+      },
+      snapshot,
+    );
+    const job = db.getJob('job_adopt_fixture');
+    const clone = db.applyProcessClone(
+      db.previewProcessClone(
+        process.id,
+        process.revision,
+        {
+          name: 'Other Process keeps old bytes',
+          includeContent: true,
+          includeSources: true,
+          keepDevice: false,
+        },
+        hostId,
+      ).token,
+      hostId,
+    );
+    const otherBefore = db.listContent(clone.process.id);
+    const before = db.listContent(process.id);
+    const preview = (await service.request('previewMediaAdoption', {
+      processId: process.id,
+      assetId,
+    })) as MediaAdoptionPreview;
+    expect(preview).toMatchObject({
+      contentCount: 1,
+      nextHash: (await fingerprint(filename)).hash,
+    });
+    expect(db.listContent(process.id)).toEqual(before);
+    const adopted = (await service.request('applyMediaAdoption', {
+      token: preview.token,
+    })) as MediaAdoptionResult;
+    expect(adopted.assetId).not.toBe(assetId);
+    expect(adopted).toMatchObject({
+      oldAssetId: assetId,
+      contentIds: [row.id],
+      alreadyApplied: false,
+    });
+    expect(db.listContent(process.id)[0]).toMatchObject({
+      id: row.id,
+      revision: before[0]!.revision + 1,
+      assetIds: [adopted.assetId],
+      fields: {
+        file: { assetId: adopted.assetId },
+        files: [{ assetId: adopted.assetId }, { assetId: adopted.assetId }],
+        text: assetId,
+      },
+    });
+    expect(adopted.process).toMatchObject({
+      revision: process.revision + 1,
+      fields: { cover: { assetId: adopted.assetId } },
+    });
+    expect(db.listContentAssets(process.id)[0]).toMatchObject({
+      id: adopted.assetId,
+      state: 'READY',
+      hash: preview.nextHash,
+    });
+    expect(db.getJob(job.job.id)).toEqual(job);
+    expect(db.listContent(clone.process.id)).toEqual(otherBefore);
+    expect(db.listContentAssets(clone.process.id)[0]?.hash).toBe(preview.previousHash);
+    await rm(filename);
+    db.close();
+    db = new StudioDatabase(join(dir, 'studio.sqlite'));
+    await expect(
+      service.request('applyMediaAdoption', { token: preview.token }),
+    ).resolves.toMatchObject({ assetId: adopted.assetId, alreadyApplied: true });
+  });
+  it('rejects changed-again, stale row and source context, expired/tampered/foreign previews and raw paths', async () => {
+    const { filename, row, assetId, s, service } = await changedMedia();
+    const prepare = () =>
+      service.request('previewMediaAdoption', {
+        processId: processInput.id,
+        assetId,
+      }) as Promise<MediaAdoptionPreview>;
+    const first = await prepare();
+    await writeFile(filename, 'changed a second time after preview');
+    await expect(
+      service.request('applyMediaAdoption', { token: first.token }),
+    ).rejects.toMatchObject({ code: 'MEDIA_CHANGED_AGAIN' });
+    const stale = await prepare();
+    db.saveContent({ ...row, fields: { note: 'local edit' } }, row.revision);
+    await expect(
+      service.request('applyMediaAdoption', { token: stale.token }),
+    ).rejects.toMatchObject({ code: 'PREVIEW_STALE' });
+    const staleSource = await prepare();
+    db.updateSourceOptions(s.id, hostId, s.revision, {
+      recursive: false,
+      watch: true,
+      active: true,
+    });
+    await expect(
+      service.request('applyMediaAdoption', { token: staleSource.token }),
+    ).rejects.toMatchObject({ code: 'PREVIEW_STALE' });
+    const expiring = await prepare();
+    expect(() => db.mediaAdoptionPlan(expiring.token, hostId, expiring.expiresAt)).toThrow(
+      'hết hạn',
+    );
+    await expect(
+      host(undefined, 'other_host').request('applyMediaAdoption', { token: expiring.token }),
+    ).rejects.toMatchObject({ code: 'ADOPTION_HOST' });
+    await expect(
+      host(undefined, 'other_host').request('previewMediaAdoption', {
+        processId: processInput.id,
+        assetId,
+      }),
+    ).rejects.toMatchObject({ code: 'SOURCE_REBIND_REQUIRED' });
+    await expect(
+      service.request('previewMediaAdoption', {
+        processId: processInput.id,
+        assetId,
+        rootPath: filename,
+      }),
+    ).rejects.toThrow();
+    const raw = new DatabaseSync(join(dir, 'studio.sqlite'));
+    raw
+      .prepare('UPDATE media_adoption_previews SET payload=? WHERE token=?')
+      .run('{}', expiring.token);
+    raw.close();
+    await expect(
+      service.request('applyMediaAdoption', { token: expiring.token }),
+    ).rejects.toMatchObject({ code: 'PREVIEW_TAMPERED' });
+    expect(db.listContentAssets(processInput.id)[0]?.id).toBe(assetId);
+  });
+  it('rolls back adoption if a row update fails and can safely retry the original token', async () => {
+    const { assetId, row, service } = await changedMedia();
+    const preview = (await service.request('previewMediaAdoption', {
+      processId: processInput.id,
+      assetId,
+    })) as MediaAdoptionPreview;
+    const before = db.listContent(processInput.id),
+      process = db.getProcess(processInput.id);
+    const raw = new DatabaseSync(join(dir, 'studio.sqlite'));
+    raw.exec(
+      "CREATE TRIGGER fail_adoption BEFORE UPDATE ON content_items BEGIN SELECT RAISE(ABORT,'adoption fixture failure'); END;",
+    );
+    await expect(service.request('applyMediaAdoption', { token: preview.token })).rejects.toThrow(
+      'adoption fixture failure',
+    );
+    expect(db.listContent(processInput.id)).toEqual(before);
+    expect(db.getProcess(processInput.id)).toEqual(process);
+    expect(db.listContentAssets(processInput.id)[0]).toMatchObject({
+      id: assetId,
+      state: 'CHANGED',
+    });
+    raw.exec('DROP TRIGGER fail_adoption');
+    raw.close();
+    await expect(
+      service.request('applyMediaAdoption', { token: preview.token }),
+    ).resolves.toMatchObject({ contentIds: [row.id], alreadyApplied: false });
+  });
+  it('bounds concurrent file reads and aborts adoption reads on host shutdown', async () => {
+    let resume: (() => void) | undefined;
+    const blocking = new Promise<void>((resolve) => {
+      resume = resolve;
+    });
+    const service = new HostMediaService(
+      {
+        request: async () => null,
+        internal: async <T>() => {
+          await blocking;
+          return {} as T;
+        },
+      },
+      hostId,
+    );
+    const one = service.request('previewMediaAdoption', {
+      processId: processInput.id,
+      assetId: 'asset_pending',
+    });
+    const two = service.request('previewMediaAdoption', {
+      processId: processInput.id,
+      assetId: 'asset_pending',
+    });
+    await expect(
+      service.request('previewMediaAdoption', {
+        processId: processInput.id,
+        assetId: 'asset_pending',
+      }),
+    ).rejects.toMatchObject({ code: 'MEDIA_BUSY' });
+    const closed = service.close();
+    resume!();
+    await expect(one).rejects.toMatchObject({ code: 'CANCELLED' });
+    await expect(two).rejects.toMatchObject({ code: 'CANCELLED' });
+    await closed;
+    await expect(
+      service.request('applyMediaAdoption', { token: 'adopt_pending' }),
+    ).rejects.toMatchObject({ code: 'MEDIA_CLOSED' });
+  });
   it('rebinds a relocated folder through the native picker without changing content/asset IDs or accepting stale scans', async () => {
     const root = join(dir, 'original'),
       moved = join(dir, 'moved');

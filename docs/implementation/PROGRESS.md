@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment019 / P06-S054 — tiếp nhận media đã đổi
+
+Đã có preview/apply từ ID có scoped host grant, hash/probe tệp thật ngoài DB worker, giới hạn hai lượt đọc đồng thời và abort khi đóng host. Preview lưu descriptor/checksum/context hash/expiry, apply kiểm tra lại tệp và context rồi remap typed file/file[]/ordered asset refs atomically sang immutable asset ID mới. Giữ ContentItem IDs, asset records cũ, Process khác và mọi job snapshot. Retry cùng token qua restart trả kết quả cũ kể cả source file đã mất sau commit. UI có preview/hủy/xác nhận và giữ pending Process edits khi nhận ACK.
+
+`pnpm check`: **208 tests /21 files**, generated/type/lint/build PASS. Full browser: **19 passed /0 failed/skipped/flaky**. Test filesystem/SQLite gồm changed-again/stale/source/expiry/foreign/tamper/raw-path rejection, transaction rollback/retry, immutable old job/other Process và read concurrency/shutdown; browser kiểm cancel rồi apply file thật và giữ local edits. Native Windows/Android acceptance vẫn NOT_RUN. P06 còn thumbnail/cache, content query và schema migration UI. Tiếp theo P07-S066/S067 về preview/apply giãn lịch có scope.
+
 ## Increment018 / P06-S052 — native source rebind
 
 Đã thêm chọn lại nguồn qua host dialog có canonical approval, không nhận paths/host/kind từ renderer. Giữ source/content/asset IDs khi chuyển thư mục/đổi tên tệp, remap bound basename/ignore ledger atomic, tăng revision/fence scan cũ và bắt buộc đối chiếu tệp thật trước READY. Khác bytes vẫn CHANGED; source inactive có thể chọn lại explicit, foreign-host chỉ đổi binding sau native approval. Không sửa immutable job snapshots. Scan restart sau cancel chờ task bị abort kết thúc trước khi tạo scan mới.

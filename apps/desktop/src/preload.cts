@@ -3,6 +3,9 @@ const { contextBridge, ipcRenderer } = require('electron') as typeof import('ele
 const send = <T,>(command: ApiCommand, input: unknown = {}): Promise<T> =>
   ipcRenderer.invoke('studio:request', { command, input }) as Promise<T>;
 const api: StudioApi = {
+  previewMediaAdoption: (processId, assetId) =>
+    send('previewMediaAdoption', { processId, assetId }),
+  applyMediaAdoption: (token) => send('applyMediaAdoption', { token }),
   rebindSource: (id, expectedRevision) => send('rebindSource', { id, expectedRevision }),
   previewProcessClone: (id, expectedRevision, options) =>
     send('previewProcessClone', { id, expectedRevision, options }),

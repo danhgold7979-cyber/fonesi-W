@@ -2,6 +2,28 @@ import type { FieldDefinition, JsonValue, ValidationIssue } from './types.js';
 import { isSafeKey, assertJsonSafe } from './validation.js';
 import { timezoneSchema, localDateSchema } from './models.js';
 
+/** Replace only declared file references; ordinary text and identity fields stay untouched. */
+export function replaceAssetReferences(
+  fields: readonly FieldDefinition[],
+  values: Record<string, JsonValue>,
+  scope: FieldDefinition['scope'],
+  from: string,
+  to: string,
+): Record<string, JsonValue> {
+  const next = structuredClone(values);
+  const replace = (value: JsonValue): JsonValue =>
+    value && typeof value === 'object' && !Array.isArray(value) && value.assetId === from
+      ? { assetId: to }
+      : value;
+  for (const field of fields) {
+    if (field.scope !== scope || !Object.hasOwn(next, field.key)) continue;
+    if (field.type === 'file') next[field.key] = replace(next[field.key]!);
+    const value = next[field.key];
+    if (field.type === 'file[]' && Array.isArray(value)) next[field.key] = value.map(replace);
+  }
+  return next;
+}
+
 function isRef(v: unknown, key: string): boolean {
   return (
     typeof v === 'object' &&

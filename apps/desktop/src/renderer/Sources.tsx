@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ContentAssetInfo, ProcessDefinition, SourceState } from '@autoreels/contracts';
+import type {
+  ContentAssetInfo,
+  MediaAdoptionResult,
+  ProcessDefinition,
+  SourceState,
+} from '@autoreels/contracts';
 import { api } from './api.js';
+import { MediaAdoption } from './MediaAdoption.js';
 
 const scanLabels = {
   QUEUED: 'Đang đợi',
@@ -15,9 +21,11 @@ interface Props {
   notify: (message: string) => void;
   onAssets: (assets: ContentAssetInfo[]) => void;
   onContentChanged: () => void;
+  onAdopted: (result: MediaAdoptionResult) => Promise<void>;
 }
 export function Sources(props: Props) {
   const [sources, setSources] = useState<SourceState[]>([]),
+    [assets, setAssets] = useState<ContentAssetInfo[]>([]),
     [native, setNative] = useState(false),
     [recursive, setRecursive] = useState(false),
     [watch, setWatch] = useState(true),
@@ -42,6 +50,7 @@ export function Sources(props: Props) {
         ]);
         if (!active || token !== generation) return;
         setSources(list);
+        setAssets(assets);
         setError('');
         live.current.onAssets(assets);
         const nextSignature = JSON.stringify([
@@ -136,6 +145,16 @@ export function Sources(props: Props) {
         </p>
       )}
       {error && <p role="alert">{error}</p>}
+      <MediaAdoption
+        processId={props.process.id}
+        assets={assets}
+        save={props.save}
+        committed={async (result) => {
+          await live.current.onAdopted(result);
+          await reload.current();
+          live.current.onContentChanged();
+        }}
+      />
       {!sources.some((s) => s.source.active) && (
         <p className="muted">
           Chưa có nguồn. Quét chỉ thêm nội dung; bỏ qua dòng sẽ giữ nguyên tệp gốc.
