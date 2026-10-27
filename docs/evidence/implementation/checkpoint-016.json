@@ -11,5 +11,13 @@
     {"scope": "ELECTRON_SQLITE_BACKUP_WORKER_SMOKE", "status": "PASS", "electron": "45.0.0", "node": "24.22.0", "schema": 12}
   ],
   "verified": ["local calendar boundaries/DST/leap/week rollover", "immutable job app filter after Process rebind", "app-bound keyset cursor", "bounded calendar cards with full virtualized day access", "snapshot timezone editing", "multi-app browser scope", "backup before runtime upgrade and actual schema12 readiness"],
-  "limitations": ["CI for this source commit awaits push/run", "drag/overdue/auto-append/actual dispatch/sleep remain", "Win10 GUI/physical Android NOT_RUN", "full15-phase completion not claimed"]
+  "remoteCi": {
+    "revision": "e16940442ece6a2f6f0ae29bc179138ab0690d19",
+    "runId": 40459468100,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40459468100",
+    "conclusion": "success",
+    "ubuntu": {"testsPassed": 226, "filesPassed": 24, "planValidators": "PASS"},
+    "windows": {"testsPassed": 225, "filesPassed": 24, "testsSkipped": 1, "skipReason": "pre-existing Unix executable SDK fixture", "setupScript": "PASS", "launcherVerifyOnly": "PASS", "planValidators": "PASS"}
+  },
+  "limitations": ["drag/overdue/auto-append/actual dispatch/sleep remain", "Win10 GUI/physical Android NOT_RUN", "full15-phase completion not claimed"]
 }

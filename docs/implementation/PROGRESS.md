@@ -8,6 +8,8 @@
 
 Đã backup schema11 trước khi nâng cloud DB12, restart host và functional health/renderer/bootstrap/current-schema smoke PASS. Readiness mới bắt được host cũ11 thay vì coi port mở là code mới. Isolated Electron45.0.0/bundled Node24.22.0 thực thi real DB-worker/status/verified backup trên schema12 PASS. Remote CI đã xanh ở022/49dcb77; CI cho023 cần xác nhận theo source commit sau push. Windows10 GUI/physical phones vẫn NOT_RUN.
 
+**Remote CI023 đã xác nhận:** run40459468100 ở `e16940442ece6a2f6f0ae29bc179138ab0690d19` SUCCESS cả Ubuntu/Windows. Ubuntu226 pass/24 files; Windows225 pass/24 files +1 pre-existing Unix SDK fixture skip. Full generated/type/lint/build, Windows PowerShell setup/launcher VerifyOnly và hai Python validators đều PASS. Đây là hosted Windows CI, không Win10 GUI/Android certification.
+
 P07 còn drag/auto-append/overdue/actual dispatch/sleep-resume. P06 còn thumbnail/cache/server content query/schema migration UI; P04/P05 và P08–P14 giữ gaps theo tracker. **Tổng15 phases chưa100%**; không dùng226 tests hoặc hosted Windows CI thay cho runtime/app/hardware acceptance.
 
 ## Increment022 / P00-S005 + P14-S119 — Windows source checkout/launcher
