@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { once } from 'node:events';
 import { StudioDatabase } from '../../packages/database/dist/index.js';
+import { contentHash } from '../../packages/domain/dist/index.js';
 
 async function request<T>(page: Page, command: string, input: unknown): Promise<T> {
   const origin = new URL(page.url()).origin;
@@ -147,4 +148,81 @@ test('saved proposal → apply → timeline → reschedule/cancel uses real SQLi
   await page.reload();
   await page.locator('[data-route="schedule"]').click();
   await expect(page.locator('.schedule-page tbody tr')).toHaveCount(2);
+});
+
+test('timeline loads beyond the first 500 jobs while keeping DOM rows bounded and filters scoped', async ({
+  page,
+}) => {
+  const db = new StudioDatabase(join(directory, 'studio.sqlite'));
+  try {
+    const source = db.getProcess('process_schedule_ui');
+    const process = {
+      ...source,
+      id: 'process_page_ui',
+      name: 'Paged timeline fixture',
+      revision: 0,
+    };
+    db.saveProcess(process, null);
+    db.saveContent(
+      {
+        id: 'content_page_ui',
+        processId: process.id,
+        revision: 0,
+        fields: { caption: 'Pagination fixture' },
+        assetIds: [],
+        ignored: false,
+      },
+      null,
+    );
+    const version = db.getVersion(process.workflowVersionId!);
+    for (let index = 0; index < 501; index++)
+      db.createJob(
+        {
+          id: 'job_page_ui_' + String(index).padStart(3, '0'),
+          occurrenceKey: contentHash({ uiPage: index }),
+          processId: process.id,
+          deviceId: process.deviceId!,
+          contentId: 'content_page_ui',
+          scheduledUtc: '2035-01-01T00:00:00.000Z',
+          state: 'SCHEDULED',
+          revision: 0,
+          priority: 0,
+        },
+        {
+          workflowVersionId: version.id,
+          workflowHash: version.hash,
+          bundle: version.bundle,
+          contentId: 'content_page_ui',
+          fields: { caption: 'Pagination fixture' },
+          assetIds: [],
+          targetId: null,
+          networkProfileId: null,
+        },
+      );
+  } finally {
+    db.close();
+  }
+  await page.goto('http://127.0.0.1:4176/');
+  await page.locator('[data-route="schedule"]').click();
+  await page
+    .getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
+    .selectOption('process_page_ui');
+  await expect(page.locator('.schedule-page')).toContainText('Đã tải 500 công việc');
+  expect(await page.locator('.schedule-page tbody tr[data-index]').count()).toBeLessThan(40);
+  await page.getByRole('button', { name: 'Tải thêm công việc', exact: true }).click();
+  await expect(page.locator('.schedule-page')).toContainText('Đã tải 501 công việc');
+  await expect(page.getByRole('button', { name: 'Tải thêm công việc', exact: true })).toHaveCount(
+    0,
+  );
+  await page.locator('.schedule-scroll').evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+  await expect(
+    page.getByRole('button', { name: 'Sửa lịch job_page_ui_500', exact: true }),
+  ).toBeVisible();
+  expect(await page.locator('.schedule-page tbody tr[data-index]').count()).toBeLessThan(40);
+  await page.getByRole('combobox', { name: 'Lọc trạng thái lịch' }).selectOption('CANCELLED');
+  await expect(
+    page.getByRole('heading', { name: 'Chưa có công việc trong phạm vi này' }),
+  ).toBeVisible();
 });

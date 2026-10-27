@@ -20,12 +20,18 @@ export interface ScheduledJobSummary extends JobDefinition {
   snapshotHash: string;
 }
 export interface JobQuery {
+  cursor?: string | undefined;
   processId?: string | undefined;
   deviceId?: string | undefined;
   state?: JobDefinition['state'] | undefined;
   fromUtc?: string | undefined;
   toUtc?: string | undefined;
   limit?: number | undefined;
+}
+export interface JobPage {
+  jobs: ScheduledJobSummary[];
+  hasMore: boolean;
+  nextCursor: string | null;
 }
 
 export type QueueClaimResult =

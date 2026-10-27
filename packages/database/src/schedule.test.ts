@@ -219,6 +219,58 @@ describe('persisted schedule proposals and atomic apply', () => {
   });
 });
 describe('saved job queries and safe schedule edits', () => {
+  it('pages more than a thousand tied instants by stable keys without duplicates or omissions', () => {
+    const applied = db.applySchedule(preview().token, null, at);
+    const fixture = db.getJob(applied.jobIds[0]!);
+    for (let index = 0; index < 1201; index++)
+      db.createJob(
+        {
+          ...fixture.job,
+          id: 'job_page_' + String(index).padStart(4, '0'),
+          occurrenceKey: contentHash({ paging: index }),
+          priority: index % 3,
+        },
+        fixture.snapshot,
+      );
+    const ids: string[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = db.listJobs({
+        processId: processInput.id,
+        limit: 73,
+        ...(cursor ? { cursor } : {}),
+      });
+      expect(page.jobs.length).toBeLessThanOrEqual(73);
+      ids.push(...page.jobs.map((job) => job.id));
+      cursor = page.nextCursor ?? undefined;
+      expect(page.hasMore).toBe(!!cursor);
+    } while (cursor);
+    expect(ids).toHaveLength(1203);
+    expect(new Set(ids).size).toBe(1203);
+    const first = db.getJob(ids[0]!).job;
+    expect(first.priority).toBe(2);
+  });
+  it('preserves a cursor across restart but rejects mutations from another connection, changed filters and malformed tokens', () => {
+    db.applySchedule(preview().token, null, at);
+    const first = db.listJobs({ limit: 1 });
+    expect(first.nextCursor).toBeTruthy();
+    db.close();
+    db = new StudioDatabase(join(dir, 'studio.sqlite'));
+    const next = db.listJobs({ limit: 1, cursor: first.nextCursor! });
+    expect(next.jobs[0]!.id).not.toBe(first.jobs[0]!.id);
+    expect(next.nextCursor).toBeNull();
+    expect(() => db.listJobs({ cursor: first.nextCursor!, deviceId: 'other_device' })).toThrow(
+      'Bộ lọc',
+    );
+    expect(() => db.listJobs({ cursor: '!!!!' })).toThrow('không hợp lệ');
+    const other = raw();
+    other
+      .prepare('UPDATE jobs SET priority=priority+1,revision=revision+1 WHERE id=?')
+      .run(first.jobs[0]!.id);
+    other.close();
+    expect(() => db.listJobs({ cursor: first.nextCursor! })).toThrow('đã thay đổi');
+    expect(db.getJob(first.jobs[0]!.id).snapshotHash).toBe(first.jobs[0]!.snapshotHash);
+  });
   it('filters jobs with a visible limit and uses instants for timestamp range comparisons', () => {
     db.applySchedule(preview().token, null, at);
     const result = db.listJobs({

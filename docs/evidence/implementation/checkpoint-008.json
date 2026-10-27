@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-27",
+  "baselineRevision": "f6bbaee",
+  "increment": "015",
+  "phase": "P07",
+  "steps": ["S065"],
+  "status": "TESTED_TIMELINE_SLICE_NOT_FULL_PHASE_ACCEPTANCE",
+  "checks": [
+    {"command": "pnpm check", "exitStatus": 0, "filesPassed": 20, "testsPassed": 191},
+    {"command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test", "exitStatus": 0, "passed": 16, "failed": 0, "skipped": 0, "flaky": 0}
+  ],
+  "verified": {"databasePagedJobs": 1203, "duplicates": 0, "omissions": 0, "browserFixtureJobs": 501, "browserRenderedRows": "less than 40", "cursorAcrossRestart": true, "crossConnectionMutationInvalidatesCursor": true},
+  "schemaVersion": 8,
+  "limitations": ["No physical 300-phone throughput claim", "calendar/spread/worker execution and overdue remain incomplete", "P06 and P08-P14 still require implementation and acceptance", "Windows10 x64/physical Android certification/installer NOT_RUN"]
+}

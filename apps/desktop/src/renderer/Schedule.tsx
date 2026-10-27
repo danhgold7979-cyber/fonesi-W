@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { jobStates } from '@autoreels/contracts';
-import type { ProcessDefinition, ScheduledJobSummary, JobDefinition } from '@autoreels/contracts';
+import type {
+  ProcessDefinition,
+  ScheduledJobSummary,
+  JobDefinition,
+  JobQuery,
+} from '@autoreels/contracts';
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 const stateLabels: Record<JobDefinition['state'], string> = {
   DRAFT: 'Nháp',
@@ -40,6 +46,8 @@ export function Schedule(props: Props) {
     [to, setTo] = useState('');
   const [jobs, setJobs] = useState<ScheduledJobSummary[]>([]),
     [hasMore, setHasMore] = useState(false),
+    [nextCursor, setNextCursor] = useState<string | null>(null),
+    [loadingMore, setLoadingMore] = useState(false),
     [loading, setLoading] = useState(true),
     [error, setError] = useState('');
   const [revision, setRevision] = useState(0),
@@ -48,7 +56,16 @@ export function Schedule(props: Props) {
     [time, setTime] = useState(''),
     [busy, setBusy] = useState(false);
   const generation = useRef(0),
-    mounted = useRef(true);
+    mounted = useRef(true),
+    scroll = useRef<HTMLDivElement>(null);
+  const virtual = useVirtualizer({
+    count: jobs.length,
+    getScrollElement: () => scroll.current,
+    getItemKey: (index) => jobs[index]!.id,
+    estimateSize: () => 70,
+    overscan: 8,
+  });
+  const visible = virtual.getVirtualItems();
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -56,25 +73,34 @@ export function Schedule(props: Props) {
       generation.current++;
     };
   }, []);
+  function query(cursor?: string): JobQuery {
+    return {
+      ...(cursor ? { cursor } : {}),
+      ...(processId ? { processId } : {}),
+      ...(deviceId ? { deviceId } : {}),
+      ...(state ? { state: state as JobDefinition['state'] } : {}),
+      ...(from ? { fromUtc: new Date(from + 'T00:00:00Z').toISOString() } : {}),
+      ...(to
+        ? { toUtc: new Date(new Date(to + 'T00:00:00Z').getTime() + 86400000).toISOString() }
+        : {}),
+      limit: 500,
+    };
+  }
   useEffect(() => {
     const token = ++generation.current;
     setLoading(true);
     setError('');
+    setNextCursor(null);
+    setLoadingMore(false);
+    setSelected(null);
+    scroll.current?.scrollTo({ top: 0 });
     void api
-      .jobs({
-        ...(processId ? { processId } : {}),
-        ...(deviceId ? { deviceId } : {}),
-        ...(state ? { state: state as JobDefinition['state'] } : {}),
-        ...(from ? { fromUtc: new Date(from + 'T00:00:00Z').toISOString() } : {}),
-        ...(to
-          ? { toUtc: new Date(new Date(to + 'T00:00:00Z').getTime() + 86400000).toISOString() }
-          : {}),
-        limit: 500,
-      })
+      .jobs(query())
       .then((result) => {
         if (token !== generation.current) return;
         setJobs(result.jobs);
         setHasMore(result.hasMore);
+        setNextCursor(result.nextCursor);
       })
       .catch((e) => {
         if (token === generation.current)
@@ -84,6 +110,25 @@ export function Schedule(props: Props) {
         if (token === generation.current) setLoading(false);
       });
   }, [processId, deviceId, state, from, to, revision]);
+  async function more(): Promise<void> {
+    if (!nextCursor || loadingMore) return;
+    const token = generation.current;
+    setLoadingMore(true);
+    try {
+      const result = await api.jobs(query(nextCursor));
+      if (!mounted.current || token !== generation.current) return;
+      setJobs((previous) => [...previous, ...result.jobs]);
+      setHasMore(result.hasMore);
+      setNextCursor(result.nextCursor);
+    } catch (error) {
+      if (mounted.current && token === generation.current) {
+        props.notify(error instanceof Error ? error.message : 'Không tải được trang tiếp.');
+        setRevision((value) => value + 1);
+      }
+    } finally {
+      if (mounted.current && token === generation.current) setLoadingMore(false);
+    }
+  }
   function open(job: ScheduledJobSummary): void {
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: job.timezone,
@@ -202,7 +247,7 @@ export function Schedule(props: Props) {
           đăng ký cùng phiên bản workflow.
         </Empty>
       ) : (
-        <div className="table-wrap">
+        <div className="table-wrap schedule-scroll" ref={scroll}>
           <table>
             <thead>
               <tr>
@@ -215,43 +260,71 @@ export function Schedule(props: Props) {
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id}>
-                  <td>
-                    <strong>
-                      {new Date(job.scheduledUtc).toLocaleString('vi-VN', {
-                        timeZone: job.timezone,
-                      })}
-                    </strong>
-                    <small className="timeline-timezone">{job.timezone}</small>
-                  </td>
-                  <td>{job.processName}</td>
-                  <td>{job.deviceName}</td>
-                  <td>
-                    <code title={job.contentId}>{job.contentId.slice(0, 18)}</code>
-                  </td>
-                  <td>
-                    <span className="badge">{stateLabels[job.state]}</span>
-                  </td>
-                  <td>
-                    <button
-                      disabled={job.state !== 'SCHEDULED'}
-                      aria-label={'Sửa lịch ' + job.id}
-                      onClick={() => open(job)}
-                    >
-                      Sửa lịch
-                    </button>
-                  </td>
+              {!!visible.length && visible[0]!.start > 0 && (
+                <tr aria-hidden="true">
+                  <td colSpan={6} style={{ height: visible[0]!.start, padding: 0, border: 0 }} />
                 </tr>
-              ))}
+              )}
+              {visible.map((row) => {
+                const job = jobs[row.index]!;
+                return (
+                  <tr key={job.id} data-index={row.index} ref={virtual.measureElement}>
+                    <td>
+                      <strong>
+                        {new Date(job.scheduledUtc).toLocaleString('vi-VN', {
+                          timeZone: job.timezone,
+                        })}
+                      </strong>
+                      <small className="timeline-timezone">{job.timezone}</small>
+                    </td>
+                    <td>{job.processName}</td>
+                    <td>{job.deviceName}</td>
+                    <td>
+                      <code title={job.contentId}>{job.contentId.slice(0, 18)}</code>
+                    </td>
+                    <td>
+                      <span className="badge">{stateLabels[job.state]}</span>
+                    </td>
+                    <td>
+                      <button
+                        disabled={job.state !== 'SCHEDULED'}
+                        aria-label={'Sửa lịch ' + job.id}
+                        onClick={() => open(job)}
+                      >
+                        Sửa lịch
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {!!visible.length && virtual.getTotalSize() > visible.at(-1)!.end && (
+                <tr aria-hidden="true">
+                  <td
+                    colSpan={6}
+                    style={{
+                      height: virtual.getTotalSize() - visible.at(-1)!.end,
+                      padding: 0,
+                      border: 0,
+                    }}
+                  />
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       )}
-      {hasMore && (
-        <p className="muted">
-          Đang hiển thị 500 công việc đầu tiên. Thu hẹp bộ lọc để xem các công việc còn lại.
-        </p>
+      {!loading && !error && (
+        <div className="section-heading">
+          <p className="muted">
+            Đã tải {jobs.length} công việc
+            {hasMore ? ' · còn trang tiếp theo' : ' · hết phạm vi lọc'}.
+          </p>
+          {hasMore && nextCursor && (
+            <button disabled={loadingMore} onClick={() => void more()}>
+              {loadingMore ? 'Đang tải thêm…' : 'Tải thêm công việc'}
+            </button>
+          )}
+        </div>
       )}
       {selected && (
         <Dialog

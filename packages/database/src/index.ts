@@ -32,7 +32,7 @@ import type {
   ContentAssetInfo,
   SchedulePreviewDto,
   JobQuery,
-  ScheduledJobSummary,
+  JobPage,
   ContentImportDocument,
   BulkContentRequest,
   ContentPreviewDto,
@@ -1973,12 +1973,24 @@ export class StudioDatabase {
       return { jobIds, alreadyApplied: false };
     });
   }
-  listJobs(query: JobQuery = {}): { jobs: ScheduledJobSummary[]; hasMore: boolean } {
+  listJobs(query: JobQuery = {}): JobPage {
     const limit = query.limit ?? 500;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
       throw new DomainError('INVALID_QUERY', 'Limit must be between 1 and 1000');
     const where: string[] = [],
       params: (string | number)[] = [];
+    const epoch = () =>
+      Number(
+        this.db.prepare("SELECT revision FROM query_epochs WHERE name='jobs'").get()!.revision,
+      );
+    const revision = epoch();
+    const fingerprint = contentHash({
+      processId: query.processId ?? null,
+      deviceId: query.deviceId ?? null,
+      state: query.state ?? null,
+      fromUtc: query.fromUtc ?? null,
+      toUtc: query.toUtc ?? null,
+    });
     for (const [key, column] of [
       ['processId', 'process_id'],
       ['deviceId', 'device_id'],
@@ -1996,11 +2008,45 @@ export class StudioDatabase {
         );
         params.push(query[key]!);
       }
+    if (query.cursor) {
+      try {
+        if (query.cursor.length > 4096 || !/^[A-Za-z0-9_-]+$/.test(query.cursor))
+          throw new Error('Malformed cursor');
+        const cursor: unknown = JSON.parse(Buffer.from(query.cursor, 'base64url').toString('utf8'));
+        assertJsonSafe(cursor);
+        if (!cursor || typeof cursor !== 'object' || Array.isArray(cursor))
+          throw new Error('Invalid cursor');
+        const c = cursor as Record<string, JsonValue>;
+        if (
+          Object.keys(c).length !== 7 ||
+          c.version !== 1 ||
+          typeof c.fingerprint !== 'string' ||
+          !Number.isSafeInteger(c.epoch) ||
+          !Number.isSafeInteger(c.priority) ||
+          typeof c.utc !== 'string' ||
+          typeof c.createdAt !== 'string' ||
+          typeof c.id !== 'string'
+        )
+          throw new Error('Invalid cursor');
+        jobSchema.shape.scheduledUtc.parse(c.utc);
+        jobSchema.shape.scheduledUtc.parse(c.createdAt);
+        idSchema.parse(c.id);
+        if (c.fingerprint !== fingerprint)
+          throw new DomainError('CURSOR_SCOPE', 'Bộ lọc đã đổi; tải lại từ trang đầu.');
+        if (c.epoch !== revision)
+          throw new DomainError('QUERY_STALE', 'Lịch đã thay đổi; tải lại từ trang đầu.');
+        where.push('(julianday(scheduled_utc),-priority,created_at,id)>(julianday(?),?,?,?)');
+        params.push(c.utc, -Number(c.priority), c.createdAt, c.id);
+      } catch (error) {
+        if (error instanceof DomainError) throw error;
+        throw new DomainError('INVALID_CURSOR', 'Con trỏ trang không hợp lệ; tải lại lịch.');
+      }
+    }
     const records = this.db
       .prepare(
-        'SELECT id FROM jobs' +
+        'SELECT id,scheduled_utc,priority,created_at FROM jobs' +
           (where.length ? ' WHERE ' + where.join(' AND ') : '') +
-          ' ORDER BY julianday(scheduled_utc),priority DESC,created_at,id LIMIT ?',
+          ' ORDER BY julianday(scheduled_utc),-priority,created_at,id LIMIT ?',
       )
       .all(...params, limit + 1);
     const devices = new Map(this.listDevices().map((device) => [device.id, device.name]));
@@ -2015,7 +2061,25 @@ export class StudioDatabase {
         snapshotHash,
       };
     });
-    return { jobs, hasMore: records.length > limit };
+    if (epoch() !== revision)
+      throw new DomainError('QUERY_STALE', 'Lịch thay đổi trong khi tải; tải lại từ trang đầu.');
+    const hasMore = records.length > limit,
+      last = records[Math.min(records.length, limit) - 1];
+    const nextCursor =
+      hasMore && last
+        ? Buffer.from(
+            JSON.stringify({
+              version: 1,
+              epoch: revision,
+              fingerprint,
+              utc: String(last.scheduled_utc),
+              priority: Number(last.priority),
+              createdAt: String(last.created_at),
+              id: String(last.id),
+            }),
+          ).toString('base64url')
+        : null;
+    return { jobs, hasMore, nextCursor };
   }
   private editableScheduledJob(id: string, expectedRevision: number): JobDefinition {
     const { job } = this.getJob(id);

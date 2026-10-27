@@ -1,5 +1,13 @@
 # Tiến độ implementation
 
+## Mốc mới nhất — increment 015 / P07-S065
+
+Timeline có keyset pagination theo UTC/priority/createdAt/stable ID; page size1–1000 là operation budget, không truncate tổng jobs. Migration8 thêm persisted jobs epoch + insert/update/delete triggers và index; cursor bind filters/epoch, bị invalidate khi worker/connection khác thay đổi lịch. UI có Tải thêm, loaded counts, response generation guards và virtualized rows để không dựng hàng trăm/nghìn DOM rows một lúc.
+
+Đã chạy `pnpm check`: **191 tests / 20 files**, typecheck/lint/generated/build PASS. Browser **16 passed / 0 failed/skipped/flaky**. DB regression duyệt1203 jobs không trùng/thiếu, cursor qua restart và bị chặn sau mutation từ connection khác; browser fixture501 jobs xem được job sau500, DOM rows dưới40. Đây là test dữ liệu/paging, **không là chứng nhận300 điện thoại vật lý**.
+
+P07 còn calendar day/week/drag/spread, actual dispatch/overdue/auto-append/sleep gates. P06 còn clone/archive/media adopt/rebind/thumbnail/query/schema migration UI; P08–P14 còn các runtime/hardware/operations/release mục đã ghi trong tracker. Không gọi phase nào hoàn tất100% chỉ vì lát vừa thêm qua checks.
+
 ## Cập nhật tiếp — increment 014 / P05
 
 Pinned external subflows đã resolve theo immutable version/workflow/hash và canonical bytes; reject missing/undeclared/conflicting pins, app mismatch, namespace escapes và resource excess. Compiler tạo deep-frozen IR/source maps/routes; TRACE interpreter dùng routes đã compile. SQLite createVersion đóng full graph closure trong transaction, giữ draft refs nguyên và không bị child draft edit/restart làm đổi. Validate/TRACE/debug host dùng cùng DB resolver; paused debugger vẫn ngoài DB worker.

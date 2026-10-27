@@ -8,7 +8,7 @@ import type {
   ContentDownload,
   BulkContentRequest,
 } from './content-data.js';
-import type { SchedulePreviewDto, JobQuery, ScheduledJobSummary } from './schedule.js';
+import type { SchedulePreviewDto, JobQuery, JobPage } from './schedule.js';
 import type {
   SourceState,
   SourceDefinition,
@@ -105,7 +105,7 @@ export interface StudioApi {
   ignoreContent(id: string, expectedRevision: number): Promise<void>;
   previewSchedule(processId: string, contentIds: string[]): Promise<SchedulePreviewDto>;
   applySchedule(token: string): Promise<{ jobIds: string[]; alreadyApplied: boolean }>;
-  jobs(query: JobQuery): Promise<{ jobs: ScheduledJobSummary[]; hasMore: boolean }>;
+  jobs(query: JobQuery): Promise<JobPage>;
   rescheduleJob(
     id: string,
     expectedRevision: number,

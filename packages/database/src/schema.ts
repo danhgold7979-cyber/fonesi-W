@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -56,6 +56,14 @@ CREATE INDEX device_transport_device ON device_transports(device_id,host_id,stat
 export const endpointPolicyMigration = `
 CREATE TABLE device_endpoint_policies(host_id TEXT NOT NULL,endpoint TEXT NOT NULL,resolved_serial TEXT,desired INTEGER NOT NULL CHECK(desired IN(0,1)),revision INTEGER NOT NULL CHECK(revision>=0),failures INTEGER NOT NULL CHECK(failures>=0),next_attempt_utc TEXT,last_error_code TEXT,PRIMARY KEY(host_id,endpoint)) STRICT;
 `;
+export const timelinePagingMigration = `
+CREATE TABLE query_epochs(name TEXT PRIMARY KEY,revision INTEGER NOT NULL CHECK(revision>=0)) STRICT;
+INSERT INTO query_epochs VALUES('jobs',0);
+CREATE TRIGGER jobs_query_insert AFTER INSERT ON jobs BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='jobs'; END;
+CREATE TRIGGER jobs_query_update AFTER UPDATE ON jobs BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='jobs'; END;
+CREATE TRIGGER jobs_query_delete AFTER DELETE ON jobs BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='jobs'; END;
+CREATE INDEX jobs_timeline_page ON jobs(julianday(scheduled_utc),-priority,created_at,id);
+`;
 export const migrations = [
   { version: 1, sql: migration },
   { version: 2, sql: mediaMigration },
@@ -64,4 +72,5 @@ export const migrations = [
   { version: 5, sql: queueClaimMigration },
   { version: 6, sql: deviceRegistryMigration },
   { version: 7, sql: endpointPolicyMigration },
+  { version: 8, sql: timelinePagingMigration },
 ] as const;

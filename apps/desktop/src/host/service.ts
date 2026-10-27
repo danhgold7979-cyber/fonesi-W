@@ -131,6 +131,7 @@ const schemas = {
   applySchedule: z.strictObject({ token: idSchema }),
   jobs: z.strictObject({
     query: z.strictObject({
+      cursor: z.string().min(1).max(4096).optional(),
       processId: idSchema.optional(),
       deviceId: idSchema.optional(),
       state: jobStateSchema.optional(),
