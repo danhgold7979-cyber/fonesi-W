@@ -19,6 +19,8 @@ Trạng thái hiện tại: đã bắt đầu ứng dụng React/Electron nhiề
 
 ## Phát triển và kiểm tra
 
+**Windows10 64-bit:** tải [ZIP nhánh phần mềm](https://github.com/danhgold7979-cyber/fonesi-W/archive/refs/heads/feat/studio-workspace.zip), cài Node24.x x64 rồi chạy `Start-AutoReels.cmd`. [Hướng dẫn tải/chạy và xử lý lỗi](docs/implementation/WINDOWS_START.md). Đây là source launcher của bản đang phát triển; installer/hardware acceptance còn riêng.
+
 Node 24.19+ (24.x), pnpm 11.25.0. Trên cloud:
 
 ```sh

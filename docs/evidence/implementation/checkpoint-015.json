@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-27", "baselineRevision": "2ee43ab", "increment": "022", "phases": ["P00", "P14"], "steps": ["S005", "S119"],
+  "status": "LOCAL_CHECKOUT_PARITY_PASS_WINDOWS_CI_PENDING",
+  "checks": [
+    {"scope": "BEFORE_FIX_CORE_AUTOCRLF_TRUE_CHECKOUT", "hasCRLF": true, "matchesTrackedLF": false},
+    {"scope": "AFTER_FIX_CORE_AUTOCRLF_TRUE_CHECKOUT", "filesChecked": 44, "frozenReferenceFiles": 42, "mismatches": []},
+    {"command": "pnpm check:generated", "exitStatus": 0},
+    {"command": "pnpm check:plan", "exitStatus": 0}
+  ],
+  "previousApplicationChecks": {"increment": "021", "unitIntegrationPassed": 220, "filesPassed": 23, "browserPassed": 21},
+  "limitations": ["Windows script execution awaits remote CI", "hosted Windows CI is distinct from Win10 GUI/phone acceptance", "source launcher is not a published installer"]
+}

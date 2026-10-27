@@ -3,6 +3,7 @@ on: [push, pull_request]
 jobs:
   foundation:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -14,9 +15,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: pnpm install --frozen-lockfile
-      - run: node node_modules/electron/install.js
+      - if: runner.os != 'Windows'
+        run: pnpm install --frozen-lockfile
+      - if: runner.os != 'Windows'
+        run: node node_modules/electron/install.js
+      - if: runner.os == 'Windows'
+        shell: powershell
+        run: ./scripts/setup-windows.ps1 -SkipChecks
       - run: pnpm check
+      - if: runner.os == 'Windows'
+        shell: powershell
+        run: ./scripts/start-windows.ps1 -VerifyOnly
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

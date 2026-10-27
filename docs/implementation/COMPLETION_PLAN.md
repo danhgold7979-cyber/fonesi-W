@@ -10,7 +10,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 
 | Phase | Phạm vi | Công việc tiếp theo / điều kiện đóng |
 |---|---|---|
-| P00 | Toolchain/repository | Giữ frozen install; CI Windows/remote và environment publication còn riêng |
+| P00 | Toolchain/repository | Giữ frozen install; đã fix forced-autocrlf parity, chờ Windows CI script/check evidence; environment publication riêng |
 | P01 | Contracts | Hoàn thiện contracts theo services, immutable dependency closure/event ordering |
 | P02 | Persistence | Đã test verified local online backup/receipt/restart; còn workspace import preview/atomic restore UI, vận hành schema và Windows acceptance |
 | P03 | Shell | Diagnostics, lifecycle, navigation/accessibility; Windows DPI/multi-monitor |
@@ -24,7 +24,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 | P11 | Execution/effects | Journal-first executor, independent comments, uncertainty/review/recovery/owned cleanup |
 | P12 | App adapters | Profile-specific Facebook Reels + TikTok trước; Lite/Instagram/Threads/photo theo evidence |
 | P13 | Operations | Đã test health/allowlisted diagnostic + verified local backups; còn APK/network, secrets, run logs/retention/power/staging resource bounds |
-| P14 | Packaging | Windows installer/offline notices, clean-machine/upgrade/rollback/completeness; publication riêng |
+| P14 | Packaging | Đã có Windows source setup/launcher/guide; còn installer/offline notices, clean-machine/upgrade/rollback/completeness; publication riêng |
 
 ## Thứ tự và cách báo tiến độ
 

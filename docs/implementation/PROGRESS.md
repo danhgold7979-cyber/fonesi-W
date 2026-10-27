@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment022 / P00-S005 + P14-S119 — Windows source checkout/launcher
+
+Đã tái hiện core.autocrlf=true làm generated node-registry.ts chuyển CRLF; thêm default LF cho source, giữ override frozen reference/binaries và CMD CRLF. Forced-autocrlf checkout sau sửa khớp44/44 files, gồm42 reference files nguyên byte và generated/schema. Không regenerate contracts hoặc renormalize frozen data. Strict generated check + hai plan validators PASS. App source vẫn ở mốc220 unit/integration +21 browser đã qua021.
+
+Thêm setup Windows PowerShell5.1 (pinned Node/pnpm, local caches, frozen install, official Electron verifier, exit propagation), launcher CMD/start script và hướng dẫn tải đúng feature branch/ZIP. CI Windows chạy scripts thực, full checks; tắt matrix fail-fast để lấy đủ lỗi cả hai OS. Remote Windows result đang chờ commit/push mới; chưa ghi PASS. Đây là source launcher, không installer/offline bundle hay Win10/Android certification.
+
 ## Increment021 / P02-S020 + P13-S116/S117 — health và verified local backup
 
 Đã có status allowlist từ SQLite quick_check/schema/counts, host memory/runtime và filesystem capacity/available thật. Panel header tải diagnostic JSON chỉ chứa DTO đã xem, không private names/fields/paths/serials/env. Backup lưu app-owned canonical directory, one-at-a-time + disk reserve, SQLite online copy chờ serialized worker hoàn tất, đóng WAL thành tệp độc lập và kiểm integrity/FK/schema/migration checksums rồi hash ngoài worker. No-replace publish + durable receipt, restart retry/copy bị đổi/mất được kiểm; final file thiếu receipt có thể recover. Không ghi đè prior backups/source files. UI save ACK trước backup, giữ ID khi retry; đóng host đợi/abort công việc đang chạy.
