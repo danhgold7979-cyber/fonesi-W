@@ -86,6 +86,36 @@ function host(picker?: (kind: 'FOLDER' | 'FILE') => Promise<string[] | null>): H
   return service;
 }
 describe('native grants and host boundary', () => {
+  it('stops source observation on archive and restores the original host grants without deleting source files', async () => {
+    const path = join(dir, 'archive-media.mp4');
+    await writeFile(path, 'fixture-media-bytes');
+    const definition = await source('FILE', path);
+    db.updateSourceOptions(definition.id, hostId, definition.revision, {
+      active: true,
+      recursive: false,
+      watch: true,
+    });
+    const service = host();
+    await service.ready();
+    await service.coordinator.start(definition.id);
+    await service.coordinator.idle(definition.id);
+    const process = db.getProcess(processInput.id);
+    const archived = (await service.request('saveProcess', {
+      process: { ...process, archived: true },
+      expectedRevision: process.revision,
+    })) as ProcessDefinition;
+    expect(db.activeSourceGrants(hostId)).toEqual([]);
+    expect(db.getSourceGrant(definition.id, hostId).active).toBe(false);
+    expect(await readFile(path, 'utf8')).toBe('fixture-media-bytes');
+    await service.request('saveProcess', {
+      process: { ...archived, archived: false },
+      expectedRevision: archived.revision,
+    });
+    expect(db.activeSourceGrants(hostId).map((g) => g.id)).toEqual([definition.id]);
+    await service.coordinator.start(definition.id);
+    await service.coordinator.idle(definition.id);
+    expect(db.listContent(processInput.id)).toHaveLength(1);
+  });
   it('keeps a stable separate host identity across restarts and requires rebind on another host', async () => {
     const id = await loadHostId(join(dir, 'host'));
     expect(await loadHostId(join(dir, 'host'))).toBe(id);

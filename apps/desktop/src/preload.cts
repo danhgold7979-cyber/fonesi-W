@@ -59,7 +59,7 @@ const api: StudioApi = {
   validateWorkflow: (bundle) => send('validateWorkflow', { bundle }),
   traceWorkflow: (bundle, row) => send('traceWorkflow', { bundle, row }),
   savePreference: (value, expectedRevision) => send('savePreference', { value, expectedRevision }),
-  listProcesses: () => send('listProcesses'),
+  listProcesses: (includeArchived = false) => send('listProcesses', { includeArchived }),
   saveProcess: (process, expectedRevision) => send('saveProcess', { process, expectedRevision }),
   content: (processId) => send('content', { processId }),
   saveContent: (item, expectedRevision) => send('saveContent', { item, expectedRevision }),

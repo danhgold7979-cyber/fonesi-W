@@ -130,7 +130,7 @@ export interface StudioApi {
     value: JsonValue,
     expectedRevision: number,
   ): Promise<{ revision: number; value: JsonValue }>;
-  listProcesses(): Promise<ProcessDefinition[]>;
+  listProcesses(includeArchived?: boolean): Promise<ProcessDefinition[]>;
   saveProcess(
     process: ProcessDefinition,
     expectedRevision: number | null,
@@ -253,7 +253,7 @@ export function createStudioApi(transport: Transport): StudioApi {
     traceWorkflow: (bundle, row) => call('traceWorkflow', { bundle, row }),
     savePreference: (value, expectedRevision) =>
       call('savePreference', { value, expectedRevision }),
-    listProcesses: () => call('listProcesses'),
+    listProcesses: (includeArchived = false) => call('listProcesses', { includeArchived }),
     saveProcess: (process, expectedRevision) => call('saveProcess', { process, expectedRevision }),
     content: (processId) => call('content', { processId }),
     saveContent: (item, expectedRevision) => call('saveContent', { item, expectedRevision }),

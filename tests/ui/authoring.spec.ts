@@ -395,3 +395,87 @@ test('canvas clipboard preserves wires/groups through paste, cut, undo and persi
   await page.getByRole('button', { name: 'Hoàn tác', exact: true }).click();
   await expect(page.locator('.canvas-visual-group')).toHaveCount(2);
 });
+
+test('Process archive waits for save ACK and restores persisted typed content without copying jobs', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const draft = await request<WorkflowDraft>(page, 'createWorkflow', {
+    appId: 'fb',
+    name: 'Archive workflow',
+  });
+  draft.bundle.inputs = [
+    { key: 'caption', type: 'text', scope: 'row', required: true },
+    { key: 'count', type: 'number', scope: 'row', required: false },
+    { key: 'enabled', type: 'boolean', scope: 'process', required: false },
+  ];
+  await request(page, 'saveWorkflow', { bundle: draft.bundle, expectedRevision: 0 });
+  const process: ProcessDefinition = {
+    id: 'process_archive_ui',
+    name: 'Archive UI',
+    appId: 'fb',
+    workflowId: draft.workflowId,
+    workflowVersionId: null,
+    deviceId: null,
+    accountId: null,
+    targetId: null,
+    revision: 0,
+    archived: false,
+    fields: { enabled: false },
+    schedule: {
+      timezone: 'Asia/Ho_Chi_Minh',
+      startDate: '2030-01-01',
+      slots: ['08:00'],
+      weekdays: [1, 2, 3, 4, 5, 6, 7],
+      overduePolicy: 'NEXT_FUTURE_SLOT',
+      jitterMinutes: 0,
+    },
+  };
+  await request(page, 'saveProcess', { process, expectedRevision: null });
+  await request(page, 'saveContent', {
+    item: {
+      id: 'content_archive_ui',
+      processId: process.id,
+      revision: 0,
+      fields: { caption: 'Archive persisted caption', count: 0 },
+      assetIds: [],
+      ignored: false,
+    },
+    expectedRevision: null,
+  });
+  await page.reload();
+  await page.locator('[data-route="processes"]').click();
+  await page.getByRole('combobox', { name: 'Chọn tiến trình' }).selectOption(process.id);
+  await expect(page.locator('.content-table-scroll')).toContainText('Archive persisted caption');
+  await page
+    .getByRole('textbox', { name: 'Tên tiến trình', exact: true })
+    .fill('Archive UI updated');
+  await page.getByRole('button', { name: 'Lưu trữ tiến trình', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Archive UI updated');
+  await page.getByRole('button', { name: 'Xác nhận lưu trữ', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Chưa chọn tiến trình', exact: true }),
+  ).toBeVisible();
+  const records = await request<ProcessDefinition[]>(page, 'listProcesses', {
+    includeArchived: true,
+  });
+  expect(records.find((p) => p.id === process.id)).toMatchObject({
+    archived: true,
+    fields: { enabled: false },
+  });
+  await page.getByRole('button', { name: 'Kho lưu trữ tiến trình', exact: true }).click();
+  await page.getByRole('button', { name: 'Khôi phục Archive UI updated', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Chọn tiến trình' })).toHaveValue(process.id);
+  await expect(page.locator('.content-table-scroll')).toContainText('Archive persisted caption');
+  const content = await request<{ id: string; fields: Record<string, unknown> }[]>(
+    page,
+    'content',
+    { processId: process.id },
+  );
+  expect(content).toHaveLength(1);
+  expect(content[0]).toMatchObject({
+    id: 'content_archive_ui',
+    fields: { caption: 'Archive persisted caption', count: 0 },
+  });
+});

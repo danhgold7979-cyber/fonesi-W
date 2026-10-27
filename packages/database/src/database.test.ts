@@ -150,6 +150,36 @@ function fixtureJob(id = 'job_1'): { job: JobDefinition; snapshot: JobSnapshot }
   return { job, snapshot };
 }
 
+describe('Process archive lifecycle', () => {
+  it('preserves content/jobs across archive and restart, excludes new claims, then restores explicitly', () => {
+    const { job, snapshot } = fixtureJob();
+    db.createJob(job, snapshot);
+    const process = db.getProcess(job.processId);
+    const archived = db.saveProcess({ ...process, archived: true }, process.revision);
+    expect(db.listProcesses()).toEqual([]);
+    expect(db.listProcesses(true)[0]!.archived).toBe(true);
+    expect(
+      db.claimDueJob(job.deviceId, 'worker_archive', Date.parse('2030-01-01T00:00:00Z')).status,
+    ).toBe('EMPTY');
+    expect(db.getJob(job.id).job.state).toBe('SCHEDULED');
+    expect(db.getJob(job.id).snapshot).toEqual(snapshot);
+    const content = db.listContent(job.processId);
+    db.close();
+    db = new StudioDatabase(join(dir, 'studio.sqlite'));
+    closes.push(db);
+    expect(db.listContent(job.processId)).toEqual(content);
+    expect(() => db.saveProcess({ ...process, archived: false }, process.revision)).toThrow(
+      'changed',
+    );
+    const restored = db.saveProcess({ ...archived, archived: false }, archived.revision);
+    expect(db.listProcesses()).toEqual([restored]);
+    expect(db.getJob(job.id).snapshot).toEqual(snapshot);
+    expect(
+      db.claimDueJob(job.deviceId, 'worker_archive', Date.parse('2030-01-01T00:00:00Z')).status,
+    ).toBe('CLAIMED');
+  });
+});
+
 describe('workflow persistence', () => {
   it('starts with no fake phones/accounts/jobs or workflows', () => {
     expect(db.listDevices()).toEqual([]);

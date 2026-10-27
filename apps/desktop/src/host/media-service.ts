@@ -50,6 +50,11 @@ export class HostMediaService {
     await this.coordinator.refresh();
   }
   async request(command: ApiCommand, input: unknown): Promise<unknown> {
+    if (command === 'saveProcess') {
+      const result = await this.db.request(command, input);
+      await this.coordinator.refresh();
+      return result;
+    }
     if (!Object.hasOwn(mediaSchemas, command)) return this.db.request(command, input);
     assertJsonSafe(input);
     switch (command) {

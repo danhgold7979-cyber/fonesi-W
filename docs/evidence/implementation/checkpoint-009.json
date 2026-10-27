@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-27",
+  "baselineRevision": "3d0731c",
+  "increment": "016",
+  "phase": "P06",
+  "steps": ["S050"],
+  "status": "TESTED_ARCHIVE_RESTORE_SLICE_NOT_FULL_PHASE_ACCEPTANCE",
+  "checks": [
+    {"command": "pnpm check", "exitStatus": 0, "filesPassed": 20, "testsPassed": 193},
+    {"command": "pnpm exec vitest run tests/media-integration.test.ts", "exitStatus": 0, "passed": 13},
+    {"command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test", "exitStatus": 0, "passed": 17, "failed": 0, "skipped": 0, "flaky": 0},
+    {"command": "node tools/smoke-host.mjs", "exitStatus": 0, "target": "restarted current Linux authoring host"},
+    {"operation": "current host startDebug -> PAUSED -> CONTINUE -> COMPLETED", "mode": "TRACE", "events": 2, "status": "PASS"}
+  ],
+  "verified": ["archive follows Process save ACK", "includeArchived/restore persisted state", "queue skips archived Process", "content and immutable job snapshots survive archive/restart", "media source observation and grants resume without deleting source bytes", "actual browser archived-list/restore round-trip"],
+  "remaining": ["P06 clone/media ownership/adopt/rebind/thumbnail/server query/schema migration UI", "remaining P04/P05/P07 and P08-P14 scope", "Windows10 x64/physical20-300 phones/app profile certification/installer acceptance"]
+}

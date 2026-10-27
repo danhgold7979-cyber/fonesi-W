@@ -1,5 +1,13 @@
 # Tiến độ implementation
 
+## Mốc mới nhất — increment016 / P06-S050 archive lifecycle
+
+Đã bổ sung UI lưu trữ sau đúng save ACK/revision, kho archived records theo device scope và restore có ACK. Giữ nguyên typed content0/false, nguồn/tệp, job snapshots và history; archived Process không được claim mới, không tự cancel/replay pending/running effects. Host refresh media coordinator sau Process mutation để ngừng/tái lập watchers và scans theo grant hiện có.
+
+Đã chạy full quality checks với **193 tests / 20 files**; rerun affected media integration sau củng cố scan synchronization:13 passed; browser full suite **17 passed / 0 failed/skipped/flaky**. Current Linux host restart bằng compiled output mới; health/SQLite/renderer/bootstrap smoke và actual startDebug→initial PAUSED→CONTINUE→COMPLETED API smoke PASS. Không có fake phone/account/posting results trong production DB.
+
+P06 còn clone preview/asset ownership, adopt/rebind, thumbnails, server content query và migration UI; các mục P04/P05/P07 khác và P08–P14 vẫn giữ theo completion plan. Target Windows10 x64/20→300 phones/Facebook-first đa app chưa được hardware/throughput/installer acceptance. Tổng15 phases chưa hoàn tất100%.
+
 ## Mốc mới nhất — increment 015 / P07-S065
 
 Timeline có keyset pagination theo UTC/priority/createdAt/stable ID; page size1–1000 là operation budget, không truncate tổng jobs. Migration8 thêm persisted jobs epoch + insert/update/delete triggers và index; cursor bind filters/epoch, bị invalidate khi worker/connection khác thay đổi lịch. UI có Tải thêm, loaded counts, response generation guards và virtualized rows để không dựng hàng trăm/nghìn DOM rows một lúc.

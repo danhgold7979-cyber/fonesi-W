@@ -161,7 +161,7 @@ const schemas = {
   validateWorkflow: z.strictObject({ bundle: z.unknown() }),
   traceWorkflow: z.strictObject({ bundle: z.unknown(), row: z.record(z.string(), z.unknown()) }),
   savePreference: z.strictObject({ value: z.unknown(), expectedRevision: revision }),
-  listProcesses: z.strictObject({}),
+  listProcesses: z.strictObject({ includeArchived: z.boolean().default(false) }),
   saveProcess: z.strictObject({ process: processSchema, expectedRevision: revision.nullable() }),
   content: z.strictObject({ processId: idSchema }),
   saveContent: z.strictObject({
@@ -351,7 +351,7 @@ export async function dispatch(
       );
     }
     case 'listProcesses':
-      return db.listProcesses();
+      return db.listProcesses(schemas.listProcesses.parse(input).includeArchived);
     case 'saveProcess': {
       const p = schemas.saveProcess.parse(input);
       return db.saveProcess(p.process, p.expectedRevision);

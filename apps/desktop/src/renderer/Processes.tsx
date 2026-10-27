@@ -14,6 +14,7 @@ import { Sources } from './Sources.js';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ContentActions } from './ContentActions.js';
 import { ContentFields } from './ContentFields.js';
+import { ProcessArchive } from './ProcessArchive.js';
 
 interface Props {
   deviceScope?: string | null;
@@ -208,6 +209,30 @@ export function Processes(props: Props) {
           <p>Mỗi tiến trình có app, workflow, dữ liệu và lịch riêng.</p>
         </div>
         <div className="actions">
+          <ProcessArchive
+            current={current}
+            isNew={isNew}
+            deviceScope={props.deviceScope ?? null}
+            save={save}
+            refresh={props.refresh}
+            notify={props.notify}
+            archived={(id) => {
+              if (context.current?.id !== id) return;
+              rowGeneration.current++;
+              schemaGeneration.current++;
+              context.current = null;
+              live.current = { current: null, dirty: false, isNew: false, validInputs: true };
+              setCurrent(null);
+              setDirty(false);
+              setRows([]);
+              setAssets([]);
+              setSelected(new Set());
+              setPreview(null);
+            }}
+            restored={(process) => {
+              void select(process);
+            }}
+          />
           <button
             onClick={() => {
               void save().then(() => {
