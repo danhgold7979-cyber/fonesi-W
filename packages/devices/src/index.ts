@@ -417,9 +417,9 @@ export class AdbClient {
       '/asset-' + ordinalText + '-' + input.nonce + extension;
     if (signal?.aborted) throw new DomainError('CANCELLED', 'Remote readback cancelled.');
     await this.beforeDispatch();
-    // Budget includes each 8-byte DATA header and the final DONE header.
+    // Budget includes both ADB OKAY responses, DATA headers and final DONE.
     const frameCount = Math.ceil(input.expectedBytes / (64 * 1024));
-    const budget = input.expectedBytes + frameCount * 8 + 8;
+    const budget = input.expectedBytes + frameCount * 8 + 16;
     const connection = await this.device(input.serial, 'sync:', budget, signal, 180000);
     try {
       const request = Buffer.from(remotePath, 'utf8');
