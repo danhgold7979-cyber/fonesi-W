@@ -3,7 +3,6 @@ import {
   lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rename, rm, stat, statfs,
 } from 'node:fs/promises';
 import { extname, join, relative, resolve, sep } from 'node:path';
-import { pipeline } from 'node:stream/promises';
 import { assertJsonSafe, hashSchema, idSchema } from '@autoreels/contracts';
 import type { JobMediaPreflightPlan } from '@autoreels/contracts';
 import { contentHash, DomainError } from '@autoreels/domain';
@@ -205,11 +204,32 @@ export class HostStagingLedger {
       if (!before.isFile() || before.size !== item.pinnedBytes)
         throw new DomainError('STAGE_SOURCE_CHANGED', 'Source size does not match pinned media.');
       to = await open(join(pending, filename), 'wx', 0o600);
-      await pipeline(
-        from.createReadStream({ autoClose: false }),
-        to.createWriteStream({ autoClose: false }),
-        { signal },
-      );
+      // Keep file handles owned explicitly: autoClose=false streams can leave
+      // FileHandle.close() waiting forever on an unfinished stream.
+      // Positional bounded reads/writes keep memory <=256 KiB per transfer.
+      const block = Buffer.allocUnsafe(256 * 1024);
+      const deadline = Date.now() + 120000;
+      let offset = 0;
+      while (true) {
+        if (signal?.aborted)
+          throw new DomainError('CANCELLED', 'Staging cancelled.');
+        if (Date.now() >= deadline)
+          throw new DomainError('STAGE_TIMEOUT', 'Media staging exceeded its time budget.');
+        const { bytesRead } = await from.read(block, 0, block.length, offset);
+        if (!bytesRead) break;
+        if (offset + bytesRead > item.pinnedBytes)
+          throw new DomainError('STAGE_SOURCE_CHANGED', 'Source grew while being staged.');
+        let written = 0;
+        while (written < bytesRead) {
+          const result = await to.write(block, written, bytesRead - written, offset + written);
+          if (!result.bytesWritten)
+            throw new DomainError('STAGE_WRITE_FAILED', 'Cannot persist staged bytes.');
+          written += result.bytesWritten;
+        }
+        offset += bytesRead;
+      }
+      if (offset !== item.pinnedBytes)
+        throw new DomainError('STAGE_SOURCE_CHANGED', 'Source length changed during staging.');
       await to.sync();
       const after = await from.stat();
       const resolvedAgain = await resolveGrantedFile(
