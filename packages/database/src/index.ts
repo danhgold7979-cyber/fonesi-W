@@ -983,7 +983,62 @@ export class StudioDatabase {
         const old = this.db
           .prepare('SELECT * FROM device_transports WHERE host_id=? AND serial=?')
           .get(hostId, observation.serial);
-        const evidence = deviceFingerprint(observation.metadata, hostId, observation.serial);
+        // Metadata is fresh identity evidence only for an authorized/connected
+        // transport. Offline/unauthorized callbacks cannot promote or rebind it.
+        const freshMetadata =
+          observation.state === 'CONNECTED' ? observation.metadata : null;
+        const evidence = deviceFingerprint(freshMetadata, hostId, observation.serial);
+        const previous = old
+          ? this.db
+              .prepare('SELECT * FROM device_profiles WHERE device_id=?')
+              .get(String(old.device_id))
+          : undefined;
+        // An already-verified transport alias is not permission to bind a different
+        // physical phone to its historical Process/jobs. This is an identity
+        // contradiction, not a discovery event. Preserve the old binding and
+        // revoke input capability until an explicitly audited resolution exists.
+        if (
+          old &&
+          previous &&
+          (previous.identity === 'VERIFIED_PROPERTIES' || previous.identity === 'CONFLICT') &&
+          observation.state === 'CONNECTED' &&
+          !evidence.provisional &&
+          evidence.fingerprint !== previous.fingerprint
+        ) {
+          const candidate = this.db
+            .prepare('SELECT device_id FROM device_profiles WHERE fingerprint=?')
+            .get(evidence.fingerprint);
+          this.db
+            .prepare(
+              "UPDATE device_profiles SET identity='CONFLICT',revision=revision+1 WHERE device_id=? AND identity<>'CONFLICT'",
+            )
+            .run(String(old.device_id));
+          if (candidate && candidate.device_id !== old.device_id)
+            this.db
+              .prepare(
+                "UPDATE device_profiles SET identity='CONFLICT',revision=revision+1 WHERE device_id=? AND identity<>'CONFLICT'",
+              )
+              .run(String(candidate.device_id));
+          const changed =
+            old.state !== observation.state ||
+            old.kind !== observation.kind ||
+            Boolean(old.identity_verified);
+          this.db
+            .prepare(
+              'UPDATE device_transports SET kind=?,state=?,generation=?,last_seen=?,identity_verified=0 WHERE host_id=? AND serial=?',
+            )
+            .run(
+              observation.kind,
+              observation.state,
+              Number(old.generation) + Number(changed),
+              at,
+              hostId,
+              observation.serial,
+            );
+          // Do not create or auto-verify a new record, and do not move a lease,
+          // existing content, queued jobs, or historical device references.
+          continue;
+        }
         let profile = this.db
           .prepare('SELECT * FROM device_profiles WHERE fingerprint=?')
           .get(evidence.fingerprint);
@@ -991,14 +1046,19 @@ export class StudioDatabase {
           const previous = this.db
             .prepare('SELECT * FROM device_profiles WHERE device_id=?')
             .get(String(old.device_id));
-          if (previous?.identity === 'PROVISIONAL' || !observation.metadata) profile = previous;
+          // Incomplete (provisional) hardware evidence cannot migrate an existing
+          // verified transport to a new identity or overwrite historical metadata.
+          if (previous?.identity === 'PROVISIONAL' || evidence.provisional) profile = previous;
         }
         let deviceId = profile ? String(profile.device_id) : null;
-        const metadata = observation.metadata
-          ? canonicalJson(observation.metadata)
-          : profile?.metadata
-            ? String(profile.metadata)
-            : null;
+        const metadata =
+          !evidence.provisional && freshMetadata
+            ? canonicalJson(freshMetadata)
+            : profile?.metadata
+              ? String(profile.metadata)
+              : freshMetadata
+                ? canonicalJson(freshMetadata)
+                : null;
         const identity =
           profile?.identity === 'CONFLICT'
             ? 'CONFLICT'
@@ -1010,7 +1070,7 @@ export class StudioDatabase {
           deviceId = makeId('device');
           this.db
             .prepare('INSERT INTO devices(id,name) VALUES(?,?)')
-            .run(deviceId, observation.metadata?.model ?? observation.serial);
+            .run(deviceId, freshMetadata?.model ?? observation.serial);
           this.db
             .prepare('INSERT INTO device_profiles VALUES(?,?,?,?,0)')
             .run(deviceId, evidence.fingerprint, metadata, identity);
@@ -1035,7 +1095,7 @@ export class StudioDatabase {
         const fresh =
           observation.state === 'CONNECTED' &&
           !evidence.provisional &&
-          observation.metadata !== null;
+          freshMetadata !== null;
         const changed =
           !old ||
           Boolean(old.identity_verified) !== fresh ||
@@ -1588,6 +1648,14 @@ export class StudioDatabase {
     return this.transaction(() => {
       const device = this.db.prepare('SELECT enabled FROM devices WHERE id=?').get(deviceId);
       if (!device?.enabled) return { status: 'DEVICE_DISABLED' };
+      // A latched hardware identity conflict is an operator-review gate even
+      // when a previously scheduled job is due. Do not allocate a new lease.
+      if (
+        this.db
+          .prepare("SELECT 1 FROM device_profiles WHERE device_id=? AND identity='CONFLICT'")
+          .get(deviceId)
+      )
+        return { status: 'NEEDS_REVIEW' };
       if (
         this.db
           .prepare("SELECT 1 FROM jobs WHERE device_id=? AND state='NEEDS_REVIEW'")

@@ -137,3 +137,157 @@ it('persists host-scoped endpoint policies, resolved aliases and bounded backoff
     resolvedSerial: '192.168.1.2:5555',
   });
 });
+
+
+it('fences a reused verified host transport without stealing the old device, name, enabled state or history', () => {
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  const existing = db.listDeviceRecords('host')[0]!;
+  db.updateDevice(existing.id, existing.revision, { name: 'Original handset', enabled: false });
+  const previous = db.listDeviceRecords('host')[0]!;
+  const counterfeit = {
+    ...observation('usb_1'),
+    metadata: { ...metadata, hardwareSerial: 'DIFFERENT_HANDSET' },
+  };
+  db.reconcileDeviceTransports('host', [counterfeit]);
+  let records = db.listDeviceRecords('host');
+  expect(records).toHaveLength(1);
+  expect(records[0]).toMatchObject({
+    id: existing.id,
+    name: 'Original handset',
+    enabled: false,
+    identity: 'CONFLICT',
+    metadata: { hardwareSerial: metadata.hardwareSerial },
+  });
+  expect(records[0]!.transports[0]).toMatchObject({
+    serial: 'usb_1',
+    state: 'CONNECTED',
+    identityVerified: false,
+  });
+  const fencedGeneration = records[0]!.transports[0]!.generation;
+  expect(fencedGeneration).toBeGreaterThan(previous.transports[0]!.generation);
+  expect(records[0]!.capabilities.manualControl).toBe(false);
+  expect(() => db.assertDeviceTransport('host', existing.id, 'usb_1', previous.transports[0]!.generation)).toThrow();
+
+  // Polling the same contradictory identity must not repeatedly increment generation.
+  db.reconcileDeviceTransports('host', [counterfeit]);
+  records = db.listDeviceRecords('host');
+  expect(records[0]!.transports[0]!.generation).toBe(fencedGeneration);
+  expect(records).toHaveLength(1);
+
+  // Even a later matching scan must not silently clear a previously latched conflict.
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  records = db.listDeviceRecords('host');
+  expect(records[0]!.identity).toBe('CONFLICT');
+  expect(records[0]!.capabilities.manualControl).toBe(false);
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  const reopened = db.listDeviceRecords('host');
+  expect(reopened[0]!.id).toBe(existing.id);
+  expect(reopened[0]!.identity).toBe('CONFLICT');
+  expect(reopened[0]!.name).toBe('Original handset');
+});
+
+it('latches both historical identities when a reused serial claims another registered device fingerprint', () => {
+  const otherMetadata: DeviceMetadata = { ...metadata, hardwareSerial: 'KNOWN_OTHER' };
+  db.reconcileDeviceTransports('host', [
+    observation('usb_old'),
+    { ...observation('usb_other'), metadata: otherMetadata },
+  ]);
+  const before = db.listDeviceRecords('host'),
+    old = before.find((r) => r.metadata?.hardwareSerial === metadata.hardwareSerial)!,
+    other = before.find((r) => r.metadata?.hardwareSerial === 'KNOWN_OTHER')!;
+  expect(old.id).not.toBe(other.id);
+  expect(before.every((r) => r.capabilities.manualControl)).toBe(true);
+
+  db.reconcileDeviceTransports('host', [
+    { ...observation('usb_old'), metadata: otherMetadata },
+    { ...observation('usb_other'), metadata: otherMetadata },
+  ]);
+  const after = db.listDeviceRecords('host');
+  expect(after).toHaveLength(2);
+  expect(after.find((r) => r.id === old.id)).toMatchObject({
+    identity: 'CONFLICT',
+    transports: [expect.objectContaining({ serial: 'usb_old', identityVerified: false })],
+  });
+  expect(after.find((r) => r.id === other.id)!.identity).toBe('CONFLICT');
+  expect(after.every((r) => !r.capabilities.manualControl)).toBe(true);
+  expect(() => db.assertDeviceTransport('host', old.id, 'usb_old', old.transports[0]!.generation)).toThrow();
+
+  // The same metadata on a different, unrelated phone never authorizes the old ID.
+  db.reconcileDeviceTransports('host', [
+    observation('usb_old'),
+    { ...observation('usb_other'), metadata: otherMetadata },
+  ]);
+  expect(db.listDeviceRecords('host').every((r) => r.identity === 'CONFLICT')).toBe(true);
+});
+
+it('ignores identity-looking metadata from unauthorized/offline transports without creating a new device', () => {
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  const before = db.listDeviceRecords('host')[0]!;
+  const untrusted: DeviceMetadata = { ...metadata, hardwareSerial: 'FORGED_NONCONNECTED' };
+  db.reconcileDeviceTransports('host', [
+    { ...observation('usb_1'), state: 'UNAUTHORIZED', metadata: untrusted },
+  ]);
+  let after = db.listDeviceRecords('host');
+  expect(after).toHaveLength(1);
+  expect(after[0]).toMatchObject({
+    id: before.id,
+    identity: 'VERIFIED_PROPERTIES',
+    metadata: { hardwareSerial: metadata.hardwareSerial },
+  });
+  expect(after[0]!.capabilities.manualControl).toBe(false);
+  expect(after[0]!.transports[0]!.identityVerified).toBe(false);
+  db.reconcileDeviceTransports('host', [
+    { ...observation('usb_1'), state: 'OFFLINE', metadata: untrusted },
+  ]);
+  after = db.listDeviceRecords('host');
+  expect(after).toHaveLength(1);
+  expect(after[0]!.identity).toBe('VERIFIED_PROPERTIES');
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  expect(db.listDeviceRecords('host')[0]!.capabilities.manualControl).toBe(true);
+});
+
+it('keeps a legitimate USB+TCP pair and an unrelated phone unaffected by a contradictory alias', () => {
+  const second = { ...metadata, hardwareSerial: 'SECOND_PHONE' };
+  db.reconcileDeviceTransports('host', [
+    observation('usb_1'),
+    observation('192.168.1.3:5555', 'TCP'),
+    { ...observation('usb_2'), metadata: second },
+  ]);
+  const records = db.listDeviceRecords('host');
+  expect(records).toHaveLength(2);
+  const original = records.find((r) => r.metadata?.hardwareSerial === metadata.hardwareSerial)!;
+  expect(original.transports).toHaveLength(2);
+  expect(original.capabilities.manualControl).toBe(true);
+  db.reconcileDeviceTransports('host', [
+    { ...observation('usb_1'), metadata: { ...metadata, hardwareSerial: 'UNKNOWN_NEW' } },
+    observation('192.168.1.3:5555', 'TCP'),
+    { ...observation('usb_2'), metadata: second },
+  ]);
+  const after = db.listDeviceRecords('host');
+  expect(after.find((r) => r.id === original.id)!.identity).toBe('CONFLICT');
+  expect(after.find((r) => r.id === original.id)!.capabilities.manualControl).toBe(false);
+  const unaffected = after.find((r) => r.metadata?.hardwareSerial === 'SECOND_PHONE')!;
+  expect(unaffected.identity).toBe('VERIFIED_PROPERTIES');
+  expect(unaffected.capabilities.manualControl).toBe(true);
+});
+
+it('never remaps a verified transport on partial property probe with no hardware serial', () => {
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  const verified = db.listDeviceRecords('host')[0]!;
+  db.reconcileDeviceTransports('host', [{
+    ...observation('usb_1'),
+    metadata: { ...metadata, hardwareSerial: null, manufacturer: 'Unconfirmed', model: 'Uncertain' },
+  }]);
+  const pending = db.listDeviceRecords('host');
+  expect(pending).toHaveLength(1);
+  expect(pending[0]).toMatchObject({
+    id: verified.id,
+    identity: 'VERIFIED_PROPERTIES',
+    metadata: { hardwareSerial: metadata.hardwareSerial, manufacturer: metadata.manufacturer },
+  });
+  expect(pending[0]!.transports[0]!.identityVerified).toBe(false);
+  expect(pending[0]!.capabilities.manualControl).toBe(false);
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  expect(db.listDeviceRecords('host')[0]!.capabilities.manualControl).toBe(true);
+});
