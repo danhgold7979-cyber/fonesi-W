@@ -174,3 +174,6 @@ export function overdueAction(
   if (reason === 'NORMAL_QUEUE_DELAY') return 'QUEUE';
   return policy === 'CATCH_UP' ? 'QUEUE' : policy === 'SKIP' ? 'SKIP' : 'NEXT_FUTURE_SLOT';
 }
+
+export { nextAvailableRecoverySlot } from './recovery.js';
+export type { RecoverySlot } from './recovery.js';

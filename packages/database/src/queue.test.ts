@@ -40,7 +40,7 @@ function fixture(deviceId = 'device_1', index = '1'): string[] {
       startDate: '2026-10-26',
       slots: ['08:00', '12:00'],
       weekdays: [1, 2, 3, 4, 5, 6, 7],
-      overduePolicy: 'CATCH_UP',
+      overduePolicy,
       jitterMinutes: 0,
     },
   };
@@ -194,4 +194,74 @@ it('preserves a newer manual lease during recovery and blocks active jobs withou
   db.releaseLease(manual);
   db.transitionJob(c.job.id, 'PREFLIGHT', db.getJob(c.job.id).job.revision);
   expect(db.claimDueJob('device_1', 'worker_new', now + 1003).status).toBe('DEVICE_BUSY');
+});
+
+
+it('reconciles a real sleep gap using frozen policies without reissuing external actions', () => {
+  const began = Date.parse('2026-10-25T23:00:00Z'),
+    resumed = Date.parse('2026-10-26T06:00:00Z');
+  const catchUp = fixture('device_1', '1', 'CATCH_UP');
+  const skip = fixture('device_2', '2', 'SKIP');
+  const next = fixture('device_3', '3', 'NEXT_FUTURE_SLOT');
+  // Mutating Process settings after scheduling must not change pinned job policy.
+  const process = db.getProcess('process_2');
+  db.saveProcess(
+    { ...process, schedule: { ...process.schedule, overduePolicy: 'CATCH_UP' } },
+    process.revision,
+  );
+  const frozen = new Map([...catchUp, ...skip, ...next].map((id) => [id, db.getJob(id).snapshotHash]));
+  const result = db.reconcileSleepGap(began, resumed);
+  expect(result.queued).toEqual(catchUp);
+  expect(result.skipped).toEqual(skip);
+  expect(result.postponed.map((item) => item.jobId)).toEqual(next);
+  expect(new Set(result.postponed.map((item) => item.scheduledUtc)).size).toBe(next.length);
+  for (const id of catchUp) expect(db.getJob(id).job.state).toBe('QUEUED');
+  for (const id of skip) expect(db.getJob(id).job.state).toBe('SKIPPED');
+  for (const id of next) expect(db.getJob(id).job.state).toBe('SCHEDULED');
+  for (const id of frozen.keys()) expect(db.getJob(id).snapshotHash).toBe(frozen.get(id));
+  expect(db.reconcileSleepGap(began, resumed)).toEqual({
+    queued: [], skipped: [], postponed: [], review: [],
+  });
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.reconcileSleepGap(began, resumed)).toEqual({
+    queued: [], skipped: [], postponed: [], review: [],
+  });
+});
+
+it('never replays claimed jobs or jobs with any effect, and keeps the old snapshot immutable', () => {
+  const ids = fixture('device_1', '1', 'CATCH_UP'),
+    began = Date.parse('2026-10-25T23:00:00Z'),
+    resumed = Date.parse('2026-10-27T00:00:00Z');
+  const old = db.getJob(ids[0]!).snapshotHash;
+  db.recordIntent(ids[0]!, 'publish_node', 'PUBLISH', contentHash('sleep-effect'), contentHash('payload'));
+  expect(db.reconcileSleepGap(began, resumed)).toEqual({
+    queued: [ids[1]!], skipped: [], postponed: [], review: [ids[0]!],
+  });
+  expect(db.getJob(ids[0]!).job.state).toBe('NEEDS_REVIEW');
+  expect(db.getJob(ids[0]!).snapshotHash).toBe(old);
+  expect(db.claimDueJob('device_1', 'worker_new', resumed + 1).status).toBe('NEEDS_REVIEW');
+  const another = fixture('device_2', '2', 'SKIP');
+  db.claimDueJob('device_2', 'manual_worker', resumed, 1000);
+  const second = db.reconcileSleepGap(began, resumed);
+  expect(second.skipped).not.toContain(another[0]);
+  expect(db.getJob(another[0]!).job.state).toBe('PREFLIGHT');
+});
+
+it('bounds sleep gap inputs and excludes normal queue delay and future jobs', () => {
+  const ids = fixture();
+  for (const [a, b] of [
+    [NaN, now],
+    [now, now],
+    [now, now + 20000],
+    [now, now + 8 * 86400000],
+    [Number.MAX_SAFE_INTEGER, now],
+  ])
+    expect(() => db.reconcileSleepGap(a, b)).toThrow();
+  const result = db.reconcileSleepGap(
+    Date.parse('2026-10-27T00:00:00Z'),
+    Date.parse('2026-10-27T01:00:00Z'),
+  );
+  expect(result).toEqual({ queued: [], skipped: [], postponed: [], review: [] });
+  for (const id of ids) expect(db.getJob(id).job.state).toBe('SCHEDULED');
 });

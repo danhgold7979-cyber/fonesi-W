@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog, powerMonitor } from 'electron';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { mkdirSync } from 'node:fs';
@@ -23,6 +23,7 @@ else {
   let window: BrowserWindow | null = null,
     db: DbClient | null = null,
     services: HostServices | null = null;
+  let suspendedAt: number | null = null;
   app.on('second-instance', () => {
     window?.show();
     window?.focus();
@@ -101,6 +102,28 @@ else {
         new HostWorkspaceService(db, app.getPath('userData')),
       );
       await services.ready();
+      // Only a paired, observed native suspend/resume can classify missed slots.
+      // A startup, clock jump, busy queue or device reconnect is NOT a sleep gap.
+      powerMonitor.on('suspend', () => { suspendedAt = Date.now(); });
+      powerMonitor.on('resume', () => {
+        const began = suspendedAt;
+        suspendedAt = null;
+        const resumed = Date.now();
+        if (
+          began === null ||
+          resumed - began < 30000 ||
+          resumed - began > 7 * 24 * 60 * 60 * 1000 ||
+          !db
+        ) return;
+        void db
+          .internal({ command: 'queue.reconcileSleep', suspendedAt: began, resumedAt: resumed })
+          .catch((error: unknown) =>
+            console.error(
+              'Sleep recovery requires operator review:',
+              error instanceof Error ? error.message : 'Unknown worker failure',
+            ),
+          );
+      });
       const request = z.strictObject({ command: z.string(), input: z.unknown() });
       ipcMain.handle('studio:request', async (event, raw: unknown) => {
         if (
