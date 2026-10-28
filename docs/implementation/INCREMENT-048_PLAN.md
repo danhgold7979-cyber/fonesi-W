@@ -37,3 +37,8 @@ Increment044–047 now persist a job-unique remote destination, uncertainty befo
 ## Acceptance boundary
 
 The strongest status allowed is `TESTED_DURABLE_STAGE_RECONCILIATION_NOT_S095_ACCEPTED` after exact-source CI passes. Physical Android proof and the S095 acceptance test `AT-095` remain unrun unless separately evidenced.
+
+
+## Amendment — preserve the exact fresh MediaStore row observation
+
+Before closing the increment, the reconciliation audit must retain the bounded exact-row fields returned by the probe: row ID, display name, relative path, MIME type and byte count. These fields are optional only for non-indexed/unsupported/mismatch outcomes. For `INDEXED_EXACT`, all fields must be validated against the durable owned stage and persisted atomically with the classification. Add immutable-update/delete SQLite triggers to make the append-only promise enforceable at the database boundary. This does not alter any migration v1–v17; the still-unreleased v18 migration is extended before acceptance. Add tests for exact row evidence, invalid row mismatch, duplicate request ID conflict and immutable audit rows.
