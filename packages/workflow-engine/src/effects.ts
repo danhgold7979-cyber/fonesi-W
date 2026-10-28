@@ -46,7 +46,11 @@ export function assessEffectPaths(input: WorkflowBundle): ValidationIssue[] {
   const cache = new Map<string, boolean>();
   const active = new Set<string>();
   const riskyNode = (node: WorkflowNode): boolean =>
-    ['transaction', 'tap', 'verify', 'cleanup'].includes(node.type);
+    [
+      'transaction', 'verify', 'cleanup', 'stage', 'selectmedia',
+      'tap', 'doubletap', 'hold', 'drag', 'swipe', 'scroll', 'pinch',
+      'type', 'clear', 'keyboard',
+    ].includes(node.type);
   const childRef = (node: WorkflowNode): string | null => {
     if (node.type === 'subflow')
       return typeof node.config.graphRef === 'string' ? node.config.graphRef : null;
