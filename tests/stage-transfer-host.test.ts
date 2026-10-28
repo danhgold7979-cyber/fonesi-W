@@ -142,6 +142,22 @@ function coordinator(
           bytes: input.expectedBytes,
         };
       },
+      probeOwnedStageMediaStore: async (input: {
+        serial: string; jobId: string; ordinal: number; nonce: string; extension: string; expectedBytes: number;
+      }) => {
+        events.push('fake.adb.mediastore');
+        await fence();
+        if (outcome === 'NOT_INDEXED' || outcome === 'AMBIGUOUS' || outcome === 'UNSUPPORTED')
+          return { status: outcome } as const;
+        return {
+          status: 'INDEXED_EXACT' as const,
+          rowId: '42',
+          displayName: 'asset-' + String(input.ordinal).padStart(3, '0') + '-' + input.nonce + input.extension,
+          relativePath: 'Download/AutoReelsStudio/job-' + input.jobId + '/',
+          mimeType: /^\\.(?:jpg|jpeg|png|webp|gif|bmp)$/.test(input.extension) ? 'image/jpeg' : 'video/mp4',
+          bytes: input.expectedBytes,
+        };
+      },
     }),
   }));
 }
@@ -212,6 +228,48 @@ it('does not persist mismatched remote hash and never marks it dispatchable', as
     state: 'SYNC_ACK_UNVERIFIED',
     remoteReadbackHash: null, remoteReadbackBytes: null, remoteReadbackAt: null,
   });
+});
+it('records exact MediaStore row only after matching remote byte readback and never dispatches', async () => {
+  const f = await fixture();
+  const uploaded = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId: f.jobId, stageId: uploaded.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const receipt = await coordinator().verifyMediaStoreRow({
+    jobId: f.jobId, stageId: uploaded.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  expect(receipt).toMatchObject({
+    scope: 'MEDIASTORE_ROW_ONLY', status: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED',
+    canDispatch: false,
+  });
+  expect(db.listDeviceStageTransfers(jobId)[0]).toMatchObject({
+    state: 'SYNC_ACK_UNVERIFIED', mediaStoreRowId: '42',
+    mediaStoreDisplayName: expect.stringContaining('asset-000-'),
+    mediaStoreRelativePath: 'Download/AutoReelsStudio/job-' + jobId + '/',
+    mediaStoreMimeType: 'video/mp4', mediaStoreBytes: expect.any(Number),
+  });
+  expect(events).toContain('stage.recordMediaStore');
+  expect(db.getJob(jobId).job.state).toBe('PREFLIGHT');
+});
+it('does not persist a MediaStore row when the probe says not indexed', async () => {
+  const f = await fixture();
+  const upload = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId: f.jobId, stageId: upload.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const receipt = await coordinator('NOT_INDEXED').verifyMediaStoreRow({
+    jobId: f.jobId, stageId: upload.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  expect(receipt).toMatchObject({ status: 'NOT_INDEXED', canDispatch: false });
+  expect(db.listDeviceStageTransfers(jobId)[0]?.mediaStoreAt).toBeNull();
 });
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {
   const f = await fixture();
