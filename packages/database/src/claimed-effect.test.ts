@@ -26,7 +26,7 @@ const node = (
 ): WorkflowNode => ({ id, type, name: id, x: 10, y: 10, config });
 const edge = (id: string, source: string, port: WorkflowEdge['port'], target: string): WorkflowEdge =>
   ({ id, source, port, target });
-function fixture(deviceId = 'device_1', index = '1') {
+function fixture(deviceId = 'device_1', index = '1', withComment = false) {
   db.registerObservedDevice(deviceId, deviceId);
   // A verified profile fixture is required even before the provider preflight.
   const setup = new DatabaseSync(join(dir, 'studio.sqlite'));
@@ -60,6 +60,25 @@ function fixture(deviceId = 'device_1', index = '1') {
     edge('cleanup_next', 'cleanup', 'next', 'end'),
     edge('cleanup_error', 'cleanup', 'error', 'review'),
   ];
+  if (withComment) {
+    graph.nodes.push(
+      node('commentIntent', 'transaction', {
+        effectKind: 'COMMENT', idempotencyScope: 'comment-item', payloadHash: 'pinned-comment',
+      }),
+      node('comment', 'tap', { selector: '#comment', effectClassification: 'comment' }),
+      node('commentVerify', 'verify', { verificationProfile: 'comment', evidenceMapping: {} }),
+    );
+    graph.edges.find((e) => e.id === 'verify_true')!.target = 'commentIntent';
+    graph.edges.push(
+      edge('comment_intent_next', 'commentIntent', 'next', 'comment'),
+      edge('comment_intent_error', 'commentIntent', 'error', 'review'),
+      edge('comment_next', 'comment', 'next', 'commentVerify'),
+      edge('comment_error', 'comment', 'error', 'review'),
+      edge('comment_verified', 'commentVerify', 'true', 'cleanup'),
+      edge('comment_not_verified', 'commentVerify', 'false', 'review'),
+      edge('comment_verify_error', 'commentVerify', 'error', 'review'),
+    );
+  }
   const saved = db.saveDraft(bundle, draft.revision),
     version = db.createVersion(saved.workflowId, saved.revision);
   const process: ProcessDefinition = {
@@ -257,4 +276,65 @@ it('private worker allows explicit guarded intent but public dispatcher refuses 
     effectKey: contentHash('extra'), payloadHash: contentHash('payload'),
     lease, at: at + 100,
   })).toThrow();
+});
+
+
+it('does not allow a comment attempt until the previous publish is explicitly verified', () => {
+  const f = fixture('device_1', '1', true);
+  const publish = prepare(f);
+  const pending = db.beginClaimedEffectAttempt({
+    effectId: publish.effectId,
+    expectedJobRevision: publish.jobRevision,
+    lease: f.lease,
+    at: at + 100,
+  });
+  const commentInput = (revision: number) => ({
+    jobId: f.jobId,
+    expectedJobRevision: revision,
+    expectedSnapshotHash: f.snapshotHash,
+    nodeId: 'comment',
+    kind: 'COMMENT' as const,
+    effectKey: contentHash('comment_ordinal_0'),
+    payloadHash: contentHash('comment-payload'),
+    lease: f.lease,
+    at: at + 130,
+  });
+  expect(() => db.prepareClaimedEffect(commentInput(pending.jobRevision))).toThrow('phase');
+
+  // DB-only verification fixture, not a provider assertion or external post.
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  sql.prepare("UPDATE jobs SET state='POSTED',revision=revision+1 WHERE id=?").run(f.jobId);
+  sql.prepare("UPDATE effects SET state='DEFINITIVELY_REJECTED' WHERE id=?").run(publish.effectId);
+  const postedRevision = db.getJob(f.jobId).job.revision;
+  expect(() => db.prepareClaimedEffect(commentInput(postedRevision))).toThrow('verified');
+  sql.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?").run(publish.effectId);
+  sql.close();
+
+  const intent = db.prepareClaimedEffect(commentInput(postedRevision));
+  expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+  const attempted = db.beginClaimedEffectAttempt({
+    effectId: intent.effectId,
+    expectedJobRevision: intent.jobRevision,
+    lease: f.lease,
+    at: at + 160,
+  });
+  expect(attempted.state).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+  expect(() => db.prepareClaimedEffect({
+    ...commentInput(attempted.jobRevision), effectKey: contentHash('comment_ordinal_1'),
+  })).toThrow('phase');
+  const after = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(after.prepare("SELECT COUNT(*) AS n FROM effects WHERE job_id=? AND kind='PUBLISH'").get(f.jobId)?.n).toBe(1);
+  expect(after.prepare("SELECT COUNT(*) AS n FROM effects WHERE job_id=? AND kind='COMMENT'").get(f.jobId)?.n).toBe(1);
+  after.close();
+});
+
+it('blocks new intent on a device that becomes identity-conflicted after queue claim', () => {
+  const f = fixture();
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  sql.prepare("UPDATE device_profiles SET identity='CONFLICT' WHERE device_id=?").run(f.lease.deviceId);
+  sql.close();
+  expect(() => prepare(f)).toThrow('Verified');
+  expect(db.getJob(f.jobId).job.state).toBe('RUNNING');
 });
