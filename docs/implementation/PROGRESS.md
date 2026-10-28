@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment029 / P08-S072 — khôi phục nhận diện có xác nhận và audit
+
+Đã triển khai recovery **khi fingerprint lịch sử khớp chính xác bằng chứng ADB mới**, dùng phiếu xem trước SQLite hết hạn sau 60 giây, chặn stale revision/transport generation/multiple transports, owner lease và job/effect chưa chắc chắn. Giao diện yêu cầu nhập đúng tên thiết bị, checkbox xác nhận vật lý và **hộp thoại native Electron**; loopback browser không thể gọi Apply. Sau khi ghi audit, tất cả generation cũ bị vô hiệu hóa và thiết bị **bị tắt**, phải tự kiểm tra và bật thủ công. Không tự khởi chạy job/đăng bài.
+
+Kế hoạch chi tiết: [INCREMENT-029_PLAN.md](INCREMENT-029_PLAN.md). Kết quả: [INCREMENT-029_RESULTS.md](INCREMENT-029_RESULTS.md). Bằng chứng: [checkpoint-022.json](../evidence/implementation/checkpoint-022.json). **CI source [40644592569](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40644592569) SUCCESS** cả Ubuntu/Windows: Ubuntu **258/258 unit/integration (27 files) + 24/24 Playwright UI**, Windows **257 pass + 1 pre-existing Unix-only SDK skip (27 files)**. PR #8 vẫn tách riêng để review/merge trên `feat/studio-workspace`; KHÔNG có chứng nhận thiết bị thật/Win10 GUI, không phải P08 ACCEPTED.
+
 ## Increment028 / P05-S045 — static effect path safety trên graph
 
 Đã code và merge [PR #6](https://github.com/danhgold7979-cyber/fonesi-W/pull/6) vào `feat/studio-workspace` tại `6074b9db`. Kế hoạch trước code tại [INCREMENT-028_PLAN.md](INCREMENT-028_PLAN.md), kết quả [INCREMENT-028_RESULTS.md](INCREMENT-028_RESULTS.md), receipt [checkpoint-021.json](../evidence/implementation/checkpoint-021.json). Compiler đã gắn kiểm tra đường đi: typed `transaction.next` mới cấp intent PUBLISH/COMMENT; đường error không thể lách bước ghi ý định; publish/comment chưa verify không được sang effect kế tiếp hoặc cleanup/normal success. Unknown external tap bị chặn bởi admission helper; chỉ là **static intragraph audit**, không phải provider/phone/real-job proof.

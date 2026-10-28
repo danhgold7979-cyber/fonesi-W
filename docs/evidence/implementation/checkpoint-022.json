@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-28",
+  "increment": "029",
+  "phase": "P08",
+  "steps": [
+    "S072"
+  ],
+  "baseline": "feat/studio-workspace@c55ca58235e8c1806c956c37f05b40713cffbcef",
+  "verifiedSourceCommit": "0188886417e468c544455e743029b4206139c70b",
+  "status": "TESTED_INCREMENT_NOT_FULL_PHASE_ACCEPTED",
+  "ci": {
+    "runId": 40644592569,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40644592569",
+    "conclusion": "success",
+    "ubuntu": {
+      "unitPassed": 258,
+      "testFiles": 27,
+      "browserPassed": 24,
+      "failed": 0
+    },
+    "windows": {
+      "unitPassed": 257,
+      "testFiles": 27,
+      "skipped": 1,
+      "failed": 0,
+      "skipReason": "pre-existing Unix-only SDK fixture"
+    }
+  },
+  "implemented": [
+    "SQLite v13 immutable preview token and redacted audit",
+    "real ADB re-probe before preview/apply",
+    "matching historical hardware fingerprint and generation",
+    "native operator confirmation required",
+    "transactional fail-closed validation",
+    "device disabled and transport fenced on apply",
+    "SQLite/TCP fixture/browser regression"
+  ],
+  "unrun": [
+    "Windows10 physical native dialog and UX acceptance",
+    "two real Android devices collision recovery",
+    "real USB/LAN replay/races",
+    "hardware-app certification",
+    "actual published effects",
+    "20-to-300 phone throughput",
+    "signed installer"
+  ],
+  "scopeNote": "CI tests use controlled fixtures; no real device ownership or post verification proven."
+}

@@ -18,7 +18,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 | P05 | Compiler/engine | Đã test typed mapping/pinned closure/immutable IR/debugger/UI và audit đường đi effect nội bộ; còn audit qua subflow/loop, journal runtime/providers/DEVICE_TEST thật |
 | P06 | Process/media | Đã test archive/restore, clone preview/scoped ownership, rebind và explicit adoption; còn thumbnails/cache, query/migration UI gaps |
 | P07 | Scheduler | Đã test app/snapshot filter, local day/week/month, paging/virtual timeline và scoped spread/cancel; còn dispatch/recovery/overdue, auto-append/drag/sleep-resume |
-| P08 | Device/worker | Đã thêm security fence cho transport identity conflict, queue claim chặn device CONFLICT và kiểm thử DB; còn audited conflict resolution, worker coordination và nghiệm thu Windows/Android thật |
+| P08 | Device/worker | Đã có security fence + conflict readiness và Increment029 verified-fingerprint operator-review/audit + quét lại, device tắt sau khôi phục; còn nghiệm thu desktop native/Windows10 với 2 Android thật, worker coordination, mở rộng USB/LAN và scale |
 | P09 | Stream/Inspector | Real stream decoder/control, richer selectors/OCR/Unicode/gestures, correlation |
 | P10 | Technical risk | Verify exact devices/app versions/locale/USB/LAN; owned staging, identity, publish signals, routing |
 | P11 | Execution/effects | Journal-first executor, independent comments, uncertainty/review/recovery/owned cleanup |
