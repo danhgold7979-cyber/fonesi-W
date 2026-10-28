@@ -1487,9 +1487,7 @@ export class StudioDatabase {
             this.db.prepare('SELECT 1 FROM effects WHERE job_id=?').get(id),
           ),
           frozen = scheduleProfileSchema.safeParse(record.snapshot.scheduleProfile);
-        const action = !frozen.success
-          ? 'REVIEW'
-          : overdueAction(frozen.data.overduePolicy, 'SLEEP_GAP', hasEffect);
+        const profile = frozen.success ? frozen.data : null;
         const markReview = (code: string): void => {
           assertJobTransition(record.job.state, 'NEEDS_REVIEW', hasEffect);
           this.db
@@ -1503,8 +1501,13 @@ export class StudioDatabase {
           );
           result.review.push(id);
         };
-        if (action === 'REVIEW') {
+        if (!profile || hasEffect) {
           markReview(hasEffect ? 'EFFECT_PRESENT' : 'FROZEN_PROFILE_UNAVAILABLE');
+          continue;
+        }
+        const action = overdueAction(profile.overduePolicy, 'SLEEP_GAP', false);
+        if (action === 'REVIEW') {
+          markReview('RECOVERY_POLICY_REVIEW');
           continue;
         }
         if (action === 'QUEUE') {
@@ -1538,7 +1541,7 @@ export class StudioDatabase {
             16,
           );
           const slot = nextAvailableRecoverySlot(
-            frozen.data,
+            profile,
             resumedUtc,
             occupied.map((r) => String(r.scheduled_utc)),
             seed,
