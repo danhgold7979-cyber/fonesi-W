@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
+import { constants } from 'node:fs';
+import { open, lstat, realpath } from 'node:fs/promises';
+import { basename, dirname, extname, isAbsolute, resolve } from 'node:path';
+import type { Socket } from 'node:net';
 import type { DeviceMetadata, TransportObservation } from '@autoreels/contracts';
-import { packageNameSchema } from '@autoreels/contracts';
+import { idSchema, packageNameSchema, hashSchema } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
 import { AdbConnection } from './connection.js';
 import { assertSerial, quoteAndroidArg, parseEndpoint, serverVersion } from './protocol.js';
@@ -83,6 +87,60 @@ export function deviceFingerprint(
     provisional: !verified,
   };
 }
+
+/** Only a trusted host worker may supply this app-owned staged file. */
+export interface OwnedSyncInput {
+  serial: string;
+  localPath: string;
+  jobId: string;
+  ordinal: number;
+  nonce: string;
+  expectedHash: string;
+  expectedBytes: number;
+}
+export interface OwnedSyncAck {
+  status: 'SYNC_ACK_UNVERIFIED';
+  remotePath: string;
+  bytes: number;
+  /** ADB Sync ACK is NOT MediaStore index or post verification. */
+  canDispatch: false;
+}
+const syncExtensions = new Set([
+  '.mp4', '.mov', '.mkv', '.webm', '.m4v', '.avi',
+  '.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp',
+]);
+const MAX_SYNC_BYTES = 512 * 1024 * 1024;
+async function sendPacket(socket: Socket, bytes: Buffer, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) throw new DomainError('CANCELLED', 'Staging transfer cancelled.');
+  if (socket.destroyed) throw new DomainError('ADB_CONNECTION', 'ADB transport closed.');
+  if (socket.write(bytes)) return;
+  await new Promise<void>((resolve, reject) => {
+    const done = (error?: Error): void => {
+      socket.off('drain', drained);
+      socket.off('close', closed);
+      socket.off('error', failed);
+      signal?.removeEventListener('abort', aborted);
+      if (error) reject(error);
+      else resolve();
+    };
+    const drained = () => done();
+    const closed = () => done(new DomainError('ADB_CONNECTION', 'ADB Sync transport closed.'));
+    const failed = () => done(new DomainError('ADB_CONNECTION', 'ADB Sync transport failed.'));
+    const aborted = () => done(new DomainError('CANCELLED', 'ADB Sync was cancelled.'));
+    socket.once('drain', drained);
+    socket.once('close', closed);
+    socket.once('error', failed);
+    signal?.addEventListener('abort', aborted, { once: true });
+    if (socket.destroyed || signal?.aborted) aborted();
+  });
+}
+function syncHeader(op: 'SEND' | 'DATA' | 'DONE', size: number): Buffer {
+  const result = Buffer.alloc(8);
+  result.write(op, 0, 'ascii');
+  result.writeUInt32LE(size, 4);
+  return result;
+}
+
 export class AdbClient {
   constructor(
     readonly port = 5037,
@@ -146,10 +204,11 @@ export class AdbClient {
     service: string,
     budget: number,
     signal?: AbortSignal,
+    timeoutMs = 15000,
   ): Promise<AdbConnection> {
     assertSerial(serial);
     await this.diagnostic(signal);
-    const c = new AdbConnection(this.port, 15000, budget, signal);
+    const c = new AdbConnection(this.port, timeoutMs, budget, signal);
     try {
       await c.request('host:transport:' + serial);
       await this.beforeDispatch?.();
@@ -192,6 +251,136 @@ export class AdbClient {
       c.close();
     }
   }
+  /**
+   * ADB Sync v1 byte transfer; no public IPC, no MediaStore index, no posting
+   * success. The caller must persist remote ownership before invoking this.
+   */
+  async sendOwnedStage(input: OwnedSyncInput, signal?: AbortSignal): Promise<OwnedSyncAck> {
+    if (!this.beforeDispatch)
+      throw new DomainError('ADB_STAGE_LEASE_REQUIRED', 'A fenced JOB owner is required.');
+    assertSerial(input.serial);
+    idSchema.parse(input.jobId);
+    hashSchema.parse(input.expectedHash);
+    if (!/^[a-f0-9]{32}$/.test(input.nonce) ||
+        !Number.isSafeInteger(input.ordinal) || input.ordinal < 0 || input.ordinal > 999 ||
+        !Number.isSafeInteger(input.expectedBytes) || input.expectedBytes <= 0 ||
+        input.expectedBytes > MAX_SYNC_BYTES)
+      throw new DomainError('ADB_SYNC_INVALID', 'Invalid owned staged asset specification.');
+    if (!isAbsolute(input.localPath))
+      throw new DomainError('ADB_SYNC_SOURCE', 'Stage path must be app-owned and absolute.');
+    const sourcePath = resolve(input.localPath),
+      extension = extname(sourcePath).toLowerCase(),
+      ordinalText = String(input.ordinal).padStart(3, '0');
+    if (!syncExtensions.has(extension) ||
+        basename(sourcePath) !== 'asset-' + ordinalText + extension ||
+        basename(dirname(sourcePath)) !== 'job-' + input.jobId ||
+        basename(dirname(dirname(sourcePath))) !== 'owned-media-stage')
+      throw new DomainError('ADB_SYNC_SOURCE', 'Only an app-owned job stage file is admissible.');
+    const stats = await lstat(sourcePath);
+    if (!stats.isFile() || stats.isSymbolicLink() || stats.size !== input.expectedBytes ||
+        await realpath(sourcePath) !== sourcePath)
+      throw new DomainError('ADB_SYNC_SOURCE', 'Local staged file is not a stable regular file.');
+
+    const handle = await open(sourcePath, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+    try {
+      const before = await handle.stat();
+      if (!before.isFile() || before.size !== input.expectedBytes ||
+          before.ino !== stats.ino || before.dev !== stats.dev ||
+          before.mtimeMs !== stats.mtimeMs)
+        throw new DomainError('ADB_SYNC_SOURCE', 'Staged file identity changed before upload.');
+      const block = Buffer.allocUnsafe(64 * 1024);
+      const hashFile = async (): Promise<string> => {
+        const digest = createHash('sha256');
+        let offset = 0;
+        while (offset < input.expectedBytes) {
+          if (signal?.aborted) throw new DomainError('CANCELLED', 'ADB Sync was cancelled.');
+          const { bytesRead } = await handle.read(
+            block, 0, Math.min(block.length, input.expectedBytes - offset), offset,
+          );
+          if (!bytesRead) throw new DomainError('ADB_SYNC_SOURCE', 'Staged bytes ended early.');
+          digest.update(block.subarray(0, bytesRead));
+          offset += bytesRead;
+        }
+        return digest.digest('hex');
+      };
+      // Verify *before* Android input, then hash the actual bytes once more as
+      // they are transmitted. Any mutation means an unknown remote side effect.
+      if (await hashFile() !== input.expectedHash)
+        throw new DomainError('ADB_SYNC_SOURCE_HASH', 'Local staged bytes do not match snapshot.');
+      const fresh = await handle.stat();
+      if (fresh.size !== before.size || fresh.mtimeMs !== before.mtimeMs ||
+          fresh.ino !== before.ino || fresh.dev !== before.dev)
+        throw new DomainError('ADB_SYNC_SOURCE', 'Staged file changed while verifying.');
+
+      const folder = '/sdcard/Download/AutoReelsStudio/job-' + input.jobId;
+      const remotePath = folder + '/asset-' + ordinalText + '-' + input.nonce + extension;
+      // Shell command arguments are quoted by the existing restricted shell
+      // provider. No generic path from renderer or user inputs is accepted.
+      await this.shell(input.serial, ['mkdir', '-p', folder], signal);
+      const connection = await this.device(input.serial, 'sync:', 64 * 1024, signal, 180000);
+      try {
+        const setup = Buffer.from(remotePath + ',' + String(0o100644), 'utf8');
+        await sendPacket(
+          connection.socket,
+          Buffer.concat([syncHeader('SEND', setup.length), setup]),
+          signal,
+        );
+        const digest = createHash('sha256');
+        let offset = 0;
+        let nextFence = 1024 * 1024;
+        const deadline = Date.now() + 180000;
+        while (offset < input.expectedBytes) {
+          if (signal?.aborted) throw new DomainError('CANCELLED', 'ADB Sync was cancelled.');
+          if (Date.now() >= deadline)
+            throw new DomainError('ADB_SYNC_TIMEOUT', 'ADB Sync exceeded its transfer budget.');
+          if (offset >= nextFence) {
+            await this.beforeDispatch();
+            nextFence = offset + 1024 * 1024;
+          }
+          const { bytesRead } = await handle.read(
+            block, 0, Math.min(block.length, input.expectedBytes - offset), offset,
+          );
+          if (!bytesRead) throw new DomainError('ADB_SYNC_SOURCE', 'Staged bytes ended early.');
+          digest.update(block.subarray(0, bytesRead));
+          await sendPacket(connection.socket, syncHeader('DATA', bytesRead), signal);
+          await sendPacket(connection.socket, Buffer.from(block.subarray(0, bytesRead)), signal);
+          offset += bytesRead;
+        }
+        if (digest.digest('hex') !== input.expectedHash)
+          throw new DomainError('ADB_SYNC_SOURCE_HASH', 'Staged file changed during upload.');
+        const after = await handle.stat(),
+          pathAgain = await lstat(sourcePath);
+        if (after.size !== before.size || after.mtimeMs !== before.mtimeMs ||
+            after.ino !== before.ino || after.dev !== before.dev ||
+            pathAgain.ino !== before.ino || pathAgain.dev !== before.dev)
+          throw new DomainError('ADB_SYNC_SOURCE', 'Staged source changed during upload.');
+        await this.beforeDispatch();
+        const mtime = Math.floor(before.mtimeMs / 1000);
+        if (!Number.isSafeInteger(mtime) || mtime < 0 || mtime > 0xffffffff)
+          throw new DomainError('ADB_SYNC_SOURCE', 'Invalid staged file timestamp.');
+        await sendPacket(connection.socket, syncHeader('DONE', mtime), signal);
+        const status = await connection.read(8);
+        const kind = status.toString('ascii', 0, 4), length = status.readUInt32LE(4);
+        if (kind === 'FAIL') {
+          if (length > 4096)
+            throw new DomainError('ADB_SYNC_PROTOCOL', 'ADB Sync failure frame exceeds budget.');
+          await connection.read(length);
+          throw new DomainError('ADB_SYNC_FAILED', 'ADB Sync rejected the staged file.');
+        }
+        if (kind !== 'OKAY' || length !== 0)
+          throw new DomainError('ADB_SYNC_PROTOCOL', 'ADB Sync completion was not confirmed.');
+        return {
+          status: 'SYNC_ACK_UNVERIFIED', remotePath, bytes: input.expectedBytes,
+          canDispatch: false,
+        };
+      } finally {
+        connection.close();
+      }
+    } finally {
+      await handle.close();
+    }
+  }
+
   async uiXml(serial: string, signal?: AbortSignal): Promise<string> {
     const path = '/data/local/tmp/autoreels-inspector-' + randomUUID() + '.xml';
     let result: string | undefined,
