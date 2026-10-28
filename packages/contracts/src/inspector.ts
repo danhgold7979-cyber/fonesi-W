@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertJsonSafe } from './validation.js';
 import type { DeviceCapture } from './devices.js';
 export interface UiElement {
   id: string;
@@ -36,17 +37,107 @@ export const uiSelectorSchema = z.strictObject({
   enabled: z.boolean().optional(),
 });
 export type UiSelector = z.infer<typeof uiSelectorSchema>;
-export function queryUiElements(nodes: UiElement[], raw: unknown): UiElement[] {
-  const selector = uiSelectorSchema.parse(raw);
-  return nodes.filter(
-    (n) =>
-      (selector.clickable === undefined || selector.clickable === n.clickable) &&
-      (selector.enabled === undefined || selector.enabled === n.enabled) &&
-      selector.all.every((p) => {
-        if (n.password && (p.field === 'text' || p.field === 'description')) return false;
-        return p.op === 'EQ' ? n[p.field] === p.value : n[p.field].includes(p.value);
-      }),
+const relativeSelector = z.strictObject({
+  all: z.array(predicate).min(1).max(12),
+  clickable: z.boolean().optional(),
+  enabled: z.boolean().optional(),
+});
+export const uiSelectorV2Schema = z.strictObject({
+  version: z.literal(2),
+  strategies: z.array(
+    relativeSelector.extend({
+      ancestor: z.strictObject({
+        all: z.array(predicate).min(1).max(12),
+        maxDepth: z.number().int().min(1).max(20),
+      }).optional(),
+    }),
+  ).min(1).max(5),
+});
+export type UiSelectorV2 = z.infer<typeof uiSelectorV2Schema>;
+export interface UiSelectorMatchReport {
+  nodes: UiElement[];
+  strategyIndex: number | null;
+  totalStrategies: number;
+  attempts: { strategyIndex: number; count: number }[];
+  ambiguous: boolean;
+}
+
+function matchPredicate(
+  element: UiElement,
+  selector: z.infer<typeof relativeSelector>,
+): boolean {
+  return (
+    (selector.clickable === undefined || selector.clickable === element.clickable) &&
+    (selector.enabled === undefined || selector.enabled === element.enabled) &&
+    selector.all.every((p) => {
+      if (element.password && (p.field === 'text' || p.field === 'description')) return false;
+      return p.op === 'EQ' ? element[p.field] === p.value : element[p.field].includes(p.value);
+    })
   );
+}
+
+/**
+ * Read-only selector query on one frozen XML tree. Fallback is attempted only
+ * for ZERO matches; ambiguous matches remain explicit rather than choosing the
+ * first phone element or falling through to a more permissive strategy.
+ */
+export function inspectUiSelectorMatches(
+  nodes: UiElement[],
+  raw: unknown,
+): UiSelectorMatchReport {
+  assertJsonSafe(raw, { depth: 20, entries: 10000, stringLength: 8192 });
+  if (nodes.length > 10000) throw new Error('INSPECTOR_NODE_BUDGET');
+  const version = raw && typeof raw === 'object' && 'version' in raw
+    ? (raw as { version: unknown }).version
+    : null;
+  const strategies: UiSelectorV2['strategies'] = version === 1
+    ? [{ ...uiSelectorSchema.parse(raw) }]
+    : uiSelectorV2Schema.parse(raw).strategies;
+  const byId = new Map<string, UiElement>();
+  for (const element of nodes) {
+    if (byId.has(element.id)) throw new Error('INSPECTOR_DUPLICATE_ELEMENT_ID');
+    byId.set(element.id, element);
+  }
+  const attempts: UiSelectorMatchReport['attempts'] = [];
+  for (let index = 0; index < strategies.length; index++) {
+    const selector = strategies[index]!;
+    const matching = nodes.filter((element) => {
+      if (!matchPredicate(element, selector)) return false;
+      if (!selector.ancestor) return true;
+      let parentId = element.parentId;
+      const seen = new Set([element.id]);
+      for (let depth = 1; depth <= selector.ancestor.maxDepth && parentId; depth++) {
+        if (seen.has(parentId)) throw new Error('INSPECTOR_PARENT_CYCLE');
+        seen.add(parentId);
+        const ancestor = byId.get(parentId);
+        if (!ancestor) return false;
+        if (matchPredicate(ancestor, selector.ancestor)) return true;
+        parentId = ancestor.parentId;
+      }
+      return false;
+    });
+    attempts.push({ strategyIndex: index + 1, count: matching.length });
+    if (matching.length > 0) {
+      return {
+        nodes: matching,
+        strategyIndex: index + 1,
+        totalStrategies: strategies.length,
+        attempts,
+        ambiguous: matching.length > 1,
+      };
+    }
+  }
+  return {
+    nodes: [],
+    strategyIndex: null,
+    totalStrategies: strategies.length,
+    attempts,
+    ambiguous: false,
+  };
+}
+
+export function queryUiElements(nodes: UiElement[], raw: unknown): UiElement[] {
+  return inspectUiSelectorMatches(nodes, raw).nodes;
 }
 export function pickUiElement(nodes: UiElement[], x: number, y: number): UiElement | null {
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null;

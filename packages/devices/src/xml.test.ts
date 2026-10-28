@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { parseUiXml } from './xml.js';
-import { pickUiElement, queryUiElements, suggestUiSelector } from '@autoreels/contracts';
+import { pickUiElement, queryUiElements, inspectUiSelectorMatches, suggestUiSelector } from '@autoreels/contracts';
 const node = (attributes = '') =>
   `<node bounds="[0,0][360,640]" class="android.view.View" package="com.fixture" ${attributes}/>`;
 const xml = (body = node(), rotation = 0) =>
@@ -77,4 +77,115 @@ it('picks the smallest visible bound and applies strict right/bottom boundaries'
   expect(pickUiElement(nodes, 30, 40)?.id).toBe('element_1');
   expect(pickUiElement(nodes, 100, 80)?.id).toBe('element_0');
   expect(pickUiElement(nodes, 360, 640)).toBeNull();
+});
+
+
+it('v2 falls back after zero matches and traces the chosen strategy without changing v1 behavior', () => {
+  const nodes = parseUiXml(xml(
+    '<node bounds="[0,0][360,640]" class="android.view.View" package="com.fixture">' +
+    '<node bounds="[10,10][80,60]" text="Submit" class="android.widget.Button" resource-id="com.fixture:id/submit"/>' +
+    '</node>',
+  ), 360, 640, 0);
+  const selector = {
+    version: 2,
+    strategies: [
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'missing' }] },
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'com.fixture:id/submit' }] },
+    ],
+  } as const;
+  const report = inspectUiSelectorMatches(nodes, selector);
+  expect(report).toMatchObject({
+    strategyIndex: 2,
+    totalStrategies: 2,
+    attempts: [{ strategyIndex: 1, count: 0 }, { strategyIndex: 2, count: 1 }],
+    ambiguous: false,
+  });
+  expect(report.nodes).toHaveLength(1);
+  expect(queryUiElements(nodes, selector)).toEqual(report.nodes);
+  expect(queryUiElements(nodes, suggestUiSelector(nodes[1]!))).toHaveLength(1);
+});
+
+it('v2 requires the matching ancestor under a bounded parent relation', () => {
+  const nodes = parseUiXml(xml(
+    '<node bounds="[0,0][360,640]" class="Root" resource-id="container">' +
+    '<node bounds="[0,0][360,200]" class="Inner">' +
+    '<node bounds="[10,10][80,60]" text="Go" class="Button"/>' +
+    '</node></node>' +
+    '<node bounds="[0,200][360,640]" class="Other">' +
+    '<node bounds="[10,210][80,260]" text="Go" class="Button"/>' +
+    '</node>',
+  ), 360, 640, 0);
+  const strategy = (maxDepth: number) => ({
+    version: 2,
+    strategies: [{
+      all: [{ field: 'text', op: 'EQ', value: 'Go' }],
+      ancestor: { all: [{ field: 'resourceId', op: 'EQ', value: 'container' }], maxDepth },
+    }],
+  });
+  expect(inspectUiSelectorMatches(nodes, strategy(2)).nodes).toHaveLength(1);
+  expect(inspectUiSelectorMatches(nodes, strategy(1)).nodes).toHaveLength(0);
+  expect(inspectUiSelectorMatches(nodes, strategy(2)).nodes[0]!.parentId).toBe('element_1');
+});
+
+it('reports ambiguity without trying later fallback; zero matches across all remain zero', () => {
+  const nodes = parseUiXml(xml(
+    node('text="Hello" resource-id="id/a"') + node('text="Hello" resource-id="id/b"'),
+  ), 360, 640, 0);
+  const ambiguous = inspectUiSelectorMatches(nodes, {
+    version: 2,
+    strategies: [
+      { all: [{ field: 'text', op: 'EQ', value: 'Hello' }] },
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'id/a' }] },
+    ],
+  });
+  expect(ambiguous.nodes).toHaveLength(2);
+  expect(ambiguous.ambiguous).toBe(true);
+  expect(ambiguous.strategyIndex).toBe(1);
+  expect(ambiguous.attempts).toEqual([{ strategyIndex: 1, count: 2 }]);
+  const absent = inspectUiSelectorMatches(nodes, {
+    version: 2,
+    strategies: [
+      { all: [{ field: 'text', op: 'EQ', value: 'missing' }] },
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'absent' }] },
+    ],
+  });
+  expect(absent).toMatchObject({ strategyIndex: null, ambiguous: false });
+  expect(absent.attempts).toHaveLength(2);
+  expect(absent.nodes).toEqual([]);
+});
+
+it('rejects hostile, malformed or unbounded v2 selectors and never reads password text', () => {
+  const nodes = parseUiXml(xml(
+    node('text="secret" password="true" resource-id="password-field"') +
+    node('text="Public"'),
+  ), 360, 640, 0);
+  const passwordQuery = inspectUiSelectorMatches(nodes, {
+    version: 2,
+    strategies: [{ all: [{ field: 'text', op: 'EQ', value: 'secret' }] }],
+  });
+  expect(passwordQuery.nodes).toEqual([]);
+  const values: unknown[] = [
+    { version: 2, strategies: [] },
+    { version: 2, strategies: Array.from({ length: 6 }, () => ({ all: [{ field: 'text', op: 'EQ', value: 'x' }] })) },
+    { version: 2, strategies: [{ all: [{ field: 'text', op: 'REGEX', value: '.*' }] }] },
+    { version: 2, strategies: [{ all: [{ field: '__proto__', op: 'EQ', value: 'x' }] }] },
+    { version: 2, strategies: [{ all: [{ field: 'text', op: 'EQ', value: 'x' }], ancestor: { all: [{ field: 'className', op: 'EQ', value: 'Root' }], maxDepth: 21 } }] },
+    { version: 2, strategies: [{ all: [{ field: 'text', op: 'EQ', value: 'x' }] }], arbitraryCode: 'return true' },
+    JSON.parse('{"version":2,"strategies":[{"all":[{"field":"text","op":"EQ","value":"x"}],"__proto__":{}}]}'),
+  ];
+  for (const value of values) expect(() => inspectUiSelectorMatches(nodes, value)).toThrow();
+  const cycle = structuredClone(nodes);
+  cycle[0]!.parentId = cycle[1]!.id;
+  cycle[1]!.parentId = cycle[0]!.id;
+  expect(() => inspectUiSelectorMatches(cycle, {
+    version: 2,
+    strategies: [{
+      all: [{ field: 'resourceId', op: 'EQ', value: 'password-field' }],
+      ancestor: { all: [{ field: 'className', op: 'EQ', value: 'nobody' }], maxDepth: 5 },
+    }],
+  })).toThrow('CYCLE');
+  expect(() => inspectUiSelectorMatches([...nodes, ...nodes], {
+    version: 1,
+    all: [{ field: 'text', op: 'EQ', value: 'Public' }],
+  })).toThrow('DUPLICATE');
 });

@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment032 / P09-S083.1 — selector v2 theo cha–con và fallback
+
+Đã triển khai selector v2 trên snapshot XML: 1–5 chiến lược, mỗi chiến lược tối đa12 predicate, quan hệ ancestor giới hạn20 cấp. Fallback chỉ thử khi chiến lược trước có0 match; nếu có2+ match trả ambiguous, không chọn bừa hoặc phát lệnh Android. V1 giữ tương thích. Inspector hiển thị chiến lược và số match thật; chặn JSON không an toàn, regex/eval, text mật khẩu, parent cycles. Kế hoạch [INCREMENT-032_PLAN.md](INCREMENT-032_PLAN.md), kết quả [INCREMENT-032_RESULTS.md](INCREMENT-032_RESULTS.md), receipt [checkpoint-025.json](../evidence/implementation/checkpoint-025.json).
+
+CI source [GitHub Actions 40646572330](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40646572330) SUCCESS Ubuntu/Windows: Ubuntu **264/264 unit/integration (27 files),26/26 browser**, Windows **263 pass/1 Unix-only SDK skip (27 files)**. Đây chỉ là **TESTED slice**, chưa phải S083/P09 ACCEPTED; OCR/XPath/stream/gesture và phần cứng chưa thử.
+
 ## Increment031 / P08-S072 — lịch sử audit khôi phục nhận diện
 
 Đã code giao diện **Lịch sử khôi phục** trong Device Details với truy vấn SQLite chỉ đọc, phân trang keyset theo `created_at + audit ID` và cursor bị khóa theo device ID, giới hạn 20 mỗi lần gọi host (DB hỗ trợ tối đa 50). Kết quả chỉ chứa audit ID, device ID, thời gian UTC và revision trước/sau; **không lộ host ID, hardware serial hoặc proof hash**. Có kiểm thử 7 sự kiện cùng thời điểm, restart và cursor khác device/giả mạo, cùng browser empty state.
