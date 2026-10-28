@@ -984,6 +984,57 @@ export class StudioDatabase {
           .prepare('SELECT * FROM device_transports WHERE host_id=? AND serial=?')
           .get(hostId, observation.serial);
         const evidence = deviceFingerprint(observation.metadata, hostId, observation.serial);
+        const previous = old
+          ? this.db
+              .prepare('SELECT * FROM device_profiles WHERE device_id=?')
+              .get(String(old.device_id))
+          : undefined;
+        // An already-verified transport alias is not permission to bind a different
+        // physical phone to its historical Process/jobs. This is an identity
+        // contradiction, not a discovery event. Preserve the old binding and
+        // revoke input capability until an explicitly audited resolution exists.
+        if (
+          old &&
+          previous &&
+          (previous.identity === 'VERIFIED_PROPERTIES' || previous.identity === 'CONFLICT') &&
+          observation.state === 'CONNECTED' &&
+          !evidence.provisional &&
+          evidence.fingerprint !== previous.fingerprint
+        ) {
+          const candidate = this.db
+            .prepare('SELECT device_id FROM device_profiles WHERE fingerprint=?')
+            .get(evidence.fingerprint);
+          this.db
+            .prepare(
+              "UPDATE device_profiles SET identity='CONFLICT',revision=revision+1 WHERE device_id=? AND identity<>'CONFLICT'",
+            )
+            .run(String(old.device_id));
+          if (candidate && candidate.device_id !== old.device_id)
+            this.db
+              .prepare(
+                "UPDATE device_profiles SET identity='CONFLICT',revision=revision+1 WHERE device_id=? AND identity<>'CONFLICT'",
+              )
+              .run(String(candidate.device_id));
+          const changed =
+            old.state !== observation.state ||
+            old.kind !== observation.kind ||
+            Boolean(old.identity_verified);
+          this.db
+            .prepare(
+              'UPDATE device_transports SET kind=?,state=?,generation=?,last_seen=?,identity_verified=0 WHERE host_id=? AND serial=?',
+            )
+            .run(
+              observation.kind,
+              observation.state,
+              Number(old.generation) + Number(changed),
+              at,
+              hostId,
+              observation.serial,
+            );
+          // Do not create or auto-verify a new record, and do not move a lease,
+          // existing content, queued jobs, or historical device references.
+          continue;
+        }
         let profile = this.db
           .prepare('SELECT * FROM device_profiles WHERE fingerprint=?')
           .get(evidence.fingerprint);
