@@ -143,6 +143,41 @@ it('commits remote destination before ADB, then uncertainty and ACK without clai
   });
 });
 
+it('persists exact remote readback only for the active claim and keeps stage state non-dispatchable', () => {
+  const f = fixture();
+  const stage = prepare(f);
+  db.beginClaimedDeviceStageAttempt({
+    stageId: stage.id, expectedJobRevision: f.jobRevision,
+    lease: f.lease, at: at + 150,
+  });
+  db.recordClaimedDeviceStageSyncAck({
+    stageId: stage.id, lease: f.lease,
+    expectedJobRevision: f.jobRevision, at: at + 200,
+  });
+  expect(() => db.recordClaimedDeviceStageRemoteReadback({
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision,
+    observedHash: contentHash('wrong'), observedBytes: stage.expectedBytes, at: at + 220,
+  })).toThrow('differ');
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toMatchObject({
+    state: 'SYNC_ACK_UNVERIFIED',
+    remoteReadbackHash: null, remoteReadbackBytes: null, remoteReadbackAt: null,
+  });
+  const verified = db.recordClaimedDeviceStageRemoteReadback({
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision,
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes, at: at + 230,
+  });
+  expect(verified).toMatchObject({
+    state: 'SYNC_ACK_UNVERIFIED',
+    remoteReadbackHash: stage.expectedHash,
+    remoteReadbackBytes: stage.expectedBytes,
+    remoteReadbackAt: new Date(at + 230).toISOString(),
+  });
+  expect(() => db.recordClaimedDeviceStageRemoteReadback({
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision,
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes, at: at + 240,
+  })).toThrow('immutable');
+  expect(() => db.transitionJob(f.jobId, 'RUNNING', f.jobRevision)).toThrow('MediaStore');
+});
 it('retains transferred uncertainty across restart, never requeues or retries stage intent', () => {
   const f = fixture(), stage = prepare(f);
   db.beginClaimedDeviceStageAttempt({
