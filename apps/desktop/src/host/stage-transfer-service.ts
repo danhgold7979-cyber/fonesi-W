@@ -74,7 +74,7 @@ export class HostStageTransferService {
     if (request.lease.ownerKind !== 'JOB' || !request.lease.deviceId ||
         !Number.isSafeInteger(request.expectedJobRevision) || request.expectedJobRevision < 0 ||
         !Number.isSafeInteger(request.transportGeneration) || request.transportGeneration < 1 ||
-        !/^[A-Za-z0-9][A-Za-z0-9_.:[\\]-]{0,199}$/.test(request.transportSerial) || signal?.aborted)
+        !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(request.transportSerial) || signal?.aborted)
       throw new DomainError('STAGE_RECONCILE_REQUEST_INVALID', 'Invalid trusted reconciliation request.');
     const fence = async (): Promise<void> => {
       if (signal?.aborted) throw new DomainError('CANCELLED', 'Stage reconciliation cancelled.');
@@ -134,7 +134,7 @@ export class HostStageTransferService {
       if (error instanceof DomainError && ['ADB_SYNC_READ_HASH', 'ADB_SYNC_READ_LENGTH'].includes(error.code))
         classification = 'REMOTE_MISMATCH';
       else if (error instanceof DomainError && error.code === 'ADB_SYNC_READ_FAILED')
-        classification = 'REMOTE_MISSING';
+        classification = 'REVIEW_REQUIRED';
       else if (error instanceof DomainError && error.code === 'ADB_COMMAND_FAILED') {
         classification = 'PROBE_UNSUPPORTED'; mediaStoreStatus = 'UNSUPPORTED';
       } else throw error;
