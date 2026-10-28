@@ -1,3 +1,7 @@
+## Increment048 / P11-S095.2 — durable stage reconciliation
+
+Plan-first: [INCREMENT-048_PLAN.md](INCREMENT-048_PLAN.md), baseline `b0136bf2`, plan commit `fe1414b8`. Implementation adds schema v18 append-only reconciliation audit and private `reconcileStage` fresh remote-byte/MediaStore probe. It does not retry upload, delete remote files, change stage/job state or dispatch. **CI pending; not yet validated.** Physical Android/AT-095, picker, recovery after claim has expired, posting, Windows 10 USB/LAN and 20→300 device benchmark remain NOT_RUN.
+
 ## Increment048 / P11-S095.2 — durable stage reconciliation (plan committed)
 
 Plan-first baseline `b0136bf29d5a59bfbcaa384b6ca5c176d03c71c4`; plan commit [`fe1414b8`](https://github.com/danhgold7979-cyber/fonesi-W/commit/fe1414b8052b4b98db59c70a3203843bb0e3b86c), [INCREMENT-048_PLAN.md](INCREMENT-048_PLAN.md). This increment targets restart reconciliation classification and immutable audit only: no retry, no remote cleanup, no posting. Implementation/CI is pending; no result is claimed yet.

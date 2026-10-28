@@ -271,6 +271,52 @@ it('does not persist a MediaStore row when the probe says not indexed', async ()
   expect(receipt).toMatchObject({ status: 'NOT_INDEXED', canDispatch: false });
   expect(db.listDeviceStageTransfers(jobId)[0]?.mediaStoreAt).toBeNull();
 });
+
+it('records fresh remote and MediaStore reconciliation without mutating stage/job state', async () => {
+  const f = await fixture();
+  const upload = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId: f.jobId, stageId: upload.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const before = db.listDeviceStageTransfers(jobId)[0]!;
+  const receipt = await coordinator().reconcileStage({
+    requestId: 'reconcile_fixture_001', jobId: f.jobId, stageId: upload.stageId,
+    expectedJobRevision: f.expectedJobRevision, expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: f.lease, transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  expect(receipt).toMatchObject({
+    classification: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED',
+    mediaStoreStatus: 'INDEXED_EXACT', canDispatch: false,
+  });
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(before);
+  expect(db.getJob(jobId).job.state).toBe('PREFLIGHT');
+  let audit: unknown;
+  sql((conn) => { audit = conn.prepare(
+    'SELECT classification,observed_hash,observed_bytes FROM device_stage_reconciliations WHERE stage_id=? AND request_id=?',
+  ).get(upload.stageId, 'reconcile_fixture_001'); });
+  expect(audit).toMatchObject({
+    classification: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED',
+    observed_hash: before.expectedHash, observed_bytes: before.expectedBytes,
+  });
+});
+it('classifies fresh absent MediaStore index while preserving matching remote-byte evidence', async () => {
+  const f = await fixture();
+  const upload = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId: f.jobId, stageId: upload.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const receipt = await coordinator('NOT_INDEXED').reconcileStage({
+    requestId: 'reconcile_fixture_002', jobId: f.jobId, stageId: upload.stageId,
+    expectedJobRevision: f.expectedJobRevision, expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: f.lease, transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  expect(receipt).toMatchObject({ classification: 'REMOTE_BYTES_MATCHED', mediaStoreStatus: 'NOT_INDEXED', canDispatch: false });
+  expect(db.listDeviceStageTransfers(jobId)[0]?.state).toBe('SYNC_ACK_UNVERIFIED');
+});
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {
   const f = await fixture();
   await expect(coordinator('FAIL').transfer(f)).rejects.toThrow('simulated disconnect');

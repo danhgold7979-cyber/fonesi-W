@@ -1,7 +1,7 @@
 import { extname, join, resolve } from 'node:path';
 import { idSchema, hashSchema } from '@autoreels/contracts';
 import type {
-  DeviceLease, DeviceRecord, DeviceStageTransfer, JobMediaPreflightPlan,
+  DeviceLease, DeviceRecord, DeviceStageTransfer, DeviceStageReconciliation, JobMediaPreflightPlan,
 } from '@autoreels/contracts';
 import type { OwnedSyncInput, OwnedSyncAck } from '@autoreels/devices';
 import type { HostStageResult } from '@autoreels/media';
@@ -59,6 +59,97 @@ export class HostStageTransferService {
    * Explicit private verification step. A successful receipt proves byte
    * equality at the generated remote path, not Android MediaStore indexing.
    */
+
+  /** Fresh read-only reconciliation. Never retries upload, deletes files, or dispatches. */
+  async reconcileStage(request: {
+    requestId: string; jobId: string; stageId: string; expectedJobRevision: number;
+    expectedSnapshotHash: string; lease: DeviceLease; transportSerial: string; transportGeneration: number;
+  }, signal?: AbortSignal): Promise<{
+    requestId: string; stageId: string;
+    classification: import('@autoreels/contracts').StageReconciliationClassification;
+    mediaStoreStatus: DeviceStageReconciliation['mediaStoreStatus']; canDispatch: false;
+  }> {
+    idSchema.parse(request.requestId); idSchema.parse(request.jobId); idSchema.parse(request.stageId);
+    hashSchema.parse(request.expectedSnapshotHash);
+    if (request.lease.ownerKind !== 'JOB' || !request.lease.deviceId ||
+        !Number.isSafeInteger(request.expectedJobRevision) || request.expectedJobRevision < 0 ||
+        !Number.isSafeInteger(request.transportGeneration) || request.transportGeneration < 1 ||
+        !/^[A-Za-z0-9][A-Za-z0-9_.:[\\]-]{0,199}$/.test(request.transportSerial) || signal?.aborted)
+      throw new DomainError('STAGE_RECONCILE_REQUEST_INVALID', 'Invalid trusted reconciliation request.');
+    const fence = async (): Promise<void> => {
+      if (signal?.aborted) throw new DomainError('CANCELLED', 'Stage reconciliation cancelled.');
+      await this.db.internal({ command: 'lease.assert', lease: request.lease, at: Date.now() });
+      await this.db.internal({ command: 'device.assertTransport', hostId: this.hostId,
+        deviceId: request.lease.deviceId, serial: request.transportSerial, generation: request.transportGeneration });
+      const records = await this.db.internal<DeviceRecord[]>({ command: 'device.records', hostId: this.hostId });
+      const device = records.find((item) => item.id === request.lease.deviceId);
+      const transport = device?.transports.find((item) => item.serial === request.transportSerial &&
+        item.generation === request.transportGeneration && item.state === 'CONNECTED' && item.identityVerified);
+      const seenAt = transport ? Date.parse(transport.lastSeen) : NaN;
+      if (!device?.enabled || device.identity !== 'VERIFIED_PROPERTIES' || !transport ||
+          !Number.isFinite(seenAt) || Date.now() < seenAt || Date.now() - seenAt > 30000)
+        throw new DomainError('STAGE_TRANSPORT_STALE', 'Trusted transport observation is stale.');
+    };
+    const rows = await this.db.internal<DeviceStageTransfer[]>({ command: 'stage.list', jobId: request.jobId });
+    const stage = rows.find((item) => item.id === request.stageId);
+    if (!stage || stage.hostId !== this.hostId || stage.deviceId !== request.lease.deviceId ||
+        stage.claimGeneration !== request.lease.generation || stage.snapshotHash !== request.expectedSnapshotHash ||
+        !['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state))
+      throw new DomainError('STAGE_RECONCILE_NOT_ELIGIBLE', 'Stage identity or state requires operator review.');
+    const plan = await this.db.internal<JobMediaPreflightPlan>({
+      command: 'job.mediaPlan', jobId: request.jobId, hostId: this.hostId,
+    });
+    const asset = plan.entries[stage.ordinal];
+    if (!asset || plan.jobRevision !== request.expectedJobRevision || plan.snapshotHash !== request.expectedSnapshotHash ||
+        asset.assetId !== stage.assetId || asset.pinnedHash !== stage.expectedHash || asset.pinnedBytes !== stage.expectedBytes)
+      throw new DomainError('STAGE_SNAPSHOT_STALE', 'Pinned asset or job snapshot changed.');
+    const extension = extname(asset.binding.relativePath).toLowerCase();
+    if (!/^\\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension))
+      throw new DomainError('STAGE_EXTENSION_INVALID', 'Pinned media format is unsupported.');
+    let classification: import('@autoreels/contracts').StageReconciliationClassification = 'REVIEW_REQUIRED';
+    let observedHash: string | null = null, observedBytes: number | null = null;
+    let mediaStoreStatus: DeviceStageReconciliation['mediaStoreStatus'] = null;
+    const adapter = this.adapter().scoped(fence);
+    await fence();
+    try {
+      const remote = await adapter.readOwnedStage({
+        serial: request.transportSerial, jobId: stage.jobId, ordinal: stage.ordinal,
+        nonce: stage.nonce, extension, expectedHash: stage.expectedHash, expectedBytes: stage.expectedBytes,
+      }, signal);
+      observedHash = remote.hash; observedBytes = remote.bytes;
+      if (remote.remotePath !== stage.remotePath || remote.hash !== stage.expectedHash || remote.bytes !== stage.expectedBytes) {
+        classification = 'REMOTE_MISMATCH';
+      } else if (!adapter.probeOwnedStageMediaStore) {
+        classification = 'PROBE_UNSUPPORTED'; mediaStoreStatus = 'UNSUPPORTED';
+      } else {
+        const probe = await adapter.probeOwnedStageMediaStore({
+          serial: request.transportSerial, jobId: stage.jobId, ordinal: stage.ordinal,
+          nonce: stage.nonce, extension, expectedBytes: stage.expectedBytes,
+        }, signal);
+        mediaStoreStatus = probe.status;
+        classification = probe.status === 'INDEXED_EXACT' ? 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED'
+          : probe.status === 'NOT_INDEXED' ? 'REMOTE_BYTES_MATCHED' : 'PROBE_UNSUPPORTED';
+      }
+    } catch (error) {
+      if (error instanceof DomainError && ['ADB_SYNC_READ_HASH', 'ADB_SYNC_READ_LENGTH'].includes(error.code))
+        classification = 'REMOTE_MISMATCH';
+      else if (error instanceof DomainError && error.code === 'ADB_SYNC_READ_FAILED')
+        classification = 'REMOTE_MISSING';
+      else if (error instanceof DomainError && error.code === 'ADB_COMMAND_FAILED') {
+        classification = 'PROBE_UNSUPPORTED'; mediaStoreStatus = 'UNSUPPORTED';
+      } else throw error;
+    }
+    await fence();
+    const recorded = await this.db.internal<DeviceStageReconciliation>({
+      command: 'stage.recordReconciliation', requestId: request.requestId, stageId: stage.id,
+      lease: request.lease, expectedJobRevision: request.expectedJobRevision,
+      classification, observedHash, observedBytes, mediaStoreStatus, at: Date.now(),
+    });
+    if (recorded.classification !== classification)
+      throw new DomainError('STAGE_RECONCILE_NOT_STORED', 'Reconciliation evidence was not persisted.');
+    return { requestId: request.requestId, stageId: stage.id, classification, mediaStoreStatus, canDispatch: false };
+  }
+
   async verifyMediaStoreRow(request: {
     jobId: string; stageId: string; expectedJobRevision: number; expectedSnapshotHash: string;
     lease: DeviceLease; transportSerial: string; transportGeneration: number;

@@ -2801,10 +2801,8 @@ export class StudioDatabase {
           mediaStoreStatus:old.mediastore_status==null?null:String(old.mediastore_status) as DeviceStageReconciliation['mediaStoreStatus'],
           createdAt:String(old.created_at)};
       }
-      const hasReadback = stage.remoteReadbackHash === stage.expectedHash &&
-        stage.remoteReadbackBytes === stage.expectedBytes;
       if (['REMOTE_BYTES_MATCHED','MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED'].includes(args.classification) &&
-          (!hasReadback || args.observedHash!==stage.expectedHash || args.observedBytes!==stage.expectedBytes))
+          (args.observedHash!==stage.expectedHash || args.observedBytes!==stage.expectedBytes))
         throw new DomainError('STAGE_RECONCILIATION_MISMATCH','Observed bytes do not match pinned stage.');
       const id=makeId('stage_reconcile'), createdAt=new Date(args.at).toISOString();
       this.db.prepare('INSERT INTO device_stage_reconciliations(id,request_id,stage_id,job_id,device_id,host_id,claim_generation,classification,observed_hash,observed_bytes,mediastore_status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
