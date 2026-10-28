@@ -473,6 +473,64 @@ export class AdbClient {
     }
   }
 
+  /** Read-only, bounded MediaStore query for a deterministic owned filename. */
+  async probeOwnedStageMediaStore(input: {
+    serial: string; jobId: string; ordinal: number; nonce: string; extension: string; expectedBytes: number;
+  }, signal?: AbortSignal): Promise<
+    | { status: 'INDEXED_EXACT'; rowId: string; displayName: string; relativePath: string; mimeType: string; bytes: number }
+    | { status: 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' }
+  > {
+    if (!this.beforeDispatch)
+      throw new DomainError('ADB_STAGE_LEASE_REQUIRED', 'A fenced JOB owner is required.');
+    assertSerial(input.serial);
+    idSchema.parse(input.jobId);
+    const extension = input.extension.toLowerCase();
+    if (!syncExtensions.has(extension) || !/^[a-f0-9]{32}$/.test(input.nonce) ||
+        !Number.isSafeInteger(input.ordinal) || input.ordinal < 0 || input.ordinal >= 32 ||
+        !Number.isSafeInteger(input.expectedBytes) || input.expectedBytes <= 0 ||
+        input.expectedBytes > MAX_SYNC_BYTES)
+      throw new DomainError('ADB_MEDIASTORE_INVALID', 'Invalid owned MediaStore probe specification.');
+    const filename = 'asset-' + String(input.ordinal).padStart(3, '0') + '-' + input.nonce + extension;
+    const relativePath = 'Download/AutoReelsStudio/job-' + input.jobId + '/';
+    const where = "_display_name='" + filename + "' AND relative_path='" + relativePath +
+      "' AND _size=" + String(input.expectedBytes);
+    let raw: string;
+    try {
+      raw = (await this.shell(input.serial, [
+        'content', 'query', '--uri', 'content://media/external/file',
+        '--projection', '_id:_display_name:relative_path:_size:mime_type',
+        '--where', where,
+      ], signal)).toString('utf8');
+    } catch (error) {
+      if (error instanceof DomainError && error.code === 'ADB_COMMAND_FAILED')
+        return { status: 'UNSUPPORTED' };
+      throw error;
+    }
+    if (Buffer.byteLength(raw) > 32 * 1024)
+      throw new DomainError('ADB_MEDIASTORE_OUTPUT_LIMIT', 'MediaStore response exceeds bounded output.');
+    if (/permission denied|not allowed|unknown column|unsupported|securityexception|exception/i.test(raw))
+      return { status: 'UNSUPPORTED' };
+    if (/no result found|no rows/i.test(raw.trim())) return { status: 'NOT_INDEXED' };
+    const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    if (!lines.length || lines.some((line) => !/^Row: \d+\s/.test(line)))
+      return { status: 'UNSUPPORTED' };
+    if (lines.length > 1) return { status: 'AMBIGUOUS' };
+    const line = lines[0]!.replace(/^Row: \d+\s*/, '');
+    const field = (key: string): string | null =>
+      new RegExp('(?:^|,\s*)' + key + '=([^,]*)').exec(line)?.[1]?.trim() ?? null;
+    const rowId = field('_id'), displayName = field('_display_name');
+    const observedPath = field('relative_path'), sizeText = field('_size'), mimeType = field('mime_type');
+    const bytes = sizeText && /^\d+$/.test(sizeText) ? Number(sizeText) : NaN;
+    const family = /^\.(?:jpg|jpeg|png|webp|gif|bmp)$/.test(extension) ? 'image/' : 'video/';
+    if (!rowId || !/^\d+$/.test(rowId) || !displayName || !observedPath || !mimeType ||
+        !mimeType.startsWith(family) || displayName !== filename ||
+        observedPath.replace(/^\/+/, '') !== relativePath ||
+        !Number.isSafeInteger(bytes) || bytes !== input.expectedBytes)
+      return { status: 'UNSUPPORTED' };
+    await this.beforeDispatch();
+    return { status: 'INDEXED_EXACT', rowId, displayName, relativePath: observedPath, mimeType, bytes };
+  }
+
   async uiXml(serial: string, signal?: AbortSignal): Promise<string> {
     const path = '/data/local/tmp/autoreels-inspector-' + randomUUID() + '.xml';
     let result: string | undefined,
