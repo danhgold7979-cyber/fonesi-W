@@ -33,6 +33,10 @@ interface StageMediaPort {
 }
 interface SyncSender {
   sendOwnedStage(input: OwnedSyncInput, signal?: AbortSignal): Promise<OwnedSyncAck>;
+  readOwnedStage(input: {
+    serial: string; jobId: string; ordinal: number; nonce: string; extension: string;
+    expectedHash: string; expectedBytes: number;
+  }, signal?: AbortSignal): Promise<{ remotePath: string; hash: string; bytes: number }>;
 }
 interface SyncFactory {
   scoped(fence: () => Promise<void>): SyncSender;
@@ -49,6 +53,110 @@ export class HostStageTransferService {
     private readonly appDataDirectory: string,
     private readonly adapter: () => SyncFactory,
   ) {}
+
+  /**
+   * Explicit private verification step. A successful receipt proves byte
+   * equality at the generated remote path, not Android MediaStore indexing.
+   */
+  async verifyRemoteBytes(request: {
+    jobId: string;
+    stageId: string;
+    expectedJobRevision: number;
+    expectedSnapshotHash: string;
+    lease: DeviceLease;
+    transportSerial: string;
+    transportGeneration: number;
+  }, signal?: AbortSignal): Promise<{
+    jobId: string; stageId: string; ordinal: number;
+    scope: 'REMOTE_BYTES_ONLY'; status: 'REMOTE_BYTES_MATCHED'; canDispatch: false;
+  }> {
+    idSchema.parse(request.jobId);
+    idSchema.parse(request.stageId);
+    idSchema.parse(this.hostId);
+    hashSchema.parse(request.expectedSnapshotHash);
+    if (request.lease.ownerKind !== 'JOB' ||
+        !Number.isSafeInteger(request.expectedJobRevision) || request.expectedJobRevision < 0 ||
+        !Number.isSafeInteger(request.transportGeneration) || request.transportGeneration < 1 ||
+        !/^[A-Za-z0-9][A-Za-z0-9_.:[\]-]{0,199}$/.test(request.transportSerial) ||
+        signal?.aborted)
+      throw new DomainError('STAGE_READBACK_REQUEST_INVALID', 'Invalid trusted readback request.');
+
+    const fence = async (): Promise<void> => {
+      if (signal?.aborted) throw new DomainError('CANCELLED', 'Remote readback cancelled.');
+      await this.db.internal({
+        command: 'lease.assert', lease: request.lease, at: Date.now(),
+      });
+      await this.db.internal({
+        command: 'device.assertTransport', hostId: this.hostId,
+        deviceId: request.lease.deviceId, serial: request.transportSerial,
+        generation: request.transportGeneration,
+      });
+      const records = await this.db.internal<DeviceRecord[]>({
+        command: 'device.records', hostId: this.hostId,
+      });
+      const device = records.find((record) => record.id === request.lease.deviceId);
+      const transport = device?.transports.find((item) =>
+        item.serial === request.transportSerial &&
+        item.generation === request.transportGeneration &&
+        item.state === 'CONNECTED' && item.identityVerified);
+      const seenAt = transport ? Date.parse(transport.lastSeen) : NaN;
+      if (!device?.enabled || device.identity !== 'VERIFIED_PROPERTIES' ||
+          !transport || !Number.isFinite(seenAt) || Date.now() < seenAt ||
+          Date.now() - seenAt > 30000)
+        throw new DomainError('STAGE_TRANSPORT_STALE', 'Trusted transport observation is stale.');
+    };
+
+    const stages = await this.db.internal<DeviceStageTransfer[]>({
+      command: 'stage.list', jobId: request.jobId,
+    });
+    const stage = stages.find((item) => item.id === request.stageId);
+    if (!stage || stage.jobId !== request.jobId || stage.hostId !== this.hostId ||
+        stage.deviceId !== request.lease.deviceId ||
+        stage.claimGeneration !== request.lease.generation ||
+        stage.snapshotHash !== request.expectedSnapshotHash ||
+        stage.state !== 'SYNC_ACK_UNVERIFIED')
+      throw new DomainError('STAGE_READBACK_NOT_ELIGIBLE', 'Stage ownership/state does not permit readback.');
+    if (stage.remoteReadbackHash !== null || stage.remoteReadbackBytes !== null ||
+        stage.remoteReadbackAt !== null)
+      throw new DomainError('STAGE_READBACK_ALREADY_RECORDED', 'Readback evidence already exists.');
+
+    const plan = await this.db.internal<JobMediaPreflightPlan>({
+      command: 'job.mediaPlan', jobId: request.jobId, hostId: this.hostId,
+    });
+    const asset = plan.entries[stage.ordinal];
+    if (!asset || plan.jobRevision !== request.expectedJobRevision ||
+        plan.snapshotHash !== request.expectedSnapshotHash ||
+        asset.assetId !== stage.assetId || asset.pinnedHash !== stage.expectedHash ||
+        asset.pinnedBytes !== stage.expectedBytes)
+      throw new DomainError('STAGE_SNAPSHOT_STALE', 'Pinned asset or job snapshot changed.');
+    const extension = extname(asset.binding.relativePath).toLowerCase();
+    if (!/^\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension))
+      throw new DomainError('STAGE_EXTENSION_INVALID', 'Pinned media format is unsupported.');
+
+    await fence();
+    const readback = await this.adapter().scoped(fence).readOwnedStage({
+      serial: request.transportSerial, jobId: stage.jobId, ordinal: stage.ordinal,
+      nonce: stage.nonce, extension, expectedHash: stage.expectedHash,
+      expectedBytes: stage.expectedBytes,
+    }, signal);
+    if (readback.remotePath !== stage.remotePath ||
+        readback.hash !== stage.expectedHash || readback.bytes !== stage.expectedBytes)
+      throw new DomainError('STAGE_READBACK_MISMATCH', 'Remote bytes do not match the durable stage intent.');
+    await fence();
+    const recorded = await this.db.internal<DeviceStageTransfer>({
+      command: 'stage.verifyRemoteBytes', stageId: stage.id, lease: request.lease,
+      expectedJobRevision: request.expectedJobRevision,
+      observedHash: readback.hash, observedBytes: readback.bytes, at: Date.now(),
+    });
+    if (recorded.remoteReadbackHash !== stage.expectedHash ||
+        recorded.remoteReadbackBytes !== stage.expectedBytes ||
+        recorded.remoteReadbackAt === null)
+      throw new DomainError('STAGE_READBACK_NOT_STORED', 'Readback evidence was not durably recorded.');
+    return {
+      jobId: stage.jobId, stageId: stage.id, ordinal: stage.ordinal,
+      scope: 'REMOTE_BYTES_ONLY', status: 'REMOTE_BYTES_MATCHED', canDispatch: false,
+    };
+  }
 
   async transfer(request: ClaimedStageRequest, signal?: AbortSignal): Promise<ClaimedStageResult> {
     idSchema.parse(request.jobId);
