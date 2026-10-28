@@ -105,7 +105,7 @@ function readyForReconciliation(f: Fixture): DeviceStageTransfer {
     stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision,
     observedHash: stage.expectedHash, observedBytes: stage.expectedBytes, at: at + 230,
   });
-  return stage;
+  return db.listDeviceStageTransfers(f.jobId)[0]!;
 }
 
 function reconciliationAuditCount(stageId: string): number {
