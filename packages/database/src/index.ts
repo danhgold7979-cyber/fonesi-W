@@ -61,6 +61,8 @@ import type {
   DeviceEndpointPolicy,
   DeviceResolutionPreview,
   DeviceResolutionResult,
+  DeviceResolutionAuditPage,
+  DeviceResolutionAuditEntry,
 } from '@autoreels/contracts';
 import {
   DomainError,
@@ -1498,6 +1500,91 @@ export class StudioDatabase {
         .run(new Date(at).toISOString(), token);
       return { deviceId, auditId, revision: previousRevision + 1, enabled: false };
     });
+  }
+
+
+  /**
+   * Bounded, read-only history. Raw host IDs and proof hashes stay in the DB.
+   * Cursor is scope-bound to one registered device and an existing audit anchor.
+   */
+  deviceResolutionHistory(
+    deviceId: string,
+    limit = 20,
+    cursor: string | null = null,
+  ): DeviceResolutionAuditPage {
+    idSchema.parse(deviceId);
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 50)
+      throw new DomainError('INVALID_AUDIT_LIMIT', 'Chỉ được xem 1–50 sự kiện một trang.');
+    if (!this.db.prepare('SELECT 1 FROM devices WHERE id=?').get(deviceId))
+      throw new DomainError('NOT_FOUND', 'Thiết bị chưa đăng ký.');
+    let anchor: { id: string; createdAt: string } | null = null;
+    if (cursor !== null) {
+      if (typeof cursor !== 'string' || !/^[A-Za-z0-9_-]{1,1024}$/.test(cursor))
+        throw new DomainError('INVALID_AUDIT_CURSOR', 'Cursor lịch sử không hợp lệ.');
+      let decoded: unknown;
+      try {
+        decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+        assertJsonSafe(decoded);
+      } catch {
+        throw new DomainError('INVALID_AUDIT_CURSOR', 'Cursor lịch sử không hợp lệ.');
+      }
+      if (
+        !decoded ||
+        typeof decoded !== 'object' ||
+        Array.isArray(decoded) ||
+        Object.keys(decoded).sort().join(',') !== 'createdAt,deviceId,id,version'
+      )
+        throw new DomainError('INVALID_AUDIT_CURSOR', 'Cursor lịch sử không hợp lệ.');
+      const c = decoded as { version: unknown; deviceId: unknown; id: unknown; createdAt: unknown };
+      if (c.version !== 1 || c.deviceId !== deviceId)
+        throw new DomainError('AUDIT_CURSOR_SCOPE', 'Cursor không thuộc thiết bị này.');
+      if (
+        typeof c.id !== 'string' ||
+        typeof c.createdAt !== 'string' ||
+        !idSchema.safeParse(c.id).success ||
+        !Number.isFinite(Date.parse(c.createdAt)) ||
+        new Date(c.createdAt).toISOString() !== c.createdAt
+      )
+        throw new DomainError('INVALID_AUDIT_CURSOR', 'Cursor lịch sử không hợp lệ.');
+      if (
+        !this.db
+          .prepare(
+            'SELECT 1 FROM device_resolution_audit WHERE device_id=? AND id=? AND created_at=?',
+          )
+          .get(deviceId, c.id, c.createdAt)
+      )
+        throw new DomainError('AUDIT_CURSOR_STALE', 'Sự kiện neo của cursor đã đổi.');
+      anchor = { id: c.id, createdAt: c.createdAt };
+    }
+    const query =
+      'SELECT id,device_id,previous_revision,new_revision,created_at FROM device_resolution_audit WHERE device_id=?' +
+      (anchor ? ' AND (created_at<? OR (created_at=? AND id<?))' : '') +
+      ' ORDER BY created_at DESC,id DESC LIMIT ?';
+    const rows = anchor
+      ? this.db.prepare(query).all(deviceId, anchor.createdAt, anchor.createdAt, anchor.id, limit + 1)
+      : this.db.prepare(query).all(deviceId, limit + 1);
+    const hasMore = rows.length > limit;
+    const entries: DeviceResolutionAuditEntry[] = rows.slice(0, limit).map((row) => ({
+      id: String(row.id),
+      deviceId: String(row.device_id),
+      previousRevision: Number(row.previous_revision),
+      newRevision: Number(row.new_revision),
+      createdAt: String(row.created_at),
+    }));
+    const last = entries.at(-1);
+    const nextCursor =
+      hasMore && last
+        ? Buffer.from(
+            JSON.stringify({
+              version: 1,
+              deviceId,
+              id: last.id,
+              createdAt: last.createdAt,
+            }),
+            'utf8',
+          ).toString('base64url')
+        : null;
+    return { entries, hasMore, nextCursor };
   }
 
   updateDevice(
