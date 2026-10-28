@@ -213,3 +213,33 @@ test('loopback browser authoring host cannot clear identity conflicts without na
   expect(payload.ok).toBe(false);
   expect(payload.error?.code).toBe('NATIVE_DIALOG_REQUIRED');
 });
+
+
+test('Device Details exposes only real bounded resolution audit history with a clear empty state', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:4177/');
+  const card = page.locator('.device-card').first();
+  await expect(card).toBeVisible();
+  await card.getByRole('button', { name: 'Chi tiết / điều khiển', exact: true }).click();
+  const history = page.getByRole('region', { name: 'Lịch sử khôi phục nhận diện' });
+  await expect(history).toBeVisible();
+  await history.getByRole('button', { name: 'Xem lịch sử khôi phục', exact: true }).click();
+  await expect(history).toContainText('Chưa có lần khôi phục nhận diện nào được ghi audit.');
+  await expect(history.getByRole('button', { name: 'Xem thêm lịch sử' })).toHaveCount(0);
+  const id = await card.getAttribute('data-device-id');
+  const token = await page.locator('meta[name="studio-token"]').getAttribute('content');
+  const res = await page.request.post('http://127.0.0.1:4177/api', {
+    headers: {
+      Origin: 'http://127.0.0.1:4177',
+      'X-Studio-Token': token!,
+    },
+    data: {
+      command: 'deviceResolutionHistory',
+      operationId: 'op_resolution_history_bad_cursor',
+      input: { id, cursor: 'bad!!!' },
+    },
+  });
+  const body = (await res.json()) as { ok: boolean };
+  expect(body.ok).toBe(false);
+});

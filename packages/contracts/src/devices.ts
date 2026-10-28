@@ -123,3 +123,18 @@ export interface DeviceResolutionApplyResponse {
   resolution: DeviceResolutionResult | null;
   snapshot: DeviceSnapshot;
 }
+
+
+/** Public audit projection: excludes transport serial, fingerprint, host ID and proof digest. */
+export interface DeviceResolutionAuditEntry {
+  id: string;
+  deviceId: string;
+  previousRevision: number;
+  newRevision: number;
+  createdAt: string;
+}
+export interface DeviceResolutionAuditPage {
+  entries: DeviceResolutionAuditEntry[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}

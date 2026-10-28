@@ -5,7 +5,7 @@ import type { DebugAction, DebugSnapshot } from './debug.js';
 import type { ProcessCloneOptions, ProcessClonePreview, ProcessCloneResult } from './processes.js';
 import type {
   DeviceSnapshot, DeviceCapture, ManualDeviceAction,
-  DeviceResolutionPreview, DeviceResolutionApplyResponse,
+  DeviceResolutionPreview, DeviceResolutionApplyResponse, DeviceResolutionAuditPage,
 } from './devices.js';
 import type {
   ContentFormat,
@@ -74,6 +74,7 @@ export interface StudioApi {
   debugSnapshot(id: string): Promise<DebugSnapshot>;
   controlDebug(id: string, action: DebugAction): Promise<DebugSnapshot>;
   deviceSnapshot(): Promise<DeviceSnapshot>;
+  deviceResolutionHistory(id: string, cursor?: string): Promise<DeviceResolutionAuditPage>;
   previewDeviceConflictResolution(
     id: string, expectedRevision: number,
   ): Promise<DeviceResolutionPreview>;
@@ -186,6 +187,7 @@ export type ApiCommand =
   | 'debugSnapshot'
   | 'controlDebug'
   | 'deviceSnapshot'
+  | 'deviceResolutionHistory'
   | 'previewDeviceConflictResolution'
   | 'applyDeviceConflictResolution'
   | 'scanDevices'
@@ -255,6 +257,8 @@ export function createStudioApi(transport: Transport): StudioApi {
     debugSnapshot: (id) => call('debugSnapshot', { id }),
     controlDebug: (id, action) => call('controlDebug', { id, action }),
     deviceSnapshot: () => call('deviceSnapshot'),
+    deviceResolutionHistory: (id, cursor) =>
+      call('deviceResolutionHistory', { id, ...(cursor ? { cursor } : {}) }),
     previewDeviceConflictResolution: (id, expectedRevision) =>
       call('previewDeviceConflictResolution', { id, expectedRevision }),
     applyDeviceConflictResolution: (id, token, confirmedName) =>

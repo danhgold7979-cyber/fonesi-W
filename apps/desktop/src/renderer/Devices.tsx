@@ -5,6 +5,7 @@ import type {
   DeviceRecord,
   DeviceSnapshot,
   DeviceResolutionPreview,
+  DeviceResolutionAuditEntry,
   ManualDeviceAction,
 } from '@autoreels/contracts';
 import { api } from './api.js';
@@ -552,6 +553,9 @@ function DeviceDetails({
   const [resolution, setResolution] = useState<DeviceResolutionPreview | null>(null),
     [resolutionName, setResolutionName] = useState(''),
     [physicallyChecked, setPhysicallyChecked] = useState(false);
+  const [auditRows, setAuditRows] = useState<DeviceResolutionAuditEntry[]>([]),
+    [auditCursor, setAuditCursor] = useState<string | null>(null),
+    [auditLoaded, setAuditLoaded] = useState(false);
   const alive = useRef(true),
     working = useRef(false),
     pointer = useRef<{ x: number; y: number; at: number } | null>(null);
@@ -565,6 +569,9 @@ function DeviceDetails({
     setResolution(null);
     setResolutionName('');
     setPhysicallyChecked(false);
+    setAuditRows([]);
+    setAuditCursor(null);
+    setAuditLoaded(false);
   }, [device.id, device.revision, device.identity]);
   async function task(operation: () => Promise<void>): Promise<void> {
     if (working.current) return;
@@ -578,6 +585,13 @@ function DeviceDetails({
       working.current = false;
       if (alive.current) setBusy(false);
     }
+  }
+  async function loadAudit(cursor: string | null = null): Promise<void> {
+    const page = await api.deviceResolutionHistory(device.id, cursor ?? undefined);
+    if (!alive.current) return;
+    setAuditRows((before) => cursor ? [...before, ...page.entries] : page.entries);
+    setAuditCursor(page.nextCursor);
+    setAuditLoaded(true);
   }
   async function takeCapture(): Promise<void> {
     const result = await api.captureDevice(device.id);
@@ -802,6 +816,38 @@ function DeviceDetails({
                 )}
               </section>
             )}
+            <section className="device-audit" aria-label="Lịch sử khôi phục nhận diện">
+              <button
+                disabled={busy}
+                onClick={() => void task(() => loadAudit())}
+              >
+                Xem lịch sử khôi phục
+              </button>
+              {auditLoaded && (
+                <>
+                  {!auditRows.length && (
+                    <p className="muted">Chưa có lần khôi phục nhận diện nào được ghi audit.</p>
+                  )}
+                  {!!auditRows.length && (
+                    <ol>
+                      {auditRows.map((entry) => (
+                        <li key={entry.id}>
+                          <time dateTime={entry.createdAt}>
+                            {new Date(entry.createdAt).toLocaleString('vi-VN')}
+                          </time>
+                          {' · '}Revision {entry.previousRevision} → {entry.newRevision}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  {auditCursor && (
+                    <button disabled={busy} onClick={() => void task(() => loadAudit(auditCursor))}>
+                      Xem thêm lịch sử
+                    </button>
+                  )}
+                </>
+              )}
+            </section>
             <div className="quick-key-actions">
               {(['BACK', 'HOME', 'RECENT', 'POWER', 'VOLUME_UP', 'VOLUME_DOWN'] as const).map(
                 (key, index) => (

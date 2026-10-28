@@ -1,5 +1,13 @@
 # Tiến độ implementation
 
+## Increment031 / P08-S072 — lịch sử audit khôi phục nhận diện
+
+Đã code giao diện **Lịch sử khôi phục** trong Device Details với truy vấn SQLite chỉ đọc, phân trang keyset theo `created_at + audit ID` và cursor bị khóa theo device ID, giới hạn 20 mỗi lần gọi host (DB hỗ trợ tối đa 50). Kết quả chỉ chứa audit ID, device ID, thời gian UTC và revision trước/sau; **không lộ host ID, hardware serial hoặc proof hash**. Có kiểm thử 7 sự kiện cùng thời điểm, restart và cursor khác device/giả mạo, cùng browser empty state.
+
+Kế hoạch trước code [INCREMENT-031_PLAN.md](INCREMENT-031_PLAN.md), kết quả [INCREMENT-031_RESULTS.md](INCREMENT-031_RESULTS.md), receipt [checkpoint-024.json](../evidence/implementation/checkpoint-024.json). **CI [40645667946](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40645667946) SUCCESS**: Ubuntu **260/260 unit/integration + 25/25 Chromium**, Windows **259 pass, 1 pre-existing Unix SDK skip** (27 files mỗi OS). Vẫn chưa nghiệm thu phần cứng thật, bảo mật ADB trên máy người dùng hoặc 20→300 điện thoại.
+
+PR #7 P06 từ baseline cũ đang trùng migration v13/Increment029 với P08; đã ghi cảnh báo trực tiếp để bảo toàn cả hai, chưa sửa nhánh P06 hay merge `main`. Increment031 không sửa schema v13 và dùng tên/receipt riêng để tránh trùng.
+
 ## Increment029 / P08-S072 — khôi phục nhận diện có xác nhận và audit
 
 Đã triển khai recovery **khi fingerprint lịch sử khớp chính xác bằng chứng ADB mới**, dùng phiếu xem trước SQLite hết hạn sau 60 giây, chặn stale revision/transport generation/multiple transports, owner lease và job/effect chưa chắc chắn. Giao diện yêu cầu nhập đúng tên thiết bị, checkbox xác nhận vật lý và **hộp thoại native Electron**; loopback browser không thể gọi Apply. Sau khi ghi audit, tất cả generation cũ bị vô hiệu hóa và thiết bị **bị tắt**, phải tự kiểm tra và bật thủ công. Không tự khởi chạy job/đăng bài.

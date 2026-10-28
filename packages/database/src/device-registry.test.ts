@@ -445,3 +445,63 @@ it('blocks conflict recovery while an active owner holds a device lease', () => 
   db.releaseLease(lease);
   expect(db.previewDeviceConflictResolution('host', id, revision, original, at + 2).canApply).toBe(true);
 });
+
+
+it('pages redacted resolution audits by stable same-time keyset across restart, never exposing proof hashes', () => {
+  db.reconcileDeviceTransports('host', [observation('usb_history')]);
+  const id = db.listDeviceRecords('host')[0]!.id;
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const timestamp = '2026-10-28T01:02:03.000Z';
+  for (let i = 0; i < 7; i++)
+    sql.prepare(
+      'INSERT INTO device_resolution_audit(id,device_id,host_id,previous_revision,new_revision,proof_hash,created_at) VALUES(?,?,?,?,?,?,?)',
+    ).run('audit_' + i, id, 'private_host_identifier', i, i + 1, 'b'.repeat(64), timestamp);
+  sql.close();
+  const first = db.deviceResolutionHistory(id, 3);
+  expect(first.entries.map((entry) => entry.id)).toEqual(['audit_6', 'audit_5', 'audit_4']);
+  expect(first.hasMore).toBe(true);
+  expect(first.nextCursor).toBeTruthy();
+  const second = db.deviceResolutionHistory(id, 3, first.nextCursor);
+  expect(second.entries.map((entry) => entry.id)).toEqual(['audit_3', 'audit_2', 'audit_1']);
+  expect(second.hasMore).toBe(true);
+  const third = db.deviceResolutionHistory(id, 3, second.nextCursor);
+  expect(third.entries.map((entry) => entry.id)).toEqual(['audit_0']);
+  expect(third.hasMore).toBe(false);
+  expect(third.nextCursor).toBeNull();
+  const output = JSON.stringify([first, second, third]);
+  expect(output).not.toContain('usb_history');
+  expect(output).not.toContain('private_host_identifier');
+  expect(output).not.toContain('b'.repeat(64));
+  expect(output).not.toContain(metadata.hardwareSerial);
+  const beforeRestart = first.nextCursor!;
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.deviceResolutionHistory(id, 3, beforeRestart).entries.map((e) => e.id)).toEqual(
+    second.entries.map((e) => e.id),
+  );
+});
+
+it('rejects cross-device, forged, oversized and unknown audit cursors without changing the ledger', () => {
+  db.reconcileDeviceTransports('host', [observation('usb_history')]);
+  const id = db.listDeviceRecords('host')[0]!.id;
+  db.registerObservedDevice('other_device', 'Other');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  for (let i = 0; i < 3; i++)
+    sql.prepare(
+      'INSERT INTO device_resolution_audit(id,device_id,host_id,previous_revision,new_revision,proof_hash,created_at) VALUES(?,?,?,?,?,?,?)',
+    ).run('audit_' + i, id, 'host', i, i + 1, 'c'.repeat(64), '2026-10-28T01:02:03.000Z');
+  sql.close();
+  const first = db.deviceResolutionHistory(id, 1);
+  expect(() => db.deviceResolutionHistory('other_device', 1, first.nextCursor)).toThrow();
+  expect(() => db.deviceResolutionHistory(id, 0)).toThrow();
+  expect(() => db.deviceResolutionHistory(id, 51)).toThrow();
+  expect(() => db.deviceResolutionHistory(id, 1, '!')).toThrow();
+  expect(() => db.deviceResolutionHistory(id, 1, 'A'.repeat(1025))).toThrow();
+  const forged = JSON.parse(Buffer.from(first.nextCursor!, 'base64url').toString('utf8'));
+  forged.id = 'audit_missing';
+  expect(() =>
+    db.deviceResolutionHistory(id, 1, Buffer.from(JSON.stringify(forged)).toString('base64url')),
+  ).toThrow('neo');
+  expect(db.deviceResolutionHistory('other_device').entries).toEqual([]);
+  expect(db.deviceResolutionHistory(id, 50).entries).toHaveLength(3);
+});
