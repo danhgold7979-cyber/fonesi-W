@@ -1982,8 +1982,13 @@ export class StudioDatabase {
     if (lease?.owner_id && Number(lease.expires_at) > at)
       add('DEVICE_LEASE_BUSY', 'Thiết bị đang thuộc quyền thao tác khác.');
     const effects = this.db.prepare('SELECT state FROM effects WHERE job_id=? LIMIT 2').all(id);
-    if (effects.length)
-      add('EXTERNAL_EFFECT_REVIEW', 'Công việc có external effect; cần đối soát, không tự đăng lại.');
+    const unresolvedEffect = effects.some((effect) =>
+      ['INTENT', 'ATTEMPT_UNCERTAIN', 'NEEDS_REVIEW'].includes(String(effect.state)),
+    );
+    if (unresolvedEffect)
+      add('EXTERNAL_EFFECT_REVIEW', 'Có external effect chưa được đối soát; không tự đăng lại.');
+    else if (effects.length)
+      add('EXTERNAL_EFFECT_ALREADY_RECORDED', 'Có external effect đã ghi nhận; không tự phát lại.');
     const frozenAssets = snapshot.assets ?? [];
     const assetIds = snapshot.assetIds ?? [];
     if (assetIds.length > 250 || new Set(assetIds).size !== assetIds.length)
@@ -2026,7 +2031,7 @@ export class StudioDatabase {
       jobRevision: job.revision,
       inspectedAt: new Date(at).toISOString(),
       scope: 'PERSISTED_ONLY',
-      status: effects.length || job.state === 'NEEDS_REVIEW' ? 'NEEDS_REVIEW' : 'BLOCKED',
+      status: unresolvedEffect || job.state === 'NEEDS_REVIEW' ? 'NEEDS_REVIEW' : 'BLOCKED',
       canDispatch: false,
       blockers,
     };

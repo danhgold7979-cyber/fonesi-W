@@ -164,6 +164,21 @@ it('matches media to the frozen reference, rejects changes and preserves uncerta
   expect(codes(f.jobId)).toContain('MEDIA_CHANGED_OR_MISSING');
   expect(db.getJob(f.jobId).snapshot.assetIds).toEqual([f.assetId]);
 });
+it('distinguishes resolved recorded effects from unresolved attempts without allowing a replay', () => {
+  const f = fixture();
+  const id = db.recordIntent(
+    f.jobId, 'external_node', 'PUBLISH', contentHash('confirmed'), contentHash('payload'),
+  );
+  sql((connection) =>
+    connection.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?").run(id));
+  const checked = db.inspectJobPreflight(f.jobId, at);
+  expect(checked.status).toBe('BLOCKED');
+  expect(checked.canDispatch).toBe(false);
+  expect(checked.blockers.map((b) => b.code)).toContain('EXTERNAL_EFFECT_ALREADY_RECORDED');
+  expect(checked.blockers.map((b) => b.code)).not.toContain('EXTERNAL_EFFECT_REVIEW');
+  expect(db.getJob(f.jobId).job).toMatchObject({ state: 'SCHEDULED', revision: 0 });
+  // A persisted-only diagnostic never treats a synthetic DB test record as live post proof.
+});
 it('fails safely on invalid clock and corrupt snapshot rather than authorizing dispatch', () => {
   const f = fixture();
   expect(() => db.inspectJobPreflight(f.jobId, Number.NaN)).toThrow();
