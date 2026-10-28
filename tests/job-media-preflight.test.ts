@@ -124,8 +124,13 @@ describe('P11/S094 private host media bytes', () => {
     const f = await fixture();
     const originalPlan = db.jobMediaPreflightPlan(jobId,hostId);
     expect(originalPlan.entries).toHaveLength(1);
-    expect(() => db.jobMediaPreflightPlan(jobId,'host_other'))
-      .toThrow('Source belongs to another host');
+    let crossHostError: unknown;
+    try {
+      db.jobMediaPreflightPlan(jobId, 'host_other');
+    } catch (error) {
+      crossHostError = error;
+    }
+    expect(crossHostError).toMatchObject({ code: 'SOURCE_REBIND_REQUIRED' });
     const raw = new DatabaseSync(join(dir, 'data.sqlite'));
     raw.prepare("UPDATE source_entries SET state='CHANGED' WHERE asset_id=?")
       .run(f.assetIds[0]);
