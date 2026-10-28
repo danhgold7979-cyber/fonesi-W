@@ -77,6 +77,23 @@ function validateFragment(fragment: PortableGraphClipboard): void {
   checkGraph(fragment.selection.nodes, fragment.selection.edges, fragment.selection.groups);
   for (const graph of fragment.graphs)
     checkGraph(graph.nodes, graph.edges, graph.groups ?? []);
+  // The OS clipboard is untrusted; reject cycles even in externally authored JSON.
+  const byId = new Map(fragment.graphs.map((graph) => [graph.id, graph]));
+  const active = new Set<string>();
+  const visited = new Set<string>();
+  const walk = (graphId: string): void => {
+    if (active.has(graphId)) throw new Error('Graph phụ thuộc đệ quy.');
+    if (visited.has(graphId)) return;
+    const graph = byId.get(graphId)!;
+    active.add(graphId);
+    for (const node of graph.nodes) {
+      const ref = localGraphRef(node);
+      if (ref) walk(ref);
+    }
+    active.delete(graphId);
+    visited.add(graphId);
+  };
+  for (const id of byId.keys()) walk(id);
 }
 
 /** Only local graph closure crosses the clipboard boundary; no Process/device/account state. */
