@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import type { DeviceMetadata, TransportObservation } from '@autoreels/contracts';
 import { StudioDatabase } from './index.js';
 let dir: string, db: StudioDatabase;
@@ -325,4 +326,122 @@ it('exposes safe read-only conflict readiness after restart without altering own
   expect(db.listDeviceRecords('host')[0]!.identity).toBe('CONFLICT');
   expect(() => db.conflictResolutionReadiness('host', 'missing', Date.now())).toThrow();
   expect(() => db.conflictResolutionReadiness('host', original.id, Number.NaN)).toThrow();
+});
+
+
+function latchedConflict(): { id: string; revision: number; original: TransportObservation } {
+  const original = observation('usb_conflict');
+  db.reconcileDeviceTransports('host', [original]);
+  const id = db.listDeviceRecords('host')[0]!.id;
+  db.reconcileDeviceTransports('host', [{
+    ...original,
+    metadata: { ...metadata, hardwareSerial: 'A_DIFFERENT_PHYSICAL_PHONE' },
+  }]);
+  const locked = db.listDeviceRecords('host')[0]!;
+  expect(locked.identity).toBe('CONFLICT');
+  expect(locked.id).toBe(id);
+  return { id, revision: locked.revision, original };
+}
+
+it('requires exact historic ADB proof plus confirmed name, records a durable audit and disables the device', () => {
+  const { id, revision, original } = latchedConflict();
+  const at = Date.now();
+  const preview = db.previewDeviceConflictResolution('host', id, revision, original, at);
+  expect(preview).toMatchObject({
+    deviceId: id, expectedRevision: revision, name: metadata.model,
+    canApply: true, blockers: [],
+  });
+  expect(preview.token).toMatch(/^deviceResolution_/);
+  const before = db.listDeviceRecords('host')[0]!;
+  expect(() =>
+    db.applyDeviceConflictResolution('host', id, preview.token!, 'wrong device', original, at + 1),
+  ).toThrow('tên');
+  expect(db.listDeviceRecords('host')[0]).toEqual(before);
+  const result = db.applyDeviceConflictResolution(
+    'host', id, preview.token!, before.name, original, at + 2,
+  );
+  expect(result).toMatchObject({ deviceId: id, revision: revision + 1, enabled: false });
+  const after = db.listDeviceRecords('host')[0]!;
+  expect(after).toMatchObject({ id, identity: 'VERIFIED_PROPERTIES', enabled: false });
+  expect(after.metadata?.hardwareSerial).toBe(metadata.hardwareSerial);
+  expect(after.transports[0]!.generation).toBeGreaterThan(before.transports[0]!.generation);
+  expect(after.transports[0]!.identityVerified).toBe(false);
+  expect(after.capabilities.manualControl).toBe(false);
+  expect(() =>
+    db.applyDeviceConflictResolution('host', id, preview.token!, before.name, original, at + 3),
+  ).toThrow('đã dùng');
+
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const audit = sql.prepare('SELECT * FROM device_resolution_audit WHERE id=?').get(result.auditId)!;
+  expect(audit).toMatchObject({
+    device_id: id, host_id: 'host', previous_revision: revision, new_revision: revision + 1,
+  });
+  expect(JSON.stringify(audit)).not.toContain(metadata.hardwareSerial);
+  expect(JSON.stringify(audit)).not.toContain(original.serial);
+  sql.close();
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.listDeviceRecords('host')[0]!.enabled).toBe(false);
+  db.reconcileDeviceTransports('host', [original]);
+  expect(db.listDeviceRecords('host')[0]!.capabilities.manualControl).toBe(false);
+  db.updateDevice(id, db.listDeviceRecords('host')[0]!.revision, { enabled: true });
+  expect(db.listDeviceRecords('host')[0]!.capabilities.manualControl).toBe(true);
+});
+
+it('rejects wrong phone, missing properties and ambiguous multiple connected transports', () => {
+  const { id, revision, original } = latchedConflict();
+  const wrong = { ...original, metadata: { ...metadata, hardwareSerial: 'ANOTHER_PHONE' } };
+  const mismatch = db.previewDeviceConflictResolution('host', id, revision, wrong);
+  expect(mismatch.canApply).toBe(false);
+  expect(mismatch.blockers).toContain('HISTORICAL_FINGERPRINT_MISMATCH');
+  const empty = db.previewDeviceConflictResolution('host', id, revision, {
+    ...original, metadata: null,
+  });
+  expect(empty.blockers).toContain('UNVERIFIED_HARDWARE_PROPERTIES');
+  db.reconcileDeviceTransports('host', [original, observation('192.168.1.8:5555', 'TCP')]);
+  const current = db.listDeviceRecords('host')[0]!;
+  const ambiguous = db.previewDeviceConflictResolution(
+    'host', id, current.revision, original,
+  );
+  expect(ambiguous.canApply).toBe(false);
+  expect(ambiguous.blockers).toContain('AMBIGUOUS_ACTIVE_TRANSPORTS');
+  expect(db.listDeviceRecords('host')[0]!.identity).toBe('CONFLICT');
+});
+
+it('invalidates a preview when transport generation, profile revision, host or expiration changes', () => {
+  const { id, revision, original } = latchedConflict();
+  const at = Date.now();
+  const preview = db.previewDeviceConflictResolution('host', id, revision, original, at);
+  expect(() =>
+    db.applyDeviceConflictResolution('other_host', id, preview.token!, metadata.model, original, at + 1),
+  ).toThrow();
+  db.invalidateDeviceTransports('host', id);
+  db.reconcileDeviceTransports('host', [original]);
+  expect(() =>
+    db.applyDeviceConflictResolution('host', id, preview.token!, metadata.model, original, at + 2),
+  ).toThrow('đổi');
+  const replacement = db.previewDeviceConflictResolution(
+    'host', id, db.listDeviceRecords('host')[0]!.revision, original, at + 3,
+  );
+  expect(replacement.canApply).toBe(true);
+  expect(() =>
+    db.applyDeviceConflictResolution('host', id, replacement.token!, metadata.model, original, at + 60004),
+  ).toThrow('hết hạn');
+  const old = db.listDeviceRecords('host')[0]!;
+  db.updateDevice(id, old.revision, { name: 'New display label' });
+  expect(() =>
+    db.applyDeviceConflictResolution('host', id, replacement.token!, metadata.model, original, at + 4),
+  ).toThrow('đổi');
+  expect(db.listDeviceRecords('host')[0]!.identity).toBe('CONFLICT');
+});
+
+it('blocks conflict recovery while an active owner holds a device lease', () => {
+  const { id, revision, original } = latchedConflict();
+  const at = Date.now();
+  const lease = db.acquireLease(id, 'manual_owner', 'MANUAL', at, 30000);
+  const blocked = db.previewDeviceConflictResolution('host', id, revision, original, at + 1);
+  expect(blocked.token).toBeNull();
+  expect(blocked.blockers).toContain('DEVICE_LEASE_BUSY');
+  db.releaseLease(lease);
+  expect(db.previewDeviceConflictResolution('host', id, revision, original, at + 2).canApply).toBe(true);
 });
