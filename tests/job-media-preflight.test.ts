@@ -125,7 +125,7 @@ describe('P11/S094 private host media bytes', () => {
     const originalPlan = db.jobMediaPreflightPlan(jobId,hostId);
     expect(originalPlan.entries).toHaveLength(1);
     expect(() => db.jobMediaPreflightPlan(jobId,'host_other'))
-      .toThrow('máy khác');
+      .toThrow('Source belongs to another host');
     const raw = new DatabaseSync(join(dir, 'data.sqlite'));
     raw.prepare("UPDATE source_entries SET state='CHANGED' WHERE asset_id=?")
       .run(f.assetIds[0]);
