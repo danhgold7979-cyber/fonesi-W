@@ -19,6 +19,7 @@ import { compileWorkflow } from './compiler.js';
 export * from './dsl.js';
 export * from './debug.js';
 export * from './compiler.js';
+export * from './effects.js';
 
 export function validateBundle(input: unknown): ValidationIssue[] {
   const shape = validateWorkflowShape(input);

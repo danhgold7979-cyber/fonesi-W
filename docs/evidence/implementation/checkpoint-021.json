@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-28",
+  "increment": "028",
+  "phase": "P05",
+  "steps": [
+    "S045"
+  ],
+  "status": "TESTED_STATIC_INTRAGRAPH_SLICE_NOT_FULL_PHASE_ACCEPTED",
+  "baselineCommit": "91294aa20295d3d009de9585a343d5788c601cc5",
+  "sourceCommit": "10027ae7ee261565d83954fb79c0597706b591cd",
+  "plan": "docs/implementation/INCREMENT-028_PLAN.md",
+  "checks": [
+    {
+      "platform": "ubuntu-latest",
+      "command": "pnpm check",
+      "passed": 250,
+      "failed": 0,
+      "skipped": 0,
+      "files": 27
+    },
+    {
+      "platform": "ubuntu-latest",
+      "command": "pnpm test:ui",
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "platform": "windows-latest",
+      "command": "pnpm check",
+      "passed": 249,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "pre-existing Unix-only executable SDK fixture",
+      "files": 27
+    },
+    {
+      "platform": "both",
+      "command": "pnpm check:plan",
+      "status": "PASS"
+    }
+  ],
+  "ci": {
+    "runId": 40642239427,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40642239427",
+    "conclusion": "success"
+  },
+  "verified": [
+    "transaction.error path cannot grant durable intent",
+    "typed PUBLISH COMMENT matching",
+    "effect uncertainty before next effect",
+    "verify.false cannot permit cleanup",
+    "unclassified write cannot be admitted",
+    "bounded branch frontier"
+  ],
+  "unrun": [
+    "Physical Win10 and Android effects",
+    "durable runtime journal and post verification",
+    "cross-graph effect token propagation",
+    "Facebook/TikTok app adapters",
+    "full P05 acceptance"
+  ]
+}
