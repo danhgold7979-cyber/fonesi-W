@@ -1,6 +1,11 @@
-## Increment048 / P11-S095.2 — durable stage reconciliation
+## Increment049 / P11-S095.2 — reconciliation idempotency and crash-reopen tests (plan committed)
 
-Plan-first: [INCREMENT-048_PLAN.md](INCREMENT-048_PLAN.md), baseline `b0136bf2`, plan commit `fe1414b8`. Implementation adds schema v18 append-only reconciliation audit and private `reconcileStage` fresh remote-byte/MediaStore probe. It does not retry upload, delete remote files, change stage/job state or dispatch. **CI pending; not yet validated.** Physical Android/AT-095, picker, recovery after claim has expired, posting, Windows 10 USB/LAN and 20→300 device benchmark remain NOT_RUN.
+Plan-first: [INCREMENT-049_PLAN.md](INCREMENT-049_PLAN.md), commit [257e5c96](https://github.com/danhgold7979-cyber/fonesi-W/commit/257e5c9663353f87cda14a8a69e28b739f0913b0), baseline Increment048 tested source `f3b61dfa586a97ec94ffe4adb0778e5d4a82364e`. Current work adds focused tests for immutable audit/idempotency, SQLite reopen, lease/generation fencing and non-dispatchability. Implementation/CI pending; no result claimed yet.
+
+## Increment048 / P11-S095.2 — durable stage reconciliation (validated)
+
+Plan: [INCREMENT-048_PLAN.md](INCREMENT-048_PLAN.md). Tested source SHA `f3b61dfa586a97ec94ffe4adb0778e5d4a82364e`. [Ubuntu CI 40716382943](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40716382943) **SUCCESS** — 334/334 unit/integration tests across 39 files, 30/30 Chromium UI, generated contracts/type/lint/build/plan PASS. [Windows CI 40716396683](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40716396683) **SUCCESS** — 333 passed + 1 platform-only skip across 39 files, generated contracts/type/lint/build/Windows VerifyOnly/plan PASS. Added schema v18 append-only reconciliation audit and private fenced read-only remote-byte/MediaStore reconciliation. No upload retry, deletion, stage/job mutation or dispatch. [Results](INCREMENT-048_RESULTS.md), [checkpoint-041](../evidence/implementation/checkpoint-041.json). **Physical Android/picker, no-live-lease recovery, cleanup, publishing and scale NOT_RUN.**
+
 
 ## Increment048 / P11-S095.2 — durable stage reconciliation (plan committed)
 
