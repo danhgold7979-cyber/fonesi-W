@@ -1208,6 +1208,68 @@ export class StudioDatabase {
         };
       });
   }
+  /**
+   * Read-only diagnostic. Never authorizes a conflict to be cleared.
+   * Personal hardware serials/fingerprints and transport aliases are intentionally absent.
+   */
+  conflictResolutionReadiness(
+    hostId: string,
+    deviceId: string,
+    at = Date.now(),
+  ): {
+    deviceId: string;
+    revision: number;
+    status: 'CONFLICT' | 'NOT_CONFLICT';
+    canResolveAutomatically: false;
+    blockers: string[];
+  } {
+    idSchema.parse(hostId);
+    idSchema.parse(deviceId);
+    if (!Number.isSafeInteger(at) || !Number.isFinite(new Date(at).getTime()))
+      throw new DomainError('INVALID_CLOCK', 'Invalid diagnostic clock.');
+    const row = this.db
+      .prepare('SELECT p.identity,p.revision FROM device_profiles p WHERE p.device_id=?')
+      .get(deviceId);
+    if (!row) throw new DomainError('NOT_FOUND', 'Không tìm thấy thiết bị đã đăng ký.');
+    const blockers: string[] = [];
+    if (row.identity !== 'CONFLICT') blockers.push('NOT_CONFLICT');
+    const transports = this.db
+      .prepare(
+        'SELECT state,identity_verified FROM device_transports WHERE host_id=? AND device_id=?',
+      )
+      .all(hostId, deviceId);
+    if (!transports.length || !transports.some((t) => t.state === 'CONNECTED'))
+      blockers.push('NO_CONNECTED_TRANSPORT');
+    if (!transports.some((t) => t.state === 'CONNECTED' && Boolean(t.identity_verified)))
+      blockers.push('NO_FRESH_VERIFIED_PROOF');
+    if (
+      this.db
+        .prepare(
+          'SELECT 1 FROM leases WHERE device_id=? AND owner_id IS NOT NULL AND expires_at>? LIMIT 1',
+        )
+        .get(deviceId, at)
+    )
+      blockers.push('DEVICE_LEASE_BUSY');
+    if (
+      this.db
+        .prepare(
+          "SELECT 1 FROM jobs WHERE device_id=? AND state IN('PREFLIGHT','RUNNING','POST_INTENT','POST_PENDING','POSTED','COMMENT_PENDING','NEEDS_REVIEW') LIMIT 1",
+        )
+        .get(deviceId)
+    )
+      blockers.push('ACTIVE_OR_UNCERTAIN_JOB');
+    // These are distinct obligations: a good scan cannot prove physical ownership
+    // nor establish an operator's informed confirmation of the right handset.
+    blockers.push('PHYSICAL_IDENTITY_CONFIRMATION_REQUIRED');
+    blockers.push('AUDITED_RESOLUTION_NOT_IMPLEMENTED');
+    return {
+      deviceId,
+      revision: Number(row.revision),
+      status: row.identity === 'CONFLICT' ? 'CONFLICT' : 'NOT_CONFLICT',
+      canResolveAutomatically: false,
+      blockers,
+    };
+  }
   updateDevice(
     id: string,
     expectedRevision: number,

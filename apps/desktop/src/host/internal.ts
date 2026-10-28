@@ -39,6 +39,7 @@ export type InternalRequest =
       at: string;
     }
   | { command: 'device.records'; hostId: string }
+  | { command: 'device.conflictReadiness'; hostId: string; deviceId: string; at: number }
   | {
       command: 'device.update';
       id: string;
@@ -138,6 +139,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.reconcileDeviceTransports(request.hostId, request.observations, request.at);
     case 'device.records':
       return db.listDeviceRecords(request.hostId);
+    case 'device.conflictReadiness':
+      return db.conflictResolutionReadiness(request.hostId, request.deviceId, request.at);
     case 'device.update':
       return db.updateDevice(request.id, request.expectedRevision, request.patch);
     case 'device.assertTransport':
