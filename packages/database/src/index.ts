@@ -983,7 +983,11 @@ export class StudioDatabase {
         const old = this.db
           .prepare('SELECT * FROM device_transports WHERE host_id=? AND serial=?')
           .get(hostId, observation.serial);
-        const evidence = deviceFingerprint(observation.metadata, hostId, observation.serial);
+        // Metadata is fresh identity evidence only for an authorized/connected
+        // transport. Offline/unauthorized callbacks cannot promote or rebind it.
+        const freshMetadata =
+          observation.state === 'CONNECTED' ? observation.metadata : null;
+        const evidence = deviceFingerprint(freshMetadata, hostId, observation.serial);
         const previous = old
           ? this.db
               .prepare('SELECT * FROM device_profiles WHERE device_id=?')
@@ -1045,8 +1049,8 @@ export class StudioDatabase {
           if (previous?.identity === 'PROVISIONAL' || !observation.metadata) profile = previous;
         }
         let deviceId = profile ? String(profile.device_id) : null;
-        const metadata = observation.metadata
-          ? canonicalJson(observation.metadata)
+        const metadata = freshMetadata
+          ? canonicalJson(freshMetadata)
           : profile?.metadata
             ? String(profile.metadata)
             : null;
@@ -1061,7 +1065,7 @@ export class StudioDatabase {
           deviceId = makeId('device');
           this.db
             .prepare('INSERT INTO devices(id,name) VALUES(?,?)')
-            .run(deviceId, observation.metadata?.model ?? observation.serial);
+            .run(deviceId, freshMetadata?.model ?? observation.serial);
           this.db
             .prepare('INSERT INTO device_profiles VALUES(?,?,?,?,0)')
             .run(deviceId, evidence.fingerprint, metadata, identity);
@@ -1086,7 +1090,7 @@ export class StudioDatabase {
         const fresh =
           observation.state === 'CONNECTED' &&
           !evidence.provisional &&
-          observation.metadata !== null;
+          freshMetadata !== null;
         const changed =
           !old ||
           Boolean(old.identity_verified) !== fresh ||
