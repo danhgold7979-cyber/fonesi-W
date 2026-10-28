@@ -103,7 +103,7 @@ async function fixture() {
 }
 type Fixture = Awaited<ReturnType<typeof fixture>>;
 function coordinator(
-  outcome: 'OK' | 'FAIL' | 'WRONG_ACK' = 'OK',
+  outcome: 'OK' | 'FAIL' | 'WRONG_ACK' | 'WRONG_READBACK' = 'OK',
 ) {
   return new HostStageTransferService({
     internal: async <T>(request: InternalRequest) => {
@@ -127,6 +127,19 @@ function coordinator(
             '/asset-' + String(input.ordinal).padStart(3, '0') +
             '-' + input.nonce + '.mp4',
           bytes: input.expectedBytes, canDispatch: false as const,
+        };
+      },
+      readOwnedStage: async (input: {
+        serial: string; jobId: string; ordinal: number; nonce: string; extension: string;
+        expectedHash: string; expectedBytes: number;
+      }) => {
+        events.push('fake.adb.readback');
+        await fence();
+        return {
+          remotePath: '/sdcard/Download/AutoReelsStudio/job-' + input.jobId +
+            '/asset-' + String(input.ordinal).padStart(3, '0') + '-' + input.nonce + input.extension,
+          hash: outcome === 'WRONG_READBACK' ? 'f'.repeat(64) : input.expectedHash,
+          bytes: input.expectedBytes,
         };
       },
     }),
@@ -162,6 +175,44 @@ it('orders host stage → SQLite intent → uncertainty → ADB → ACK without 
   expect(db.listDeviceStageTransfers(jobId)).toHaveLength(1);
 });
 
+it('persists remote byte readback evidence only after exact match and still blocks dispatch', async () => {
+  const f = await fixture();
+  const uploaded = await coordinator().transfer(f);
+  const receipt = await coordinator().verifyRemoteBytes({
+    jobId: f.jobId, stageId: uploaded.stageId,
+    expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: f.lease, transportSerial: f.transportSerial,
+    transportGeneration: f.transportGeneration,
+  });
+  expect(receipt).toMatchObject({
+    scope: 'REMOTE_BYTES_ONLY', status: 'REMOTE_BYTES_MATCHED', canDispatch: false,
+  });
+  const stage = db.listDeviceStageTransfers(jobId)[0]!;
+  expect(stage).toMatchObject({
+    state: 'SYNC_ACK_UNVERIFIED',
+    remoteReadbackHash: stage.expectedHash,
+    remoteReadbackBytes: stage.expectedBytes,
+  });
+  expect(stage.remoteReadbackAt).toBeTruthy();
+  expect(db.getJob(jobId).job.state).toBe('PREFLIGHT');
+  expect(events).toContain('stage.verifyRemoteBytes');
+});
+it('does not persist mismatched remote hash and never marks it dispatchable', async () => {
+  const f = await fixture();
+  const uploaded = await coordinator().transfer(f);
+  await expect(coordinator('WRONG_READBACK').verifyRemoteBytes({
+    jobId: f.jobId, stageId: uploaded.stageId,
+    expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: f.lease, transportSerial: f.transportSerial,
+    transportGeneration: f.transportGeneration,
+  })).rejects.toMatchObject({ code: 'STAGE_READBACK_MISMATCH' });
+  expect(db.listDeviceStageTransfers(jobId)[0]).toMatchObject({
+    state: 'SYNC_ACK_UNVERIFIED',
+    remoteReadbackHash: null, remoteReadbackBytes: null, remoteReadbackAt: null,
+  });
+});
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {
   const f = await fixture();
   await expect(coordinator('FAIL').transfer(f)).rejects.toThrow('simulated disconnect');
