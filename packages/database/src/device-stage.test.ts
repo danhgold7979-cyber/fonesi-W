@@ -100,8 +100,9 @@ it('commits remote destination before ADB, then uncertainty and ACK without clai
   expect(stage).toMatchObject({
     jobId: f.jobId, deviceId: f.deviceId, hostId,
     state: 'INTENT', claimGeneration: f.lease.generation,
-    ordinal: 0, expectedHash: f.hash, canDispatch: undefined,
+    ordinal: 0, expectedHash: f.hash,
   });
+  expect(Object.hasOwn(stage, 'canDispatch')).toBe(false);
   expect(stage.nonce).toMatch(/^[a-f0-9]{32}$/);
   expect(stage.remotePath).toBe(
     '/sdcard/Download/AutoReelsStudio/job-' + f.jobId +
