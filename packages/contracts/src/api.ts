@@ -1,4 +1,4 @@
-import type { InspectorSnapshot } from './inspector.js';
+import type { InspectorSnapshot, DeviceSelectorLiveReport } from './inspector.js';
 import type { WorkspaceStatus, WorkspaceBackupResult } from './workspace.js';
 import type { MediaAdoptionPreview, MediaAdoptionResult } from './media.js';
 import type { DebugAction, DebugSnapshot } from './debug.js';
@@ -98,6 +98,7 @@ export interface StudioApi {
     patch: { name?: string; enabled?: boolean },
   ): Promise<DeviceSnapshot>;
   inspectDevice(id: string): Promise<InspectorSnapshot>;
+  testDeviceSelector(id: string, selector: unknown): Promise<DeviceSelectorLiveReport>;
   captureDevice(id: string): Promise<DeviceCapture>;
   devicePackages(id: string): Promise<{ packages: string[]; foreground: string | null }>;
   deviceAction(id: string, action: ManualDeviceAction): Promise<{ acknowledged: true }>;
@@ -200,6 +201,7 @@ export type ApiCommand =
   | 'pairDevice'
   | 'updateDevice'
   | 'inspectDevice'
+  | 'testDeviceSelector'
   | 'captureDevice'
   | 'devicePackages'
   | 'deviceAction'
@@ -276,6 +278,7 @@ export function createStudioApi(transport: Transport): StudioApi {
     updateDevice: (id, expectedRevision, patch) =>
       call('updateDevice', { id, expectedRevision, patch }),
     inspectDevice: (id) => call('inspectDevice', { id }),
+    testDeviceSelector: (id, selector) => call('testDeviceSelector', { id, selector }),
     captureDevice: (id) => call('captureDevice', { id }),
     devicePackages: (id) => call('devicePackages', { id }),
     deviceAction: (id, action) => call('deviceAction', { id, action }),

@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-28",
+  "increment": "034",
+  "phase": "P09",
+  "steps": [
+    "S083.1"
+  ],
+  "baseline": "a2096d325c6417908c00c103e556018396087556",
+  "codeCommit": "57b42a18301ea715db90e1a0aa0ac01c59104444",
+  "status": "TESTED_SLICE_NOT_FULL_PHASE_ACCEPTED",
+  "ci": {
+    "runId": 40648794904,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40648794904",
+    "conclusion": "success",
+    "ubuntu": {
+      "unitPassed": 272,
+      "files": 30,
+      "browserPassed": 28,
+      "failed": 0
+    },
+    "windows": {
+      "unitPassed": 271,
+      "files": 30,
+      "skipped": 1,
+      "skipReason": "pre-existing Unix-only SDK fixture"
+    }
+  },
+  "verified": [
+    "v1 and v2 exact live selector count",
+    "safe ordered fallback",
+    "ADB read-only shared Inspector lease",
+    "no tap action",
+    "no raw XML/password/serial output",
+    "host offline/lease and invalid input denial",
+    "browser UI fresh test"
+  ],
+  "notRun": [
+    "physical Windows10/Android",
+    "vendor app selector compatibility",
+    "OCR and image matching",
+    "video stream protocol and decoder",
+    "multitouch/Unicode input",
+    "real publishing/effects",
+    "20-300 device scale"
+  ]
+}

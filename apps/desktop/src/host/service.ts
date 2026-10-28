@@ -73,6 +73,7 @@ export const deviceSchemas = {
     }),
   }),
   inspectDevice: id,
+  testDeviceSelector: id.extend({ selector: z.unknown() }),
   captureDevice: id,
   devicePackages: id,
   disconnectDevice: id,
@@ -250,6 +251,7 @@ export async function dispatch(
     case 'pairDevice':
     case 'updateDevice':
     case 'inspectDevice':
+    case 'testDeviceSelector':
     case 'captureDevice':
     case 'devicePackages':
     case 'deviceAction':

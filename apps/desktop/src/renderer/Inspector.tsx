@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { DeviceRecord, InspectorSnapshot, UiElement } from '@autoreels/contracts';
+import type { DeviceRecord, InspectorSnapshot, UiElement, DeviceSelectorLiveReport } from '@autoreels/contracts';
 import { pickUiElement, inspectUiSelectorMatches, suggestUiSelector } from '@autoreels/contracts';
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
@@ -18,9 +18,11 @@ export function Inspector({
     [search, setSearch] = useState(''),
     [selected, setSelected] = useState<string | null>(null),
     [selector, setSelector] = useState(''),
+    [liveProbe, setLiveProbe] = useState<DeviceSelectorLiveReport | null>(null),
     [now, setNow] = useState(Date.now());
   const alive = useRef(true),
-    pending = useRef(false);
+    pending = useRef(false),
+    probeRevision = useRef(0);
   useEffect(() => {
     alive.current = true;
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -62,6 +64,8 @@ export function Inspector({
           t.state === 'CONNECTED',
       ));
   function choose(node: UiElement | null) {
+    probeRevision.current++;
+    setLiveProbe(null);
     setSelected(node?.id ?? null);
     if (node) setSelector(JSON.stringify(suggestUiSelector(node), null, 2));
   }
@@ -73,11 +77,33 @@ export function Inspector({
     setSnapshot(null);
     setSelected(null);
     setSelector('');
+    probeRevision.current++;
+    setLiveProbe(null);
     try {
       const result = await api.inspectDevice(device.id);
       if (alive.current) setSnapshot(result);
     } catch (e) {
       if (alive.current) setError(e instanceof Error ? e.message : 'Không đọc được giao diện.');
+    } finally {
+      pending.current = false;
+      if (alive.current) setBusy(false);
+    }
+  }
+  async function testLiveSelector() {
+    if (pending.current || !selector || !!query.error || stale) return;
+    const generation = ++probeRevision.current;
+    pending.current = true;
+    setBusy(true);
+    setError('');
+    setLiveProbe(null);
+    try {
+      const raw: unknown = JSON.parse(selector);
+      const result = await api.testDeviceSelector(device.id, raw);
+      if (alive.current && generation === probeRevision.current)
+        setLiveProbe(result);
+    } catch (error) {
+      if (alive.current && generation === probeRevision.current)
+        setError(error instanceof Error ? error.message : 'Không kiểm tra được selector trên điện thoại.');
     } finally {
       pending.current = false;
       if (alive.current) setBusy(false);
@@ -204,7 +230,11 @@ export function Inspector({
                   aria-label="Selector JSON"
                   rows={6}
                   value={selector}
-                  onChange={(e) => setSelector(e.target.value)}
+                  onChange={(e) => {
+                    probeRevision.current++;
+                    setLiveProbe(null);
+                    setSelector(e.target.value);
+                  }}
                 />
               </label>
               {query.error ? (
@@ -227,6 +257,35 @@ export function Inspector({
                       : ''}
                 </p>
               )}
+              <div className="inspector-live-probe">
+                <button
+                  disabled={busy || stale || !snapshot || !selector || !!query.error || !device.capabilities.manualControl}
+                  onClick={() => void testLiveSelector()}
+                >
+                  Kiểm tra selector trực tiếp trên điện thoại
+                </button>
+                <p className="muted">
+                  Kiểm tra ADB/XML mới trên điện thoại, không chạm hoặc tự chọn phần tử.
+                  Kết quả snapshot bên trên có thể đã cũ.
+                </p>
+                {liveProbe && (
+                  <p role="status" aria-label="Kết quả selector trực tiếp">
+                    {liveProbe.totalMatches} phần tử khớp trực tiếp ·{' '}
+                    {liveProbe.status === 'UNIQUE'
+                      ? 'duy nhất'
+                      : liveProbe.status === 'AMBIGUOUS'
+                        ? 'không duy nhất — không tự chọn'
+                        : 'không tìm thấy'}
+                    {liveProbe.strategyIndex
+                      ? ' · chiến lược ' + liveProbe.strategyIndex + '/' + liveProbe.totalStrategies
+                      : ''}
+                    {' · '}
+                    {new Date(liveProbe.observedAt).toLocaleTimeString('vi-VN')}
+                    {' · '}correlation: {liveProbe.correlation}
+                    {liveProbe.truncated && ' · chỉ xem 100 vùng hình học đầu tiên'}
+                  </p>
+                )}
+              </div>
               <button
                 disabled={!selector || !!query.error}
                 onClick={() => {

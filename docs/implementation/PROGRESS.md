@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment034 / P09-S083.1 — thử selector trực tiếp trên ADB, không touch
+
+Đã bổ sung `testDeviceSelector(id,selector)` typed API qua host Inspector có lease/fencing và chụp/đọc XML ADB thực (sequential correlation, không giả atomicity). V1/v2 được validate trước khi gọi ADB; trả status `NONE/UNIQUE/AMBIGUOUS`, exact 0/1/n và strategy attempts, tối đa100 mẫu hình học an toàn; **không trả screenshot, text mật khẩu, XML thô, hardware serial hoặc capture token**. Test không tự tap, không chọn đầu khi ambiguous, xóa capture transient sau khi đọc. Inspector có nút riêng "Kiểm tra selector trực tiếp trên điện thoại", hiển thị khác biệt kết quả snapshot cũ/đọc lại mới. Có test fixture ADB TCP, offline/lease, invalid input và Chromium.
+
+Kế hoạch trước code [INCREMENT-034_PLAN.md](INCREMENT-034_PLAN.md), kết quả [INCREMENT-034_RESULTS.md](INCREMENT-034_RESULTS.md), receipt [checkpoint-027.json](../evidence/implementation/checkpoint-027.json). CI [40648794904](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40648794904) **SUCCESS cả Ubuntu và Windows**: Ubuntu **272/272 unit/integration/30 files + 28/28 Chromium**, Windows **271 pass/1 pre-existing Unix-only SDK skip/30 files**. Nghiệm thu P09 với máy Android thật, app selectors và video stream/gesture/OCR còn NOT_RUN.
+
 ## Increment033 / P06-S056 — content paging + schema v14 integration
 
 Đã tích hợp code P06 ContentPage từ PR #7 của nhánh cũ vào base mới sau khi P08 đã dùng migration v13 và P09 selector/fallback (PR #10) cũng đã merge. **Giữ nguyên mọi byte SQL của migration v13 P08**, thêm content epoch/triggers như append-only **migration v14**, nâng `SCHEMA_VERSION=14`. Typed named API `contentPage`, SQLite cursor khóa Process/filter/epoch, batch ordered asset reads; Process editor vẫn tải đủ dữ liệu cho bulk/schedule để tránh thay đổi ngầm ý nghĩa Select All. Kế hoạch tại [INCREMENT-033_PLAN.md](INCREMENT-033_PLAN.md), bản gốc P06 tại [INCREMENT-033_ORIGIN.md](INCREMENT-033_ORIGIN.md), kết quả [INCREMENT-033_RESULTS.md](INCREMENT-033_RESULTS.md), receipt [checkpoint-026.json](../evidence/implementation/checkpoint-026.json).
