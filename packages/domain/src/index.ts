@@ -1,5 +1,11 @@
 import { createHash } from 'node:crypto';
 import {
+  compareJobPreflightEvidence,
+  type JobPreflightEvidence,
+  type JobPreflightAssessment,
+} from './preflight.js';
+export type { JobPreflightEvidence, JobPreflightAssessment, PreflightMediaCheck } from './preflight.js';
+import {
   assertJsonSafe,
   appDefinitionSchema,
   profileSchema,
@@ -148,4 +154,12 @@ export function freezeSnapshot<T extends JsonValue>(input: T): Readonly<T> {
   };
   freeze(cloned);
   return cloned;
+}
+
+/**
+ * Advisory comparison of supplied evidence. Never an authorization to send
+ * Android input; only a future trusted, leased executor can dispatch effects.
+ */
+export function assessJobPreflightEvidence(input: JobPreflightEvidence): JobPreflightAssessment {
+  return compareJobPreflightEvidence(input, { bundleHash, contentHash, workflowReady });
 }
