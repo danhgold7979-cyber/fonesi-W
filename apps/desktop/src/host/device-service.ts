@@ -15,6 +15,7 @@ import type {
   TransportObservation,
   DeviceResolutionPreview,
   DeviceResolutionResult,
+  DeviceResolutionAuditPage,
   ManualDeviceAction,
 } from '@autoreels/contracts';
 import { assertJsonSafe } from '@autoreels/contracts';
@@ -674,6 +675,15 @@ export class HostDeviceService {
       case 'deviceSnapshot':
         deviceSchemas.deviceSnapshot.parse(input);
         return this.snapshot();
+      case 'deviceResolutionHistory': {
+        const p = deviceSchemas.deviceResolutionHistory.parse(input);
+        return this.db.internal<DeviceResolutionAuditPage>({
+          command: 'device.resolutionHistory',
+          deviceId: p.id,
+          limit: 20,
+          cursor: p.cursor ?? null,
+        });
+      }
       case 'previewDeviceConflictResolution': {
         const p = deviceSchemas.previewDeviceConflictResolution.parse(input);
         return this.previewConflict(p.id, p.expectedRevision);

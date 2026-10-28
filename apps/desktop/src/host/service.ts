@@ -45,6 +45,7 @@ export const mediaSchemas = {
 const coordinate = z.number().int().min(0).max(8191);
 export const deviceSchemas = {
   deviceSnapshot: z.strictObject({}),
+  deviceResolutionHistory: id.extend({ cursor: z.string().min(1).max(1024).optional() }),
   previewDeviceConflictResolution: id.extend({ expectedRevision: revision }),
   applyDeviceConflictResolution: id.extend({
     token: idSchema,
@@ -228,6 +229,7 @@ export async function dispatch(
     case 'controlDebug':
       throw new DomainError('HOST_REQUIRED', 'Debug cần session service của host.');
     case 'deviceSnapshot':
+    case 'deviceResolutionHistory':
     case 'previewDeviceConflictResolution':
     case 'applyDeviceConflictResolution':
     case 'scanDevices':

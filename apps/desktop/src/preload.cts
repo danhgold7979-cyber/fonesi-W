@@ -16,6 +16,8 @@ const api: StudioApi = {
   debugSnapshot: (id) => send('debugSnapshot', { id }),
   controlDebug: (id, action) => send('controlDebug', { id, action }),
   deviceSnapshot: () => send('deviceSnapshot'),
+  deviceResolutionHistory: (id, cursor) =>
+    send('deviceResolutionHistory', { id, ...(cursor ? { cursor } : {}) }),
   previewDeviceConflictResolution: (id, expectedRevision) =>
     send('previewDeviceConflictResolution', { id, expectedRevision }),
   applyDeviceConflictResolution: (id, token, confirmedName) =>
