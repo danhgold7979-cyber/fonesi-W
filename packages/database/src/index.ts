@@ -1046,14 +1046,19 @@ export class StudioDatabase {
           const previous = this.db
             .prepare('SELECT * FROM device_profiles WHERE device_id=?')
             .get(String(old.device_id));
-          if (previous?.identity === 'PROVISIONAL' || !observation.metadata) profile = previous;
+          // Incomplete (provisional) hardware evidence cannot migrate an existing
+          // verified transport to a new identity or overwrite historical metadata.
+          if (previous?.identity === 'PROVISIONAL' || evidence.provisional) profile = previous;
         }
         let deviceId = profile ? String(profile.device_id) : null;
-        const metadata = freshMetadata
-          ? canonicalJson(freshMetadata)
-          : profile?.metadata
-            ? String(profile.metadata)
-            : null;
+        const metadata =
+          !evidence.provisional && freshMetadata
+            ? canonicalJson(freshMetadata)
+            : profile?.metadata
+              ? String(profile.metadata)
+              : freshMetadata
+                ? canonicalJson(freshMetadata)
+                : null;
         const identity =
           profile?.identity === 'CONFLICT'
             ? 'CONFLICT'
