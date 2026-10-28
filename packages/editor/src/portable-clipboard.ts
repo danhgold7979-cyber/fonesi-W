@@ -209,11 +209,12 @@ export function pastePortableSelection(
       source: nodeMap.get(edge.source)!,
       target: nodeMap.get(edge.target)!,
     }));
-    cloned.groups = cloned.groups?.map((group) => ({
-      ...group,
-      id: 'group_' + crypto.randomUUID().replaceAll('-', ''),
-      nodeIds: group.nodeIds.map((nodeId) => nodeMap.get(nodeId)!),
-    }));
+    if (cloned.groups)
+      cloned.groups = cloned.groups.map((group) => ({
+        ...group,
+        id: 'group_' + crypto.randomUUID().replaceAll('-', ''),
+        nodeIds: group.nodeIds.map((nodeId) => nodeMap.get(nodeId)!),
+      }));
     return cloned;
   });
   const root = structuredClone(safe.selection);
