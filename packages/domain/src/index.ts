@@ -224,6 +224,9 @@ export function assessJobPreflightEvidence(input: JobPreflightEvidence): JobPref
   if (!input.device?.transports.some((t) =>
     t.state === 'CONNECTED' && t.identityVerified))
     block('TRANSPORT_NOT_VERIFIED');
+  if (!input.device?.owner || input.device.owner.kind !== 'JOB' ||
+      input.device.owner.expiresAt <= input.at)
+    block('JOB_OWNER_UNAVAILABLE');
   if (!input.observedProfile || !profileSchema.safeParse(input.observedProfile).success)
     block('PROFILE_UNAVAILABLE');
   else {
