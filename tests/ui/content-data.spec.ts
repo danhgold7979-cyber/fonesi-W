@@ -450,6 +450,25 @@ test('Process read-only SQLite browser pages 53 items without changing all-row s
   await expect(browser.getByRole('alert')).toContainText('thay đổi');
   await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
   await expect(browser.getByRole('status')).toContainText('Tổng chính xác: 54 nội dung');
+  // A separate read-only order leaves global editing/scheduling scope untouched.
+  await browser.getByRole('combobox', { name: 'Sắp xếp SQLite' }).selectOption('NEWEST_FIRST');
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(0);
+  await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
+  await expect(browser.getByRole('status')).toContainText('Tổng chính xác: 54 nội dung · Trang 1');
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(50);
+  await expect(browser.locator('[data-testid="server-content-row"]').first())
+    .toContainText('content_ui_browser_after_cursor');
+  await browser.getByRole('button', { name: 'Trang tiếp theo (SQLite)' }).click();
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(4);
+  await expect(browser.locator('[data-testid="server-content-row"]').last())
+    .toContainText('content_ui_browser_0');
+  await browser.getByRole('button', { name: 'Trang trước (SQLite)' }).click();
+  await expect(browser.locator('[data-testid="server-content-row"]').first())
+    .toContainText('content_ui_browser_after_cursor');
+  await browser.getByRole('combobox', { name: 'Sắp xếp SQLite' }).selectOption('OLDEST_FIRST');
+  await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
+  await expect(browser.locator('[data-testid="server-content-row"]').first())
+    .toContainText('content_ui_browser_0');
   // The old Process table intentionally still owns the original full-row selection.
   await expect(page.getByText('53 chọn · 53 đang lọc', { exact: true })).toBeVisible();
 });

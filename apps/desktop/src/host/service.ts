@@ -191,6 +191,7 @@ const schemas = {
       processId: idSchema,
       search: z.string().max(120).optional(),
       includeIgnored: z.boolean().optional(),
+      sortOrder: z.enum(['OLDEST_FIRST', 'NEWEST_FIRST']).optional(),
       cursor: z.string().max(4096).optional(),
       limit: z.number().int().min(1).max(250).optional(),
     }),

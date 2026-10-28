@@ -94,6 +94,8 @@ export interface ContentQuery {
   processId: string;
   search?: string | undefined;
   includeIgnored?: boolean | undefined;
+  /** Stable insertion order; never an arbitrary SQL expression. */
+  sortOrder?: 'OLDEST_FIRST' | 'NEWEST_FIRST' | undefined;
   cursor?: string | undefined;
   limit?: number | undefined;
 }

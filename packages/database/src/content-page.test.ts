@@ -78,6 +78,19 @@ describe('P06 scoped SQLite content paging', () => {
     expect(new Set(ids).size).toBe(1003);
     expect(ids[0]).toBe('process_one_content_0');
     expect(ids.at(-1)).toBe('process_one_content_1002');
+    const reverseIds: string[] = [];
+    let reverseCursor: string | undefined;
+    for (let pageIndex = 0; pageIndex < 10; pageIndex++) {
+      const page = db.listContentPage({
+        processId: 'process_one', sortOrder: 'NEWEST_FIRST', limit: 125,
+        ...(reverseCursor ? { cursor: reverseCursor } : {}),
+      });
+      expect(page.total).toBe(1003);
+      reverseIds.push(...page.items.map((row) => row.id));
+      if (!page.hasMore) break;
+      reverseCursor = page.nextCursor!;
+    }
+    expect(reverseIds).toEqual([...ids].reverse());
     expect(db.listContentPage({ processId: 'process_two', limit: 30 })).toMatchObject({
       total: 13, hasMore: false,
     });
@@ -145,6 +158,50 @@ describe('P06 scoped SQLite content paging', () => {
     expect(() => db.listContentPage({
       processId: 'process_a', cursor: first.nextCursor!, limit: 1,
     })).toThrow('thay đổi');
+  });
+  it('supports descending stable keysets, isolates sort cursors and preserves filters after restart', () => {
+    process('process_reverse');
+    for (let i = 0; i < 7; i++) add('process_reverse', i, i < 3 ? 'alpha ' + i : 'beta ' + i);
+    const query = { processId: 'process_reverse', sortOrder: 'NEWEST_FIRST' as const, limit: 2 };
+    const first = db.listContentPage(query);
+    expect(first.total).toBe(7);
+    expect(first.items.map((row) => row.id)).toEqual([
+      'process_reverse_content_6', 'process_reverse_content_5',
+    ]);
+    expect(first.nextCursor).toBeTruthy();
+    expect(() => db.listContentPage({
+      processId: 'process_reverse', sortOrder: 'OLDEST_FIRST', limit: 2,
+      cursor: first.nextCursor!,
+    })).toThrow('bộ lọc');
+    expect(() => db.listContentPage({
+      processId: 'process_reverse', sortOrder: 'INVALID' as 'NEWEST_FIRST',
+    })).toThrow('Bộ lọc');
+    const ids = [...first.items.map((row) => row.id)];
+    let cursor = first.nextCursor;
+    while (cursor) {
+      const page = db.listContentPage({ ...query, cursor });
+      expect(page.total).toBe(7);
+      ids.push(...page.items.map((row) => row.id));
+      cursor = page.nextCursor;
+    }
+    expect(ids).toEqual(Array.from({ length: 7 }, (_, i) => 'process_reverse_content_' + (6 - i)));
+    expect(new Set(ids).size).toBe(7);
+    const filtered = db.listContentPage({ ...query, search: 'alpha' });
+    expect(filtered.total).toBe(3);
+    expect(filtered.items.map((row) => row.id)).toEqual([
+      'process_reverse_content_2', 'process_reverse_content_1',
+    ]);
+    db.close();
+    db = new StudioDatabase(join(root, 'data.sqlite'));
+    expect(db.listContentPage({ ...query, cursor: first.nextCursor! }).items[0]!.id)
+      .toBe('process_reverse_content_4');
+    const ignored = db.listContent('process_reverse')[6]!;
+    db.ignoreContent(ignored.id, ignored.revision);
+    expect(db.listContentPage(query).items[0]!.id).toBe('process_reverse_content_5');
+    expect(db.listContentPage({ ...query, includeIgnored: true }).items[0]!.id)
+      .toBe('process_reverse_content_6');
+    expect(() => db.listContentPage({ ...query, cursor: first.nextCursor! }))
+      .toThrow('thay đổi');
   });
   it('counts ignored rows explicitly without changing historical content files or records', () => {
     process('process_ignore');

@@ -1700,18 +1700,22 @@ export class StudioDatabase {
       throw new DomainError('INVALID_CONTENT_QUERY', 'Limit phải từ 1 đến 250.');
     if (
       (query.search !== undefined && (typeof query.search !== 'string' || query.search.length > 120)) ||
-      (query.includeIgnored !== undefined && typeof query.includeIgnored !== 'boolean')
+      (query.includeIgnored !== undefined && typeof query.includeIgnored !== 'boolean') ||
+      (query.sortOrder !== undefined &&
+        query.sortOrder !== 'OLDEST_FIRST' &&
+        query.sortOrder !== 'NEWEST_FIRST')
     )
       throw new DomainError('INVALID_CONTENT_QUERY', 'Bộ lọc nội dung không hợp lệ.');
     const search = (query.search ?? '').trim(),
-      includeIgnored = query.includeIgnored ?? false;
+      includeIgnored = query.includeIgnored ?? false,
+      sortOrder = query.sortOrder ?? 'OLDEST_FIRST';
     const epoch = () => {
       const r = this.db.prepare("SELECT revision FROM query_epochs WHERE name='content'").get();
       if (!r) throw new DomainError('MISSING_QUERY_EPOCH', 'Workspace cần cập nhật migration.');
       return Number(r.revision);
     };
     const revision = epoch(),
-      fingerprint = contentHash({ processId: query.processId, search, includeIgnored });
+      fingerprint = contentHash({ processId: query.processId, search, includeIgnored, sortOrder });
     let lastRowId = 0,
       cursorTotal: number | null = null;
     if (query.cursor !== undefined) {
@@ -1763,13 +1767,17 @@ export class StudioDatabase {
           .prepare('SELECT COUNT(*) AS count FROM content_items WHERE ' + where)
           .get(...params)?.count ?? 0,
       );
+    // Direction is an enum, not caller-supplied SQL. The anchor is applied only
+    // after the first page, ensuring all rows can be traversed in either order.
+    const descending = sortOrder === 'NEWEST_FIRST',
+      cursorWhere = query.cursor === undefined ? '' : descending ? ' AND rowid<?' : ' AND rowid>?',
+      orderSql = descending ? 'DESC' : 'ASC';
     const records = this.db
       .prepare(
         'SELECT rowid AS ordinal,id,process_id,revision,fields,ignored FROM content_items WHERE ' +
-          where +
-          ' AND rowid>? ORDER BY rowid LIMIT ?',
+          where + cursorWhere + ' ORDER BY rowid ' + orderSql + ' LIMIT ?',
       )
-      .all(...params, lastRowId, limit + 1);
+      .all(...params, ...(query.cursor === undefined ? [] : [lastRowId]), limit + 1);
     const page = records.slice(0, limit);
     const ids = page.map((r) => String(r.id));
     const assets = new Map<string, string[]>();

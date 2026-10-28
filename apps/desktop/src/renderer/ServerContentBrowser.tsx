@@ -15,6 +15,7 @@ const PAGE_SIZE = 50;
 export function ServerContentBrowser({ processId, notify }: Props) {
   const [search, setSearch] = useState(''),
     [includeIgnored, setIncludeIgnored] = useState(false),
+    [sortOrder, setSortOrder] = useState<'OLDEST_FIRST' | 'NEWEST_FIRST'>('OLDEST_FIRST'),
     [page, setPage] = useState<ContentPage | null>(null),
     [pageIndex, setPageIndex] = useState(0),
     [cursors, setCursors] = useState<(string | null)[]>([null]),
@@ -54,6 +55,7 @@ export function ServerContentBrowser({ processId, notify }: Props) {
       processId,
       limit: PAGE_SIZE,
       includeIgnored,
+      sortOrder,
       ...(filter ? { search: filter } : {}),
       ...(cursor ? { cursor } : {}),
     };
@@ -111,6 +113,23 @@ export function ServerContentBrowser({ processId, notify }: Props) {
             }}
           />{' '}
           Bao gồm nội dung đã bỏ qua
+        </label>
+        <label>
+          Sắp xếp SQLite{' '}
+          <select
+            aria-label="Sắp xếp SQLite"
+            value={sortOrder}
+            disabled={busy}
+            onChange={(event) => {
+              const next = event.target.value;
+              if (next !== 'OLDEST_FIRST' && next !== 'NEWEST_FIRST') return;
+              setSortOrder(next);
+              clearQuery();
+            }}
+          >
+            <option value="OLDEST_FIRST">Cũ nhất trước</option>
+            <option value="NEWEST_FIRST">Mới nhất trước</option>
+          </select>
         </label>
         <button disabled={busy || search.trim().length > 120} onClick={() => void load(null, 0)}>
           Tải trang đầu từ SQLite
