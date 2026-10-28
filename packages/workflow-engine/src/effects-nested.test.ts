@@ -117,4 +117,19 @@ describe('P05 nested external effect admission (conservative fail-closed)', () =
       graphId: 'main', nodeId: 'loop', code: 'NESTED_EFFECT_CONTEXT_UNSUPPORTED',
     }));
   });
+  it('also blocks a nested gesture that could mutate an app without a journaled effect', () => {
+    const bundle = pure();
+    bundle.graphs[1] = graph('child', [
+      node('child_start', 'start'),
+      node('gesture', 'doubletap', { selector: '#action', intervalMs: 100 }),
+      node('child_end', 'end'),
+    ], [
+      edge('g1', 'child_start', 'next', 'gesture'),
+      edge('g2', 'gesture', 'next', 'child_end'),
+    ]);
+    expect(assessEffectPaths(bundle)).toContainEqual(expect.objectContaining({
+      code: 'NESTED_EFFECT_CONTEXT_UNSUPPORTED', graphId: 'main', nodeId: 'call',
+    }));
+  });
+
 });
