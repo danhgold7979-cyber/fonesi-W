@@ -1,4 +1,4 @@
-# Increment027 — P05/S045 structural effect-path safety audit
+# Increment028 — P05/S045 structural effect-path safety audit
 
 Baseline: `feat/studio-workspace@91294aa20295d3d009de9585a343d5788c601cc5` (P04/P07/P08 already integrated). Reviewed V2 `16_MASTER_EXECUTION_PLAN.md`, S045 and AT-045 in `17_STEP_RUNBOOK.md`, P05_PLAN, INCREMENT-014_PLAN and current `validateBundle/compileWorkflow` behavior.
 
