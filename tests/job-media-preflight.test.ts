@@ -82,7 +82,7 @@ beforeEach(async () => {
       dispatch(db, { operationId: 'op_media_preflight', command, input }),
     internal: async <T>(request: Parameters<typeof dispatchInternal>[1]) =>
       dispatchInternal(db, request) as T,
-  }, hostId);
+  }, hostId, undefined, dir);
 });
 afterEach(async () => {
   await service.close();
@@ -147,6 +147,29 @@ describe('P11/S094 private host media bytes', () => {
     db.saveProcess({...p,archived:true},p.revision);
     await expect(service.inspectJobMediaBytes(jobId))
       .rejects.toMatchObject({code:'PROCESS_ARCHIVED'});
+  });
+  it('stages a private owned copy via trusted host only, never an Android effect', async () => {
+    await fixture();
+    const pinned = db.getJob(jobId),
+      originalFile = await readFile(file);
+    const stage = await service.stageJobHostMedia(jobId);
+    expect(stage).toMatchObject({
+      scope: 'HOST_STAGED_NOT_ANDROID', status: 'CREATED',
+      mediaCount: 1, canDispatch: false,
+    });
+    expect(JSON.stringify(stage)).not.toContain(dir);
+    expect(JSON.stringify(stage)).not.toContain('Sensitive caption');
+    expect(await readFile(join(dir, 'owned-media-stage', 'job-' + jobId, 'asset-000.mp4')))
+      .toEqual(originalFile);
+    expect(await service.stageJobHostMedia(jobId)).toMatchObject({ status: 'REUSED' });
+    expect(db.getJob(jobId)).toEqual(pinned);
+    expect(await readFile(file)).toEqual(originalFile);
+    const raw = new DatabaseSync(join(dir, 'data.sqlite'));
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n).toBe(0);
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM leases').get()?.n).toBe(0);
+    raw.close();
+    await expect(service.request('stageJobHostMedia' as never, {jobId}))
+      .rejects.toThrow();
   });
   it('rejects missing host files without treating their old metadata as valid', async () => {
     await fixture();
