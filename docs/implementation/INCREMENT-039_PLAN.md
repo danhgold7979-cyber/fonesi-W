@@ -1,0 +1,16 @@
+# Increment039 — P11/S094 persisted-only job preflight diagnostics
+
+Date 2026-10-28. Integration branch `feat/studio-workspace`. Initial reviewed source baseline `c61d04206bd150e24c709eeff2f81d8cbfbefdb9`. Read V2.1 master execution plan / S094 runbook, P11 effect journal Increment035, SQLite job/claim/media registries, Schedule UI, API/service contracts, queue and Playwright fixtures. This plan is committed **before source code**. No new branch or merge to `main`.
+
+## Gap
+A scheduled job currently has no user-visible, immutable-snapshot-grounded explanation of why execution is not yet eligible. A queue claim puts it in PREFLIGHT, but no certified Android/provider preflight has been implemented. Showing a green READY status from stored data alone would be false; pressing a button must not acquire a lease, mutate job state, trigger manual gestures or authorize publish.
+
+## Slice and invariants
+1. Define a small `JobPreflightReport` DTO with bounded, deterministic safe codes/messages, job ID/revision, persisted-only scope, explicit `canDispatch: false`. Never emit job snapshot content, private host grants, account credentials, ADB serial, raw device fingerprint or source paths.
+2. Add read-only `StudioDatabase.inspectJobPreflight(jobId)`: check persisted job state, integrity of pinned version/hash/bundle and expected Process; archived state, registered and enabled device, verified identity, active lease, pending/prior external effects, pinned asset list/hash and source state (READY/CHANGED/MISSING/ambiguous), without relying on current mutable Process content for snapshot payload. Any unknown source must fail closed. Always include `LIVE_PROFILE_NOT_CERTIFIED` pending real P10 device/app/target/locale/verification receipts, so no DB-only status becomes a production execution permission. No SQL writes/migration.
+3. Expose strict named read-only public `jobPreflight({id})` through `StudioApi`/host Zod dispatcher; deny arbitrary worker/effect/SQL operations. Button in Schedule LIST view opens a separate diagnostic dialog, with loading/error states and cancellation/generation fencing; no edits/claim/dispatch.
+4. Vitest SQLite tests: healthy fixture still blocked by external certification, disabled/unverified device, archived Process, stale/corrupt pinned data, changed/missing/ambiguous media, effect uncertainty/review and lease, restart stability, no changes to jobs/effects/leases. Chromium UI: one real SQLite fixture, inspect block reasons and ensure snapshot/job/revision unchanged, no touch/deviceAction/queue claims.
+5. Run GitHub CI Ubuntu + Windows `pnpm check`, Chromium `pnpm test:ui`, plan validators, verify exact SHA and record truthful receipt/results/progress. Failures fixed before marking TESTED.
+
+## Acceptance boundary
+This is `PERSISTED_PREFLIGHT_DIAGNOSTIC_TESTED_SLICE`, **not** S094 or P11 accepted. Live installed app/version/locale/target identity, USB/LAN, media bytes, P10 profiles, actual runner/verification, 20→300 devices, installer and production posting all remain NOT_RUN. Never infer a positive device certification or enable post from this report. Continue on `feat/studio-workspace`; do not deploy/publish installer/merge `main`.
