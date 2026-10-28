@@ -106,7 +106,7 @@ export class HostStageTransferService {
     const extension = extname(asset.binding.relativePath).toLowerCase();
     if (!/^\\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension))
       throw new DomainError('STAGE_EXTENSION_INVALID', 'Pinned media format is unsupported.');
-    let classification: import('@autoreels/contracts').StageReconciliationClassification = 'REVIEW_REQUIRED';
+    let classification: import('@autoreels/contracts').StageReconciliationClassification;
     let observedHash: string | null = null, observedBytes: number | null = null;
     let mediaStoreStatus: DeviceStageReconciliation['mediaStoreStatus'] = null;
     const adapter = this.adapter().scoped(fence);
