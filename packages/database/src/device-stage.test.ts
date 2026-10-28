@@ -93,6 +93,31 @@ function prepare(f: Fixture, overrides: Partial<{
   });
 }
 
+function readyForReconciliation(f: Fixture): DeviceStageTransfer {
+  const stage = prepare(f);
+  db.beginClaimedDeviceStageAttempt({
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision, at: at + 150,
+  });
+  db.recordClaimedDeviceStageSyncAck({
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision, at: at + 200,
+  });
+  db.recordClaimedDeviceStageRemoteReadback({
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision,
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes, at: at + 230,
+  });
+  return stage;
+}
+
+function reconciliationAuditCount(stageId: string): number {
+  let count = 0;
+  sql((connection) => {
+    count = Number(connection.prepare(
+      'SELECT COUNT(*) AS count FROM device_stage_reconciliations WHERE stage_id=?',
+    ).get(stageId)?.count ?? 0);
+  });
+  return count;
+}
+
 it('commits remote destination before ADB, then uncertainty and ACK without claiming MediaStore', () => {
   const f = fixture();
   const before: JobDefinition = db.getJob(f.jobId).job;
@@ -222,6 +247,62 @@ it('refuses stale lease generation, snapshot hash, foreign host and changed medi
   ).run(f.item.assetIds[0]));
   expect(() => prepare(f)).toThrow('matches');
   expect(db.listDeviceStageTransfers(f.jobId)).toHaveLength(0);
+});
+
+it('rejects contradictory reconciliation classifications without writing audit rows', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  const common = {
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision,
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes, at: at + 240,
+  };
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...common, requestId: 'reconcile_invalid_001',
+    classification: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED', mediaStoreStatus: 'NOT_INDEXED',
+  })).toThrow('requires an exact indexed row');
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...common, requestId: 'reconcile_invalid_002',
+    classification: 'REMOTE_BYTES_MATCHED', mediaStoreStatus: 'INDEXED_EXACT',
+  })).toThrow('requires an explicit not-indexed result');
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...common, requestId: 'reconcile_invalid_003',
+    classification: 'REMOTE_MISSING', mediaStoreStatus: null,
+  })).toThrow('cannot carry present-file evidence');
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...common, requestId: 'reconcile_invalid_004',
+    classification: 'REMOTE_MISMATCH', mediaStoreStatus: null,
+  })).toThrow('conflicts with matching evidence');
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...common, requestId: 'reconcile_invalid_005',
+    classification: 'PROBE_UNSUPPORTED', mediaStoreStatus: 'INDEXED_EXACT',
+  })).toThrow('requires an unsupported probe status');
+  expect(reconciliationAuditCount(stage.id)).toBe(0);
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stage);
+  expect(db.getJob(f.jobId).job.state).toBe('PREFLIGHT');
+});
+
+it('rejects stale generation, stale revision and expired lease before reconciliation audit insert', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  const valid = {
+    stageId: stage.id, requestId: 'reconcile_fence_001', lease: f.lease,
+    expectedJobRevision: f.jobRevision, classification: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED' as const,
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'INDEXED_EXACT' as const, at: at + 240,
+  };
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...valid, lease: { ...f.lease, generation: f.lease.generation + 1 },
+  })).toThrow();
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...valid, requestId: 'reconcile_fence_002', expectedJobRevision: f.jobRevision + 1,
+  })).toThrow();
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...valid, requestId: 'reconcile_fence_003', at: at + 4000,
+  })).toThrow();
+  expect(reconciliationAuditCount(stage.id)).toBe(0);
+  const stored = db.recordClaimedDeviceStageReconciliation(valid);
+  expect(stored.classification).toBe('MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED');
+  expect(reconciliationAuditCount(stage.id)).toBe(1);
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stage);
+  expect(db.getJob(f.jobId).job.state).toBe('PREFLIGHT');
 });
 
 it('private DB worker tracks one stage; public HTTP dispatcher cannot forge stage intent', async () => {

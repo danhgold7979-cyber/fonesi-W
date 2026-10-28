@@ -2801,8 +2801,25 @@ export class StudioDatabase {
           mediaStoreStatus:old.mediastore_status==null?null:String(old.mediastore_status) as DeviceStageReconciliation['mediaStoreStatus'],
           createdAt:String(old.created_at)};
       }
+      const validMediaStoreStatuses = ['INDEXED_EXACT', 'NOT_INDEXED', 'AMBIGUOUS', 'UNSUPPORTED'];
+      if (args.mediaStoreStatus !== null && !validMediaStoreStatuses.includes(args.mediaStoreStatus))
+        throw new DomainError('STAGE_RECONCILIATION_INVALID', 'Invalid MediaStore status.');
+      const exactBytes = args.observedHash === stage.expectedHash && args.observedBytes === stage.expectedBytes;
+      if (args.classification === 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED' &&
+          args.mediaStoreStatus !== 'INDEXED_EXACT')
+        throw new DomainError('STAGE_RECONCILIATION_INVALID', 'MediaStore-match classification requires an exact indexed row.');
+      if (args.classification === 'REMOTE_BYTES_MATCHED' && args.mediaStoreStatus !== 'NOT_INDEXED')
+        throw new DomainError('STAGE_RECONCILIATION_INVALID', 'Remote-byte-only classification requires an explicit not-indexed result.');
+      if (args.classification === 'REMOTE_MISSING' &&
+          (args.observedHash !== null || args.observedBytes !== null || args.mediaStoreStatus === 'INDEXED_EXACT'))
+        throw new DomainError('STAGE_RECONCILIATION_INVALID', 'Remote-missing classification cannot carry present-file evidence.');
+      if (args.classification === 'REMOTE_MISMATCH' &&
+          (exactBytes || args.mediaStoreStatus === 'INDEXED_EXACT'))
+        throw new DomainError('STAGE_RECONCILIATION_INVALID', 'Remote-mismatch classification conflicts with matching evidence.');
+      if (args.classification === 'PROBE_UNSUPPORTED' && args.mediaStoreStatus !== 'UNSUPPORTED')
+        throw new DomainError('STAGE_RECONCILIATION_INVALID', 'Unsupported classification requires an unsupported probe status.');
       if (['REMOTE_BYTES_MATCHED','MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED'].includes(args.classification) &&
-          (args.observedHash!==stage.expectedHash || args.observedBytes!==stage.expectedBytes))
+          !exactBytes)
         throw new DomainError('STAGE_RECONCILIATION_MISMATCH','Observed bytes do not match pinned stage.');
       const id=makeId('stage_reconcile'), createdAt=new Date(args.at).toISOString();
       this.db.prepare('INSERT INTO device_stage_reconciliations(id,request_id,stage_id,job_id,device_id,host_id,claim_generation,classification,observed_hash,observed_bytes,mediastore_status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
