@@ -26,8 +26,10 @@ import {
   insertOnEdge,
   layoutGraph,
   createSubgraph,
-  copySelection,
-  pasteSelection,
+  copyPortableSelection,
+  parsePortableSelection,
+  serializePortableSelection,
+  pastePortableSelection,
   createGroup,
   removeGroup,
   toggleGroup,
@@ -36,7 +38,7 @@ import {
   alignNodes,
   selectionToSubgraph,
 } from '@autoreels/editor';
-import type { GraphClipboard } from '@autoreels/editor';
+import type { PortableGraphClipboard } from '@autoreels/editor';
 import { api } from './api.js';
 import { EditorDevicePanel } from './EditorDevicePanel.js';
 import { Canvas } from './Canvas.js';
@@ -93,7 +95,7 @@ export function Editor(props: Props) {
     [trace, setTrace] = useState<TraceReportDto | null>(null),
     [rowData, setRowData] = useState('{}');
   const [favorites, setFavorites] = useState<string[]>([]),
-    clipboard = useRef<GraphClipboard | null>(null),
+    clipboard = useRef<PortableGraphClipboard | null>(null),
     pasteCount = useRef(0),
     fit = useRef<(selection?: boolean) => void>(() => undefined);
   const graphId = stack.at(-1)!,
@@ -172,24 +174,65 @@ export function Editor(props: Props) {
     return generation.current !== savedGeneration.current ? save() : result;
   }
   function copyNodes(cut = false) {
-    clipboard.current = copySelection(graph, selected);
-    pasteCount.current = 0;
-    if (cut) {
-      apply((b) => removeNodes(graphById(b, graphId), selected));
-      setSelected([]);
+    try {
+      if (!selected.length) return;
+      const content = copyPortableSelection(bundle, graphId, selected);
+      const encoded = serializePortableSelection(content);
+      clipboard.current = content;
+      pasteCount.current = 0;
+      // Apply the local cut synchronously. A denied OS clipboard write must not
+      // break ordinary cut/undo or lose the in-editor copy.
+      if (cut) {
+        apply((b) => removeNodes(graphById(b, graphId), selected));
+        setSelected([]);
+      }
+      const localOnly = () =>
+        props.notify('Clipboard hệ thống không khả dụng; chỉ dán trong editor hiện tại.');
+      try {
+        const pending = navigator.clipboard?.writeText?.(encoded);
+        if (pending) void pending.catch(localOnly);
+        else localOnly();
+      } catch {
+        localOnly();
+      }
+    } catch (error) {
+      props.notify(error instanceof Error ? error.message : 'Không thể sao chép node.');
     }
   }
-  function pasteNodes(at?: { x: number; y: number }) {
-    const content = clipboard.current;
-    if (!content?.nodes.length) return;
-    const amount = 28 * ++pasteCount.current,
-      offset = at
+  async function pasteNodes(at?: { x: number; y: number }) {
+    try {
+      let content = clipboard.current;
+      let systemText: string | null = null;
+      try {
+        if (navigator.clipboard?.readText) systemText = await navigator.clipboard.readText();
+      } catch {
+        // A denied read can use the in-editor selection only.
+      }
+      if (systemText) {
+        const parsed = parsePortableSelection(systemText);
+        if (!parsed) {
+          props.notify('Clipboard không chứa node AutoReels Studio.');
+          return;
+        }
+        content = parsed;
+      }
+      if (!content?.selection.nodes.length) return;
+      if (actions.current.graphId !== graphId || actions.current.bundle.workflow.id !== bundle.workflow.id) {
+        props.notify('Graph đã thay đổi trong khi đọc clipboard; dán lại trên graph hiện tại.');
+        return;
+      }
+      const nodes = content.selection.nodes;
+      const amount = 28 * ++pasteCount.current;
+      const offset = at
         ? {
-            x: at.x - Math.min(...content.nodes.map((n) => n.x)),
-            y: at.y - Math.min(...content.nodes.map((n) => n.y)),
+            x: at.x - Math.min(...nodes.map((n) => n.x)),
+            y: at.y - Math.min(...nodes.map((n) => n.y)),
           }
         : { x: amount, y: amount };
-    apply((b) => setSelected(pasteSelection(graphById(b, graphId), content, offset)));
+      apply((b) => setSelected(pastePortableSelection(b, graphId, content, offset)));
+    } catch (error) {
+      props.notify(error instanceof Error ? error.message : 'Không thể dán workflow.');
+    }
   }
   function groupSelected() {
     apply((b) => {
@@ -291,10 +334,10 @@ export function Editor(props: Props) {
             setSelected(currentGraph.nodes.map((n) => n.id));
             break;
           case 'c':
-            a.copyNodes();
+            void a.copyNodes();
             break;
           case 'x':
-            a.copyNodes(true);
+            void a.copyNodes(true);
             break;
           case 'g':
             a.groupSelected();
@@ -305,7 +348,7 @@ export function Editor(props: Props) {
             });
             break;
           case 'v':
-            a.pasteNodes();
+            void a.pasteNodes();
             break;
           case '0':
             fit.current();
@@ -955,7 +998,7 @@ export function Editor(props: Props) {
               <button
                 role="menuitem"
                 onClick={() => {
-                  copyNodes();
+                  void copyNodes();
                   setMenu(null);
                 }}
               >
@@ -964,7 +1007,7 @@ export function Editor(props: Props) {
               <button
                 role="menuitem"
                 onClick={() => {
-                  copyNodes(true);
+                  void copyNodes(true);
                   setMenu(null);
                 }}
               >
@@ -1116,9 +1159,9 @@ export function Editor(props: Props) {
             <>
               <button
                 role="menuitem"
-                disabled={!clipboard.current?.nodes.length}
+                aria-label="Dán node từ clipboard hệ thống"
                 onClick={() => {
-                  pasteNodes(menu.world);
+                  void pasteNodes(menu.world);
                   setMenu(null);
                 }}
               >

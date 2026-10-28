@@ -25,6 +25,10 @@ jobs:
         shell: powershell
         run: ./scripts/setup-windows.ps1 -SkipChecks
       - run: pnpm check
+      - if: runner.os == 'Linux'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: runner.os == 'Linux'
+        run: pnpm test:ui
       - if: runner.os == 'Windows'
         shell: powershell
         run: ./scripts/start-windows.ps1 -VerifyOnly

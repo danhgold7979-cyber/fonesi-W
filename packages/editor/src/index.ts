@@ -479,3 +479,11 @@ export function createSubgraph(bundle: WorkflowBundle, name: string): string {
   });
   return graphId;
 }
+
+export {
+  copyPortableSelection,
+  parsePortableSelection,
+  serializePortableSelection,
+  pastePortableSelection,
+} from './portable-clipboard.js';
+export type { PortableGraphClipboard } from './portable-clipboard.js';
