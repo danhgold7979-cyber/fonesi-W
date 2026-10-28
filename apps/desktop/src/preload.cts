@@ -33,6 +33,7 @@ const api: StudioApi = {
   updateDevice: (id, expectedRevision, patch) =>
     send('updateDevice', { id, expectedRevision, patch }),
   inspectDevice: (id) => send('inspectDevice', { id }),
+  testDeviceSelector: (id, selector) => send('testDeviceSelector', { id, selector }),
   captureDevice: (id) => send('captureDevice', { id }),
   devicePackages: (id) => send('devicePackages', { id }),
   deviceAction: (id, action) => send('deviceAction', { id, action }),

@@ -8,6 +8,7 @@ import type {
   BootstrapData,
   DeviceCapture,
   InspectorSnapshot,
+  DeviceSelectorLiveReport,
   DeviceEndpointPolicy,
   DeviceLease,
   DeviceRecord,
@@ -18,7 +19,12 @@ import type {
   DeviceResolutionAuditPage,
   ManualDeviceAction,
 } from '@autoreels/contracts';
-import { assertJsonSafe } from '@autoreels/contracts';
+import {
+  assertJsonSafe,
+  inspectUiSelectorMatches,
+  uiSelectorSchema,
+  uiSelectorV2Schema,
+} from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
 import type { MediaHostPort } from './media-service.js';
 import { deviceSchemas } from './service.js';
@@ -418,6 +424,59 @@ export class HostDeviceService {
     });
     await this.db.internal({ command: 'lease.assert', lease, at: Date.now() });
   }
+
+  /** Host-side live selector test. No auto-tap, no private XML/text in the DTO. */
+  private async testDeviceSelector(
+    id: string,
+    raw: unknown,
+  ): Promise<DeviceSelectorLiveReport> {
+    let selector: unknown;
+    try {
+      assertJsonSafe(raw, { depth: 20, entries: 10000, stringLength: 8192 });
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !('version' in raw))
+        throw new Error('Invalid selector');
+      selector =
+        raw.version === 1 ? uiSelectorSchema.parse(raw) : uiSelectorV2Schema.parse(raw);
+    } catch {
+      throw new DomainError(
+        'INVALID_SELECTOR',
+        'Selector phải đúng định dạng v1/v2; không gửi lệnh Android.',
+      );
+    }
+    // Existing Inspector owns a real ADB lease and verifies device identity,
+    // generation, orientation, foreground, and screenshot/XML correlation.
+    const snapshot = await this.inspectDevice(id);
+    try {
+      const match = inspectUiSelectorMatches(snapshot.nodes, selector);
+      const totalMatches = match.nodes.length;
+      return {
+        deviceId: id,
+        observedAt: snapshot.capture.capturedAt,
+        deviceRevision: snapshot.capture.deviceRevision,
+        transportGeneration: snapshot.capture.transportGeneration,
+        foreground: snapshot.foreground,
+        correlation: snapshot.correlation,
+        status:
+          totalMatches === 0 ? 'NONE' : totalMatches === 1 ? 'UNIQUE' : 'AMBIGUOUS',
+        totalMatches,
+        strategyIndex: match.strategyIndex,
+        totalStrategies: match.totalStrategies,
+        attempts: match.attempts,
+        samples: match.nodes.slice(0, 100).map((n) => ({
+          id: n.id,
+          bounds: { ...n.bounds },
+          resourceId: n.resourceId,
+          className: n.className,
+          packageName: n.packageName,
+        })),
+        truncated: totalMatches > 100,
+      };
+    } finally {
+      // A read-only probe must never leave an action-capable capture token.
+      this.captures.delete(id);
+    }
+  }
+
   private async inspectDevice(id: string): Promise<InspectorSnapshot> {
     return this.actor(id, 'INSPECTOR', async (device, transport, lease) => {
       const start = Date.now(),
@@ -803,6 +862,10 @@ export class HostDeviceService {
       }
       case 'inspectDevice':
         return this.inspectDevice(deviceSchemas.inspectDevice.parse(input).id);
+      case 'testDeviceSelector': {
+        const p = deviceSchemas.testDeviceSelector.parse(input);
+        return this.testDeviceSelector(p.id, p.selector);
+      }
       case 'captureDevice':
         return this.capture(deviceSchemas.captureDevice.parse(input).id);
       case 'deviceAction': {

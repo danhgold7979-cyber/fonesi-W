@@ -166,3 +166,27 @@ export function suggestUiSelector(node: UiElement): UiSelector {
   if (node.packageName) all.push({ field: 'packageName', op: 'EQ', value: node.packageName });
   return { version: 1, all };
 }
+
+
+/** One fresh, read-only ADB/XML probe. No credential text or tap capability. */
+export interface DeviceSelectorLiveReport {
+  deviceId: string;
+  observedAt: string;
+  deviceRevision: number;
+  transportGeneration: number;
+  foreground: string | null;
+  correlation: 'BOUNDED_SEQUENTIAL';
+  status: 'NONE' | 'UNIQUE' | 'AMBIGUOUS';
+  totalMatches: number;
+  strategyIndex: number | null;
+  totalStrategies: number;
+  attempts: { strategyIndex: number; count: number }[];
+  samples: {
+    id: string;
+    bounds: UiElement['bounds'];
+    resourceId: string;
+    className: string;
+    packageName: string;
+  }[];
+  truncated: boolean;
+}
