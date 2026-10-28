@@ -47,6 +47,8 @@ import type {
   ContentAssetInfo,
   JobMediaPreflightPlan,
   DeviceStageTransfer,
+  DeviceStageReconciliation,
+  StageReconciliationClassification,
   SchedulePreviewDto,
   JobChangeRequest,
   JobChangePreview,
@@ -2756,6 +2758,64 @@ export class StudioDatabase {
         stageId: stage.id, ordinal: stage.ordinal, claimGeneration: stage.claimGeneration,
       }, args.at);
       return this.stageTransfer(stage.id);
+    });
+  }
+
+
+  /** Append fenced reconciliation evidence; never mutates stage/job state. */
+  recordClaimedDeviceStageReconciliation(args: {
+    requestId: string; stageId: string; lease: DeviceLease; expectedJobRevision: number;
+    classification: StageReconciliationClassification; observedHash: string | null;
+    observedBytes: number | null; mediaStoreStatus: DeviceStageReconciliation['mediaStoreStatus']; at: number;
+  }): DeviceStageReconciliation {
+    idSchema.parse(args.requestId); idSchema.parse(args.stageId);
+    const allowed: StageReconciliationClassification[] = [
+      'REMOTE_BYTES_MATCHED','MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED','REMOTE_MISSING',
+      'REMOTE_MISMATCH','PROBE_UNSUPPORTED','REVIEW_REQUIRED',
+    ];
+    if (!allowed.includes(args.classification) ||
+        (args.observedHash !== null && !hashSchema.safeParse(args.observedHash).success) ||
+        (args.observedBytes !== null && (!Number.isSafeInteger(args.observedBytes) || args.observedBytes <= 0)) ||
+        !Number.isSafeInteger(args.at) || !Number.isFinite(new Date(args.at).getTime()))
+      throw new DomainError('STAGE_RECONCILIATION_INVALID','Invalid reconciliation evidence.');
+    if (['REMOTE_BYTES_MATCHED','MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED'].includes(args.classification) &&
+        (args.observedHash === null || args.observedBytes === null))
+      throw new DomainError('STAGE_RECONCILIATION_INVALID','Verified result requires hash and bytes.');
+    return this.transaction(() => {
+      const stage = this.stageTransfer(args.stageId);
+      this.assertStageClaim(stage,args.lease,args.expectedJobRevision,args.at);
+      const old = this.db.prepare('SELECT * FROM device_stage_reconciliations WHERE stage_id=? AND request_id=?')
+        .get(stage.id,args.requestId);
+      if (old) {
+        if (String(old.classification)!==args.classification ||
+            (old.observed_hash==null?null:String(old.observed_hash))!==args.observedHash ||
+            (old.observed_bytes==null?null:Number(old.observed_bytes))!==args.observedBytes ||
+            (old.mediastore_status==null?null:String(old.mediastore_status))!==args.mediaStoreStatus)
+          throw new DomainError('STAGE_RECONCILIATION_IDEMPOTENCY_CONFLICT','Request ID has different evidence.');
+        return {id:String(old.id),requestId:String(old.request_id),stageId:String(old.stage_id),
+          jobId:String(old.job_id),deviceId:String(old.device_id),hostId:String(old.host_id),
+          claimGeneration:Number(old.claim_generation),
+          classification:String(old.classification) as StageReconciliationClassification,
+          observedHash:old.observed_hash==null?null:String(old.observed_hash),
+          observedBytes:old.observed_bytes==null?null:Number(old.observed_bytes),
+          mediaStoreStatus:old.mediastore_status==null?null:String(old.mediastore_status) as DeviceStageReconciliation['mediaStoreStatus'],
+          createdAt:String(old.created_at)};
+      }
+      const hasReadback = stage.remoteReadbackHash === stage.expectedHash &&
+        stage.remoteReadbackBytes === stage.expectedBytes;
+      if (['REMOTE_BYTES_MATCHED','MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED'].includes(args.classification) &&
+          (!hasReadback || args.observedHash!==stage.expectedHash || args.observedBytes!==stage.expectedBytes))
+        throw new DomainError('STAGE_RECONCILIATION_MISMATCH','Observed bytes do not match pinned stage.');
+      const id=makeId('stage_reconcile'), createdAt=new Date(args.at).toISOString();
+      this.db.prepare('INSERT INTO device_stage_reconciliations(id,request_id,stage_id,job_id,device_id,host_id,claim_generation,classification,observed_hash,observed_bytes,mediastore_status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+        .run(id,args.requestId,stage.id,stage.jobId,stage.deviceId,stage.hostId,stage.claimGeneration,
+          args.classification,args.observedHash,args.observedBytes,args.mediaStoreStatus,createdAt);
+      this.queueEvent(stage.jobId,'DEVICE_STAGE_RECONCILIATION_RECORDED',{
+        stageId:stage.id,claimGeneration:stage.claimGeneration,classification:args.classification,
+      },args.at);
+      return {id,requestId:args.requestId,stageId:stage.id,jobId:stage.jobId,deviceId:stage.deviceId,
+        hostId:stage.hostId,claimGeneration:stage.claimGeneration,classification:args.classification,
+        observedHash:args.observedHash,observedBytes:args.observedBytes,mediaStoreStatus:args.mediaStoreStatus,createdAt};
     });
   }
 

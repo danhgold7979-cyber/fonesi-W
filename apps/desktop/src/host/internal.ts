@@ -40,6 +40,7 @@ export type InternalRequest =
       at: number;
     }
   | { command: 'stage.recordMediaStore'; stageId: string; lease: DeviceLease; expectedJobRevision: number; rowId: string; displayName: string; relativePath: string; mimeType: string; observedBytes: number; at: number }
+  | { command: 'stage.recordReconciliation'; requestId: string; stageId: string; lease: DeviceLease; expectedJobRevision: number; classification: import('@autoreels/contracts').StageReconciliationClassification; observedHash: string | null; observedBytes: number | null; mediaStoreStatus: import('@autoreels/contracts').DeviceStageReconciliation['mediaStoreStatus']; at: number }
   | { command: 'stage.list'; jobId: string }
   | {
       command: 'stage.assertClaim';
@@ -188,6 +189,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.recordClaimedDeviceStageRemoteReadback(request);
     case 'stage.recordMediaStore':
       return db.recordClaimedDeviceStageMediaStore(request);
+    case 'stage.recordReconciliation':
+      return db.recordClaimedDeviceStageReconciliation(request);
     case 'stage.list':
       return db.listDeviceStageTransfers(request.jobId);
     case 'stage.assertClaim':

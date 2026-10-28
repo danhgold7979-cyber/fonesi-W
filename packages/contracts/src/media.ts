@@ -123,6 +123,16 @@ export interface JobMediaByteReport {
   canDispatch: false;
 }
 
+export type StageReconciliationClassification =
+  | 'REMOTE_BYTES_MATCHED' | 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED'
+  | 'REMOTE_MISSING' | 'REMOTE_MISMATCH' | 'PROBE_UNSUPPORTED' | 'REVIEW_REQUIRED';
+export interface DeviceStageReconciliation {
+  id: string; requestId: string; stageId: string; jobId: string; deviceId: string;
+  hostId: string; claimGeneration: number; classification: StageReconciliationClassification;
+  observedHash: string | null; observedBytes: number | null;
+  mediaStoreStatus: 'INDEXED_EXACT' | 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' | null;
+  createdAt: string;
+}
 /** Private DB/host remote staging journal; not a posting or MediaStore receipt. */
 export interface DeviceStageTransfer {
   id: string;

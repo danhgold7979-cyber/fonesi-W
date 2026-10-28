@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 17;
+export const SCHEMA_VERSION = 18;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -173,5 +173,19 @@ ALTER TABLE device_stage_transfers ADD COLUMN mediastore_relative_path TEXT;
 ALTER TABLE device_stage_transfers ADD COLUMN mediastore_mime_type TEXT;
 ALTER TABLE device_stage_transfers ADD COLUMN mediastore_bytes INTEGER;
 ALTER TABLE device_stage_transfers ADD COLUMN mediastore_at TEXT;
+` },
+  { version: 18, sql: `
+CREATE TABLE device_stage_reconciliations(
+ id TEXT PRIMARY KEY, request_id TEXT NOT NULL,
+ stage_id TEXT NOT NULL REFERENCES device_stage_transfers(id),
+ job_id TEXT NOT NULL REFERENCES jobs(id), device_id TEXT NOT NULL REFERENCES devices(id),
+ host_id TEXT NOT NULL, claim_generation INTEGER NOT NULL CHECK(claim_generation>0),
+ classification TEXT NOT NULL CHECK(classification IN('REMOTE_BYTES_MATCHED','MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED','REMOTE_MISSING','REMOTE_MISMATCH','PROBE_UNSUPPORTED','REVIEW_REQUIRED')),
+ observed_hash TEXT CHECK(observed_hash IS NULL OR length(observed_hash)=64),
+ observed_bytes INTEGER CHECK(observed_bytes IS NULL OR observed_bytes>0),
+ mediastore_status TEXT CHECK(mediastore_status IS NULL OR mediastore_status IN('INDEXED_EXACT','NOT_INDEXED','AMBIGUOUS','UNSUPPORTED')),
+ created_at TEXT NOT NULL, UNIQUE(stage_id,request_id)
+) STRICT;
+CREATE INDEX stage_reconciliation_job ON device_stage_reconciliations(job_id,created_at);
 ` },
 ] as const;
