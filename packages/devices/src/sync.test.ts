@@ -65,8 +65,8 @@ async function fixture() {
               frame.writeUInt32LE(Math.min(5, state.remote.length), 4);
               pieces.push(frame, state.remote.subarray(0, 2));
             } else {
-              for (let offset = 0; offset < state.remote.length; offset += 7) {
-                const data = state.remote.subarray(offset, offset + 7);
+              for (let offset = 0; offset < state.remote.length; offset += 64 * 1024) {
+                const data = state.remote.subarray(offset, offset + 64 * 1024);
                 const frame = Buffer.alloc(8);
                 frame.write('DATA', 0, 'ascii');
                 frame.writeUInt32LE(data.length, 4);
