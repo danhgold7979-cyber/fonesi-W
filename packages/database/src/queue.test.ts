@@ -20,7 +20,7 @@ afterEach(async () => {
   db.close();
   rmSync(dir, { recursive: true, force: true });
 });
-function fixture(deviceId = 'device_1', index = '1'): string[] {
+function fixture(deviceId = 'device_1', index = '1', overduePolicy: ProcessDefinition['schedule']['overduePolicy'] = 'CATCH_UP'): string[] {
   db.registerObservedDevice(deviceId, deviceId);
   const draft = db.createWorkflow('fb', 'Queue fixture'),
     version = db.createVersion(draft.workflowId, 0);
