@@ -81,7 +81,7 @@ describe('P06 scoped SQLite content paging', () => {
     expect(db.listContentPage({ processId: 'process_two', limit: 30 })).toMatchObject({
       total: 13, hasMore: false,
     });
-  });
+  }, 90000); // 1,016 committed SQLite rows are slower on hosted Windows filesystems.
   it('serves ordered asset IDs in one bounded page and invalidates cursor after content and asset edits', () => {
     process('process_media');
     for (const id of ['asset_1', 'asset_2']) db.registerAsset({
