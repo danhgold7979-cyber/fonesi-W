@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-28",
+  "baseBranch": "feat/studio-workspace",
+  "baseCommit": "87935843613c6194d9a0ba1ed1bd9d9cb89f4801",
+  "increment": "024",
+  "phase": "P04",
+  "steps": [
+    "S031",
+    "S037"
+  ],
+  "scope": "Portable clipboard across same-app workflows with nested local graph closure",
+  "verificationCommit": "b6a4026615a79c60ce2190cf0688fe57d7eb6e39",
+  "status": "TESTED_INCREMENT_NOT_FULL_PHASE_ACCEPTED",
+  "checks": [
+    {
+      "runner": "github-actions-ubuntu-latest",
+      "command": "pnpm check",
+      "testFiles": 25,
+      "passed": 230,
+      "failed": 0,
+      "skipped": 0,
+      "exitStatus": 0
+    },
+    {
+      "runner": "github-actions-ubuntu-latest",
+      "command": "pnpm test:ui",
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "exitStatus": 0
+    },
+    {
+      "runner": "github-actions-windows-latest",
+      "command": "pnpm check",
+      "testFiles": 25,
+      "passed": 229,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "pre-existing Unix-only SDK fixture",
+      "exitStatus": 0
+    },
+    {
+      "runner": "github-actions-ubuntu-windows",
+      "command": "pnpm check:plan",
+      "exitStatus": 0
+    }
+  ],
+  "ci": {
+    "runId": 40638326588,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40638326588",
+    "conclusion": "success"
+  },
+  "validated": [
+    "no secrets or real devices accessed",
+    "portable transitive subgraph refs",
+    "atomic paste/undo",
+    "internal edges/groups",
+    "same-app-only",
+    "untrusted payload constraints",
+    "external plain text ignored",
+    "synchronous local fallback on OS clipboard denial"
+  ],
+  "unrun": [
+    "Windows10 desktop native clipboard and Electron GUI",
+    "real Android USB/LAN operations",
+    "app profile certification and publish post-verification",
+    "full P04 and 15-phase acceptance",
+    "offline Windows installer"
+  ]
+}

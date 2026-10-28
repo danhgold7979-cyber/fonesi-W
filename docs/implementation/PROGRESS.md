@@ -1,5 +1,13 @@
 # Tiến độ implementation
 
+## Increment024 / P04-S031/S037 — portable workflow clipboard
+
+Ngày 28/10/2026, branch `phase/p04-portable-clipboard-2026-10-28`, baseline `feat/studio-workspace` commit `8793584`. Plan trước code tại [INCREMENT-024_PLAN.md](INCREMENT-024_PLAN.md); kết quả chi tiết tại [INCREMENT-024_RESULTS.md](INCREMENT-024_RESULTS.md).
+
+Đã triển khai clipboard liên-workflow cùng app: copy transitive local subgraphs/loop bodies, remap graph/node/edge/group IDs, giữ nội bộ dây nối, nhóm, undo một transaction; clipboard payload versioned JSON có giới hạn kích thước/node/graph và reject malformed/cycle/missing refs/cross-app. Ctrl+C/X/V và menu canvas dùng cùng các lệnh; Ctrl+X cắt ngay trong editor, OS clipboard bị chặn thì giữ clipboard nội bộ và báo giới hạn, không xóa tệp hay chạm Android. Unit và browser regressions đã phát hiện và sửa lỗi Cut bất đồng bộ cùng locator test bị nhập nhằng.
+
+**Evidence tại source commit b6a4026:** GitHub Actions [run 40638326588](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40638326588) PASS Ubuntu/Windows. Ubuntu `pnpm check`: **230 passed / 25 files**; `pnpm test:ui`: **23 passed, 0 failed**; Windows `pnpm check`: **229 passed, 1 skipped** (Unix-only native SDK fixture) / 25 files. `pnpm check:plan`, Windows setup và VerifyOnly cũng PASS. Đây là hosted CI, không phải chứng nhận Chrome/Electron clipboard trên Win10 GUI hay Android thật. P04 còn các parity/interaction gates khác, P05–P14 chưa nghiệm thu. Receipt: [checkpoint-017.json](../evidence/implementation/checkpoint-017.json).
+
 ## Increment023 / P07-S065 — calendar và app filter theo snapshot
 
 Đã có LIST/DAY/WEEK/MONTH, local date/IANA timezone ranges dùng Temporal với exclusive UTC end, DST23/25h/leap/week-year rollover và invalid/skipped local-day rejection. App filter/cursor scope dùng immutable snapshot app, không đổi khi Process được rebind. Migration12 thêm indexed app/time/order query. DAY dùng bảng virtualized, WEEK/MONTH giới hạn6/3 cards mỗi ngày và nút Xem ngày, count ghi rõ đã tải và giữ keyset load-more; không truncate tổng records hoặc suy jobs từ Process đang mở. Calendar hiển thị timezone riêng, edit giữ snapshot timezone. Lazy-load Schedule/Temporal giữ initial entry411.93kB thay607.45kB trong bản eager thử đầu.
