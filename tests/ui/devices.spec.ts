@@ -274,3 +274,41 @@ test('Inspector v2 ordered fallback shows exact winning strategy and refuses amb
   await expect(page.getByRole('status')).toContainText('2 phần tử khớp · chiến lược 1/2 — chưa duy nhất');
   expect(adb.state.shells.filter((s) => s.startsWith("'input'")).length).toBe(before);
 });
+
+
+test('Inspector compares a fresh ADB v2 fallback selector separately from its frozen snapshot', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:4177/');
+  const card = page.locator('.device-card').first();
+  await expect(card).toBeVisible();
+  await card.getByRole('button', { name: 'Inspector', exact: true }).click();
+  await page.getByRole('button', { name: 'Chụp cây và ảnh', exact: true }).click();
+  const selector = page.getByRole('textbox', { name: 'Selector JSON', exact: true });
+  await expect(selector).toBeVisible();
+  await selector.fill(JSON.stringify({
+    version: 2,
+    strategies: [
+      { all: [{ field: 'text', op: 'EQ', value: 'absent' }] },
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'com.facebook.katana:id/submit' }] },
+    ],
+  }));
+  const inputs = adb.state.shells.filter((s) => s.startsWith("'input'")).length;
+  const button = page.getByRole('button', {
+    name: 'Kiểm tra selector trực tiếp trên điện thoại', exact: true,
+  });
+  await expect(button).toBeEnabled();
+  await button.click();
+  const report = page.getByRole('status', { name: 'Kết quả selector trực tiếp' });
+  await expect(report).toContainText('1 phần tử khớp trực tiếp');
+  await expect(report).toContainText('chiến lược 2/2');
+  await selector.fill(JSON.stringify({
+    version: 1,
+    all: [{ field: 'className', op: 'CONTAINS', value: 'android.' }],
+  }));
+  await expect(report).toHaveCount(0);
+  await button.click();
+  await expect(report).toContainText('2 phần tử khớp trực tiếp');
+  await expect(report).toContainText('không duy nhất');
+  expect(adb.state.shells.filter((s) => s.startsWith("'input'")).length).toBe(inputs);
+});
