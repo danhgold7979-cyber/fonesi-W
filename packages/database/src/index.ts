@@ -2516,6 +2516,9 @@ export class StudioDatabase {
       remotePath: String(row.remote_path),
       nonce: String(row.nonce),
       state: row.state as DeviceStageTransfer['state'],
+      remoteReadbackHash: row.remote_readback_hash == null ? null : String(row.remote_readback_hash),
+      remoteReadbackBytes: row.remote_readback_bytes == null ? null : Number(row.remote_readback_bytes),
+      remoteReadbackAt: row.remote_readback_at == null ? null : String(row.remote_readback_at),
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at),
     };
@@ -2577,7 +2580,10 @@ export class StudioDatabase {
         id = makeId('stage'),
         timestamp = new Date(args.at).toISOString();
       this.db.prepare(
-        'INSERT INTO device_stage_transfers VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO device_stage_transfers(' +
+        'id,job_id,device_id,host_id,asset_id,ordinal,snapshot_hash,expected_hash,' +
+        'expected_bytes,claim_generation,remote_path,nonce,state,created_at,updated_at' +
+        ') VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
       ).run(
         id, job.id, job.deviceId, args.hostId, asset.assetId, args.ordinal,
         snapshotHash, asset.pinnedHash, asset.pinnedBytes, args.lease.generation,
@@ -2656,6 +2662,44 @@ export class StudioDatabase {
         "UPDATE device_stage_transfers SET state='SYNC_ACK_UNVERIFIED',updated_at=? WHERE id=?",
       ).run(new Date(args.at).toISOString(), stage.id);
       this.queueEvent(stage.jobId, 'DEVICE_STAGE_ACK_NOT_INDEXED', {
+        stageId: stage.id, ordinal: stage.ordinal, claimGeneration: stage.claimGeneration,
+      }, args.at);
+      return this.stageTransfer(stage.id);
+    });
+  }
+
+  /** Store exact remote byte equality; this does not certify MediaStore indexing. */
+  recordClaimedDeviceStageRemoteReadback(args: {
+    stageId: string;
+    lease: DeviceLease;
+    expectedJobRevision: number;
+    observedHash: string;
+    observedBytes: number;
+    at: number;
+  }): DeviceStageTransfer {
+    idSchema.parse(args.stageId);
+    hashSchema.parse(args.observedHash);
+    if (!Number.isSafeInteger(args.observedBytes) || args.observedBytes <= 0 ||
+        !Number.isSafeInteger(args.at) || !Number.isFinite(new Date(args.at).getTime()))
+      throw new DomainError('STAGE_READBACK_INVALID', 'Invalid remote readback evidence.');
+    return this.transaction(() => {
+      const stage = this.stageTransfer(args.stageId);
+      this.assertStageClaim(stage, args.lease, args.expectedJobRevision, args.at);
+      if (stage.state !== 'SYNC_ACK_UNVERIFIED')
+        throw new DomainError('STAGE_READBACK_NOT_ELIGIBLE', 'Sync ACK is required before readback.');
+      if (stage.remoteReadbackHash !== null || stage.remoteReadbackBytes !== null ||
+          stage.remoteReadbackAt !== null)
+        throw new DomainError('STAGE_READBACK_ALREADY_RECORDED', 'Remote readback evidence is immutable.');
+      if (args.observedHash !== stage.expectedHash || args.observedBytes !== stage.expectedBytes)
+        throw new DomainError('STAGE_READBACK_MISMATCH', 'Remote bytes differ from pinned media.');
+      const timestamp = new Date(args.at).toISOString();
+      const changed = this.db.prepare(
+        'UPDATE device_stage_transfers SET remote_readback_hash=?,remote_readback_bytes=?,' +
+        'remote_readback_at=?,updated_at=? WHERE id=? AND state=? AND remote_readback_hash IS NULL',
+      ).run(args.observedHash, args.observedBytes, timestamp, timestamp, stage.id, 'SYNC_ACK_UNVERIFIED');
+      if (Number(changed.changes) !== 1)
+        throw new DomainError('STAGE_READBACK_CONFLICT', 'Remote readback changed concurrently.');
+      this.queueEvent(stage.jobId, 'DEVICE_STAGE_REMOTE_BYTES_VERIFIED', {
         stageId: stage.id, ordinal: stage.ordinal, claimGeneration: stage.claimGeneration,
       }, args.at);
       return this.stageTransfer(stage.id);
