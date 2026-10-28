@@ -1,6 +1,7 @@
-## Increment050 / P11-S095.2 — reconciliation classification and lease-fence invariants (implementation CI pending)
+## Increment050 / P11-S095.2 — reconciliation classification and lease-fence invariants (validated)
 
-Plan-first: [INCREMENT-050_PLAN.md](INCREMENT-050_PLAN.md), commit [cd13c395](https://github.com/danhgold7979-cyber/fonesi-W/commit/cd13c395253e99cc53b77aa9f46e38b439646a63), baseline Increment049 tested source `91e9da36fc53bac13cb92357b2ce512a790e9cb9`. Added SQLite classification/status consistency checks, regression tests for contradictory evidence and wrong/expired JOB lease fencing, plus host tests for unsupported and ambiguous MediaStore probes. **Exact-source CI pending; do not treat this increment as accepted until both OS jobs pass.**
+Plan: [INCREMENT-050_PLAN.md](INCREMENT-050_PLAN.md). Tested source SHA `1c260738cf4451cad4bab4efa0ae2c7ee38ba16c`. [Ubuntu CI 40720165384](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40720165384) **SUCCESS** — 338/338 tests (39 files), 30/30 Chromium UI, generated contracts/type/lint/build/plan PASS. [Windows CI 40720179769](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40720179769) **SUCCESS** — 337 passed + 1 platform-only skip (39 files), generated contracts/type/lint/build/Windows VerifyOnly/plan PASS. Added strict classification/status consistency and tests proving wrong generation, stale revision and expired lease cannot write audit rows. [Results](INCREMENT-050_RESULTS.md), [checkpoint-043](../evidence/implementation/checkpoint-043.json). **Post-expiry operator-review reconciliation, physical Android/picker, cleanup, publishing and scale remain NOT_RUN.**
+
 
 ## Increment049 / P11-S095.2 — reconciliation idempotency and crash-reopen tests (validated)
 
