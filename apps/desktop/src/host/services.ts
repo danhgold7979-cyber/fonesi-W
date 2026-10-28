@@ -3,6 +3,7 @@ import type { HostDeviceService } from './device-service.js';
 import type { HostMediaService } from './media-service.js';
 import { HostDebugService } from './debug-service.js';
 import type { HostWorkspaceService } from './workspace-service.js';
+import type { HostStageTransferService } from './stage-transfer-service.js';
 /** Named host services keep privileged network/device/file work out of the SQLite worker. */
 export class HostServices {
   readonly debug: HostDebugService;
@@ -10,6 +11,8 @@ export class HostServices {
     readonly media: HostMediaService,
     readonly devices: HostDeviceService,
     readonly workspace?: HostWorkspaceService,
+    /** Private, not exposed by request(). */
+    readonly stage?: HostStageTransferService,
   ) {
     this.debug = new HostDebugService(
       async (bundle) => (await this.media.request('resolveWorkflow', { bundle })) as WorkflowBundle,

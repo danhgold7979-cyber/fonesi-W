@@ -1,0 +1,182 @@
+import { extname, join, resolve } from 'node:path';
+import { idSchema, hashSchema } from '@autoreels/contracts';
+import type {
+  DeviceLease, DeviceRecord, DeviceStageTransfer, JobMediaPreflightPlan,
+} from '@autoreels/contracts';
+import type { OwnedSyncInput, OwnedSyncAck } from '@autoreels/devices';
+import type { HostStageResult } from '@autoreels/media';
+import { DomainError } from '@autoreels/domain';
+import type { InternalRequest } from './internal.js';
+
+export interface ClaimedStageRequest {
+  jobId: string;
+  ordinal: number;
+  expectedJobRevision: number;
+  expectedSnapshotHash: string;
+  lease: DeviceLease;
+  transportSerial: string;
+  transportGeneration: number;
+}
+export interface ClaimedStageResult {
+  jobId: string;
+  stageId: string;
+  ordinal: number;
+  status: 'SYNC_ACK_UNVERIFIED';
+  /** A transport ACK never certifies MediaStore or a publish result. */
+  canDispatch: false;
+}
+interface StageDbPort {
+  internal<T>(request: InternalRequest): Promise<T>;
+}
+interface StageMediaPort {
+  stageJobHostMedia(jobId: string): Promise<HostStageResult>;
+}
+interface SyncSender {
+  sendOwnedStage(input: OwnedSyncInput, signal?: AbortSignal): Promise<OwnedSyncAck>;
+}
+interface SyncFactory {
+  scoped(fence: () => Promise<void>): SyncSender;
+}
+/**
+ * Strictly private host bridge. Call ONLY after a trusted physical-device JOB
+ * claim and preflight. No public method invokes this class automatically.
+ */
+export class HostStageTransferService {
+  constructor(
+    private readonly db: StageDbPort,
+    private readonly media: StageMediaPort,
+    private readonly hostId: string,
+    private readonly appDataDirectory: string,
+    private readonly adapter: () => SyncFactory,
+  ) {}
+
+  async transfer(request: ClaimedStageRequest, signal?: AbortSignal): Promise<ClaimedStageResult> {
+    idSchema.parse(request.jobId);
+    idSchema.parse(this.hostId);
+    hashSchema.parse(request.expectedSnapshotHash);
+    if (
+      request.lease.ownerKind !== 'JOB' ||
+      !Number.isSafeInteger(request.expectedJobRevision) ||
+      request.expectedJobRevision < 0 ||
+      !Number.isSafeInteger(request.ordinal) ||
+      request.ordinal < 0 || request.ordinal >= 32 ||
+      !Number.isSafeInteger(request.transportGeneration) ||
+      request.transportGeneration < 1 ||
+      !/^[A-Za-z0-9][A-Za-z0-9_.:[\]-]{0,199}$/.test(request.transportSerial) ||
+      signal?.aborted
+    ) throw new DomainError('STAGE_REQUEST_INVALID', 'Invalid trusted JOB stage request.');
+    if (request.lease.deviceId.length === 0)
+      throw new DomainError('STAGE_REQUEST_INVALID', 'Device binding is required.');
+
+    const fenceTransport = async (): Promise<void> => {
+      if (signal?.aborted)
+        throw new DomainError('CANCELLED', 'Staging was cancelled.');
+      await this.db.internal({
+        command: 'lease.assert', lease: request.lease, at: Date.now(),
+      });
+      await this.db.internal({
+        command: 'device.assertTransport', hostId: this.hostId,
+        deviceId: request.lease.deviceId,
+        serial: request.transportSerial, generation: request.transportGeneration,
+      });
+      const devices = await this.db.internal<DeviceRecord[]>({
+        command: 'device.records', hostId: this.hostId,
+      });
+      const record = devices.find((d) => d.id === request.lease.deviceId);
+      const observed = record?.transports.find(
+        (t) => t.serial === request.transportSerial &&
+          t.generation === request.transportGeneration &&
+          t.state === 'CONNECTED' && t.identityVerified,
+      );
+      const observedAt = observed ? Date.parse(observed.lastSeen) : NaN;
+      if (!record?.enabled || record.identity !== 'VERIFIED_PROPERTIES' ||
+          !observed || !Number.isFinite(observedAt) ||
+          Date.now() < observedAt || Date.now() - observedAt > 30000)
+        throw new DomainError('STAGE_TRANSPORT_STALE', 'Trusted transport observation is stale.');
+    };
+
+    // Existing uncertain intents always require review; NEVER create another
+    // nonce/path or re-send a remote file with unknown previous outcome.
+    if ((await this.db.internal<DeviceStageTransfer[]>({
+      command: 'stage.list', jobId: request.jobId,
+    })).length)
+      throw new DomainError('STAGE_ALREADY_ATTEMPTED', 'Remote staging needs reconciliation.');
+
+    // This may copy bytes locally, but sends no Android input.
+    const local = await this.media.stageJobHostMedia(request.jobId);
+    if (local.status === 'NO_MEDIA' || local.mediaCount <= request.ordinal)
+      throw new DomainError('STAGE_ASSET_INVALID', 'No owned host-stage asset at ordinal.');
+    const plan = await this.db.internal<JobMediaPreflightPlan>({
+      command: 'job.mediaPlan', jobId: request.jobId, hostId: this.hostId,
+    });
+    const asset = plan.entries[request.ordinal];
+    if (!asset || plan.snapshotHash !== request.expectedSnapshotHash ||
+        plan.jobRevision !== request.expectedJobRevision ||
+        local.mediaCount !== plan.entries.length)
+      throw new DomainError('STAGE_SNAPSHOT_STALE', 'Host stage or immutable job changed.');
+    const extension = extname(asset.binding.relativePath).toLowerCase();
+    if (!/^\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension))
+      throw new DomainError('STAGE_EXTENSION_INVALID', 'Pinned media format is unsupported.');
+    await fenceTransport();
+    const stage = await this.db.internal<DeviceStageTransfer>({
+      command: 'stage.prepare', jobId: request.jobId, hostId: this.hostId,
+      ordinal: request.ordinal, expectedJobRevision: request.expectedJobRevision,
+      expectedSnapshotHash: request.expectedSnapshotHash,
+      lease: request.lease, at: Date.now(),
+    });
+    if (stage.deviceId !== request.lease.deviceId ||
+        stage.jobId !== request.jobId ||
+        stage.ordinal !== request.ordinal ||
+        stage.assetId !== asset.assetId ||
+        stage.expectedHash !== asset.pinnedHash ||
+        stage.expectedBytes !== asset.pinnedBytes ||
+        stage.snapshotHash !== request.expectedSnapshotHash ||
+        stage.claimGeneration !== request.lease.generation ||
+        stage.hostId !== this.hostId || stage.state !== 'INTENT')
+      throw new DomainError('STAGE_INTENT_MISMATCH', 'Durable stage intent differs from job plan.');
+
+    // From this instant the remote upload could have happened: any exception
+    // must leave the SQLite state uncertain, and there is no blind retry.
+    await this.db.internal<DeviceStageTransfer>({
+      command: 'stage.beginAttempt', stageId: stage.id,
+      lease: request.lease,
+      expectedJobRevision: request.expectedJobRevision, at: Date.now(),
+    });
+    const fenceAttempt = async (): Promise<void> => {
+      await fenceTransport();
+      await this.db.internal({
+        command: 'stage.assertClaim', stageId: stage.id,
+        lease: request.lease,
+        expectedJobRevision: request.expectedJobRevision, at: Date.now(),
+      });
+    };
+    await fenceAttempt();
+    const localPath = resolve(this.appDataDirectory, 'owned-media-stage',
+      'job-' + stage.jobId, 'asset-' + String(stage.ordinal).padStart(3, '0') + extension);
+    if (localPath !== join(resolve(this.appDataDirectory), 'owned-media-stage',
+      'job-' + stage.jobId, 'asset-' + String(stage.ordinal).padStart(3, '0') + extension))
+      throw new DomainError('STAGE_LOCAL_PATH', 'Owned stage path is invalid.');
+    const receipt = await this.adapter().scoped(fenceAttempt).sendOwnedStage({
+      serial: request.transportSerial,
+      localPath, jobId: stage.jobId, ordinal: stage.ordinal,
+      nonce: stage.nonce,
+      expectedHash: stage.expectedHash, expectedBytes: stage.expectedBytes,
+    }, signal);
+    if (receipt.status !== 'SYNC_ACK_UNVERIFIED' ||
+        receipt.remotePath !== stage.remotePath ||
+        receipt.bytes !== stage.expectedBytes ||
+        receipt.canDispatch !== false)
+      throw new DomainError('STAGE_SYNC_ACK_MISMATCH', 'ADB Sync ACK does not match durable intent.');
+    await fenceAttempt();
+    const accepted = await this.db.internal<DeviceStageTransfer>({
+      command: 'stage.syncAck', stageId: stage.id, lease: request.lease,
+      expectedJobRevision: request.expectedJobRevision, at: Date.now(),
+    });
+    if (accepted.state !== 'SYNC_ACK_UNVERIFIED')
+      throw new DomainError('STAGE_ACK_NOT_STORED', 'ADB ACK is not durably recorded.');
+    return {
+      jobId: request.jobId, stageId: stage.id,
+      ordinal: stage.ordinal, status: 'SYNC_ACK_UNVERIFIED', canDispatch: false,
+    };
+  }
+}

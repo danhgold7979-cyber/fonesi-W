@@ -117,6 +117,12 @@ export class HostDeviceService {
     }, 5000);
     this.poll.unref();
   }
+  /** Trusted host-only ADB adapter; not exposed via the public service. */
+  stageTransportAdapter(): Pick<AdbClient, 'scoped'> {
+    if (this.closed || this.configuring || this.diagnostic.status !== 'READY')
+      throw new DomainError('ADB_UNAVAILABLE', 'Trusted ADB device transport is unavailable.');
+    return this.adb;
+  }
   handles(command: ApiCommand): boolean {
     return command === 'bootstrap' || Object.hasOwn(deviceSchemas, command);
   }

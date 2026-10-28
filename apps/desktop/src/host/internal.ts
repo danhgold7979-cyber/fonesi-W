@@ -31,6 +31,13 @@ export type InternalRequest =
       at: number;
     }
   | { command: 'stage.list'; jobId: string }
+  | {
+      command: 'stage.assertClaim';
+      stageId: string;
+      expectedJobRevision: number;
+      lease: DeviceLease;
+      at: number;
+    }
   | { command: 'asset.adoptPreview'; binding: MediaAssetBinding; scanned: ScannedAsset }
   | { command: 'asset.adoptPlan'; token: string; hostId: string }
   | { command: 'asset.adoptApply'; token: string; hostId: string; scanned: ScannedAsset }
@@ -169,6 +176,10 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.recordClaimedDeviceStageSyncAck(request);
     case 'stage.list':
       return db.listDeviceStageTransfers(request.jobId);
+    case 'stage.assertClaim':
+      return db.assertClaimedDeviceStageAttempt(
+        request.stageId, request.lease, request.expectedJobRevision, request.at,
+      );
     case 'asset.adoptPreview':
       return db.previewMediaAdoption(
         request.binding.grant.processId,

@@ -8,6 +8,7 @@ import { envelopeSchema } from './service.js';
 import { HostMediaService, loadHostId } from './media-service.js';
 import { HostDeviceService } from './device-service.js';
 import { HostServices } from './services.js';
+import { HostStageTransferService } from './stage-transfer-service.js';
 import { HostWorkspaceService } from './workspace-service.js';
 
 const root = fileURLToPath(new URL('../../../../../', import.meta.url));
@@ -20,7 +21,10 @@ const devices = new HostDeviceService(db, hostId, dataDirectory, undefined, {
   port: Number(process.env.AUTOREELS_ADB_SERVER_PORT ?? 5037),
   ...(process.env.AUTOREELS_ADB ? { path: process.env.AUTOREELS_ADB } : {}),
 });
-const services = new HostServices(media, devices, new HostWorkspaceService(db, dataDirectory));
+const stage = new HostStageTransferService(
+  db, media, hostId, dataDirectory, () => devices.stageTransportAdapter(),
+);
+const services = new HostServices(media, devices, new HostWorkspaceService(db, dataDirectory), stage);
 await db.request('bootstrap');
 await services.ready();
 const token = randomBytes(32).toString('hex');

@@ -9,6 +9,7 @@ import { envelopeSchema } from '../host/service.js';
 import { HostMediaService, loadHostId } from '../host/media-service.js';
 import { HostDeviceService } from '../host/device-service.js';
 import { HostServices } from '../host/services.js';
+import { HostStageTransferService } from '../host/stage-transfer-service.js';
 import { HostWorkspaceService } from '../host/workspace-service.js';
 
 app.setName('AutoReels Studio');
@@ -113,6 +114,10 @@ else {
         media,
         devices,
         new HostWorkspaceService(db, app.getPath('userData')),
+        new HostStageTransferService(
+          db, media, hostId, app.getPath('userData'),
+          () => devices.stageTransportAdapter(),
+        ),
       );
       await services.ready();
       // Only a paired, observed native suspend/resume can classify missed slots.

@@ -2605,6 +2605,19 @@ export class StudioDatabase {
       throw new DomainError('STAGE_CLAIM_STALE', 'Transfer no longer has a valid claim.');
   }
 
+  /**
+   * Private read-only fence invoked before each ADB Sync side-effect.
+   * A different owner/generation, phase or snapshot never authorizes I/O.
+   */
+  assertClaimedDeviceStageAttempt(
+    stageId: string, lease: DeviceLease, expectedJobRevision: number, at: number,
+  ): void {
+    const stage = this.stageTransfer(stageId);
+    this.assertStageClaim(stage, lease, expectedJobRevision, at);
+    if (stage.state !== 'TRANSFER_UNCERTAIN')
+      throw new DomainError('STAGE_ATTEMPT_NOT_ACTIVE', 'Staging attempt is not active.');
+  }
+
   /** Persist uncertainty in SQLite BEFORE the ADB Sync SEND boundary. */
   beginClaimedDeviceStageAttempt(args: {
     stageId: string;
