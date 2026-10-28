@@ -117,3 +117,9 @@ export interface DeviceResolutionResult {
   revision: number;
   enabled: false;
 }
+
+export interface DeviceResolutionApplyResponse {
+  cancelled: boolean;
+  resolution: DeviceResolutionResult | null;
+  snapshot: DeviceSnapshot;
+}

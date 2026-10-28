@@ -95,6 +95,19 @@ else {
           port: Number(process.env.AUTOREELS_ADB_SERVER_PORT ?? 5037),
           ...(process.env.AUTOREELS_ADB ? { path: process.env.AUTOREELS_ADB } : {}),
         },
+        async (name, model) => {
+          const response = await dialog.showMessageBox(window!, {
+            type: 'warning',
+            title: 'Xác minh lại điện thoại',
+            message: 'Bạn đã kiểm tra đúng điện thoại thực tế?',
+            detail: 'Thiết bị đã đăng ký: ' + name + ' · ' + (model ?? 'không rõ model') + '. Chỉ xác nhận khi đang cầm đúng điện thoại lịch sử và ADB vừa được quét lại. Khôi phục sẽ TẮT thiết bị; bạn phải kiểm tra và bật lại thủ công.',
+            buttons: ['Hủy', 'Tôi đã đối chiếu điện thoại thật'],
+            defaultId: 0,
+            cancelId: 0,
+            noLink: true,
+          });
+          return response.response === 1;
+        },
       );
       services = new HostServices(
         media,
