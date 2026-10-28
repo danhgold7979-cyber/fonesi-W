@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment043 / P11-S095 — giao thức ADB Sync có fence, chưa MediaStore
+
+Đã thêm private-capable `AdbClient.sendOwnedStage`: chỉ dùng `scoped(beforeDispatch)`, nguồn local trong `owned-media-stage/job-<id>/asset-<ordinal>.<ext>`, hash/bytes trước và trong truyền, giới hạn512MiB và gói DATA64KiB, áp backpressure/abort/timeout; đường dẫn Android tạo dưới namespace cố định với nonce riêng, shell mkdir an toàn. Phản hồi chỉ `SYNC_ACK_UNVERIFIED`, **canDispatch:false**, không được coi là file MediaStore đã index hay bài đã đăng. Test TCP giả lập ADB kiểm framing/sai hash/nonce/ACK mất/FAIL; sửa case-normalization Windows bằng lstat và chặn symlink file/cha. Plan [INCREMENT-043_PLAN.md](INCREMENT-043_PLAN.md) (commit `e197802`), [kết quả](INCREMENT-043_RESULTS.md), [checkpoint-036](../evidence/implementation/checkpoint-036.json).
+
+CI exact source `53c8d259`: [40661785292](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40661785292) và [40661790899](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40661790899) **SUCCESS Ubuntu/Windows**; Ubuntu **314/314 tests/37 files, 30 Chromium**, Windows **313 pass/1 Unix-only SDK skip**, generated/type/lint/build/plan PASS. **TESTED transport spike, P11/S095 vẫn chưa ACCEPTED**: cần remote stage journal, MediaStore, chủ sở hữu generation và Android thật.
+
 ## Increment042 / P11-S095 — staging host có manifest sở hữu, chưa Android
 
 Đã triển khai app-owned staging riêng theo job, không ghi vào thư mục media gốc; copy byte theo block256KiB, nguồn qua grant host+realpath, kiểm inode/mtime/bytes/hash trước/sau, hạn mức32 media/4GiB mỗi file/8GiB một job + disk reserve. Lock độc quyền, thư mục pending chỉ dọn nếu do chính invocation tạo, manifest + digest bền; reuse phải xác minh owner/entry order/hash và không có file lạ. `HostMediaService.stageJobHostMedia` private kiểm kế hoạch SQLite trước/sau, trả **canDispatch:false**, không thêm public API hoặc lệnh Android. Kế hoạch [INCREMENT-042_PLAN.md](INCREMENT-042_PLAN.md) (commit `147b15ae`), [kết quả](INCREMENT-042_RESULTS.md), [checkpoint-035](../evidence/implementation/checkpoint-035.json).

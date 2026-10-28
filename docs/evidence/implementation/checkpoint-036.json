@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-28",
+  "increment": "043",
+  "phase": "P11",
+  "steps": [
+    "S095"
+  ],
+  "baseline": "d73b0953706131aba4b5a6760f299e578cba3d20",
+  "planCommit": "e197802593bb98e354f8362e07c6b8df60e1c15f",
+  "codeCommit": "53c8d259ef7c4e7d3c2cea3793ee88e4e9ae742b",
+  "status": "TESTED_ADB_SYNC_PROTOCOL_NOT_S095_ACCEPTED",
+  "ci": {
+    "runs": [
+      {
+        "runId": 40661785292,
+        "conclusion": "success",
+        "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40661785292"
+      },
+      {
+        "runId": 40661790899,
+        "conclusion": "success",
+        "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40661790899"
+      }
+    ],
+    "ubuntu": {
+      "unitPassed": 314,
+      "testFiles": 37,
+      "browserPassed": 30
+    },
+    "windows": {
+      "unitPassed": 313,
+      "testFiles": 37,
+      "skipped": 1
+    },
+    "buildTypeLintPlan": "PASS"
+  },
+  "implemented": [
+    "bounded ADB Sync SEND DATA DONE binary protocol",
+    "scoped lease callback required and rechecked during upload",
+    "fixed remote namespace and staged-file/symlink validation",
+    "SHA-256 before/while upload; ACK never grants dispatch",
+    "TCP fixture tests success/fail/ambiguous/cancel"
+  ],
+  "notRun": [
+    "Android MediaStore indexing/selection/remote hash check",
+    "per-device durable stage ownership ledger and crash reconcile",
+    "Win10 real USB/LAN phones and fleet load",
+    "Facebook/TikTok publish verification",
+    "full S095/P11 acceptance and installer"
+  ]
+}
