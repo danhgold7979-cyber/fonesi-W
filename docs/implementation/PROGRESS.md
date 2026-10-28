@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment038 / P06-S056 — sắp xếp SQLite theo trang, giữ nguyên scope chỉnh sửa
+
+Đã bổ sung phân trang nội dung theo **cũ nhất/mới nhất** từ SQLite trong trình duyệt chỉ đọc, cursor khóa cả thứ tự và Process/bộ lọc/epoch, thứ tự mặc định tương thích ngược. Selector giao diện reset lịch sử trang khi đổi sort; bảng authoring vẫn tải đủ hàng và giữ nguyên chọn tất cả, sửa/xuất hàng loạt và lịch, không được hiểu page view là toàn Process. **Kế hoạch đã commit trước code:** [INCREMENT-038_PLAN.md](INCREMENT-038_PLAN.md). **Source commit:** `4c7f46ae`; [kết quả](INCREMENT-038_RESULTS.md) và [receipt checkpoint-031](../evidence/implementation/checkpoint-031.json).
+
+**CI cho đúng source SHA:** [40654528193](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40654528193) và [40654535194](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40654535194) đều SUCCESS Ubuntu/Windows. Ubuntu **285/285 unit/integration (32 files), 29/29 Chromium**; Windows **284 PASS +1 skip Unix-only (32 files)**; generated/type/lint/build/plan PASS. Đây chỉ là **TESTED read-only P06 slice**, không phải full editor paging hoặc P06 ACCEPTED. Win10 GUI, Android thật, đăng bài Facebook/TikTok, 20→300 phones, installer và phát hành chưa nghiệm thu.
+
 ## Increment035 / P11-S097 — durable effect intent và attempt uncertainty
 
 Đã bổ sung private DB worker `effect.prepareClaimed` và `effect.beginClaimedAttempt`, yêu cầu lease JOB hợp lệ + `job_claims` generation, device đã xác minh/bật, frozen snapshot/hash, effect node thuộc pinned workflow và đúng pha job. Intent + `POST_INTENT` được ghi cùng transaction SQLite. Trước bất kỳ dispatch nào, effect phải được chuyển thành `ATTEMPT_UNCERTAIN` đồng thời job `POST_PENDING`; không tự suy diễn ACK hay POSTED/SUCCESS. Khi crash/restart/expire, `recoverExpiredClaims` đưa job có effect đến review, không phát lại publish. Bảo vệ effectKey toàn cục, duplicate key/lease cũ bị từ chối. **Không có hành động ADB thực** trong increment.
