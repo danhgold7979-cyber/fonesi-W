@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-28",
+  "increment": "026",
+  "phase": "P08",
+  "steps": [
+    "S072"
+  ],
+  "status": "TESTED_INCREMENT_NOT_FULL_PHASE_ACCEPTED",
+  "repository": "danhgold7979-cyber/fonesi-W",
+  "baseBranch": "feat/studio-workspace",
+  "baseCommit": "d3e2d2fad4b3bffbf956ef29897c47ce48aee91f",
+  "codeCommit": "2efa916ef60a8a042531e7b68fe3c75c30c51149",
+  "scope": "Latched contradictory hardware identity cannot silently reassign existing verified transport or claim job leases",
+  "evidence": {
+    "runId": 40641180092,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40641180092",
+    "conclusion": "success",
+    "ubuntu": {
+      "unit": 242,
+      "files": 26,
+      "failed": 0,
+      "skipped": 0,
+      "browser": 23,
+      "browserFailed": 0
+    },
+    "windows": {
+      "unit": 241,
+      "files": 26,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "pre-existing Unix SDK executable fixture"
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "planValidators": "PASS",
+    "windowsSetupAndLauncher": "PASS"
+  },
+  "unrun": [
+    "Physical Windows10/Android USB+LAN fingerprint and conflict scenario",
+    "Audited conflict-resolution UI/workflow",
+    "Real DEVICE_TEST/REAL_JOB adapter",
+    "20/100/300 device soak/capacity",
+    "User-facing installer"
+  ]
+}

@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment026 / P08-S072 — khóa transport ADB có nhận diện phần cứng mâu thuẫn
+
+Ngày 28/10/2026. Baseline `feat/studio-workspace@d3e2d2fa`, kế hoạch [INCREMENT-026_PLAN.md](INCREMENT-026_PLAN.md), source đã commit và kiểm tra tại `2efa916e`. Trước đây khi ADB trả hardware fingerprint khác cho cùng host/serial đã xác minh, database có thể tạo thiết bị mới và remap transport khỏi device ID lịch sử. Bản sửa latches `CONFLICT`, giữ original fingerprint/metadata/name/enabled/Process/job và không chuyển transport tự động. Khi fingerprint mới đụng identity đã đăng ký khác, cả hai profile đều cần review. Metadata offline/unauthorized/không đủ serial không được tạo identity mới hay overwrite evidence lịch sử. Generation của transport được fence; queue không claim lease với identity CONFLICT; UI hiển thị block reason và không gửi input.
+
+**CI tại code commit `2efa916e`:** [run 40641180092](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40641180092) **SUCCESS Ubuntu+Windows**: Ubuntu **242 unit/integration/26 files + 23 browser**, Windows **241 đạt + 1 skip Unix-only SDK /26 files**. Generated/type/lint/build/plan/Windows setup/launcher PASS. [Kết quả và giới hạn](INCREMENT-026_RESULTS.md); [receipt checkpoint-019](../evidence/implementation/checkpoint-019.json). Đây là increment đã được TESTED trong CI, **chưa phải S072/P08 ACCEPTED**: chưa có thiết bị thật/Win10 physical, chưa có UI/audit để resolve CONFLICT, chưa chứng nhận automation/scale.
+
 ## Increment025 / P07-S068 + P13-S117 — sleep/resume recovery an toàn
 
 Đã triển khai khôi phục job bị lỡ **chỉ sau cặp sự kiện Electron suspend→resume thực sự**, không suy khoảng trống từ app restart/queue bận. `NEXT_FUTURE_SLOT`, `CATCH_UP`, `SKIP` dùng lịch đã frozen trong snapshot, không thay occurrenceKey/hash, chỉ đụng SCHEDULED/QUEUED chưa claim, reject/cần review nếu có effect hoặc DST/slot không chắc chắn; transaction idempotent với giới hạn tối đa 5.000 job/lần, không cắt mất kết quả ngầm. Đây là logic queue; **chưa chạy đăng bài Android**. Kế hoạch tại [INCREMENT-025_PLAN.md](INCREMENT-025_PLAN.md), kết quả [INCREMENT-025_RESULTS.md](INCREMENT-025_RESULTS.md), receipt [checkpoint-018.json](../evidence/implementation/checkpoint-018.json).
