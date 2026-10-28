@@ -2336,8 +2336,8 @@ export class StudioDatabase {
     const device = this.db
       .prepare('SELECT d.enabled,p.identity FROM devices d LEFT JOIN device_profiles p ON p.device_id=d.id WHERE d.id=?')
       .get(lease.deviceId);
-    if (!device?.enabled || device.identity === 'CONFLICT')
-      throw new DomainError('EFFECT_DEVICE_BLOCKED', 'Device disabled or identity needs review.');
+    if (!device?.enabled || device.identity !== 'VERIFIED_PROPERTIES')
+      throw new DomainError('EFFECT_DEVICE_BLOCKED', 'Verified and enabled device identity is required.');
   }
 
   /** Commit the matching immutable intent and job phase before ANY external input. */
