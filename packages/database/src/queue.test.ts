@@ -265,3 +265,44 @@ it('bounds sleep gap inputs and excludes normal queue delay and future jobs', ()
   expect(result).toEqual({ queued: [], skipped: [], postponed: [], review: [] });
   for (const id of ids) expect(db.getJob(id).job.state).toBe('SCHEDULED');
 });
+
+
+it('blocks due-job leases after a verified transport identity contradiction while preserving scheduled history', () => {
+  const identity = {
+    hardwareSerial: 'QUEUE_SERIAL_A',
+    manufacturer: 'Vendor',
+    model: 'Phone',
+    product: 'modelA',
+    androidVersion: '14',
+    sdk: 34,
+    locale: 'vi-VN',
+  };
+  db.reconcileDeviceTransports('host', [
+    { serial: 'usb_1', kind: 'USB', state: 'CONNECTED', metadata: identity },
+  ]);
+  const registered = db.listDeviceRecords('host')[0]!;
+  const jobIds = fixture(registered.id);
+  const snapshotHash = db.getJob(jobIds[0]!).snapshotHash,
+    originalTransportGeneration = registered.transports[0]!.generation;
+  expect(db.getProcess('process_1').deviceId).toBe(registered.id);
+  db.reconcileDeviceTransports('host', [
+    {
+      serial: 'usb_1',
+      kind: 'USB',
+      state: 'CONNECTED',
+      metadata: { ...identity, hardwareSerial: 'QUEUE_SERIAL_B' },
+    },
+  ]);
+  expect(db.claimDueJob(registered.id, 'worker_1', now).status).toBe('NEEDS_REVIEW');
+  expect(db.getJob(jobIds[0]!).job.state).toBe('SCHEDULED');
+  expect(db.getJob(jobIds[0]!).snapshotHash).toBe(snapshotHash);
+  expect(db.getProcess('process_1').deviceId).toBe(registered.id);
+  expect(() =>
+    db.assertDeviceTransport('host', registered.id, 'usb_1', originalTransportGeneration),
+  ).toThrow();
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.claimDueJob(registered.id, 'worker_after_restart', now).status).toBe('NEEDS_REVIEW');
+  fixture('independent_device', '2');
+  expect(claim('independent_device').status).toBe('CLAIMED');
+});
