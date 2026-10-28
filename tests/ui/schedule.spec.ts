@@ -447,3 +447,60 @@ test('calendar queries local days across UTC midnight, caps month cards, opens f
     page.getByRole('button', { name: 'Sửa lịch job_calendar_tt_b', exact: true }),
   ).toBeVisible();
 });
+
+
+test('read-only job preflight shows persisted blockers without claiming a phone or mutating the scheduled job', async ({
+  page,
+}) => {
+  const db = new StudioDatabase(join(directory, 'studio.sqlite'));
+  try {
+    const source = db.getProcess('process_schedule_ui');
+    const process = {
+      ...source, id: 'process_preflight_ui', name: 'Preflight read-only fixture', revision: 0,
+    };
+    db.saveProcess(process, null);
+    db.saveContent({
+      id: 'content_preflight_ui', processId: process.id, revision: 0,
+      fields: { caption: 'Secret preview caption' }, assetIds: [], ignored: false,
+    }, null);
+    const version = db.getVersion(process.workflowVersionId!);
+    db.createJob({
+      id: 'job_preflight_ui', occurrenceKey: contentHash('preflight_ui'),
+      processId: process.id, deviceId: process.deviceId!,
+      contentId: 'content_preflight_ui',
+      scheduledUtc: '2035-01-01T00:00:00.000Z',
+      state: 'SCHEDULED', revision: 0, priority: 0,
+    }, {
+      workflowVersionId: version.id, workflowHash: version.hash, bundle: version.bundle,
+      contentId: 'content_preflight_ui',
+      fields: { caption: 'Secret preview caption' },
+      assetIds: [], targetId: null, networkProfileId: null,
+    });
+  } finally { db.close(); }
+  await page.goto('http://127.0.0.1:4176/');
+  await page.locator('[data-route="schedule"]').click();
+  await page.getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
+    .selectOption('process_preflight_ui');
+  const before = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+    query: { processId: 'process_preflight_ui' },
+  });
+  expect(before.jobs).toHaveLength(1);
+  await page.getByRole('button', { name: 'Kiểm tra điều kiện job_preflight_ui' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Điều kiện thực thi (chỉ đọc)' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('LIVE_PROFILE_NOT_CERTIFIED');
+  await expect(dialog).toContainText('DEVICE_IDENTITY_UNVERIFIED');
+  await expect(dialog).toContainText('Chưa được phép thực thi');
+  await expect(dialog).not.toContainText('Secret preview caption');
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  const after = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+    query: { processId: 'process_preflight_ui' },
+  });
+  expect(after.jobs).toEqual(before.jobs);
+  const dbCheck = new StudioDatabase(join(directory, 'studio.sqlite'));
+  try {
+    expect(dbCheck.getJob('job_preflight_ui').job).toMatchObject({
+      revision: 0, state: 'SCHEDULED',
+    });
+  } finally { dbCheck.close(); }
+});

@@ -13,6 +13,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { JobBatchActions } from './JobBatchActions.js';
 import { calendarRange, localToday, moveCalendar, type CalendarView } from './calendar.js';
 import { ScheduleCalendar } from './ScheduleCalendar.js';
+import { JobPreflightDialog } from './JobPreflightDialog.js';
 
 const stateLabels: Record<JobDefinition['state'], string> = {
   DRAFT: 'Nháp',
@@ -62,6 +63,7 @@ export function Schedule(props: Props) {
   const [revision, setRevision] = useState(0),
     [selection, setSelection] = useState<Set<string>>(new Set()),
     [selected, setSelected] = useState<ScheduledJobSummary | null>(null),
+    [preflightJobId, setPreflightJobId] = useState<string | null>(null),
     [date, setDate] = useState(''),
     [time, setTime] = useState(''),
     [busy, setBusy] = useState(false);
@@ -115,6 +117,7 @@ export function Schedule(props: Props) {
     setNextCursor(null);
     setLoadingMore(false);
     setSelected(null);
+    setPreflightJobId(null);
     setSelection(new Set());
     scroll.current?.scrollTo({ top: 0 });
     void Promise.resolve()
@@ -456,6 +459,12 @@ export function Schedule(props: Props) {
                     </td>
                     <td>
                       <button
+                        aria-label={'Kiểm tra điều kiện ' + job.id}
+                        onClick={() => setPreflightJobId(job.id)}
+                      >
+                        Kiểm tra
+                      </button>
+                      <button
                         disabled={job.state !== 'SCHEDULED'}
                         aria-label={'Sửa lịch ' + job.id}
                         onClick={() => open(job)}
@@ -501,6 +510,12 @@ export function Schedule(props: Props) {
             </button>
           )}
         </div>
+      )}
+      {preflightJobId && (
+        <JobPreflightDialog
+          jobId={preflightJobId}
+          close={() => setPreflightJobId(null)}
+        />
       )}
       {selected && (
         <Dialog

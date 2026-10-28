@@ -80,6 +80,20 @@ export interface JobPage {
   nextCursor: string | null;
 }
 
+/**
+ * Diagnostic only: this DTO is not an execution authorization or a DEVICE_TEST.
+ * Do not include media paths, account data, phone serials or snapshot payloads.
+ */
+export interface JobPreflightReport {
+  jobId: string;
+  jobRevision: number;
+  inspectedAt: string;
+  scope: 'PERSISTED_ONLY';
+  status: 'BLOCKED' | 'NEEDS_REVIEW';
+  canDispatch: false;
+  blockers: { code: string; message: string }[];
+}
+
 export type QueueClaimResult =
   | {
       status: 'CLAIMED';

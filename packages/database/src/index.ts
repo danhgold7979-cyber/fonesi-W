@@ -35,6 +35,7 @@ import type {
   ContentItem,
   ContentQuery,
   ContentPage,
+  JobPreflightReport,
   MediaAsset,
   JobDefinition,
   JobSnapshot,
@@ -1922,6 +1923,115 @@ export class StudioDatabase {
     });
     return { job, snapshot, snapshotHash: String(r.snapshot_hash) };
   }
+  /**
+   * Read-only persisted checks on one pinned job. Never claim the device, mutate
+   * a job/effect, invoke ADB or treat stored metadata as live certification.
+   */
+  inspectJobPreflight(id: string, at = Date.now()): JobPreflightReport {
+    idSchema.parse(id);
+    if (!Number.isSafeInteger(at) || !Number.isFinite(new Date(at).getTime()))
+      throw new DomainError('INVALID_PREFLIGHT_CLOCK', 'Invalid inspection clock.');
+    const { job, snapshot } = this.getJob(id);
+    const blockers: JobPreflightReport['blockers'] = [];
+    const seen = new Set<string>();
+    const add = (code: string, message: string): void => {
+      if (!seen.has(code) && blockers.length < 24) {
+        blockers.push({ code, message });
+        seen.add(code);
+      }
+    };
+    if (!['SCHEDULED', 'QUEUED', 'PREFLIGHT'].includes(job.state))
+      add('JOB_NOT_PENDING', 'Công việc không ở trạng thái chờ kiểm tra.');
+    const process = this.getProcess(job.processId);
+    if (process.archived) add('PROCESS_ARCHIVED', 'Tiến trình đã lưu trữ.');
+    if (process.deviceId !== job.deviceId)
+      add('PROCESS_DEVICE_CHANGED', 'Liên kết điện thoại của tiến trình đã đổi.');
+    if (
+      snapshot.contentId !== job.contentId ||
+      snapshot.workflowHash !== bundleHash(snapshot.bundle)
+    ) add('PINNED_SNAPSHOT_MISMATCH', 'Workflow hoặc nội dung đóng băng không khớp.');
+    try {
+      const version = this.getVersion(snapshot.workflowVersionId);
+      if (
+        version.hash !== snapshot.workflowHash ||
+        version.workflowId !== snapshot.bundle.workflow.id
+      ) add('PINNED_VERSION_MISMATCH', 'Phiên bản workflow đã lưu không khớp snapshot.');
+    } catch {
+      add('PINNED_VERSION_MISSING', 'Phiên bản workflow của công việc không còn khả dụng.');
+    }
+    try {
+      const ir = compileWorkflow(snapshot.bundle, (versionId) => this.getVersion(versionId));
+      if (ir.effectPathAudit.issues.length)
+        add('STATIC_EFFECT_AUDIT_FAILED', 'Đường đi external effect của workflow chưa an toàn.');
+    } catch {
+      add('WORKFLOW_COMPILATION_FAILED', 'Không thể kiểm định workflow đã đóng băng.');
+    }
+    const device = this.db.prepare('SELECT enabled FROM devices WHERE id=?').get(job.deviceId);
+    if (!device) add('DEVICE_NOT_REGISTERED', 'Thiết bị của công việc không còn trong registry.');
+    else if (!device.enabled) add('DEVICE_DISABLED', 'Thiết bị đã bị tắt trong registry.');
+    const profile = this.db.prepare('SELECT identity FROM device_profiles WHERE device_id=?')
+      .get(job.deviceId);
+    if (profile?.identity !== 'VERIFIED_PROPERTIES')
+      add(
+        profile?.identity === 'CONFLICT' ? 'DEVICE_IDENTITY_CONFLICT' : 'DEVICE_IDENTITY_UNVERIFIED',
+        'Nhận diện phần cứng chưa được xác minh an toàn.',
+      );
+    const lease = this.db.prepare(
+      'SELECT owner_id,expires_at FROM leases WHERE device_id=?',
+    ).get(job.deviceId);
+    if (lease?.owner_id && Number(lease.expires_at) > at)
+      add('DEVICE_LEASE_BUSY', 'Thiết bị đang thuộc quyền thao tác khác.');
+    const effects = this.db.prepare('SELECT state FROM effects WHERE job_id=? LIMIT 2').all(id);
+    if (effects.length)
+      add('EXTERNAL_EFFECT_REVIEW', 'Công việc có external effect; cần đối soát, không tự đăng lại.');
+    const frozenAssets = snapshot.assets ?? [];
+    const assetIds = snapshot.assetIds ?? [];
+    if (assetIds.length > 250 || new Set(assetIds).size !== assetIds.length)
+      add('MEDIA_SCOPE_INVALID', 'Danh sách media đóng băng vượt giới hạn hoặc trùng ID.');
+    else {
+      const assetQuery = this.db.prepare('SELECT hash FROM assets WHERE id=?');
+      const bindings = this.db.prepare(
+        'SELECT e.state,e.hash,e.observed_hash,s.active FROM source_entries e ' +
+        'JOIN sources s ON s.id=e.source_id WHERE e.asset_id=? AND s.process_id=?',
+      );
+      for (const assetId of assetIds) {
+        const pinned = frozenAssets.filter((item) => item.id === assetId);
+        if (pinned.length !== 1 || pinned[0]?.state !== 'READY') {
+          add('MEDIA_SNAPSHOT_UNVERIFIED', 'Media đóng băng thiếu hoặc không ở trạng thái sẵn sàng.');
+          continue;
+        }
+        const stored = assetQuery.get(assetId);
+        if (!stored || stored.hash !== pinned[0]!.hash)
+          add('MEDIA_HASH_MISMATCH', 'Media không khớp hash đã đóng băng.');
+        const entries = bindings.all(assetId, job.processId);
+        if (entries.length !== 1) {
+          add('MEDIA_SOURCE_UNVERIFIED', 'Chưa xác định duy nhất một nguồn media thuộc tiến trình.');
+          continue;
+        }
+        if (
+          !entries[0]!.active ||
+          entries[0]!.state !== 'READY' ||
+          entries[0]!.hash !== pinned[0]!.hash ||
+          entries[0]!.observed_hash !== pinned[0]!.hash
+        ) add('MEDIA_CHANGED_OR_MISSING', 'Nguồn media đã đổi, thiếu hoặc chưa được quét hợp lệ.');
+      }
+    }
+    // Last and unconditional: DB-only checks can NEVER certify a real posting.
+    blockers.push({
+      code: 'LIVE_PROFILE_NOT_CERTIFIED',
+      message: 'Chưa có kiểm chứng trực tiếp Android, phiên bản app, tài khoản, đích đăng và nhà cung cấp.',
+    });
+    return {
+      jobId: job.id,
+      jobRevision: job.revision,
+      inspectedAt: new Date(at).toISOString(),
+      scope: 'PERSISTED_ONLY',
+      status: effects.length || job.state === 'NEEDS_REVIEW' ? 'NEEDS_REVIEW' : 'BLOCKED',
+      canDispatch: false,
+      blockers,
+    };
+  }
+
   transitionJob(id: string, to: JobDefinition['state'], expectedRevision: number): JobDefinition {
     return this.transaction(() => {
       const { job } = this.getJob(id);
