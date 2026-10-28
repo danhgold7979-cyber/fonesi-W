@@ -1,3 +1,7 @@
+## Increment048 / P11-S095.2 — durable stage reconciliation (plan committed)
+
+Plan-first baseline `b0136bf29d5a59bfbcaa384b6ca5c176d03c71c4`; plan commit [`fe1414b8`](https://github.com/danhgold7979-cyber/fonesi-W/commit/fe1414b8052b4b98db59c70a3203843bb0e3b86c), [INCREMENT-048_PLAN.md](INCREMENT-048_PLAN.md). This increment targets restart reconciliation classification and immutable audit only: no retry, no remote cleanup, no posting. Implementation/CI is pending; no result is claimed yet.
+
 ## Increment047 / P11-S095.2–S095.3 — exact MediaStore row probe (validated)
 
 Plan-first: [INCREMENT-047_PLAN.md](INCREMENT-047_PLAN.md), baseline `2e5eeab3`. Tested source SHA `a3add4f740584c62138ed0c9dc353883550c26c2`. [Ubuntu CI 40710327100](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40710327100) **SUCCESS** — 332/332 tests (39 files), 30/30 Chromium UI, generated/type/lint/build/plan PASS. [Windows CI 40710336317](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40710336317) **SUCCESS** — 331 PASS + 1 platform-only skip (39 files), generated/type/lint/build/VerifyOnly/plan PASS. Added private bounded exact-row probe, schema v17 and immutable MediaStore evidence guarded by JOB claim + matching remote byte readback. Stage remains `SYNC_ACK_UNVERIFIED`; result `MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED`, `canDispatch:false`. [Results](INCREMENT-047_RESULTS.md), [checkpoint-040](../evidence/implementation/checkpoint-040.json). **Physical Android and picker correlation NOT_RUN.**
