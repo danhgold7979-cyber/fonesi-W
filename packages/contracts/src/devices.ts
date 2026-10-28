@@ -98,3 +98,28 @@ export type ManualDeviceAction =
 export interface DevicePackage {
   packageName: string;
 }
+
+
+/** Display-safe, bounded preview: never exposes a raw ADB serial or identity fingerprint. */
+export interface DeviceResolutionPreview {
+  deviceId: string;
+  expectedRevision: number;
+  name: string;
+  model: string | null;
+  token: string | null;
+  expiresAt: string | null;
+  canApply: boolean;
+  blockers: string[];
+}
+export interface DeviceResolutionResult {
+  deviceId: string;
+  auditId: string;
+  revision: number;
+  enabled: false;
+}
+
+export interface DeviceResolutionApplyResponse {
+  cancelled: boolean;
+  resolution: DeviceResolutionResult | null;
+  snapshot: DeviceSnapshot;
+}

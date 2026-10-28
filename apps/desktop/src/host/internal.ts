@@ -41,6 +41,23 @@ export type InternalRequest =
   | { command: 'device.records'; hostId: string }
   | { command: 'device.conflictReadiness'; hostId: string; deviceId: string; at: number }
   | {
+      command: 'device.resolutionPreview';
+      hostId: string;
+      deviceId: string;
+      expectedRevision: number;
+      observation: TransportObservation;
+      at: number;
+    }
+  | {
+      command: 'device.resolutionApply';
+      hostId: string;
+      deviceId: string;
+      token: string;
+      confirmedName: string;
+      observation: TransportObservation;
+      at: number;
+    }
+  | {
       command: 'device.update';
       id: string;
       expectedRevision: number;
@@ -141,6 +158,15 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.listDeviceRecords(request.hostId);
     case 'device.conflictReadiness':
       return db.conflictResolutionReadiness(request.hostId, request.deviceId, request.at);
+    case 'device.resolutionPreview':
+      return db.previewDeviceConflictResolution(
+        request.hostId, request.deviceId, request.expectedRevision, request.observation, request.at,
+      );
+    case 'device.resolutionApply':
+      return db.applyDeviceConflictResolution(
+        request.hostId, request.deviceId, request.token, request.confirmedName, request.observation,
+        request.at,
+      );
     case 'device.update':
       return db.updateDevice(request.id, request.expectedRevision, request.patch);
     case 'device.assertTransport':

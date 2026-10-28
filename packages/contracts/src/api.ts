@@ -3,7 +3,10 @@ import type { WorkspaceStatus, WorkspaceBackupResult } from './workspace.js';
 import type { MediaAdoptionPreview, MediaAdoptionResult } from './media.js';
 import type { DebugAction, DebugSnapshot } from './debug.js';
 import type { ProcessCloneOptions, ProcessClonePreview, ProcessCloneResult } from './processes.js';
-import type { DeviceSnapshot, DeviceCapture, ManualDeviceAction } from './devices.js';
+import type {
+  DeviceSnapshot, DeviceCapture, ManualDeviceAction,
+  DeviceResolutionPreview, DeviceResolutionApplyResponse,
+} from './devices.js';
 import type {
   ContentFormat,
   ContentPreviewDto,
@@ -71,6 +74,12 @@ export interface StudioApi {
   debugSnapshot(id: string): Promise<DebugSnapshot>;
   controlDebug(id: string, action: DebugAction): Promise<DebugSnapshot>;
   deviceSnapshot(): Promise<DeviceSnapshot>;
+  previewDeviceConflictResolution(
+    id: string, expectedRevision: number,
+  ): Promise<DeviceResolutionPreview>;
+  applyDeviceConflictResolution(
+    id: string, token: string, confirmedName: string,
+  ): Promise<DeviceResolutionApplyResponse>;
   scanDevices(): Promise<DeviceSnapshot>;
   cancelDeviceScan(): Promise<void>;
   chooseAdbSdk(): Promise<{ cancelled: boolean; snapshot: DeviceSnapshot }>;
@@ -177,6 +186,8 @@ export type ApiCommand =
   | 'debugSnapshot'
   | 'controlDebug'
   | 'deviceSnapshot'
+  | 'previewDeviceConflictResolution'
+  | 'applyDeviceConflictResolution'
   | 'scanDevices'
   | 'cancelDeviceScan'
   | 'chooseAdbSdk'
@@ -244,6 +255,10 @@ export function createStudioApi(transport: Transport): StudioApi {
     debugSnapshot: (id) => call('debugSnapshot', { id }),
     controlDebug: (id, action) => call('controlDebug', { id, action }),
     deviceSnapshot: () => call('deviceSnapshot'),
+    previewDeviceConflictResolution: (id, expectedRevision) =>
+      call('previewDeviceConflictResolution', { id, expectedRevision }),
+    applyDeviceConflictResolution: (id, token, confirmedName) =>
+      call('applyDeviceConflictResolution', { id, token, confirmedName }),
     scanDevices: () => call('scanDevices'),
     cancelDeviceScan: () => call('cancelDeviceScan'),
     chooseAdbSdk: () => call('chooseAdbSdk'),

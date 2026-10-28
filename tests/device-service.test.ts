@@ -3,7 +3,10 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { StudioDatabase } from '@autoreels/database';
-import type { DeviceSnapshot, DeviceCapture, InspectorSnapshot } from '@autoreels/contracts';
+import type {
+  DeviceSnapshot, DeviceCapture, InspectorSnapshot,
+  DeviceResolutionPreview, DeviceResolutionApplyResponse,
+} from '@autoreels/contracts';
 import { SdkManager } from '@autoreels/devices';
 import { HostDeviceService } from '../apps/desktop/src/host/device-service.js';
 import { dispatchInternal } from '../apps/desktop/src/host/internal.js';
@@ -255,4 +258,126 @@ describe('native SDK grant hashing', () => {
     await writeFile(path, '#!/usr/bin/env node\nconsole.log("modified");\n', { mode: 0o755 });
     await expect(new SdkManager(path, info.hash).inspect()).rejects.toThrow('đã đổi');
   });
+});
+
+
+it('requires fresh historical ADB proof and refuses recovery outside native desktop confirmation', async () => {
+  const original = await device();
+  f.state.hardwareSerial = 'REUSED_ALIAS_DIFFERENT_PHONE';
+  await service.scan();
+  const locked = await device();
+  expect(locked.id).toBe(original.id);
+  expect(locked.identity).toBe('CONFLICT');
+  expect(locked.capabilities.manualControl).toBe(false);
+  f.state.hardwareSerial = 'SERIAL_FIXTURE';
+  await service.scan();
+  const matched = await device();
+  const preview = (await service.request('previewDeviceConflictResolution', {
+    id: locked.id, expectedRevision: matched.revision,
+  })) as DeviceResolutionPreview;
+  expect(preview).toMatchObject({ deviceId: locked.id, canApply: true, blockers: [] });
+  expect(JSON.stringify(preview)).not.toContain('SERIAL_FIXTURE');
+  await expect(
+    service.request('applyDeviceConflictResolution', {
+      id: locked.id, token: preview.token, confirmedName: preview.name,
+    }),
+  ).rejects.toMatchObject({ code: 'NATIVE_DIALOG_REQUIRED' });
+  expect((await device()).identity).toBe('CONFLICT');
+  expect(f.state.shells.some((s) => s.startsWith("'input'"))).toBe(false);
+});
+
+it('asks native operator and independently re-probes ADB, then disables controls after audited recovery', async () => {
+  const original = await device();
+  f.state.hardwareSerial = 'A_NEW_PHONE';
+  await service.scan();
+  const conflict = await device();
+  expect(conflict.identity).toBe('CONFLICT');
+  f.state.hardwareSerial = 'SERIAL_FIXTURE';
+  await service.close();
+  const dbPort = {
+    request: async (command: Parameters<typeof dispatch>[1]['command'], input = {}) =>
+      dispatch(db, { operationId: 'op_resolution_fixture', command, input }),
+    internal: async <T>(request: Parameters<typeof dispatchInternal>[1]) =>
+      dispatchInternal(db, request) as T,
+  };
+  let confirmationCount = 0;
+  service = new HostDeviceService(
+    dbPort, 'host_fixture', dir, undefined, { port: f.port },
+    async (name, model) => {
+      confirmationCount++;
+      expect(name).toBe(original.name);
+      expect(model).toBe('Fixture Phone');
+      return true;
+    },
+  );
+  await service.ready();
+  await service.scan();
+  const current = await device();
+  const preview = (await service.request('previewDeviceConflictResolution', {
+    id: current.id, expectedRevision: current.revision,
+  })) as DeviceResolutionPreview;
+  expect(preview.canApply).toBe(true);
+  const result = (await service.request('applyDeviceConflictResolution', {
+    id: current.id, token: preview.token, confirmedName: preview.name,
+  })) as DeviceResolutionApplyResponse;
+  expect(result).toMatchObject({
+    cancelled: false,
+    resolution: { deviceId: original.id, enabled: false },
+  });
+  expect(confirmationCount).toBe(1);
+  const after = await device();
+  expect(after.id).toBe(original.id);
+  expect(after.identity).toBe('VERIFIED_PROPERTIES');
+  expect(after.enabled).toBe(false);
+  expect(after.capabilities.manualControl).toBe(false);
+  expect(f.state.shells.some((s) => s.startsWith("'input'"))).toBe(false);
+  await expect(
+    service.request('applyDeviceConflictResolution', {
+      id: current.id, token: preview.token, confirmedName: preview.name,
+    }),
+  ).rejects.toThrow();
+});
+
+
+it('rejects a handset swap between preview and the desktop confirmation without changing the old device', async () => {
+  const original = await device();
+  f.state.hardwareSerial = 'TEMP_REUSED_SERIAL';
+  await service.scan();
+  expect((await device()).identity).toBe('CONFLICT');
+  f.state.hardwareSerial = 'SERIAL_FIXTURE';
+  await service.close();
+  service = new HostDeviceService(
+    {
+      request: async (command, input = {}) =>
+        dispatch(db, { operationId: 'op_resolution_swap', command, input }),
+      internal: async <T>(request: Parameters<typeof dispatchInternal>[1]) =>
+        dispatchInternal(db, request) as T,
+    },
+    'host_fixture',
+    dir,
+    undefined,
+    { port: f.port },
+    async () => {
+      // Simulated physical swap exactly while the user approves the OS dialog.
+      f.state.hardwareSerial = 'ANOTHER_HANDSET_AT_CONFIRM';
+      return true;
+    },
+  );
+  await service.ready();
+  await service.scan();
+  const current = await device();
+  const preview = (await service.request('previewDeviceConflictResolution', {
+    id: current.id, expectedRevision: current.revision,
+  })) as DeviceResolutionPreview;
+  expect(preview.canApply).toBe(true);
+  await expect(
+    service.request('applyDeviceConflictResolution', {
+      id: original.id, token: preview.token, confirmedName: preview.name,
+    }),
+  ).rejects.toMatchObject({ code: 'RESOLUTION_PROOF_CHANGED' });
+  const after = await device();
+  expect(after.id).toBe(original.id);
+  expect(after.identity).toBe('CONFLICT');
+  expect(after.capabilities.manualControl).toBe(false);
+  expect(f.state.shells.some((s) => s.startsWith("'input'"))).toBe(false);
 });

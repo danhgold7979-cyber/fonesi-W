@@ -184,3 +184,32 @@ test('editor test device opens the shared read-only Inspector and requires manua
     .poll(() => adb.state.shells.filter((s) => s === "'input' 'keyevent' '3'").length)
     .toBe(before + 1);
 });
+
+
+test('loopback browser authoring host cannot clear identity conflicts without native OS confirmation', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:4177/');
+  const token = await page.locator('meta[name="studio-token"]').getAttribute('content');
+  const res = await page.request.post('http://127.0.0.1:4177/api', {
+    headers: {
+      Origin: 'http://127.0.0.1:4177',
+      'X-Studio-Token': token!,
+    },
+    data: {
+      operationId: 'op_resolution_browser_guard',
+      command: 'applyDeviceConflictResolution',
+      input: {
+        id: 'device_fixture',
+        token: 'deviceResolution_untrusted',
+        confirmedName: 'Fixture Phone',
+      },
+    },
+  });
+  const payload = (await res.json()) as {
+    ok: boolean;
+    error?: { code?: string };
+  };
+  expect(payload.ok).toBe(false);
+  expect(payload.error?.code).toBe('NATIVE_DIALOG_REQUIRED');
+});

@@ -16,6 +16,10 @@ const api: StudioApi = {
   debugSnapshot: (id) => send('debugSnapshot', { id }),
   controlDebug: (id, action) => send('controlDebug', { id, action }),
   deviceSnapshot: () => send('deviceSnapshot'),
+  previewDeviceConflictResolution: (id, expectedRevision) =>
+    send('previewDeviceConflictResolution', { id, expectedRevision }),
+  applyDeviceConflictResolution: (id, token, confirmedName) =>
+    send('applyDeviceConflictResolution', { id, token, confirmedName }),
   scanDevices: () => send('scanDevices'),
   cancelDeviceScan: () => send('cancelDeviceScan'),
   chooseAdbSdk: () => send('chooseAdbSdk'),
