@@ -271,3 +271,23 @@ it('keeps a legitimate USB+TCP pair and an unrelated phone unaffected by a contr
   expect(unaffected.identity).toBe('VERIFIED_PROPERTIES');
   expect(unaffected.capabilities.manualControl).toBe(true);
 });
+
+it('never remaps a verified transport on partial property probe with no hardware serial', () => {
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  const verified = db.listDeviceRecords('host')[0]!;
+  db.reconcileDeviceTransports('host', [{
+    ...observation('usb_1'),
+    metadata: { ...metadata, hardwareSerial: null, manufacturer: 'Unconfirmed', model: 'Uncertain' },
+  }]);
+  const pending = db.listDeviceRecords('host');
+  expect(pending).toHaveLength(1);
+  expect(pending[0]).toMatchObject({
+    id: verified.id,
+    identity: 'VERIFIED_PROPERTIES',
+    metadata: { hardwareSerial: metadata.hardwareSerial, manufacturer: metadata.manufacturer },
+  });
+  expect(pending[0]!.transports[0]!.identityVerified).toBe(false);
+  expect(pending[0]!.capabilities.manualControl).toBe(false);
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  expect(db.listDeviceRecords('host')[0]!.capabilities.manualControl).toBe(true);
+});
