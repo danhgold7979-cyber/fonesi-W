@@ -2,7 +2,6 @@ import { constants } from 'node:fs';
 import {
   lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rename, rm, stat, statfs,
 } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
 import { extname, join, relative, resolve, sep } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { assertJsonSafe, hashSchema, idSchema } from '@autoreels/contracts';
