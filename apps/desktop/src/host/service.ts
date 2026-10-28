@@ -179,6 +179,15 @@ const schemas = {
   listProcesses: z.strictObject({ includeArchived: z.boolean().default(false) }),
   saveProcess: z.strictObject({ process: processSchema, expectedRevision: revision.nullable() }),
   content: z.strictObject({ processId: idSchema }),
+  contentPage: z.strictObject({
+    query: z.strictObject({
+      processId: idSchema,
+      search: z.string().max(120).optional(),
+      includeIgnored: z.boolean().optional(),
+      cursor: z.string().max(4096).optional(),
+      limit: z.number().int().min(1).max(250).optional(),
+    }),
+  }),
   saveContent: z.strictObject({
     item: z.strictObject({
       id: idSchema,
@@ -392,6 +401,8 @@ export async function dispatch(
     }
     case 'content':
       return db.listContent(schemas.content.parse(input).processId);
+    case 'contentPage':
+      return db.listContentPage(schemas.contentPage.parse(input).query);
     case 'saveContent': {
       const p = schemas.saveContent.parse(input);
       return db.saveContentValidated(p.item as ContentItem, p.expectedRevision);

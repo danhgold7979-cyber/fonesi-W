@@ -33,6 +33,8 @@ import type {
   MediaAdoptionResult,
   MediaAdoptionPlan,
   ContentItem,
+  ContentQuery,
+  ContentPage,
   MediaAsset,
   JobDefinition,
   JobSnapshot,
@@ -1368,6 +1370,134 @@ export class StudioDatabase {
           .map((a) => String(a.asset_id)),
       }));
   }
+
+  /**
+   * Read-only Process-scoped SQLite content query. The legacy editor uses
+   * listContent until its selection/scheduling semantics are migrated.
+   */
+  listContentPage(query: ContentQuery): ContentPage {
+    idSchema.parse(query.processId);
+    this.getProcess(query.processId);
+    const limit = query.limit ?? 100;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 250)
+      throw new DomainError('INVALID_CONTENT_QUERY', 'Limit phải từ 1 đến 250.');
+    if (
+      (query.search !== undefined && (typeof query.search !== 'string' || query.search.length > 120)) ||
+      (query.includeIgnored !== undefined && typeof query.includeIgnored !== 'boolean')
+    )
+      throw new DomainError('INVALID_CONTENT_QUERY', 'Bộ lọc nội dung không hợp lệ.');
+    const search = (query.search ?? '').trim(),
+      includeIgnored = query.includeIgnored ?? false;
+    const epoch = () => {
+      const r = this.db.prepare("SELECT revision FROM query_epochs WHERE name='content'").get();
+      if (!r) throw new DomainError('MISSING_QUERY_EPOCH', 'Workspace cần cập nhật migration.');
+      return Number(r.revision);
+    };
+    const revision = epoch(),
+      fingerprint = contentHash({ processId: query.processId, search, includeIgnored });
+    let lastRowId = 0,
+      cursorTotal: number | null = null;
+    if (query.cursor !== undefined) {
+      try {
+        if (query.cursor.length > 4096 || !/^[A-Za-z0-9_-]+$/.test(query.cursor))
+          throw new Error('Malformed cursor');
+        const decoded: unknown = JSON.parse(
+          Buffer.from(query.cursor, 'base64url').toString('utf8'),
+        );
+        assertJsonSafe(decoded);
+        if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded))
+          throw new Error('Invalid cursor');
+        const c = decoded as Record<string, JsonValue>;
+        if (
+          Object.keys(c).length !== 5 ||
+          c.version !== 1 ||
+          typeof c.fingerprint !== 'string' ||
+          !Number.isSafeInteger(c.epoch) ||
+          !Number.isSafeInteger(c.rowId) ||
+          Number(c.rowId) < 1 ||
+          !Number.isSafeInteger(c.total) ||
+          Number(c.total) < 0
+        ) throw new Error('Invalid cursor fields');
+        if (c.fingerprint !== fingerprint)
+          throw new DomainError('CONTENT_CURSOR_SCOPE', 'Đổi Process hoặc bộ lọc; tải trang đầu.');
+        if (c.epoch !== revision)
+          throw new DomainError('CONTENT_QUERY_STALE', 'Nội dung đã thay đổi; tải lại trang đầu.');
+        lastRowId = Number(c.rowId);
+        cursorTotal = Number(c.total);
+      } catch (error) {
+        if (error instanceof DomainError) throw error;
+        throw new DomainError('INVALID_CONTENT_CURSOR', 'Con trỏ nội dung không hợp lệ.');
+      }
+    }
+    const conditions = ['process_id=?'],
+      params: (string | number)[] = [query.processId];
+    if (!includeIgnored) conditions.push('ignored=0');
+    if (search) {
+      // Bound parameters, no arbitrary SQL. SQLite lower() casefold is ASCII-oriented;
+      // full accent-insensitive search requires a future indexed Unicode search field.
+      conditions.push('(instr(lower(fields),lower(?))>0 OR instr(lower(id),lower(?))>0)');
+      params.push(search, search);
+    }
+    const where = conditions.join(' AND ');
+    const total =
+      cursorTotal ??
+      Number(
+        this.db
+          .prepare('SELECT COUNT(*) AS count FROM content_items WHERE ' + where)
+          .get(...params)?.count ?? 0,
+      );
+    const records = this.db
+      .prepare(
+        'SELECT rowid AS ordinal,id,process_id,revision,fields,ignored FROM content_items WHERE ' +
+          where +
+          ' AND rowid>? ORDER BY rowid LIMIT ?',
+      )
+      .all(...params, lastRowId, limit + 1);
+    const page = records.slice(0, limit);
+    const ids = page.map((r) => String(r.id));
+    const assets = new Map<string, string[]>();
+    if (ids.length) {
+      const placeholders = ids.map(() => '?').join(',');
+      for (const a of this.db
+        .prepare(
+          'SELECT content_id,asset_id FROM content_assets WHERE content_id IN (' +
+            placeholders +
+            ') ORDER BY content_id,ordinal',
+        )
+        .all(...ids)) {
+        const key = String(a.content_id),
+          array = assets.get(key) ?? [];
+        array.push(String(a.asset_id));
+        assets.set(key, array);
+      }
+    }
+    const items: ContentItem[] = page.map((r) => ({
+      id: String(r.id),
+      processId: String(r.process_id),
+      revision: Number(r.revision),
+      fields: parse(r.fields),
+      ignored: Boolean(r.ignored),
+      assetIds: assets.get(String(r.id)) ?? [],
+    }));
+    if (epoch() !== revision)
+      throw new DomainError('CONTENT_QUERY_STALE', 'Nội dung đổi trong lúc đọc; tải lại.');
+    const hasMore = records.length > limit,
+      last = page.at(-1),
+      nextCursor =
+        hasMore && last
+          ? Buffer.from(
+              JSON.stringify({
+                version: 1,
+                epoch: revision,
+                fingerprint,
+                rowId: Number(last.ordinal),
+                total,
+              }),
+            ).toString('base64url')
+          : null;
+    return { items, total, hasMore, nextCursor };
+  }
+
   saveContent(input: ContentItem, expectedRevision: number | null): ContentItem {
     return this.transaction(() => this.insertContent(input, expectedRevision));
   }
