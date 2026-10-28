@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
-import { open, lstat, realpath } from 'node:fs/promises';
+import { open, lstat } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, resolve } from 'node:path';
 import type { Socket } from 'node:net';
 import type { DeviceMetadata, TransportObservation } from '@autoreels/contracts';
@@ -276,9 +276,15 @@ export class AdbClient {
         basename(dirname(sourcePath)) !== 'job-' + input.jobId ||
         basename(dirname(dirname(sourcePath))) !== 'owned-media-stage')
       throw new DomainError('ADB_SYNC_SOURCE', 'Only an app-owned job stage file is admissible.');
-    const stats = await lstat(sourcePath);
+    // Do not compare realpath strings: Windows can alter drive-letter case
+    // and normalize segments without changing which file was opened.
+    // Reject symlinked file *and* job/staging directories by inode metadata.
+    const stats = await lstat(sourcePath),
+      jobDir = await lstat(dirname(sourcePath)),
+      stageDir = await lstat(dirname(dirname(sourcePath)));
     if (!stats.isFile() || stats.isSymbolicLink() || stats.size !== input.expectedBytes ||
-        await realpath(sourcePath) !== sourcePath)
+        !jobDir.isDirectory() || jobDir.isSymbolicLink() ||
+        !stageDir.isDirectory() || stageDir.isSymbolicLink())
       throw new DomainError('ADB_SYNC_SOURCE', 'Local staged file is not a stable regular file.');
 
     const handle = await open(sourcePath, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
