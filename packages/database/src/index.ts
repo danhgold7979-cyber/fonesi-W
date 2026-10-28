@@ -59,6 +59,8 @@ import type {
   DeviceRecord,
   DeviceMetadata,
   DeviceEndpointPolicy,
+  DeviceResolutionPreview,
+  DeviceResolutionResult,
 } from '@autoreels/contracts';
 import {
   DomainError,
@@ -1270,6 +1272,234 @@ export class StudioDatabase {
       blockers,
     };
   }
+
+  /** Trusted-host-only proof. The renderer cannot supply transport observations. */
+  private conflictRecoveryProof(
+    hostId: string,
+    deviceId: string,
+    expectedRevision: number,
+    observation: TransportObservation,
+    at: number,
+  ): {
+    blockers: string[];
+    name: string;
+    model: string | null;
+    proofHash: string | null;
+  } {
+    idSchema.parse(hostId);
+    idSchema.parse(deviceId);
+    assertJsonSafe(observation);
+    if (
+      !Number.isSafeInteger(expectedRevision) ||
+      expectedRevision < 0 ||
+      !Number.isSafeInteger(at) ||
+      !Number.isFinite(new Date(at).getTime())
+    )
+      throw new DomainError('INVALID_RESOLUTION_INPUT', 'Clock hoặc revision không hợp lệ.');
+    const row = this.db
+      .prepare(
+        'SELECT d.name,p.identity,p.fingerprint,p.metadata,p.revision FROM devices d JOIN device_profiles p ON p.device_id=d.id WHERE d.id=?',
+      )
+      .get(deviceId);
+    if (!row) throw new DomainError('NOT_FOUND', 'Không tìm thấy identity lịch sử.');
+    const blockers: string[] = [];
+    if (row.identity !== 'CONFLICT') blockers.push('NOT_CONFLICT');
+    if (Number(row.revision) !== expectedRevision) blockers.push('REVISION_STALE');
+    const transport =
+      observation && typeof observation.serial === 'string'
+        ? this.db
+            .prepare(
+              'SELECT * FROM device_transports WHERE host_id=? AND serial=? AND device_id=?',
+            )
+            .get(hostId, observation.serial, deviceId)
+        : undefined;
+    if (
+      !transport ||
+      observation.state !== 'CONNECTED' ||
+      transport.state !== 'CONNECTED' ||
+      transport.kind !== observation.kind
+    )
+      blockers.push('TRANSPORT_UNAVAILABLE');
+    if (
+      !transport ||
+      !Number.isFinite(Date.parse(String(transport.last_seen))) ||
+      Math.abs(at - Date.parse(String(transport.last_seen))) > 30000
+    )
+      blockers.push('STALE_TRANSPORT_SCAN');
+    const live = deviceFingerprint(
+      observation.state === 'CONNECTED' ? observation.metadata : null,
+      hostId,
+      observation.serial ?? '',
+    );
+    if (live.provisional) blockers.push('UNVERIFIED_HARDWARE_PROPERTIES');
+    else if (live.fingerprint !== row.fingerprint)
+      blockers.push('HISTORICAL_FINGERPRINT_MISMATCH');
+    const count = Number(
+      this.db
+        .prepare(
+          "SELECT count(*) AS n FROM device_transports WHERE host_id=? AND device_id=? AND state='CONNECTED'",
+        )
+        .get(hostId, deviceId)!.n,
+    );
+    if (count !== 1) blockers.push('AMBIGUOUS_ACTIVE_TRANSPORTS');
+    if (
+      this.db
+        .prepare(
+          'SELECT 1 FROM leases WHERE device_id=? AND owner_id IS NOT NULL AND expires_at>? LIMIT 1',
+        )
+        .get(deviceId, at)
+    ) blockers.push('DEVICE_LEASE_BUSY');
+    if (
+      this.db
+        .prepare(
+          "SELECT 1 FROM jobs WHERE device_id=? AND state IN('PREFLIGHT','RUNNING','POST_INTENT','POST_PENDING','POSTED','COMMENT_PENDING','NEEDS_REVIEW') LIMIT 1",
+        )
+        .get(deviceId)
+    ) blockers.push('ACTIVE_OR_UNCERTAIN_JOB');
+    if (
+      this.db
+        .prepare(
+          "SELECT 1 FROM effects e JOIN jobs j ON j.id=e.job_id WHERE j.device_id=? AND e.state IN('INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW') LIMIT 1",
+        )
+        .get(deviceId)
+    ) blockers.push('PENDING_EXTERNAL_EFFECT');
+    if (
+      this.db
+        .prepare('SELECT 1 FROM device_profiles WHERE fingerprint=? AND device_id<>? LIMIT 1')
+        .get(live.fingerprint, deviceId)
+    ) blockers.push('COMPETING_REGISTERED_IDENTITY');
+    const model = row.metadata ? parse<DeviceMetadata>(row.metadata).model : null;
+    return {
+      blockers,
+      name: String(row.name),
+      model,
+      proofHash:
+        blockers.length || !transport
+          ? null
+          : contentHash({
+              hostId,
+              deviceId,
+              transport: observation.serial,
+              generation: Number(transport.generation),
+              fingerprint: live.fingerprint,
+            }),
+    };
+  }
+
+  /** Short-lived durable preview. No privileged operation or device input. */
+  previewDeviceConflictResolution(
+    hostId: string,
+    deviceId: string,
+    expectedRevision: number,
+    observation: TransportObservation,
+    at = Date.now(),
+  ): DeviceResolutionPreview {
+    return this.transaction(() => {
+      const checked = this.conflictRecoveryProof(
+        hostId, deviceId, expectedRevision, observation, at,
+      );
+      if (!checked.proofHash) return {
+        deviceId,
+        expectedRevision,
+        name: checked.name,
+        model: checked.model,
+        token: null,
+        expiresAt: null,
+        canApply: false,
+        blockers: checked.blockers,
+      };
+      const token = makeId('deviceResolution'),
+        expiresAt = new Date(at + 60000).toISOString();
+      this.db
+        .prepare(
+          'INSERT INTO device_resolution_previews(token,host_id,device_id,expected_revision,proof_hash,expires_at,used_at) VALUES(?,?,?,?,?,?,NULL)',
+        )
+        .run(token, hostId, deviceId, expectedRevision, checked.proofHash, expiresAt);
+      return {
+        deviceId,
+        expectedRevision,
+        name: checked.name,
+        model: checked.model,
+        token,
+        expiresAt,
+        canApply: true,
+        blockers: [],
+      };
+    });
+  }
+
+  /**
+   * Explicit, privately confirmed operation. The old device ID is preserved;
+   * transport generations are fenced and enabled=false until a further scan
+   * and a deliberate re-enable. This never performs any Android input.
+   */
+  applyDeviceConflictResolution(
+    hostId: string,
+    deviceId: string,
+    token: string,
+    confirmedName: string,
+    observation: TransportObservation,
+    at = Date.now(),
+  ): DeviceResolutionResult {
+    idSchema.parse(token);
+    idSchema.parse(deviceId);
+    if (typeof confirmedName !== 'string' || confirmedName.length > 120)
+      throw new DomainError('RESOLUTION_CONFIRMATION_REQUIRED', 'Tên xác nhận không hợp lệ.');
+    return this.transaction(() => {
+      const preview = this.db
+        .prepare('SELECT * FROM device_resolution_previews WHERE token=?')
+        .get(token);
+      if (!preview || preview.host_id !== hostId || preview.device_id !== deviceId)
+        throw new DomainError(
+          'RESOLUTION_PREVIEW_NOT_FOUND', 'Không tìm thấy phiếu xác minh của host.',
+        );
+      if (preview.used_at !== null)
+        throw new DomainError('RESOLUTION_TOKEN_USED', 'Phiếu đã dùng; phải xác minh lại.');
+      if (Date.parse(String(preview.expires_at)) <= at)
+        throw new DomainError('RESOLUTION_EXPIRED', 'Phiếu xác minh hết hạn; quét lại.');
+      const checked = this.conflictRecoveryProof(
+        hostId, deviceId, Number(preview.expected_revision), observation, at,
+      );
+      if (!checked.proofHash || checked.proofHash !== preview.proof_hash)
+        throw new DomainError(
+          'RESOLUTION_PROOF_CHANGED', 'Nhận diện/transport hoặc revision đã đổi; quét lại.',
+        );
+      if (confirmedName.normalize('NFC').trim() !== checked.name.normalize('NFC').trim())
+        throw new DomainError(
+          'RESOLUTION_CONFIRMATION_REQUIRED',
+          'Nhập chính xác tên thiết bị đã đăng ký sau khi kiểm tra vật lý.',
+        );
+      const previousRevision = Number(preview.expected_revision);
+      const changed = this.db
+        .prepare(
+          "UPDATE device_profiles SET identity='VERIFIED_PROPERTIES',revision=revision+1 WHERE device_id=? AND revision=? AND identity='CONFLICT'",
+        )
+        .run(deviceId, previousRevision);
+      if (Number(changed.changes) !== 1)
+        throw new DomainError('RESOLUTION_STALE', 'Identity đã đổi trong khi xác minh.');
+      // Never resume automation merely because a human cleared one conflict.
+      this.db.prepare('UPDATE devices SET enabled=0 WHERE id=?').run(deviceId);
+      this.db
+        .prepare(
+          'UPDATE device_transports SET identity_verified=0,generation=generation+1 WHERE device_id=?',
+        )
+        .run(deviceId);
+      const auditId = makeId('deviceResolutionAudit');
+      this.db
+        .prepare(
+          'INSERT INTO device_resolution_audit(id,device_id,host_id,previous_revision,new_revision,proof_hash,created_at) VALUES(?,?,?,?,?,?,?)',
+        )
+        .run(
+          auditId, deviceId, hostId, previousRevision, previousRevision + 1,
+          checked.proofHash, new Date(at).toISOString(),
+        );
+      this.db
+        .prepare('UPDATE device_resolution_previews SET used_at=? WHERE token=?')
+        .run(new Date(at).toISOString(), token);
+      return { deviceId, auditId, revision: previousRevision + 1, enabled: false };
+    });
+  }
+
   updateDevice(
     id: string,
     expectedRevision: number,
