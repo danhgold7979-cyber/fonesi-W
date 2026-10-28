@@ -142,6 +142,11 @@ describe('P11/S094 preflight evidence comparison never grants device execution',
     expect(codes({
       ...input, device: { ...input.device!, transports: [] },
     })).toContain('TRANSPORT_NOT_VERIFIED');
+    expect(codes({ ...input, device: { ...input.device!, owner: null } }))
+      .toContain('JOB_OWNER_UNAVAILABLE');
+    expect(codes({ ...input, device: {
+      ...input.device!, owner: { kind: 'MANUAL', expiresAt: at + 1000 },
+    } })).toContain('JOB_OWNER_UNAVAILABLE');
     expect(codes({
       ...input, observedProfile: { ...input.observedProfile!, deviceId: 'other_device' },
     })).toEqual(expect.arrayContaining(['PROFILE_DEVICE_MISMATCH', 'STALE_RECEIPT']));
