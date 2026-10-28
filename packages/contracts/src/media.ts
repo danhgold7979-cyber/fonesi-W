@@ -138,6 +138,9 @@ export interface DeviceStageTransfer {
   remotePath: string;
   nonce: string;
   state: 'INTENT' | 'TRANSFER_UNCERTAIN' | 'SYNC_ACK_UNVERIFIED' | 'NEEDS_REVIEW';
+  remoteReadbackHash: string | null;
+  remoteReadbackBytes: number | null;
+  remoteReadbackAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
