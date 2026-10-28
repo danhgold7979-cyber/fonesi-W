@@ -6,19 +6,19 @@
     "S045"
   ],
   "baseline": "58987bc9f39e5864dff4a0c8aca36e0eb4a6711d",
-  "codeCommit": "4592b4419f164f0d96aa647cddbfae29f9ab9a7b",
+  "codeCommit": "e2d7a5ee6408b8abb28a6bae3783d233edcdfd09",
   "status": "TESTED_STATIC_GATE_NOT_FULL_PHASE_ACCEPTED",
   "ci": {
-    "runId": 40651708189,
-    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40651708189",
+    "runId": 40652191464,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40652191464",
     "conclusion": "success",
     "ubuntu": {
-      "unitPassed": 276,
+      "unitPassed": 277,
       "unitFiles": 31,
       "browserPassed": 28
     },
     "windows": {
-      "unitPassed": 275,
+      "unitPassed": 276,
       "unitFiles": 31,
       "skipped": 1
     }
@@ -28,7 +28,8 @@
     "nested publish/verify/cleanup/transaction admission denied",
     "pure nested allowed",
     "compiler safety admission reflects issue",
-    "no external device action"
+    "no external device action",
+    "nested input/gestures and staging mutations fail closed including doubletap"
   ],
   "notRun": [
     "cross-frame effect token propagation",
