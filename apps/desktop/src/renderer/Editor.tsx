@@ -1164,7 +1164,7 @@ export function Editor(props: Props) {
             <>
               <button
                 role="menuitem"
-                disabled={!clipboard.current?.nodes.length}
+                aria-label="Dán node từ clipboard hệ thống"
                 onClick={() => {
                   void pasteNodes(menu.world);
                   setMenu(null);
