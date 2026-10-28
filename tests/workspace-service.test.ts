@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../packages/database/src/schema.js';
 import { beforeEach, afterEach, describe, it, expect } from 'vitest';
 import {
   mkdtemp,
@@ -44,7 +45,7 @@ describe('workspace operations with real serialized SQLite worker and filesystem
     const status = (await host().request('workspaceStatus')) as WorkspaceStatus;
     expect(status.database).toMatchObject({
       integrity: 'ok',
-      schemaVersion: 12,
+      schemaVersion: SCHEMA_VERSION,
       counts: { workflows: 1, jobs: 0, devices: 0, pendingEffects: 0 },
     });
     expect(status.host).toMatchObject({
@@ -66,7 +67,7 @@ describe('workspace operations with real serialized SQLite worker and filesystem
     })) as WorkspaceBackupResult;
     expect(created).toMatchObject({
       alreadyCreated: false,
-      receipt: { id, integrity: 'ok', schemaVersion: 12 },
+      receipt: { id, integrity: 'ok', schemaVersion: SCHEMA_VERSION },
     });
     const path = join(directory, 'backups', id + '.sqlite');
     expect((await fingerprint(path)).hash).toBe(created.receipt.sha256);
