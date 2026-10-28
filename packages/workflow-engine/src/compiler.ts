@@ -10,6 +10,7 @@ import type {
 } from '@autoreels/contracts';
 import { bundleHash, contentHash } from '@autoreels/domain';
 import { validateBundle } from './index.js';
+import { assessEffectPaths } from './effects.js';
 
 export class CompilationError extends Error {
   constructor(readonly issues: ValidationIssue[]) {
@@ -178,6 +179,10 @@ export interface CompiledWorkflow {
   sourceHash: string;
   closureHash: string;
   bundle: WorkflowBundle;
+  effectPathAudit: {
+    scope: 'STATIC_INTRAGRAPH_ONLY';
+    issues: ValidationIssue[];
+  };
   graphs: { id: string; entryId: string; instructions: CompiledInstruction[] }[];
 }
 function freeze(value: unknown): void {
@@ -201,6 +206,7 @@ export function compileWorkflow(
     sourceHash,
     closureHash: contentHash(resolved),
     bundle: resolved,
+    effectPathAudit: { scope: 'STATIC_INTRAGRAPH_ONLY', issues: assessEffectPaths(resolved) },
     graphs: resolved.graphs.map((graph) => ({
       id: graph.id,
       entryId: graph.nodes.find((n) => n.type === 'start')!.id,
@@ -217,4 +223,10 @@ export function compileWorkflow(
   };
   freeze(compiled);
   return compiled;
+}
+
+/** Fail-closed admission check. A clean result is NOT hardware/provider certification. */
+export function assertStaticEffectPathsSafe(ir: CompiledWorkflow): void {
+  if (ir.effectPathAudit.issues.length)
+    throw new CompilationError(ir.effectPathAudit.issues);
 }
