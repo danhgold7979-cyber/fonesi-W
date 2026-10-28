@@ -1,55 +1,38 @@
 {
   "date": "2026-10-28",
-  "increment": "033",
-  "phase": "P06",
+  "increment": "032",
+  "phase": "P09",
   "steps": [
-    "S056"
+    "S083.1"
   ],
-  "baseBranch": "feat/studio-workspace",
-  "baseline": "d25110f00e60e866258e593b79ab666fd8ac83be",
-  "originalPR": 7,
-  "integratedPR": 11,
-  "sourceCommit": "ee3190fcb40c66561a8f7c43bfad0e74a31dacf5",
-  "sourcePlan": "docs/implementation/INCREMENT-033_PLAN.md",
-  "status": "TESTED_BACKEND_SLICE_NOT_FULL_PHASE_ACCEPTED",
-  "schema": {
-    "from": 13,
-    "to": 14,
-    "unchangedMigrations": "1..13",
-    "migration14": "P06 content epoch/triggers",
-    "p08AuditPreserved": true
-  },
+  "baseline": "feat/studio-workspace@d25110f00e60e866258e593b79ab666fd8ac83be",
+  "codeCommit": "9d52d60163112dd7a821345cd0bad877801b04ad",
+  "status": "TESTED_SLICE_NOT_FULL_PHASE_ACCEPTED",
   "ci": {
-    "runId": 40647352151,
-    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40647352151",
+    "runId": 40646572330,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40646572330",
     "conclusion": "success",
     "ubuntu": {
-      "unitPassed": 269,
-      "files": 29,
-      "playwrightPassed": 27
+      "passed": 264,
+      "files": 27,
+      "browser": 26
     },
     "windows": {
-      "unitPassed": 268,
-      "files": 29,
+      "passed": 263,
       "skipped": 1,
-      "skipReason": "pre-existing Unix-only SDK fixture"
+      "files": 27
     }
   },
-  "implemented": [
-    "Process-scoped keyset ContentPage API",
-    "bounded cursor and stale epoch",
-    "batch ordered media asset read",
-    "exact count",
-    "SQLite v13 P08 audit to v14 upgrade checks",
-    "cross-Process and cross-filter test",
-    "browser named host API"
+  "validated": [
+    "bounded relative selector",
+    "ordered non-ambiguous fallback",
+    "existing v1 preserved",
+    "host fixture no input"
   ],
-  "notRun": [
-    "Complete Process client paging/selection/sorting",
-    "Windows10 desktop interactive",
-    "physical Android phone fleet",
-    "real media volume benchmarks",
-    "app adapters and publishing",
-    "offline installer"
+  "unrun": [
+    "real Android",
+    "OCR/stream/gesture",
+    "Win10 acceptance",
+    "fleet scale/installer"
   ]
 }

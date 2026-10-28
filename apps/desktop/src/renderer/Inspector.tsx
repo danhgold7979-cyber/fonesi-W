@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DeviceRecord, InspectorSnapshot, UiElement } from '@autoreels/contracts';
-import { pickUiElement, queryUiElements, suggestUiSelector } from '@autoreels/contracts';
+import { pickUiElement, inspectUiSelectorMatches, suggestUiSelector } from '@autoreels/contracts';
 import { api } from './api.js';
 import { Dialog, Empty } from './components.js';
 export function Inspector({
@@ -30,13 +30,17 @@ export function Inspector({
     };
   }, []);
   const query = useMemo(() => {
-    if (!snapshot || !selector.trim()) return { nodes: [], error: '' };
+    if (!snapshot || !selector.trim())
+      return { nodes: [], error: '', strategyIndex: null, totalStrategies: 0, ambiguous: false };
     try {
-      return { nodes: queryUiElements(snapshot.nodes, JSON.parse(selector)), error: '' };
+      return { ...inspectUiSelectorMatches(snapshot.nodes, JSON.parse(selector)), error: '' };
     } catch {
       return {
         nodes: [],
-        error: 'Selector JSON không hợp lệ. Dùng version:1, all:[{field,op,value}].',
+        strategyIndex: null,
+        totalStrategies: 0,
+        ambiguous: false,
+        error: 'Selector JSON không hợp lệ. Dùng version:1/all hoặc version:2/strategies với các predicate cho phép.',
       };
     }
   }, [snapshot, selector]);
@@ -210,6 +214,12 @@ export function Inspector({
               ) : (
                 <p role="status">
                   {query.nodes.length} phần tử khớp
+                  {query.totalStrategies > 1 && query.strategyIndex
+                    ? ' · chiến lược ' + query.strategyIndex + '/' + query.totalStrategies
+                    : ''}
+                  {query.totalStrategies > 1 && !query.strategyIndex
+                    ? ' · đã thử ' + query.totalStrategies + ' fallback'
+                    : ''}
                   {query.nodes.length > 1
                     ? ' — chưa duy nhất'
                     : query.nodes.length === 0
