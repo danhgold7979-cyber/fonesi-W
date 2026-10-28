@@ -1,6 +1,6 @@
 import { DatabaseSync, backup } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
-import { dirname, resolve, basename, isAbsolute } from 'node:path';
+import { dirname, resolve, basename, isAbsolute, extname } from 'node:path';
 import { mkdirSync, existsSync, renameSync, rmSync } from 'node:fs';
 import {
   appDefinitionSchema,
@@ -46,6 +46,7 @@ import type {
   ScannedAsset,
   ContentAssetInfo,
   JobMediaPreflightPlan,
+  DeviceStageTransfer,
   SchedulePreviewDto,
   JobChangeRequest,
   JobChangePreview,
@@ -2098,6 +2099,9 @@ export class StudioDatabase {
           .get(id),
       );
       assertJobTransition(job.state, to, pending);
+      if (to === 'RUNNING' &&
+          this.db.prepare('SELECT 1 FROM device_stage_transfers WHERE job_id=? LIMIT 1').get(id))
+        throw new DomainError('DEVICE_STAGE_UNVERIFIED', 'Android MediaStore verification missing.');
       this.db.prepare('UPDATE jobs SET state=?,revision=revision+1 WHERE id=?').run(to, id);
       return { ...job, state: to, revision: job.revision + 1 };
     });
@@ -2344,7 +2348,10 @@ export class StudioDatabase {
           .prepare(
             "SELECT 1 FROM effects e JOIN jobs j ON j.id=e.job_id WHERE j.device_id=? AND e.state IN('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
           )
-          .get(deviceId)
+          .get(deviceId) ||
+        this.db.prepare(
+          'SELECT 1 FROM device_stage_transfers WHERE device_id=? LIMIT 1',
+        ).get(deviceId)
       )
         return { status: 'NEEDS_REVIEW' };
       const owner = this.db
@@ -2436,7 +2443,10 @@ export class StudioDatabase {
         const hasEffect = Boolean(
           this.db.prepare('SELECT 1 FROM effects WHERE job_id=?').get(job.id),
         );
-        if (job.state === 'PREFLIGHT' && !hasEffect) {
+        const hasStage = Boolean(
+          this.db.prepare('SELECT 1 FROM device_stage_transfers WHERE job_id=?').get(job.id),
+        );
+        if (job.state === 'PREFLIGHT' && !hasEffect && !hasStage) {
           this.db
             .prepare("UPDATE jobs SET state='QUEUED',revision=revision+1 WHERE id=?")
             .run(job.id);
@@ -2464,7 +2474,7 @@ export class StudioDatabase {
           this.queueEvent(
             job.id,
             'NEEDS_REVIEW',
-            { lostGeneration: Number(claim.generation), previousState: job.state, hasEffect },
+            { lostGeneration: Number(claim.generation), previousState: job.state, hasEffect, hasStage },
             at,
           );
         } else
@@ -2486,6 +2496,158 @@ export class StudioDatabase {
     });
   }
 
+
+
+  private stageTransfer(id: string): DeviceStageTransfer {
+    idSchema.parse(id);
+    const row = this.db.prepare('SELECT * FROM device_stage_transfers WHERE id=?').get(id);
+    if (!row) throw new DomainError('STAGE_NOT_FOUND', 'Remote stage intent is missing.');
+    return {
+      id: String(row.id),
+      jobId: String(row.job_id),
+      deviceId: String(row.device_id),
+      hostId: String(row.host_id),
+      assetId: String(row.asset_id),
+      ordinal: Number(row.ordinal),
+      snapshotHash: String(row.snapshot_hash),
+      expectedHash: String(row.expected_hash),
+      expectedBytes: Number(row.expected_bytes),
+      claimGeneration: Number(row.claim_generation),
+      remotePath: String(row.remote_path),
+      nonce: String(row.nonce),
+      state: row.state as DeviceStageTransfer['state'],
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+    };
+  }
+
+  /** Trusted DB-worker only; never send stage records to public authoring IPC. */
+  listDeviceStageTransfers(jobId: string): DeviceStageTransfer[] {
+    idSchema.parse(jobId);
+    return this.db
+      .prepare('SELECT id FROM device_stage_transfers WHERE job_id=? ORDER BY ordinal LIMIT 33')
+      .all(jobId)
+      .map((row) => this.stageTransfer(String(row.id)));
+  }
+
+  /**
+   * Persist owner/remote destination before any Android byte write.
+   * Only a verified JOB claim and frozen media source may create an intent.
+   */
+  prepareClaimedDeviceStage(args: {
+    jobId: string;
+    hostId: string;
+    ordinal: number;
+    expectedJobRevision: number;
+    expectedSnapshotHash: string;
+    lease: DeviceLease;
+    at: number;
+  }): DeviceStageTransfer {
+    idSchema.parse(args.jobId);
+    idSchema.parse(args.hostId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    if (!Number.isSafeInteger(args.ordinal) || args.ordinal < 0 || args.ordinal >= 32 ||
+        !Number.isSafeInteger(args.expectedJobRevision) || args.expectedJobRevision < 0)
+      throw new DomainError('STAGE_INPUT_INVALID', 'Invalid ordinal or job revision.');
+    return this.transaction(() => {
+      this.assertEffectClaim(args.jobId, args.lease, args.at);
+      const { job, snapshotHash } = this.getJob(args.jobId);
+      if (job.state !== 'PREFLIGHT' || job.revision !== args.expectedJobRevision ||
+          job.deviceId !== args.lease.deviceId ||
+          snapshotHash !== args.expectedSnapshotHash)
+        throw new DomainError('STAGE_JOB_STALE', 'Claimed job or immutable snapshot changed.');
+      if (this.db.prepare('SELECT 1 FROM effects WHERE job_id=? LIMIT 1').get(job.id))
+        throw new DomainError('STAGE_EFFECT_PRESENT', 'External effect exists; stage needs review.');
+      if (this.db.prepare(
+        'SELECT 1 FROM device_stage_transfers WHERE job_id=? AND ordinal=?',
+      ).get(job.id, args.ordinal))
+        throw new DomainError('STAGE_ALREADY_PREPARED', 'Remote asset already has a durable intent.');
+      const plan = this.jobMediaPreflightPlan(job.id, args.hostId);
+      const asset = plan.entries[args.ordinal];
+      if (!asset || plan.entries.length > 32)
+        throw new DomainError('STAGE_ASSET_INVALID', 'No frozen asset at this ordinal.');
+      const extension = extname(asset.binding.relativePath).toLowerCase();
+      if (!/^\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension) ||
+          !Number.isSafeInteger(asset.pinnedBytes) || asset.pinnedBytes <= 0 ||
+          asset.pinnedBytes > 512 * 1024 * 1024)
+        throw new DomainError('STAGE_ASSET_INVALID', 'Unsupported or overbudget pinned media.');
+      const nonce = randomUUID().replaceAll('-', ''),
+        remotePath = '/sdcard/Download/AutoReelsStudio/job-' + job.id +
+          '/asset-' + String(args.ordinal).padStart(3, '0') + '-' + nonce + extension,
+        id = makeId('stage'),
+        timestamp = new Date(args.at).toISOString();
+      this.db.prepare(
+        'INSERT INTO device_stage_transfers VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      ).run(
+        id, job.id, job.deviceId, args.hostId, asset.assetId, args.ordinal,
+        snapshotHash, asset.pinnedHash, asset.pinnedBytes, args.lease.generation,
+        remotePath, nonce, 'INTENT', timestamp, timestamp,
+      );
+      this.queueEvent(job.id, 'DEVICE_STAGE_INTENT', {
+        stageId: id, ordinal: args.ordinal, claimGeneration: args.lease.generation,
+      }, args.at);
+      return this.stageTransfer(id);
+    });
+  }
+
+  private assertStageClaim(
+    stage: DeviceStageTransfer, lease: DeviceLease,
+    expectedJobRevision: number, at: number,
+  ): void {
+    this.assertEffectClaim(stage.jobId, lease, at);
+    const { job, snapshotHash } = this.getJob(stage.jobId);
+    if (stage.deviceId !== lease.deviceId ||
+        stage.claimGeneration !== lease.generation ||
+        job.state !== 'PREFLIGHT' ||
+        job.revision !== expectedJobRevision ||
+        snapshotHash !== stage.snapshotHash ||
+        this.db.prepare('SELECT 1 FROM effects WHERE job_id=?').get(job.id))
+      throw new DomainError('STAGE_CLAIM_STALE', 'Transfer no longer has a valid claim.');
+  }
+
+  /** Persist uncertainty in SQLite BEFORE the ADB Sync SEND boundary. */
+  beginClaimedDeviceStageAttempt(args: {
+    stageId: string;
+    lease: DeviceLease;
+    expectedJobRevision: number;
+    at: number;
+  }): DeviceStageTransfer {
+    return this.transaction(() => {
+      const stage = this.stageTransfer(args.stageId);
+      this.assertStageClaim(stage, args.lease, args.expectedJobRevision, args.at);
+      if (stage.state !== 'INTENT')
+        throw new DomainError('STAGE_NOT_ELIGIBLE', 'Remote staging was already attempted.');
+      this.db.prepare(
+        "UPDATE device_stage_transfers SET state='TRANSFER_UNCERTAIN',updated_at=? WHERE id=?",
+      ).run(new Date(args.at).toISOString(), stage.id);
+      this.queueEvent(stage.jobId, 'DEVICE_STAGE_TRANSFER_UNCERTAIN', {
+        stageId: stage.id, ordinal: stage.ordinal, claimGeneration: stage.claimGeneration,
+      }, args.at);
+      return this.stageTransfer(stage.id);
+    });
+  }
+
+  /** ADB Sync ACK does NOT prove a MediaStore index or selected asset. */
+  recordClaimedDeviceStageSyncAck(args: {
+    stageId: string;
+    lease: DeviceLease;
+    expectedJobRevision: number;
+    at: number;
+  }): DeviceStageTransfer {
+    return this.transaction(() => {
+      const stage = this.stageTransfer(args.stageId);
+      this.assertStageClaim(stage, args.lease, args.expectedJobRevision, args.at);
+      if (stage.state !== 'TRANSFER_UNCERTAIN')
+        throw new DomainError('STAGE_NOT_ELIGIBLE', 'Only uncertain transfers may record ACK.');
+      this.db.prepare(
+        "UPDATE device_stage_transfers SET state='SYNC_ACK_UNVERIFIED',updated_at=? WHERE id=?",
+      ).run(new Date(args.at).toISOString(), stage.id);
+      this.queueEvent(stage.jobId, 'DEVICE_STAGE_ACK_NOT_INDEXED', {
+        stageId: stage.id, ordinal: stage.ordinal, claimGeneration: stage.claimGeneration,
+      }, args.at);
+      return this.stageTransfer(stage.id);
+    });
+  }
 
   /** Called only inside an SQLite transaction; validates both lease and claim fencing. */
   private assertEffectClaim(jobId: string, lease: DeviceLease, at: number): void {
@@ -2546,6 +2708,8 @@ export class StudioDatabase {
       );
       if (nodes.length !== 1)
         throw new DomainError('EFFECT_NODE_MISMATCH', 'Effect node not in pinned workflow.');
+      if (this.db.prepare('SELECT 1 FROM device_stage_transfers WHERE job_id=? LIMIT 1').get(job.id))
+        throw new DomainError('DEVICE_STAGE_UNVERIFIED', 'Unverified device media staging blocks effects.');
       const fromState = args.kind === 'PUBLISH' ? 'RUNNING' : 'POSTED';
       const toState = args.kind === 'PUBLISH' ? 'POST_INTENT' : 'COMMENT_PENDING';
       if (job.state !== fromState)
@@ -2681,6 +2845,7 @@ export class StudioDatabase {
       this.db
         .prepare("SELECT 1 FROM effects WHERE state IN('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')")
         .get() ||
+      this.db.prepare('SELECT 1 FROM device_stage_transfers LIMIT 1').get() ||
       this.db
         .prepare('SELECT 1 FROM leases WHERE owner_id IS NOT NULL AND expires_at>?')
         .get(Date.now())

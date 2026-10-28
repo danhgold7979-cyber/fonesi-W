@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -131,6 +131,31 @@ CREATE TRIGGER content_epoch_update AFTER UPDATE ON content_items BEGIN UPDATE q
 CREATE TRIGGER content_epoch_delete AFTER DELETE ON content_items BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
 CREATE TRIGGER content_assets_epoch_insert AFTER INSERT ON content_assets BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
 CREATE TRIGGER content_assets_epoch_delete AFTER DELETE ON content_assets BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
+`,
+  },
+  {
+    version: 15,
+    sql: `
+CREATE TABLE device_stage_transfers(
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES jobs(id),
+  device_id TEXT NOT NULL REFERENCES devices(id),
+  host_id TEXT NOT NULL,
+  asset_id TEXT NOT NULL REFERENCES assets(id),
+  ordinal INTEGER NOT NULL CHECK(ordinal>=0 AND ordinal<32),
+  snapshot_hash TEXT NOT NULL CHECK(length(snapshot_hash)=64),
+  expected_hash TEXT NOT NULL CHECK(length(expected_hash)=64),
+  expected_bytes INTEGER NOT NULL CHECK(expected_bytes>0),
+  claim_generation INTEGER NOT NULL CHECK(claim_generation>0),
+  remote_path TEXT NOT NULL,
+  nonce TEXT NOT NULL CHECK(length(nonce)=32),
+  state TEXT NOT NULL CHECK(state IN('INTENT','TRANSFER_UNCERTAIN','SYNC_ACK_UNVERIFIED','NEEDS_REVIEW')),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(job_id,ordinal),
+  UNIQUE(device_id,remote_path)
+) STRICT;
+CREATE INDEX stage_transfer_device ON device_stage_transfers(device_id,state,job_id);
 `,
   },
 ] as const;

@@ -13,6 +13,24 @@ export type InternalRequest =
   | { command: 'workspace.validateBackup'; path: string }
   | { command: 'asset.binding'; processId: string; assetId: string; hostId: string }
   | { command: 'job.mediaPlan'; jobId: string; hostId: string }
+  | {
+      command: 'stage.prepare';
+      jobId: string;
+      hostId: string;
+      ordinal: number;
+      expectedJobRevision: number;
+      expectedSnapshotHash: string;
+      lease: DeviceLease;
+      at: number;
+    }
+  | {
+      command: 'stage.beginAttempt' | 'stage.syncAck';
+      stageId: string;
+      lease: DeviceLease;
+      expectedJobRevision: number;
+      at: number;
+    }
+  | { command: 'stage.list'; jobId: string }
   | { command: 'asset.adoptPreview'; binding: MediaAssetBinding; scanned: ScannedAsset }
   | { command: 'asset.adoptPlan'; token: string; hostId: string }
   | { command: 'asset.adoptApply'; token: string; hostId: string; scanned: ScannedAsset }
@@ -143,6 +161,14 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.mediaAssetBinding(request.processId, request.assetId, request.hostId);
     case 'job.mediaPlan':
       return db.jobMediaPreflightPlan(request.jobId, request.hostId);
+    case 'stage.prepare':
+      return db.prepareClaimedDeviceStage(request);
+    case 'stage.beginAttempt':
+      return db.beginClaimedDeviceStageAttempt(request);
+    case 'stage.syncAck':
+      return db.recordClaimedDeviceStageSyncAck(request);
+    case 'stage.list':
+      return db.listDeviceStageTransfers(request.jobId);
     case 'asset.adoptPreview':
       return db.previewMediaAdoption(
         request.binding.grant.processId,

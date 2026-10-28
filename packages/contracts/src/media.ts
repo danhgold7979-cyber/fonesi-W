@@ -122,3 +122,22 @@ export interface JobMediaByteReport {
   verifiedMediaCount: number;
   canDispatch: false;
 }
+
+/** Private DB/host remote staging journal; not a posting or MediaStore receipt. */
+export interface DeviceStageTransfer {
+  id: string;
+  jobId: string;
+  deviceId: string;
+  hostId: string;
+  assetId: string;
+  ordinal: number;
+  snapshotHash: string;
+  expectedHash: string;
+  expectedBytes: number;
+  claimGeneration: number;
+  remotePath: string;
+  nonce: string;
+  state: 'INTENT' | 'TRANSFER_UNCERTAIN' | 'SYNC_ACK_UNVERIFIED' | 'NEEDS_REVIEW';
+  createdAt: string;
+  updatedAt: string;
+}
