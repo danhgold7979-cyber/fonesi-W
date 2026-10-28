@@ -79,6 +79,7 @@ const api: StudioApi = {
   listProcesses: (includeArchived = false) => send('listProcesses', { includeArchived }),
   saveProcess: (process, expectedRevision) => send('saveProcess', { process, expectedRevision }),
   content: (processId) => send('content', { processId }),
+  contentPage: (query) => send('contentPage', { query }),
   saveContent: (item, expectedRevision) => send('saveContent', { item, expectedRevision }),
 };
 contextBridge.exposeInMainWorld('studioApi', api);

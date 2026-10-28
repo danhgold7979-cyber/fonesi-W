@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment033 / P06-S056 — content paging + schema v14 integration
+
+Đã tích hợp code P06 ContentPage từ PR #7 của nhánh cũ vào base mới sau khi P08 đã dùng migration v13 và P09 selector/fallback (PR #10) cũng đã merge. **Giữ nguyên mọi byte SQL của migration v13 P08**, thêm content epoch/triggers như append-only **migration v14**, nâng `SCHEMA_VERSION=14`. Typed named API `contentPage`, SQLite cursor khóa Process/filter/epoch, batch ordered asset reads; Process editor vẫn tải đủ dữ liệu cho bulk/schedule để tránh thay đổi ngầm ý nghĩa Select All. Kế hoạch tại [INCREMENT-033_PLAN.md](INCREMENT-033_PLAN.md), bản gốc P06 tại [INCREMENT-033_ORIGIN.md](INCREMENT-033_ORIGIN.md), kết quả [INCREMENT-033_RESULTS.md](INCREMENT-033_RESULTS.md), receipt [checkpoint-026.json](../evidence/implementation/checkpoint-026.json).
+
+Đã thêm test nâng DB P08 schema13 có `device_resolution_audit` sang14, kiểm tra các checksum migration1–13 không đổi và nội dung/audit còn qua restart. **CI tích hợp [40647352151](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40647352151) SUCCESS** Ubuntu **269/269 unit/integration (29 files) + 27/27 browser**, hosted Windows **268 pass/1 Unix-only SDK fixture skip (29 files)**; source/build/plan/Windows launcher PASS. P06 vẫn **TESTED backend slice**, chưa phải P06/S056 full UI acceptance; Win10/Android/device load NOT_RUN.
+
 ## Increment032 / P09-S083.1 — selector v2 theo cha–con và fallback
 
 Đã triển khai selector v2 trên snapshot XML: 1–5 chiến lược, mỗi chiến lược tối đa12 predicate, quan hệ ancestor giới hạn20 cấp. Fallback chỉ thử khi chiến lược trước có0 match; nếu có2+ match trả ambiguous, không chọn bừa hoặc phát lệnh Android. V1 giữ tương thích. Inspector hiển thị chiến lược và số match thật; chặn JSON không an toàn, regex/eval, text mật khẩu, parent cycles. Kế hoạch [INCREMENT-032_PLAN.md](INCREMENT-032_PLAN.md), kết quả [INCREMENT-032_RESULTS.md](INCREMENT-032_RESULTS.md), receipt [checkpoint-025.json](../evidence/implementation/checkpoint-025.json).

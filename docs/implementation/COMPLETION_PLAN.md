@@ -16,7 +16,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 | P03 | Shell | Diagnostics, lifecycle, navigation/accessibility; Windows DPI/multi-monitor |
 | P04 | Workflow editor | Đã test thêm group/collapse/drag, convert local subflow, routing/align/layout; còn external clipboard closure/preferences/command search và interaction gates |
 | P05 | Compiler/engine | Đã test typed mapping/pinned closure/immutable IR/debugger/UI và audit đường đi effect nội bộ; còn audit qua subflow/loop, journal runtime/providers/DEVICE_TEST thật |
-| P06 | Process/media | Đã test archive/restore, clone preview/scoped ownership, rebind và explicit adoption; còn thumbnails/cache, query/migration UI gaps |
+| P06 | Process/media | P06/S056 backend ContentPage migrated to schema14 with Process-scoped epoch-fenced keyset paging and batch assets; legacy all-row editor still untouched to preserve Select All/scheduling; thumbnails/cache, query-scoped UI selection/search/sort and Windows corpus performance remain OPEN |
 | P07 | Scheduler | Đã test app/snapshot filter, local day/week/month, paging/virtual timeline và scoped spread/cancel; còn dispatch/recovery/overdue, auto-append/drag/sleep-resume |
 | P08 | Device/worker | Có security fence + native operator review/confirmation, audit SQLite v13 và Increment031 read-only audit history/cursor trên UI; còn nghiệm thu Windows10 với 2 Android thật, worker coordination, cross-host trust, USB/LAN và scale |
 | P09 | Stream/Inspector | Đã test XML/PNG Inspector, read-only pick/query + S083.1 relative ancestor and ordered v2 fallback; còn real stream decoder, XPath/OCR/image/Unicode/multitouch, Win10/Android physical evidence |

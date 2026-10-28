@@ -30,7 +30,7 @@ import type {
 } from './media.js';
 import type { AppDefinition, ProcessDefinition } from './models.js';
 import type { WorkflowBundle, JsonValue, ValidationIssue } from './types.js';
-import type { WorkflowDraft, WorkflowVersion, ContentItem } from './persistence.js';
+import type { WorkflowDraft, WorkflowVersion, ContentItem, ContentPage, ContentQuery } from './persistence.js';
 
 export interface WorkflowSummary {
   id: string;
@@ -172,6 +172,7 @@ export interface StudioApi {
     expectedRevision: number | null,
   ): Promise<ProcessDefinition>;
   content(processId: string): Promise<ContentItem[]>;
+  contentPage(query: ContentQuery): Promise<ContentPage>;
   saveContent(item: ContentItem, expectedRevision: number | null): Promise<ContentItem>;
 }
 export type ApiCommand =
@@ -238,6 +239,7 @@ export type ApiCommand =
   | 'listProcesses'
   | 'saveProcess'
   | 'content'
+  | 'contentPage'
   | 'saveContent';
 export type Transport = (command: ApiCommand, input: unknown) => Promise<unknown>;
 export function createStudioApi(transport: Transport): StudioApi {
@@ -321,6 +323,7 @@ export function createStudioApi(transport: Transport): StudioApi {
     listProcesses: (includeArchived = false) => call('listProcesses', { includeArchived }),
     saveProcess: (process, expectedRevision) => call('saveProcess', { process, expectedRevision }),
     content: (processId) => call('content', { processId }),
+    contentPage: (query) => call('contentPage', { query }),
     saveContent: (item, expectedRevision) => call('saveContent', { item, expectedRevision }),
   };
 }
