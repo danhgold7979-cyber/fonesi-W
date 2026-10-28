@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment028 / P05-S045 — static effect path safety trên graph
+
+Đã code và merge [PR #6](https://github.com/danhgold7979-cyber/fonesi-W/pull/6) vào `feat/studio-workspace` tại `6074b9db`. Kế hoạch trước code tại [INCREMENT-028_PLAN.md](INCREMENT-028_PLAN.md), kết quả [INCREMENT-028_RESULTS.md](INCREMENT-028_RESULTS.md), receipt [checkpoint-021.json](../evidence/implementation/checkpoint-021.json). Compiler đã gắn kiểm tra đường đi: typed `transaction.next` mới cấp intent PUBLISH/COMMENT; đường error không thể lách bước ghi ý định; publish/comment chưa verify không được sang effect kế tiếp hoặc cleanup/normal success. Unknown external tap bị chặn bởi admission helper; chỉ là **static intragraph audit**, không phải provider/phone/real-job proof.
+
+**CI source và PR:** [40642239427](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40642239427) Ubuntu **250/250 unit, 23/23 Playwright UI**; Windows **249 pass, 1 skip Unix SDK** /27 files. Source test/build/plan PASS. CI tích hợp của merge `6074b9db` đang chạy tại thời điểm ghi cập nhật, không gọi pass trước khi có kết quả. Đã tránh trùng số với P08 Increment027 được merge độc lập, không ghi đè [checkpoint-020](../evidence/implementation/checkpoint-020.json). P05 và P08 vẫn **PARTIAL**; hardware, provider, audit cross-graph, effect journal runtime và publish verification còn **NOT_RUN/OPEN**.
+
 ## Increment027 / P08-S072 — conflict readiness chỉ đọc
 
 Đã code công cụ nội bộ kiểm tra trạng thái xung đột ADB, báo mã chặn cho physical verification, transport thiếu chứng cứ mới, lease đang dùng và job chưa an toàn. Tuyệt đối **không cấp quyền tự gỡ CONFLICT**, không chạm Android hoặc ghi lại fingerprint/raw serial. Đã có tests dữ liệu SQLite qua restart và tính read-only.
