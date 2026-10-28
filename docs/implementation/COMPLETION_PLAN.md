@@ -21,7 +21,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 | P08 | Device/worker | Có security fence + native operator review/confirmation, audit SQLite v13 và Increment031 read-only audit history/cursor trên UI; còn nghiệm thu Windows10 với 2 Android thật, worker coordination, cross-host trust, USB/LAN và scale |
 | P09 | Stream/Inspector | Đã có XML/PNG Inspector, selector v2 relative/fallback + Increment034 read-only fresh ADB selector probing qua shared lease (0/1/n, no touch); còn real stream decoder, XPath/OCR/image/Unicode/multitouch và hardware Windows10/Android acceptance |
 | P10 | Technical risk | Verify exact devices/app versions/locale/USB/LAN; owned staging, identity, publish signals, routing |
-| P11 | Execution/effects | Journal-first executor, independent comments, uncertainty/review/recovery/owned cleanup |
+| P11 | Execution/effects | Increment035: SQLite atomic effect intent+attempt uncertainty gated by live JOB claim, fingerprint and pinned node, crash/restart review tested; P11 runtime adapter/verification/independent comments/cleanup and real Android publishing remain OPEN |
 | P12 | App adapters | Profile-specific Facebook Reels + TikTok trước; Lite/Instagram/Threads/photo theo evidence |
 | P13 | Operations | Đã test health/allowlisted diagnostic + verified local backups; còn APK/network, secrets, run logs/retention/power/staging resource bounds |
 | P14 | Packaging | Đã có Windows source setup/launcher/guide; còn installer/offline notices, clean-machine/upgrade/rollback/completeness; publication riêng |
