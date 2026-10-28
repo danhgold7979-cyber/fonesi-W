@@ -4,6 +4,7 @@ import type {
   DeviceCapture,
   DeviceRecord,
   DeviceSnapshot,
+  DeviceResolutionPreview,
   ManualDeviceAction,
 } from '@autoreels/contracts';
 import { api } from './api.js';
@@ -548,6 +549,9 @@ function DeviceDetails({
     [packages, setPackages] = useState<string[]>([]),
     [foreground, setForeground] = useState<string | null>(null),
     [packageFilter, setPackageFilter] = useState('');
+  const [resolution, setResolution] = useState<DeviceResolutionPreview | null>(null),
+    [resolutionName, setResolutionName] = useState(''),
+    [physicallyChecked, setPhysicallyChecked] = useState(false);
   const alive = useRef(true),
     working = useRef(false),
     pointer = useRef<{ x: number; y: number; at: number } | null>(null);
@@ -557,6 +561,11 @@ function DeviceDetails({
       alive.current = false;
     };
   }, []);
+  useEffect(() => {
+    setResolution(null);
+    setResolutionName('');
+    setPhysicallyChecked(false);
+  }, [device.id, device.revision, device.identity]);
   async function task(operation: () => Promise<void>): Promise<void> {
     if (working.current) return;
     working.current = true;
@@ -699,6 +708,100 @@ function DeviceDetails({
                 {reason}
               </p>
             ))}
+            {device.identity === 'CONFLICT' && (
+              <section className="device-resolution" aria-label="Khôi phục nhận diện thiết bị">
+                <strong>Thiết bị bị khóa do nhận diện ADB mâu thuẫn</strong>
+                <p className="muted">
+                  Chỉ khôi phục khi điện thoại thực đã kết nối trả lại fingerprint cũ và
+                  bạn đã tự kiểm tra trên máy. Không thay thế/di chuyển lịch của thiết bị.
+                </p>
+                <button
+                  disabled={busy}
+                  onClick={() => {
+                    void task(async () => {
+                      const preview = await api.previewDeviceConflictResolution(
+                        device.id, device.revision,
+                      );
+                      if (alive.current) {
+                        setResolution(preview);
+                        setResolutionName('');
+                        setPhysicallyChecked(false);
+                      }
+                    });
+                  }}
+                >
+                  Kiểm tra khả năng khôi phục
+                </button>
+                {resolution && (
+                  <div className="device-resolution-preview">
+                    {resolution.blockers.length > 0 && (
+                      <p role="alert">Chưa thể khôi phục: {resolution.blockers.join(', ')}</p>
+                    )}
+                    {resolution.canApply && resolution.token && (
+                      <>
+                        <p>
+                          ADB đã đối chiếu được fingerprint lịch sử. Điều này chưa thay
+                          thế việc bạn xác nhận đúng điện thoại bằng mắt.
+                        </p>
+                        <p className="muted">
+                          Phiếu hết hạn: {resolution.expiresAt
+                            ? new Date(resolution.expiresAt).toLocaleTimeString('vi-VN')
+                            : '—'}
+                        </p>
+                        <label className="field">
+                          Nhập lại đúng tên thiết bị đã đăng ký: {resolution.name}
+                          <input
+                            aria-label="Tên thiết bị xác nhận"
+                            value={resolutionName}
+                            autoComplete="off"
+                            onChange={(event) => setResolutionName(event.target.value)}
+                          />
+                        </label>
+                        <label>
+                          <input
+                            aria-label="Tôi đã kiểm tra điện thoại thật"
+                            type="checkbox"
+                            checked={physicallyChecked}
+                            onChange={(event) => setPhysicallyChecked(event.target.checked)}
+                          />{' '}
+                          Tôi đang cầm đúng điện thoại lịch sử và đồng ý kiểm tra lần cuối
+                          trong hộp thoại desktop. Sau khi khôi phục, thiết bị sẽ TẮT.
+                        </label>
+                        <button
+                          disabled={
+                            busy ||
+                            !physicallyChecked ||
+                            resolutionName.normalize('NFC').trim() !==
+                              resolution.name.normalize('NFC').trim() ||
+                            resolution.expectedRevision !== device.revision
+                          }
+                          onClick={() => {
+                            const token = resolution.token!;
+                            void task(async () => {
+                              const result = await api.applyDeviceConflictResolution(
+                                device.id, token, resolutionName,
+                              );
+                              if (!alive.current) return;
+                              changed(result.snapshot);
+                              setResolution(null);
+                              setResolutionName('');
+                              setPhysicallyChecked(false);
+                              notify(
+                                result.cancelled
+                                  ? 'Đã hủy xác nhận. Xung đột vẫn được khóa.'
+                                  : 'Đã ghi audit khôi phục. Thiết bị đang TẮT; quét và chủ động bật lại sau khi kiểm tra.',
+                              );
+                            });
+                          }}
+                        >
+                          Xác nhận khôi phục bằng Electron
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
             <div className="quick-key-actions">
               {(['BACK', 'HOME', 'RECENT', 'POWER', 'VOLUME_UP', 'VOLUME_DOWN'] as const).map(
                 (key, index) => (
