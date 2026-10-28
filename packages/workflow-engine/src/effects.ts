@@ -39,6 +39,68 @@ export function assessEffectPaths(input: WorkflowBundle): ValidationIssue[] {
     seenIssues.add(key);
     issues.push({ code, message, path: 'graphs.' + graphId + '.nodes.' + nodeId, graphId, nodeId });
   };
+  // Intragraph analysis cannot carry journal/verification tokens across calls.
+  // Conservatively block nested graphs with any effect-sensitive operation,
+  // including a transitive sensitive grandchild. Pure subflows stay admitted.
+  const graphs = new Map(shape.value.graphs.map((graph) => [graph.id, graph]));
+  const cache = new Map<string, boolean>();
+  const active = new Set<string>();
+  const riskyNode = (node: WorkflowNode): boolean =>
+    [
+      'transaction', 'verify', 'cleanup', 'stage', 'selectmedia',
+      'tap', 'doubletap', 'hold', 'drag', 'swipe', 'scroll', 'pinch',
+      'type', 'clear', 'keyboard',
+    ].includes(node.type);
+  const childRef = (node: WorkflowNode): string | null => {
+    if (node.type === 'subflow')
+      return typeof node.config.graphRef === 'string' ? node.config.graphRef : null;
+    if (node.type === 'loop')
+      return typeof node.config.bodyGraphRef === 'string' ? node.config.bodyGraphRef : null;
+    return null;
+  };
+  function requiresCrossFrameJournal(graphId: string, depth: number): boolean {
+    if (depth > 64 || active.has(graphId)) return true;
+    const prior = cache.get(graphId);
+    if (prior !== undefined) return prior;
+    const graph = graphs.get(graphId);
+    if (!graph) return true;
+    active.add(graphId);
+    let risky = false;
+    for (const node of graph.nodes) {
+      if (riskyNode(node)) {
+        risky = true;
+        break;
+      }
+      const child = childRef(node);
+      if (child && requiresCrossFrameJournal(child, depth + 1)) {
+        risky = true;
+        break;
+      }
+      if (node.type === 'subflow' && node.config.workflowVersionRef && !child) {
+        // Unresolved pinned external calls must not be presumed pure.
+        risky = true;
+        break;
+      }
+    }
+    active.delete(graphId);
+    cache.set(graphId, risky);
+    return risky;
+  }
+  for (const graph of shape.value.graphs) {
+    for (const node of graph.nodes) {
+      const child = childRef(node);
+      if (
+        (child && requiresCrossFrameJournal(child, 0)) ||
+        (node.type === 'subflow' && node.config.workflowVersionRef && !child)
+      )
+        add(
+          'NESTED_EFFECT_CONTEXT_UNSUPPORTED',
+          'Nested graph may require a journal/verification token across call frames; real execution is blocked until certified cross-frame propagation exists',
+          graph.id,
+          node.id,
+        );
+    }
+  }
   const MAX_VISITS = 120000;
   for (const graph of shape.value.graphs) {
     const byId = new Map(graph.nodes.map((node) => [node.id, node]));
