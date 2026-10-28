@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-28",
+  "increment": "032",
+  "phase": "P09",
+  "steps": [
+    "S083.1"
+  ],
+  "baseline": "feat/studio-workspace@d25110f00e60e866258e593b79ab666fd8ac83be",
+  "codeCommit": "9d52d60163112dd7a821345cd0bad877801b04ad",
+  "status": "TESTED_SLICE_NOT_FULL_PHASE_ACCEPTED",
+  "ci": {
+    "runId": 40646572330,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40646572330",
+    "conclusion": "success",
+    "ubuntu": {
+      "passed": 264,
+      "files": 27,
+      "browser": 26
+    },
+    "windows": {
+      "passed": 263,
+      "skipped": 1,
+      "files": 27
+    }
+  },
+  "validated": [
+    "bounded relative selector",
+    "ordered non-ambiguous fallback",
+    "existing v1 preserved",
+    "host fixture no input"
+  ],
+  "unrun": [
+    "real Android",
+    "OCR/stream/gesture",
+    "Win10 acceptance",
+    "fleet scale/installer"
+  ]
+}
