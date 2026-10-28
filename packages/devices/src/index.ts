@@ -387,6 +387,92 @@ export class AdbClient {
     }
   }
 
+  /**
+   * Reads back an owned remote stage through ADB Sync RECV and hashes bytes
+   * in-stream. This proves byte equality only, never MediaStore indexing.
+   */
+  async readOwnedStage(input: {
+    serial: string;
+    jobId: string;
+    ordinal: number;
+    nonce: string;
+    extension: string;
+    expectedHash: string;
+    expectedBytes: number;
+  }, signal?: AbortSignal): Promise<{ remotePath: string; hash: string; bytes: number }> {
+    if (!this.beforeDispatch)
+      throw new DomainError('ADB_STAGE_LEASE_REQUIRED', 'A fenced JOB owner is required.');
+    assertSerial(input.serial);
+    idSchema.parse(input.jobId);
+    hashSchema.parse(input.expectedHash);
+    const extension = input.extension.toLowerCase();
+    if (!syncExtensions.has(extension) ||
+        !/^[a-f0-9]{32}$/.test(input.nonce) ||
+        !Number.isSafeInteger(input.ordinal) || input.ordinal < 0 || input.ordinal >= 32 ||
+        !Number.isSafeInteger(input.expectedBytes) || input.expectedBytes <= 0 ||
+        input.expectedBytes > MAX_SYNC_BYTES)
+      throw new DomainError('ADB_SYNC_INVALID', 'Invalid remote stage readback specification.');
+    const ordinalText = String(input.ordinal).padStart(3, '0');
+    const remotePath = '/sdcard/Download/AutoReelsStudio/job-' + input.jobId +
+      '/asset-' + ordinalText + '-' + input.nonce + extension;
+    if (signal?.aborted) throw new DomainError('CANCELLED', 'Remote readback cancelled.');
+    await this.beforeDispatch();
+    // Budget includes each 8-byte DATA header and the final DONE header.
+    const frameCount = Math.ceil(input.expectedBytes / (64 * 1024));
+    const budget = input.expectedBytes + frameCount * 8 + 8;
+    const connection = await this.device(input.serial, 'sync:', budget, signal, 180000);
+    try {
+      const request = Buffer.from(remotePath, 'utf8');
+      if (request.length > 1024)
+        throw new DomainError('ADB_SYNC_INVALID', 'Generated remote path exceeds protocol budget.');
+      await sendPacket(connection.socket, syncHeader('RECV', request.length), signal);
+      await sendPacket(connection.socket, request, signal);
+      const digest = createHash('sha256');
+      let received = 0;
+      let nextFence = 1024 * 1024;
+      const deadline = Date.now() + 180000;
+      while (true) {
+        if (signal?.aborted) throw new DomainError('CANCELLED', 'Remote readback cancelled.');
+        if (Date.now() >= deadline)
+          throw new DomainError('ADB_SYNC_TIMEOUT', 'Remote readback exceeded its time budget.');
+        const header = await connection.read(8);
+        const op = header.toString('ascii', 0, 4);
+        const length = header.readUInt32LE(4);
+        if (op === 'FAIL') {
+          if (length > 4096)
+            throw new DomainError('ADB_SYNC_PROTOCOL', 'ADB Sync failure frame exceeds budget.');
+          // Consume bounded text without exporting remote/private path details.
+          await connection.read(length);
+          throw new DomainError('ADB_SYNC_READ_FAILED', 'ADB could not read the owned remote stage.');
+        }
+        if (op === 'DONE') {
+          if (length !== 0)
+            throw new DomainError('ADB_SYNC_PROTOCOL', 'ADB Sync DONE frame is malformed.');
+          break;
+        }
+        if (op !== 'DATA' || length < 1 || length > 64 * 1024 ||
+            received + length > input.expectedBytes)
+          throw new DomainError('ADB_SYNC_PROTOCOL', 'ADB Sync DATA frame is invalid or over budget.');
+        const bytes = await connection.read(length);
+        digest.update(bytes);
+        received += length;
+        if (received >= nextFence) {
+          await this.beforeDispatch();
+          nextFence = received + 1024 * 1024;
+        }
+      }
+      const hash = digest.digest('hex');
+      if (received !== input.expectedBytes)
+        throw new DomainError('ADB_SYNC_READ_LENGTH', 'Remote byte count does not match the pinned asset.');
+      if (hash !== input.expectedHash)
+        throw new DomainError('ADB_SYNC_READ_HASH', 'Remote bytes do not match the pinned asset hash.');
+      await this.beforeDispatch();
+      return { remotePath, hash, bytes: received };
+    } finally {
+      connection.close();
+    }
+  }
+
   async uiXml(serial: string, signal?: AbortSignal): Promise<string> {
     const path = '/data/local/tmp/autoreels-inspector-' + randomUUID() + '.xml';
     let result: string | undefined,
