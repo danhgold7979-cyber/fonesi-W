@@ -92,10 +92,10 @@ export function summarizeBatch<T>(items: readonly BatchItem<T>[]): {
 /** Bounded, read-only query. Cursor scope includes Process and filter. */
 export interface ContentQuery {
   processId: string;
-  search?: string;
-  includeIgnored?: boolean;
-  cursor?: string;
-  limit?: number;
+  search?: string | undefined;
+  includeIgnored?: boolean | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
 }
 export interface ContentPage {
   items: ContentItem[];
