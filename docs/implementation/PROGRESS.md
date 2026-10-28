@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment042 / P11-S095 — staging host có manifest sở hữu, chưa Android
+
+Đã triển khai app-owned staging riêng theo job, không ghi vào thư mục media gốc; copy byte theo block256KiB, nguồn qua grant host+realpath, kiểm inode/mtime/bytes/hash trước/sau, hạn mức32 media/4GiB mỗi file/8GiB một job + disk reserve. Lock độc quyền, thư mục pending chỉ dọn nếu do chính invocation tạo, manifest + digest bền; reuse phải xác minh owner/entry order/hash và không có file lạ. `HostMediaService.stageJobHostMedia` private kiểm kế hoạch SQLite trước/sau, trả **canDispatch:false**, không thêm public API hoặc lệnh Android. Kế hoạch [INCREMENT-042_PLAN.md](INCREMENT-042_PLAN.md) (commit `147b15ae`), [kết quả](INCREMENT-042_RESULTS.md), [checkpoint-035](../evidence/implementation/checkpoint-035.json).
+
+Source final `0605b7a3` qua CI Ubuntu/Windows [40660619480](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40660619480) và [40660627363](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40660627363): **310/310 Ubuntu unit, 30 Chromium, 309 Windows pass/1 Unix-only skip; type/lint/build/plan PASS**. Đã sửa TS unused import và phát hiện/giải quyết test hang do fileHandle stream, không chỉ tăng timeout. **TESTED host-only S095 slice, NOT S095/P11 ACCEPTED**: Android MediaStore transfer/reconcile/cleanup và device physical còn NOT_RUN.
+
 ## Increment041 / P11-S094 — host-only hash kiểm byte media của job, không tự chạy
 
 Đã thêm private `job.mediaPlan` giữa SQLite worker và `HostMediaService.inspectJobMediaBytes(jobId)`. Kế hoạch media từ job snapshot bất biến (≤32 asset) đối chiếu Process/current-host grant, source READY/observed hash và pinned hash/bytes. Host hash byte thực qua `resolveGrantedFile` (realpath/symlink/host scope) + `fingerprint` stream, có giới hạn kích thước, timeout, abort và 2 lượt so sánh kế hoạch trước/sau để từ chối thay đổi giữa lúc đọc. Đầu ra là diagnostic `HOST_BYTES_ONLY`/canDispatch **false** không chứa đường dẫn/nội dung/hardware ID. Không copy/xóa file, claim phone hoặc thực thi Android; text-only là `NO_MEDIA` (không chứng nhận đăng).
