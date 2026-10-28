@@ -1,3 +1,12 @@
+## Increment045 / P11-S095 — private host stage-transfer coordinator
+
+Đã nối ba lát nền tảng trước đó thành một coordinator host-only: `HostMediaService` staging byte/manifest → SQLite stage intent bền → `TRANSFER_UNCERTAIN` trước ADB Sync → kiểm tra transport/claim fence → chỉ ghi `SYNC_ACK_UNVERIFIED` khi ACK khớp intent. Service được dựng trong Electron main và loopback host nhưng không được đăng ký trong `StudioApi`, preload, renderer hoặc HTTP command routing; không tự chạy khi startup/schedule/scan và không phát lệnh đăng bài. Kết quả private được redacted và luôn `canDispatch:false`.
+
+Kế hoạch trước code [INCREMENT-045_PLAN.md](INCREMENT-045_PLAN.md) (commit `440a53b42e8d`); implementation `88490c169ea7`; integration tests `99298a276350`. [Kết quả](INCREMENT-045_RESULTS.md), [checkpoint-038](../evidence/implementation/checkpoint-038.json). CI exact source SHA `99298a276350eeadab3e9b43f104338bdb87ef84`: [Actions 40664306217](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40664306217) và [40664315309](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40664315309) **SUCCESS Ubuntu + Windows**. Ubuntu **325/325 unit/integration (39 files) +30/30 Chromium**; Windows **324 PASS +1 platform-only skip (39 files)**; generated/type/lint/build, Windows VerifyOnly và plan validators PASS. Trạng thái **TESTED_PRIVATE_STAGE_TRANSFER_COORDINATOR_NOT_S095_ACCEPTED**: fake transport/SQLite fixtures không chứng minh chuyển tệp trên điện thoại thật, MediaStore index, app identity hoặc đăng bài.
+
+## OPEN / NOT_RUN after Increment045
+Remote Android SHA readback and MediaStore reconciliation, stage resolution/cleanup after operator review, certified private JOB executor, provider-specific Facebook/TikTok workflow execution and verification, Windows 10 physical USB/LAN, 20–300 device scale, installer/release and main merge remain NOT_RUN. Never treat Sync ACK as MediaStore confirmation or publish success.
+
 # Tiến độ implementation
 
 ## Increment044 / P11-S095 — durable Android transfer intent (SQLite v15)
