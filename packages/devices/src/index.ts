@@ -517,7 +517,7 @@ export class AdbClient {
     if (lines.length > 1) return { status: 'AMBIGUOUS' };
     const line = lines[0]!.replace(/^Row: \d+\s*/, '');
     const field = (key: string): string | null =>
-      new RegExp('(?:^|,\s*)' + key + '=([^,]*)').exec(line)?.[1]?.trim() ?? null;
+      new RegExp('(?:^|,\\s*)' + key + '=([^,]*)').exec(line)?.[1]?.trim() ?? null;
     const rowId = field('_id'), displayName = field('_display_name');
     const observedPath = field('relative_path'), sizeText = field('_size'), mimeType = field('mime_type');
     const bytes = sizeText && /^\d+$/.test(sizeText) ? Number(sizeText) : NaN;
