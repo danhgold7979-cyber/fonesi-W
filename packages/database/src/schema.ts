@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 15;
+export const SCHEMA_VERSION = 16;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -156,6 +156,14 @@ CREATE TABLE device_stage_transfers(
   UNIQUE(device_id,remote_path)
 ) STRICT;
 CREATE INDEX stage_transfer_device ON device_stage_transfers(device_id,state,job_id);
+`,
+  },
+  {
+    version: 16,
+    sql: `
+ALTER TABLE device_stage_transfers ADD COLUMN remote_readback_hash TEXT;
+ALTER TABLE device_stage_transfers ADD COLUMN remote_readback_bytes INTEGER;
+ALTER TABLE device_stage_transfers ADD COLUMN remote_readback_at TEXT;
 `,
   },
 ] as const;
