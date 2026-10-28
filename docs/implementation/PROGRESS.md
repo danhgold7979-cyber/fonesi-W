@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment033 / P06-S056 — content paging + schema v14 integration
+
+Đã tích hợp code P06 ContentPage từ PR #7 của nhánh cũ vào base mới sau khi P08 đã dùng migration v13 và P09 selector/fallback (PR #10) cũng đã merge. **Giữ nguyên mọi byte SQL của migration v13 P08**, thêm content epoch/triggers như append-only **migration v14**, nâng `SCHEMA_VERSION=14`. Typed named API `contentPage`, SQLite cursor khóa Process/filter/epoch, batch ordered asset reads; Process editor vẫn tải đủ dữ liệu cho bulk/schedule để tránh thay đổi ngầm ý nghĩa Select All. Kế hoạch tại [INCREMENT-033_PLAN.md](INCREMENT-033_PLAN.md), bản gốc P06 tại [INCREMENT-033_ORIGIN.md](INCREMENT-033_ORIGIN.md), kết quả [INCREMENT-033_RESULTS.md](INCREMENT-033_RESULTS.md), receipt [checkpoint-025.json](../evidence/implementation/checkpoint-025.json).
+
+Đã thêm test nâng DB P08 schema13 có `device_resolution_audit` sang14, kiểm tra các checksum migration1–13 không đổi và nội dung/audit còn qua restart. **CI tích hợp [40647352151](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40647352151) SUCCESS** Ubuntu **269/269 unit/integration (29 files) + 27/27 browser**, hosted Windows **268 pass/1 Unix-only SDK fixture skip (29 files)**; source/build/plan/Windows launcher PASS. P06 vẫn **TESTED backend slice**, chưa phải P06/S056 full UI acceptance; Win10/Android/device load NOT_RUN.
+
 ## Increment031 / P08-S072 — lịch sử audit khôi phục nhận diện
 
 Đã code giao diện **Lịch sử khôi phục** trong Device Details với truy vấn SQLite chỉ đọc, phân trang keyset theo `created_at + audit ID` và cursor bị khóa theo device ID, giới hạn 20 mỗi lần gọi host (DB hỗ trợ tối đa 50). Kết quả chỉ chứa audit ID, device ID, thời gian UTC và revision trước/sau; **không lộ host ID, hardware serial hoặc proof hash**. Có kiểm thử 7 sự kiện cùng thời điểm, restart và cursor khác device/giả mạo, cùng browser empty state.
