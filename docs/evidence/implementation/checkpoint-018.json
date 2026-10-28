@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-28",
+  "increment": "025",
+  "baseBranch": "feat/studio-workspace",
+  "baseCommit": "87935843613c6194d9a0ba1ed1bd9d9cb89f4801",
+  "phase": "P07",
+  "steps": [
+    "S068",
+    "S117"
+  ],
+  "codeCommit": "d1c42f5a0f5ecbabd20ca09a40cd087809d536d6",
+  "status": "TESTED_INCREMENT_NOT_FULL_PHASE_ACCEPTED",
+  "changes": [
+    "bounded IANA/Temporal next free slot",
+    "frozen policy for caught-up skipped or postponed unclaimed jobs",
+    "conservative effect review",
+    "idempotent transactional queue reconciliation",
+    "paired Electron suspend and resume events",
+    "private DB-worker internal command"
+  ],
+  "verified": [
+    {
+      "environment": "ubuntu-latest",
+      "command": "pnpm check",
+      "passed": 232,
+      "failed": 0,
+      "skipped": 0,
+      "testFiles": 25
+    },
+    {
+      "environment": "windows-latest",
+      "command": "pnpm check",
+      "passed": 231,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "pre-existing Unix-only SDK fixture",
+      "testFiles": 25
+    },
+    {
+      "environment": "both",
+      "command": "pnpm check:plan + platform setup/verify",
+      "status": "PASS"
+    }
+  ],
+  "CI": {
+    "runId": 40639719418,
+    "conclusion": "success",
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40639719418"
+  },
+  "unrun": [
+    "Windows10 native sleep-resume event/manual validation",
+    "restart gap offline policy",
+    "hardware transport revalidation after resume",
+    "real device adapter and publish effect",
+    "300-device load/soak",
+    "full P07 or P13 acceptance"
+  ]
+}
