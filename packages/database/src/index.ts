@@ -1465,13 +1465,13 @@ export class StudioDatabase {
     return this.transaction(() => {
       const rows = this.db
         .prepare(
-          "SELECT j.id FROM jobs j JOIN processes p ON p.id=j.process_id WHERE p.archived=0 AND j.state IN('SCHEDULED','QUEUED') AND julianday(j.scheduled_utc)>julianday(?) AND julianday(j.scheduled_utc)<=julianday(?) ORDER BY julianday(j.scheduled_utc),j.id LIMIT 501",
+          "SELECT j.id FROM jobs j JOIN processes p ON p.id=j.process_id WHERE p.archived=0 AND j.state IN('SCHEDULED','QUEUED') AND julianday(j.scheduled_utc)>julianday(?) AND julianday(j.scheduled_utc)<=julianday(?) ORDER BY julianday(j.scheduled_utc),j.id LIMIT 5001",
         )
         .all(beganUtc, resumedUtc);
-      if (rows.length > 500)
+      if (rows.length > 5000)
         throw new DomainError(
           'SLEEP_RECOVERY_BUDGET',
-          'Hơn 500 job bị lỡ; cần xử lý theo các khoảng nhỏ, không truncate.',
+          'Hơn 5000 job bị lỡ; cần xử lý theo các khoảng nhỏ, không truncate.',
         );
       const result: {
         queued: string[];
