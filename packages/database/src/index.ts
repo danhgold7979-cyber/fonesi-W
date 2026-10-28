@@ -1648,6 +1648,14 @@ export class StudioDatabase {
     return this.transaction(() => {
       const device = this.db.prepare('SELECT enabled FROM devices WHERE id=?').get(deviceId);
       if (!device?.enabled) return { status: 'DEVICE_DISABLED' };
+      // A latched hardware identity conflict is an operator-review gate even
+      // when a previously scheduled job is due. Do not allocate a new lease.
+      if (
+        this.db
+          .prepare("SELECT 1 FROM device_profiles WHERE device_id=? AND identity='CONFLICT'")
+          .get(deviceId)
+      )
+        return { status: 'NEEDS_REVIEW' };
       if (
         this.db
           .prepare("SELECT 1 FROM jobs WHERE device_id=? AND state='NEEDS_REVIEW'")
