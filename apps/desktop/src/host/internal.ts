@@ -86,6 +86,25 @@ export type InternalRequest =
   | { command: 'queue.recover'; deviceId: string; at: number }
   | { command: 'queue.reconcileSleep'; suspendedAt: number; resumedAt: number }
   | {
+      command: 'effect.prepareClaimed';
+      jobId: string;
+      expectedJobRevision: number;
+      expectedSnapshotHash: string;
+      nodeId: string;
+      kind: 'PUBLISH' | 'COMMENT';
+      effectKey: string;
+      payloadHash: string;
+      lease: DeviceLease;
+      at: number;
+    }
+  | {
+      command: 'effect.beginClaimedAttempt';
+      effectId: string;
+      expectedJobRevision: number;
+      lease: DeviceLease;
+      at: number;
+    }
+  | {
       command: 'source.register';
       processId: string;
       expectedRevision: number;
@@ -199,6 +218,25 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.recoverExpiredClaims(request.deviceId, request.at);
     case 'queue.reconcileSleep':
       return db.reconcileSleepGap(request.suspendedAt, request.resumedAt);
+    case 'effect.prepareClaimed':
+      return db.prepareClaimedEffect({
+        jobId: request.jobId,
+        expectedJobRevision: request.expectedJobRevision,
+        expectedSnapshotHash: request.expectedSnapshotHash,
+        nodeId: request.nodeId,
+        kind: request.kind,
+        effectKey: request.effectKey,
+        payloadHash: request.payloadHash,
+        lease: request.lease,
+        at: request.at,
+      });
+    case 'effect.beginClaimedAttempt':
+      return db.beginClaimedEffectAttempt({
+        effectId: request.effectId,
+        expectedJobRevision: request.expectedJobRevision,
+        lease: request.lease,
+        at: request.at,
+      });
     case 'source.register':
       return db.registerNativeSources(request.processId, request.expectedRevision, request.grants);
     case 'source.grant':

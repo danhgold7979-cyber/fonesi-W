@@ -2315,6 +2315,148 @@ export class StudioDatabase {
     });
   }
 
+
+  /** Called only inside an SQLite transaction; validates both lease and claim fencing. */
+  private assertEffectClaim(jobId: string, lease: DeviceLease, at: number): void {
+    idSchema.parse(jobId);
+    if (
+      !Number.isSafeInteger(at) ||
+      !Number.isFinite(new Date(at).getTime()) ||
+      lease.ownerKind !== 'JOB'
+    ) throw new DomainError('INVALID_EFFECT_CLAIM', 'A current JOB lease is required.');
+    this.assertLease(lease, at);
+    const claim = this.db.prepare('SELECT * FROM job_claims WHERE job_id=?').get(jobId);
+    if (
+      !claim ||
+      claim.device_id !== lease.deviceId ||
+      claim.owner_id !== lease.ownerId ||
+      Number(claim.generation) !== lease.generation ||
+      Number(claim.expires_at) <= at
+    ) throw new DomainError('STALE_EFFECT_CLAIM', 'Job claim no longer belongs to this owner.');
+    const device = this.db
+      .prepare('SELECT d.enabled,p.identity FROM devices d LEFT JOIN device_profiles p ON p.device_id=d.id WHERE d.id=?')
+      .get(lease.deviceId);
+    if (!device?.enabled || device.identity !== 'VERIFIED_PROPERTIES')
+      throw new DomainError('EFFECT_DEVICE_BLOCKED', 'Verified and enabled device identity is required.');
+  }
+
+  /** Commit the matching immutable intent and job phase before ANY external input. */
+  prepareClaimedEffect(args: {
+    jobId: string;
+    expectedJobRevision: number;
+    expectedSnapshotHash: string;
+    nodeId: string;
+    kind: 'PUBLISH' | 'COMMENT';
+    effectKey: string;
+    payloadHash: string;
+    lease: DeviceLease;
+    at: number;
+  }): { effectId: string; jobId: string; jobRevision: number; state: 'INTENT' } {
+    idSchema.parse(args.jobId);
+    idSchema.parse(args.nodeId);
+    hashSchema.parse(args.effectKey);
+    hashSchema.parse(args.payloadHash);
+    hashSchema.parse(args.expectedSnapshotHash);
+    if (
+      !Number.isSafeInteger(args.expectedJobRevision) ||
+      args.expectedJobRevision < 0 ||
+      (args.kind !== 'PUBLISH' && args.kind !== 'COMMENT')
+    ) throw new DomainError('INVALID_EFFECT_INTENT', 'Invalid kind or job revision.');
+    return this.transaction(() => {
+      this.assertEffectClaim(args.jobId, args.lease, args.at);
+      const { job, snapshot, snapshotHash } = this.getJob(args.jobId);
+      if (job.deviceId !== args.lease.deviceId || job.revision !== args.expectedJobRevision)
+        throw new DomainError('STALE_EFFECT_JOB', 'Job or revision changed.');
+      if (snapshotHash !== args.expectedSnapshotHash || contentHash(snapshot) !== snapshotHash)
+        throw new DomainError('EFFECT_SNAPSHOT_STALE', 'Pinned job snapshot changed.');
+      const nodes = snapshot.bundle.graphs.flatMap((g) => g.nodes).filter(
+        (n) => n.id === args.nodeId && n.type === 'tap' &&
+          String(n.config.effectClassification ?? '').toUpperCase() === args.kind,
+      );
+      if (nodes.length !== 1)
+        throw new DomainError('EFFECT_NODE_MISMATCH', 'Effect node not in pinned workflow.');
+      const fromState = args.kind === 'PUBLISH' ? 'RUNNING' : 'POSTED';
+      const toState = args.kind === 'PUBLISH' ? 'POST_INTENT' : 'COMMENT_PENDING';
+      if (job.state !== fromState)
+        throw new DomainError('EFFECT_JOB_PHASE', 'Job is not in effect-ready phase.');
+      if (this.db.prepare(
+        "SELECT 1 FROM effects WHERE job_id=? AND state IN('INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW') LIMIT 1",
+      ).get(job.id))
+        throw new DomainError('PENDING_EFFECT', 'Review previous external effect before another.');
+      if (this.db.prepare('SELECT 1 FROM effects WHERE effect_key=?').get(args.effectKey))
+        throw new DomainError('DUPLICATE_EFFECT_KEY', 'Effect key has a durable record.');
+      if (
+        args.kind === 'PUBLISH' &&
+        this.db.prepare("SELECT 1 FROM effects WHERE job_id=? AND kind='PUBLISH'").get(job.id)
+      ) throw new DomainError('PUBLISH_ALREADY_ATTEMPTED', 'Publish cannot be repeated for this job.');
+      if (
+        args.kind === 'COMMENT' &&
+        !this.db.prepare(
+          "SELECT 1 FROM effects WHERE job_id=? AND kind='PUBLISH' AND state='CONFIRMED' LIMIT 1",
+        ).get(job.id)
+      ) throw new DomainError('POST_NOT_VERIFIED', 'Comment requires verified publish evidence.');
+      assertJobTransition(job.state, toState, false);
+      const effectId = makeId('effect');
+      this.db.prepare("INSERT INTO effects VALUES(?,?,?,?,?,?,'INTENT',NULL,?)")
+        .run(
+          effectId, job.id, args.nodeId, args.kind, args.effectKey, args.payloadHash,
+          new Date(args.at).toISOString(),
+        );
+      this.db.prepare('UPDATE jobs SET state=?,revision=revision+1 WHERE id=?')
+        .run(toState, job.id);
+      this.queueEvent(job.id, 'EFFECT_INTENT_COMMITTED', {
+        effectId, kind: args.kind, claimGeneration: args.lease.generation,
+      }, args.at);
+      return { effectId, jobId: job.id, jobRevision: job.revision + 1, state: 'INTENT' };
+    });
+  }
+
+  /** Persist uncertainty and job phase together before the provider dispatch boundary. */
+  beginClaimedEffectAttempt(args: {
+    effectId: string;
+    expectedJobRevision: number;
+    lease: DeviceLease;
+    at: number;
+  }): { effectId: string; jobId: string; jobRevision: number; state: 'ATTEMPT_UNCERTAIN' } {
+    idSchema.parse(args.effectId);
+    if (!Number.isSafeInteger(args.expectedJobRevision) || args.expectedJobRevision < 0)
+      throw new DomainError('INVALID_EFFECT_ATTEMPT', 'Invalid job revision.');
+    return this.transaction(() => {
+      const effect = this.db.prepare(
+        'SELECT e.*,j.device_id FROM effects e JOIN jobs j ON j.id=e.job_id WHERE e.id=?',
+      ).get(args.effectId);
+      if (!effect || effect.state !== 'INTENT')
+        throw new DomainError('EFFECT_NOT_ELIGIBLE', 'Unattempted intent not found.');
+      const jobId = String(effect.job_id);
+      this.assertEffectClaim(jobId, args.lease, args.at);
+      const { job, snapshot, snapshotHash } = this.getJob(jobId);
+      if (
+        job.deviceId !== args.lease.deviceId ||
+        job.revision !== args.expectedJobRevision ||
+        contentHash(snapshot) !== snapshotHash
+      ) throw new DomainError('STALE_EFFECT_JOB', 'Claim or snapshot changed since intent.');
+      const publish = effect.kind === 'PUBLISH';
+      if (
+        (publish && job.state !== 'POST_INTENT') ||
+        (!publish && (effect.kind !== 'COMMENT' || job.state !== 'COMMENT_PENDING'))
+      ) throw new DomainError('EFFECT_JOB_PHASE', 'Job is not in the prepared effect phase.');
+      if (publish) assertJobTransition(job.state, 'POST_PENDING', false);
+      this.db.prepare("UPDATE effects SET state='ATTEMPT_UNCERTAIN' WHERE id=? AND state='INTENT'")
+        .run(args.effectId);
+      if (publish)
+        this.db.prepare("UPDATE jobs SET state='POST_PENDING',revision=revision+1 WHERE id=?")
+          .run(job.id);
+      else this.db.prepare('UPDATE jobs SET revision=revision+1 WHERE id=?').run(job.id);
+      this.queueEvent(job.id, 'EFFECT_ATTEMPT_UNCERTAIN', {
+        effectId: args.effectId, kind: String(effect.kind), claimGeneration: args.lease.generation,
+      }, args.at);
+      return {
+        effectId: args.effectId, jobId, jobRevision: job.revision + 1,
+        state: 'ATTEMPT_UNCERTAIN',
+      };
+    });
+  }
+
   recordIntent(
     jobId: string,
     nodeId: string,

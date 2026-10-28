@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-28",
+  "increment": "035",
+  "phase": "P11",
+  "steps": [
+    "S097"
+  ],
+  "baseBranch": "feat/studio-workspace",
+  "baseline": "58987bc9f39e5864dff4a0c8aca36e0eb4a6711d",
+  "sourceCommit": "7d223787f57f866106d816ce997addc3c8419e4f",
+  "status": "TESTED_JOURNAL_PRIMITIVE_NOT_FULL_PHASE_ACCEPTED",
+  "ci": {
+    "runId": 40650548675,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40650548675",
+    "conclusion": "success",
+    "ubuntu": {
+      "passed": 279,
+      "files": 31,
+      "playwright": 28
+    },
+    "windows": {
+      "passed": 278,
+      "skipped": 1,
+      "files": 31,
+      "skipReason": "pre-existing Unix-only SDK fixture"
+    }
+  },
+  "verified": [
+    "atomic INTENT with POST_INTENT",
+    "atomic ATTEMPT_UNCERTAIN with POST_PENDING",
+    "owner/generation/TTL and pinned snapshot identity checks",
+    "duplicate global effect key rejection",
+    "restart/crash goes review not replay",
+    "private-only DB commands",
+    "no Android action"
+  ],
+  "notRun": [
+    "actual dispatch",
+    "post verification",
+    "separate comment transactions",
+    "review action UI",
+    "owned staging cleanup",
+    "Win10 Android phone acceptance",
+    "300-phone load"
+  ]
+}

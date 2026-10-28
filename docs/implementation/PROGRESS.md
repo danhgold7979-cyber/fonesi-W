@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment035 / P11-S097 — durable effect intent và attempt uncertainty
+
+Đã bổ sung private DB worker `effect.prepareClaimed` và `effect.beginClaimedAttempt`, yêu cầu lease JOB hợp lệ + `job_claims` generation, device đã xác minh/bật, frozen snapshot/hash, effect node thuộc pinned workflow và đúng pha job. Intent + `POST_INTENT` được ghi cùng transaction SQLite. Trước bất kỳ dispatch nào, effect phải được chuyển thành `ATTEMPT_UNCERTAIN` đồng thời job `POST_PENDING`; không tự suy diễn ACK hay POSTED/SUCCESS. Khi crash/restart/expire, `recoverExpiredClaims` đưa job có effect đến review, không phát lại publish. Bảo vệ effectKey toàn cục, duplicate key/lease cũ bị từ chối. **Không có hành động ADB thực** trong increment.
+
+Kế hoạch [INCREMENT-035_PLAN.md](INCREMENT-035_PLAN.md), kết quả [INCREMENT-035_RESULTS.md](INCREMENT-035_RESULTS.md), receipt [checkpoint-028.json](../evidence/implementation/checkpoint-028.json). CI trên source SHA `7d223787`: [Actions 40650548675](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40650548675) **SUCCESS Ubuntu và Windows**: Ubuntu **279/279 unit/integration (31 files) +28/28 Chromium**, Windows **278 pass/1 pre-existing Unix-only SDK skip**. Đây chỉ là journal foundation **TESTED**, không phải toàn bộ P11 hoặc xác minh thực trên Facebook/TikTok.
+
 ## Increment034 / P09-S083.1 — thử selector trực tiếp trên ADB, không touch
 
 Đã bổ sung `testDeviceSelector(id,selector)` typed API qua host Inspector có lease/fencing và chụp/đọc XML ADB thực (sequential correlation, không giả atomicity). V1/v2 được validate trước khi gọi ADB; trả status `NONE/UNIQUE/AMBIGUOUS`, exact 0/1/n và strategy attempts, tối đa100 mẫu hình học an toàn; **không trả screenshot, text mật khẩu, XML thô, hardware serial hoặc capture token**. Test không tự tap, không chọn đầu khi ambiguous, xóa capture transient sau khi đọc. Inspector có nút riêng "Kiểm tra selector trực tiếp trên điện thoại", hiển thị khác biệt kết quả snapshot cũ/đọc lại mới. Có test fixture ADB TCP, offline/lease, invalid input và Chromium.
