@@ -214,6 +214,8 @@ export function assessJobPreflightEvidence(input: JobPreflightEvidence): JobPref
   }
   if (!input.app || input.snapshot.bundle.workflow.appId !== input.app.id)
     block('APP_BINDING_MISMATCH');
+  if (!input.app || input.app.certification !== 'SUPPORTED_PROFILES_ONLY')
+    block('APP_ADAPTER_NOT_CERTIFIED');
   if (!input.device ||
       input.device.id !== input.job.deviceId ||
       !input.device.enabled ||
