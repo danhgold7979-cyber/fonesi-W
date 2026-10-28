@@ -1,6 +1,12 @@
 # Tiến độ implementation
 
-## Increment026 / P08-S072 — khóa transport ADB có nhận diện phần cứng mâu thuẫn
+### Increment027 / P08-S072 — conflict readiness chỉ đọc
+
+Đã code công cụ nội bộ kiểm tra trạng thái xung đột ADB, báo mã chặn cho physical verification, transport thiếu chứng cứ mới, lease đang dùng và job chưa an toàn. Tuyệt đối **không cấp quyền tự gỡ CONFLICT**, không chạm Android hoặc ghi lại fingerprint/raw serial. Đã có tests dữ liệu SQLite qua restart và tính read-only.
+
+[CI 40642089739](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40642089739): Ubuntu **243 tests/26 files + 23 UI passed**, Windows **242 passed + 1 skip/26 files**, checks pass. Xem [kế hoạch](INCREMENT-027_PLAN.md), [kết quả](INCREMENT-027_RESULTS.md) và [receipt](../evidence/implementation/checkpoint-020.json). P08 **chưa ACCEPTED**; xác minh trực tiếp máy và thao tác giải quyết xung đột được đánh dấu NOT_RUN/OPEN.
+
+# Increment026 / P08-S072 — khóa transport ADB có nhận diện phần cứng mâu thuẫn
 
 Ngày 28/10/2026. Baseline `feat/studio-workspace@d3e2d2fa`, kế hoạch [INCREMENT-026_PLAN.md](INCREMENT-026_PLAN.md), source đã commit và kiểm tra tại `2efa916e`. Trước đây khi ADB trả hardware fingerprint khác cho cùng host/serial đã xác minh, database có thể tạo thiết bị mới và remap transport khỏi device ID lịch sử. Bản sửa latches `CONFLICT`, giữ original fingerprint/metadata/name/enabled/Process/job và không chuyển transport tự động. Khi fingerprint mới đụng identity đã đăng ký khác, cả hai profile đều cần review. Metadata offline/unauthorized/không đủ serial không được tạo identity mới hay overwrite evidence lịch sử. Generation của transport được fence; queue không claim lease với identity CONFLICT; UI hiển thị block reason và không gửi input.
 
