@@ -57,6 +57,7 @@ export function assessEffectPaths(input: WorkflowBundle): ValidationIssue[] {
       { id: start.id, state: { intent: null, outstanding: false, verified: false } },
     ];
     const visited = new Set<string>();
+    const enqueued = new Set<string>([stateKey(start.id, queue[0]!.state)]);
     for (let index = 0; index < queue.length; index++) {
       if (visited.size >= MAX_VISITS) {
         add(
@@ -136,7 +137,20 @@ export function assessEffectPaths(input: WorkflowBundle): ValidationIssue[] {
             edge.port === 'true'
               ? { ...state, outstanding: false, verified: state.outstanding || state.verified }
               : { ...state, verified: false };
-        queue.push({ id: edge.target, state: next });
+        const nextKey = stateKey(edge.target, next);
+        if (!enqueued.has(nextKey)) {
+          enqueued.add(nextKey);
+          if (enqueued.size > MAX_VISITS) {
+            add(
+              'EFFECT_PATH_BUDGET',
+              'Effect path frontier exceeds safe resource budget',
+              graph.id,
+              node.id,
+            );
+            break;
+          }
+          queue.push({ id: edge.target, state: next });
+        }
       }
     }
   }
