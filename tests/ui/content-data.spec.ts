@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type {
   ContentItem,
+  ContentPage,
   ContentPreviewDto,
   ProcessDefinition,
   WorkflowDraft,
@@ -300,4 +301,69 @@ test('virtual content table keeps DOM bounded and stable ID selection beyond a t
       (row) => row.id === target.id,
     )?.fields.caption,
   ).toBe('edited entry_1199');
+});
+
+
+test('named contentPage API returns DB-scoped stable pages and blocks stale cross-process cursors', async ({
+  page,
+}) => {
+  const id = 'process_content_server_page';
+  await setup(page, id);
+  for (let i = 0; i < 4; i++)
+    await request<ContentItem>(page, 'saveContent', {
+      expectedRevision: null,
+      item: {
+        id: 'content_server_page_' + i,
+        processId: id,
+        revision: 0,
+        fields: { caption: i < 3 ? 'batch alpha ' + i : 'beta', count: i },
+        assetIds: [],
+        ignored: false,
+      },
+    });
+  const first = await request<ContentPage>(page, 'contentPage', {
+    query: { processId: id, limit: 2 },
+  });
+  expect(first).toMatchObject({ total: 4, hasMore: true });
+  expect(first.items.map((x) => x.id)).toEqual([
+    'content_server_page_0', 'content_server_page_1',
+  ]);
+  expect(first.nextCursor).toBeTruthy();
+  const second = await request<ContentPage>(page, 'contentPage', {
+    query: { processId: id, limit: 2, cursor: first.nextCursor },
+  });
+  expect(second).toMatchObject({ total: 4, hasMore: false, nextCursor: null });
+  expect(second.items.map((x) => x.id)).toEqual([
+    'content_server_page_2', 'content_server_page_3',
+  ]);
+  const filtered = await request<ContentPage>(page, 'contentPage', {
+    query: { processId: id, search: 'alpha', limit: 2 },
+  });
+  expect(filtered.total).toBe(3);
+  expect(filtered.items).toHaveLength(2);
+  // The legacy Process view remains a full-scope authoring interface for now.
+  await request<ContentItem>(page, 'saveContent', {
+    item: {
+      ...first.items[0]!,
+      fields: { caption: 'changed after cursor', count: 0 },
+    },
+    expectedRevision: first.items[0]!.revision,
+  });
+  const token = await page.locator('meta[name="studio-token"]').getAttribute('content');
+  const staleResponse = await page.request.post('/api', {
+    headers: { Origin: 'http://127.0.0.1:4175', 'X-Studio-Token': token! },
+    data: {
+      operationId: 'op_content_stale_cursor',
+      command: 'contentPage',
+      input: { query: { processId: id, cursor: first.nextCursor, limit: 2 } },
+    },
+  });
+  const stale = (await staleResponse.json()) as { ok: boolean; error?: { code: string } };
+  expect(stale.ok).toBe(false);
+  expect(stale.error?.code).toBe('CONTENT_QUERY_STALE');
+  const changed = await request<ContentPage>(page, 'contentPage', {
+    query: { processId: id, limit: 2 },
+  });
+  expect(changed.total).toBe(4);
+  expect(changed.items[0]!.fields.caption).toBe('changed after cursor');
 });
