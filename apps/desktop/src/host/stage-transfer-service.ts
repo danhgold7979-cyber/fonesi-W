@@ -128,7 +128,8 @@ export class HostStageTransferService {
         }, signal);
         mediaStoreStatus = probe.status;
         classification = probe.status === 'INDEXED_EXACT' ? 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED'
-          : probe.status === 'NOT_INDEXED' ? 'REMOTE_BYTES_MATCHED' : 'PROBE_UNSUPPORTED';
+          : probe.status === 'NOT_INDEXED' ? 'REMOTE_BYTES_MATCHED'
+          : probe.status === 'UNSUPPORTED' ? 'PROBE_UNSUPPORTED' : 'REVIEW_REQUIRED';
       }
     } catch (error) {
       if (error instanceof DomainError && ['ADB_SYNC_READ_HASH', 'ADB_SYNC_READ_LENGTH'].includes(error.code))

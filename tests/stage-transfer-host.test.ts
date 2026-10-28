@@ -103,7 +103,7 @@ async function fixture() {
 }
 type Fixture = Awaited<ReturnType<typeof fixture>>;
 function coordinator(
-  outcome: 'OK' | 'FAIL' | 'WRONG_ACK' | 'WRONG_READBACK' = 'OK',
+  outcome: 'OK' | 'FAIL' | 'WRONG_ACK' | 'WRONG_READBACK' | 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' = 'OK',
 ) {
   return new HostStageTransferService({
     internal: async <T>(request: InternalRequest) => {
@@ -360,6 +360,37 @@ it('keeps reconciliation audit immutable and idempotent across SQLite reopen', a
   })).toThrowError(/Request ID has different evidence/);
   expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(stageBefore);
   expect(db.getJob(jobId).job).toEqual(jobBefore);
+});
+it('keeps unsupported and ambiguous MediaStore probes non-dispatchable during reconciliation', async () => {
+  const f = await fixture();
+  const upload = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId: f.jobId, stageId: upload.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const before = db.listDeviceStageTransfers(jobId)[0]!;
+  const unsupported = await coordinator('UNSUPPORTED').reconcileStage({
+    requestId: 'reconcile_unsupported_001', jobId: f.jobId, stageId: upload.stageId,
+    expectedJobRevision: f.expectedJobRevision, expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: f.lease, transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  expect(unsupported).toMatchObject({
+    classification: 'PROBE_UNSUPPORTED', mediaStoreStatus: 'UNSUPPORTED', canDispatch: false,
+  });
+  const afterUnsupported = db.listDeviceStageTransfers(jobId)[0]!;
+  expect(afterUnsupported).toEqual(before);
+  const ambiguous = await coordinator('AMBIGUOUS').reconcileStage({
+    requestId: 'reconcile_ambiguous_001', jobId: f.jobId, stageId: upload.stageId,
+    expectedJobRevision: f.expectedJobRevision, expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: f.lease, transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  expect(ambiguous).toMatchObject({
+    classification: 'REVIEW_REQUIRED', mediaStoreStatus: 'AMBIGUOUS', canDispatch: false,
+  });
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(before);
+  expect(db.getJob(jobId).job.state).toBe('PREFLIGHT');
+  expect(events).not.toContain('fake.adb.send:reconcile');
 });
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {
   const f = await fixture();
