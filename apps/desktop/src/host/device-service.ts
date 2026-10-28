@@ -12,6 +12,9 @@ import type {
   DeviceLease,
   DeviceRecord,
   DeviceSnapshot,
+  TransportObservation,
+  DeviceResolutionPreview,
+  DeviceResolutionResult,
   ManualDeviceAction,
 } from '@autoreels/contracts';
 import { assertJsonSafe } from '@autoreels/contracts';
@@ -58,6 +61,7 @@ export class HostDeviceService {
     private directory: string,
     private picker?: SdkPicker,
     config: Config = { port: 5037 },
+    private readonly confirmConflict?: (name: string, model: string | null) => Promise<boolean>,
   ) {
     this.config = config;
     this.sdk = new SdkManager(config.path, config.hash);
@@ -551,6 +555,107 @@ export class HostDeviceService {
       return { acknowledged: true };
     });
   }
+
+  /** Trusted host reads a live ADB response; renderer never provides a serial. */
+  private async freshConflictObservation(
+    id: string,
+  ): Promise<{ device: DeviceRecord; observation: TransportObservation | null; blockers: string[] }> {
+    const devices = await this.db.internal<DeviceRecord[]>({
+      command: 'device.records',
+      hostId: this.hostId,
+    });
+    const device = devices.find((d) => d.id === id);
+    if (!device) throw new DomainError('NOT_FOUND', 'Không tìm thấy thiết bị.');
+    const connected = device.transports.filter((t) => t.state === 'CONNECTED');
+    if (connected.length !== 1)
+      return { device, observation: null, blockers: ['AMBIGUOUS_ACTIVE_TRANSPORTS'] };
+    const candidate = connected[0]!;
+    const live = (await this.adb.devices(this.lifecycle.signal)).find(
+      (entry) => entry.serial === candidate.serial,
+    );
+    if (!live || live.state !== 'CONNECTED' || live.kind !== candidate.kind)
+      return { device, observation: null, blockers: ['TRANSPORT_UNAVAILABLE'] };
+    let metadata: TransportObservation['metadata'] = null;
+    try {
+      metadata = await this.adb.metadata(live.serial, this.lifecycle.signal);
+    } catch (error) {
+      if (this.lifecycle.signal.aborted) throw error;
+      // No property evidence means no permission to clear a conflict.
+    }
+    return { device, observation: { ...live, metadata }, blockers: [] };
+  }
+
+  private async previewConflict(
+    id: string,
+    expectedRevision: number,
+  ): Promise<DeviceResolutionPreview> {
+    return this.configuration(async () => {
+      await this.scan(true);
+      const evidence = await this.freshConflictObservation(id);
+      if (!evidence.observation) return {
+        deviceId: id,
+        expectedRevision,
+        name: evidence.device.name,
+        model: evidence.device.metadata?.model ?? null,
+        token: null,
+        expiresAt: null,
+        canApply: false,
+        blockers: evidence.blockers,
+      };
+      return this.db.internal<DeviceResolutionPreview>({
+        command: 'device.resolutionPreview',
+        hostId: this.hostId,
+        deviceId: id,
+        expectedRevision,
+        observation: evidence.observation,
+        at: Date.now(),
+      });
+    });
+  }
+
+  private async applyConflict(
+    id: string,
+    token: string,
+    confirmedName: string,
+  ): Promise<{ cancelled: boolean; resolution: DeviceResolutionResult | null; snapshot: DeviceSnapshot }> {
+    if (!this.confirmConflict)
+      throw new DomainError(
+        'NATIVE_DIALOG_REQUIRED',
+        'Khôi phục nhận diện chỉ hỗ trợ app Electron với xác nhận vật lý.',
+      );
+    return this.configuration(async () => {
+      const current = (await this.snapshot()).devices.find((d) => d.id === id);
+      if (!current || current.identity !== 'CONFLICT')
+        throw new DomainError('RESOLUTION_NOT_CONFLICT', 'Thiết bị không còn xung đột.');
+      if (current.name.normalize('NFC').trim() !== confirmedName.normalize('NFC').trim())
+        throw new DomainError('RESOLUTION_NAME_REQUIRED', 'Nhập đúng tên thiết bị lịch sử.');
+      if (!(await this.confirmConflict!(current.name, current.metadata?.model ?? null)))
+        return { cancelled: true, resolution: null, snapshot: await this.snapshot() };
+      await this.scan(true);
+      const evidence = await this.freshConflictObservation(id);
+      if (!evidence.observation)
+        throw new DomainError(
+          'RESOLUTION_PROOF_UNAVAILABLE', 'Không xác minh lại được điện thoại; giữ khóa.',
+        );
+      const resolution = await this.db.internal<DeviceResolutionResult>({
+        command: 'device.resolutionApply',
+        hostId: this.hostId,
+        deviceId: id,
+        token,
+        confirmedName,
+        observation: evidence.observation,
+        at: Date.now(),
+      });
+      this.captures.delete(id);
+      this.actorEpoch.set(id, (this.actorEpoch.get(id) ?? 0) + 1);
+      this.sequence++;
+      // All transports were fenced by the DB; require an independent new scan.
+      // Device remains disabled until a deliberate user action.
+      const snapshot = await this.scan(true);
+      return { cancelled: false, resolution, snapshot };
+    });
+  }
+
   async request(command: ApiCommand, input: unknown): Promise<unknown> {
     if (this.closed) throw new DomainError('DEVICE_SERVICE_CLOSED', 'Device service đã đóng.');
     if (command === 'bootstrap') {
@@ -569,6 +674,14 @@ export class HostDeviceService {
       case 'deviceSnapshot':
         deviceSchemas.deviceSnapshot.parse(input);
         return this.snapshot();
+      case 'previewDeviceConflictResolution': {
+        const p = deviceSchemas.previewDeviceConflictResolution.parse(input);
+        return this.previewConflict(p.id, p.expectedRevision);
+      }
+      case 'applyDeviceConflictResolution': {
+        const p = deviceSchemas.applyDeviceConflictResolution.parse(input);
+        return this.applyConflict(p.id, p.token, p.confirmedName);
+      }
       case 'scanDevices':
         deviceSchemas.scanDevices.parse(input);
         return this.scan();
