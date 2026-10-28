@@ -367,3 +367,89 @@ test('named contentPage API returns DB-scoped stable pages and blocks stale cros
   expect(changed.total).toBe(4);
   expect(changed.items[0]!.fields.caption).toBe('changed after cursor');
 });
+
+
+test('Process read-only SQLite browser pages 53 items without changing all-row selection and schedule scope', async ({
+  page,
+}) => {
+  const processId = 'process_ui_readonly_page';
+  await setup(page, processId);
+  for (let i = 0; i < 53; i++) {
+    await request<ContentItem>(page, 'saveContent', {
+      expectedRevision: null,
+      item: {
+        id: 'content_ui_browser_' + i,
+        processId,
+        revision: 0,
+        fields: { caption: i < 2 ? 'alpha ' + i : 'beta ' + i },
+        assetIds: [],
+        ignored: false,
+      },
+    });
+  }
+  const ignored = await request<ContentItem>(page, 'saveContent', {
+    expectedRevision: null,
+    item: {
+      id: 'content_ui_browser_ignored',
+      processId,
+      revision: 0,
+      fields: { caption: 'ignored_only' },
+      assetIds: [],
+      ignored: false,
+    },
+  });
+  await request(page, 'ignoreContent', {
+    id: ignored.id,
+    expectedRevision: ignored.revision,
+  });
+  await openProcess(page, processId);
+  const selectAll = page.getByRole('checkbox', { name: 'Chọn toàn bộ 53 nội dung đang lọc' });
+  await selectAll.check();
+  await expect(page.getByText('53 chọn · 53 đang lọc', { exact: true })).toBeVisible();
+  const toggle = page.getByRole('button', {
+    name: 'Duyệt nội dung SQLite theo trang (chỉ đọc)', exact: true,
+  });
+  await toggle.click();
+  const browser = page.getByRole('region', { name: 'Duyệt nội dung SQLite' });
+  await expect(browser).toBeVisible();
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(0);
+  await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
+  await expect(browser.getByRole('status')).toContainText('Tổng chính xác: 53 nội dung · Trang 1');
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(50);
+  await browser.getByRole('button', { name: 'Trang tiếp theo (SQLite)' }).click();
+  await expect(browser.getByRole('status')).toContainText('Tổng chính xác: 53 nội dung · Trang 2');
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(3);
+  await browser.getByRole('button', { name: 'Trang trước (SQLite)' }).click();
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(50);
+  await expect(page.getByText('53 chọn · 53 đang lọc', { exact: true })).toBeVisible();
+
+  await browser.getByRole('textbox', { name: 'Tìm trong SQLite' }).fill('alpha');
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(0);
+  await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
+  await expect(browser.getByRole('status')).toContainText('Tổng chính xác: 2 nội dung');
+  await expect(browser.locator('[data-testid="server-content-row"]')).toHaveCount(2);
+  await browser.getByRole('textbox', { name: 'Tìm trong SQLite' }).clear();
+  await browser.getByRole('checkbox', { name: 'Bao gồm nội dung đã bỏ qua' }).check();
+  await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
+  await expect(browser.getByRole('status')).toContainText('Tổng chính xác: 54 nội dung');
+  await browser.getByRole('checkbox', { name: 'Bao gồm nội dung đã bỏ qua' }).uncheck();
+  await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
+
+  await request(page, 'saveContent', {
+    expectedRevision: null,
+    item: {
+      id: 'content_ui_browser_after_cursor',
+      processId,
+      revision: 0,
+      fields: { caption: 'changed while browsing' },
+      assetIds: [],
+      ignored: false,
+    },
+  });
+  await browser.getByRole('button', { name: 'Trang tiếp theo (SQLite)' }).click();
+  await expect(browser.getByRole('alert')).toContainText('thay đổi');
+  await browser.getByRole('button', { name: 'Tải trang đầu từ SQLite' }).click();
+  await expect(browser.getByRole('status')).toContainText('Tổng chính xác: 54 nội dung');
+  // The old Process table intentionally still owns the original full-row selection.
+  await expect(page.getByText('53 chọn · 53 đang lọc', { exact: true })).toBeVisible();
+});

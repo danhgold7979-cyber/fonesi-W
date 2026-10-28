@@ -16,6 +16,7 @@ import { ContentActions } from './ContentActions.js';
 import { ContentFields } from './ContentFields.js';
 import { ProcessArchive } from './ProcessArchive.js';
 import { ProcessClone } from './ProcessClone.js';
+import { ServerContentBrowser } from './ServerContentBrowser.js';
 import { replaceAssetReferences } from '@autoreels/contracts';
 
 interface Props {
@@ -55,6 +56,7 @@ export function Processes(props: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const contentScroll = useRef<HTMLDivElement>(null);
   const [applying, setApplying] = useState(false);
+  const [showServerContent, setShowServerContent] = useState(false);
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof api.previewSchedule>> | null>(
     null,
   );
@@ -135,6 +137,7 @@ export function Processes(props: Props) {
       setIsNew(false);
       setRows([]);
       setSelected(new Set());
+      setShowServerContent(false);
       setAssets([]);
       setPreview(null);
       setRowModal(null);
@@ -513,6 +516,24 @@ export function Processes(props: Props) {
               </button>
             </div>
           </div>
+          {!isNew && (
+            <div className="server-content-entry">
+              <button
+                type="button"
+                aria-expanded={showServerContent}
+                onClick={() => setShowServerContent((value) => !value)}
+              >
+                {showServerContent ? 'Đóng trình duyệt SQLite' : 'Duyệt nội dung SQLite theo trang (chỉ đọc)'}
+              </button>
+              {showServerContent && (
+                <ServerContentBrowser
+                  key={current.id}
+                  processId={current.id}
+                  notify={props.notify}
+                />
+              )}
+            </div>
+          )}
           {!isNew && (
             <Sources
               key={current.id}
