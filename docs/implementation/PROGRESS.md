@@ -1,6 +1,7 @@
-## Increment049 / P11-S095.2 — reconciliation idempotency and crash-reopen tests (plan committed)
+## Increment049 / P11-S095.2 — reconciliation idempotency and crash-reopen tests (validated)
 
-Plan-first: [INCREMENT-049_PLAN.md](INCREMENT-049_PLAN.md), commit [257e5c96](https://github.com/danhgold7979-cyber/fonesi-W/commit/257e5c9663353f87cda14a8a69e28b739f0913b0), baseline Increment048 tested source `f3b61dfa586a97ec94ffe4adb0778e5d4a82364e`. Current work adds focused tests for immutable audit/idempotency, SQLite reopen, lease/generation fencing and non-dispatchability. Implementation/CI pending; no result claimed yet.
+Plan: [INCREMENT-049_PLAN.md](INCREMENT-049_PLAN.md). Tested source SHA `91e9da36fc53bac13cb92357b2ce512a790e9cb9`. [Ubuntu CI 40717503569](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40717503569) **SUCCESS** — 335/335 tests (39 files), 30/30 Chromium UI, generated contracts/type/lint/build/plan PASS. [Windows CI 40717513338](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40717513338) **SUCCESS** — 334 passed + 1 platform-only skip (39 files), generated contracts/type/lint/build/Windows VerifyOnly/plan PASS. Added SQLite close/reopen idempotency test and rejection of changed evidence under a reused request ID; stage/job unchanged. [Results](INCREMENT-049_RESULTS.md), [checkpoint-042](../evidence/implementation/checkpoint-042.json). **Expired/no-live lease reconciliation and physical-device/picker/publishing/scale tests remain NOT_RUN.**
+
 
 ## Increment048 / P11-S095.2 — durable stage reconciliation (validated)
 
