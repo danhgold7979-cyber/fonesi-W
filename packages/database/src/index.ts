@@ -16,6 +16,7 @@ import {
   processCloneOptionsSchema,
   replaceAssetReferences,
   jobChangeRequestSchema,
+  scheduleProfileSchema,
 } from '@autoreels/contracts';
 import type {
   AppDefinition,
@@ -72,6 +73,8 @@ import {
   createSchedulePreview,
   assertPreviewCurrent,
   spreadJobs,
+  overdueAction,
+  nextAvailableRecoverySlot,
   type SchedulePreview,
 } from '@autoreels/scheduler';
 import { validateBundle, compileWorkflow } from '@autoreels/workflow-engine';
@@ -1430,6 +1433,146 @@ export class StudioDatabase {
       .prepare('INSERT INTO queue_events VALUES(?,?,?,?,?)')
       .run(makeId('queueEvent'), jobId, kind, canonicalJson(detail), new Date(at).toISOString());
   }
+
+  /**
+   * Reconcile only persisted, never-claimed jobs that became due during a real,
+   * observed OS sleep gap. No guessed startup gaps, Android input or effect replay.
+   */
+  reconcileSleepGap(
+    suspendedAt: number,
+    resumedAt: number,
+  ): {
+    queued: string[];
+    skipped: string[];
+    postponed: { jobId: string; scheduledUtc: string }[];
+    review: string[];
+  } {
+    const gap = resumedAt - suspendedAt;
+    if (
+      !Number.isSafeInteger(suspendedAt) ||
+      !Number.isSafeInteger(resumedAt) ||
+      !Number.isFinite(new Date(suspendedAt).getTime()) ||
+      !Number.isFinite(new Date(resumedAt).getTime()) ||
+      gap < 30000 ||
+      gap > 7 * 24 * 60 * 60 * 1000
+    )
+      throw new DomainError(
+        'INVALID_SLEEP_GAP',
+        'Chỉ xử lý khoảng sleep thực đã quan sát từ 30 giây đến 7 ngày.',
+      );
+    const beganUtc = new Date(suspendedAt).toISOString(),
+      resumedUtc = new Date(resumedAt).toISOString();
+    return this.transaction(() => {
+      const rows = this.db
+        .prepare(
+          "SELECT j.id FROM jobs j JOIN processes p ON p.id=j.process_id WHERE p.archived=0 AND j.state IN('SCHEDULED','QUEUED') AND julianday(j.scheduled_utc)>julianday(?) AND julianday(j.scheduled_utc)<=julianday(?) ORDER BY julianday(j.scheduled_utc),j.id LIMIT 5001",
+        )
+        .all(beganUtc, resumedUtc);
+      if (rows.length > 5000)
+        throw new DomainError(
+          'SLEEP_RECOVERY_BUDGET',
+          'Hơn 5000 job bị lỡ; cần xử lý theo các khoảng nhỏ, không truncate.',
+        );
+      const result: {
+        queued: string[];
+        skipped: string[];
+        postponed: { jobId: string; scheduledUtc: string }[];
+        review: string[];
+      } = { queued: [], skipped: [], postponed: [], review: [] };
+      for (const row of rows) {
+        const id = String(row.id),
+          record = this.getJob(id),
+          originalTime = record.job.scheduledUtc,
+          hasEffect = Boolean(
+            this.db.prepare('SELECT 1 FROM effects WHERE job_id=?').get(id),
+          ),
+          frozen = scheduleProfileSchema.safeParse(record.snapshot.scheduleProfile);
+        const profile = frozen.success ? frozen.data : null;
+        const markReview = (code: string): void => {
+          assertJobTransition(record.job.state, 'NEEDS_REVIEW', hasEffect);
+          this.db
+            .prepare("UPDATE jobs SET state='NEEDS_REVIEW',revision=revision+1 WHERE id=?")
+            .run(id);
+          this.queueEvent(
+            id,
+            'SLEEP_NEEDS_REVIEW',
+            { code, previousUtc: originalTime, hadEffect: hasEffect },
+            resumedAt,
+          );
+          result.review.push(id);
+        };
+        if (!profile || hasEffect) {
+          markReview(hasEffect ? 'EFFECT_PRESENT' : 'FROZEN_PROFILE_UNAVAILABLE');
+          continue;
+        }
+        const action = overdueAction(profile.overduePolicy, 'SLEEP_GAP', false);
+        if (action === 'REVIEW') {
+          markReview('RECOVERY_POLICY_REVIEW');
+          continue;
+        }
+        if (action === 'QUEUE') {
+          if (record.job.state === 'QUEUED') continue;
+          assertJobTransition(record.job.state, 'QUEUED');
+          this.db.prepare("UPDATE jobs SET state='QUEUED',revision=revision+1 WHERE id=?").run(id);
+          this.queueEvent(id, 'SLEEP_CATCH_UP', { previousUtc: originalTime }, resumedAt);
+          result.queued.push(id);
+          continue;
+        }
+        if (action === 'SKIP') {
+          assertJobTransition(record.job.state, 'SKIPPED');
+          this.db.prepare("UPDATE jobs SET state='SKIPPED',revision=revision+1 WHERE id=?").run(id);
+          this.queueEvent(id, 'SLEEP_SKIP', { previousUtc: originalTime }, resumedAt);
+          result.skipped.push(id);
+          continue;
+        }
+        try {
+          const occupied = this.db
+            .prepare(
+              "SELECT scheduled_utc FROM jobs WHERE device_id=? AND id<>? AND state NOT IN('SUCCESS','SUCCESS_WITH_WARNINGS','FAILED','CANCELLED','SKIPPED') AND julianday(scheduled_utc)>julianday(?) LIMIT 5001",
+            )
+            .all(record.job.deviceId, id, resumedUtc);
+          if (occupied.length > 5000)
+            throw new DomainError(
+              'RECOVERY_RESOURCE_BUDGET',
+              'Quá nhiều lịch tương lai cùng thiết bị.',
+            );
+          const seed = parseInt(
+            contentHash({ id, occurrenceKey: record.job.occurrenceKey }).slice(0, 8),
+            16,
+          );
+          const slot = nextAvailableRecoverySlot(
+            profile,
+            resumedUtc,
+            occupied.map((r) => String(r.scheduled_utc)),
+            seed,
+          );
+          if (record.job.state !== 'SCHEDULED')
+            assertJobTransition(record.job.state, 'SCHEDULED');
+          const nextUtc = new Date(Date.parse(slot.scheduledUtc)).toISOString();
+          this.db
+            .prepare("UPDATE jobs SET state='SCHEDULED',scheduled_utc=?,revision=revision+1 WHERE id=?")
+            .run(nextUtc, id);
+          this.queueEvent(
+            id,
+            'SLEEP_NEXT_SLOT',
+            {
+              previousUtc: originalTime,
+              scheduledUtc: nextUtc,
+              jitterMinutes: slot.jitterMinutes,
+              crossesLocalDay: slot.crossesLocalDay,
+            },
+            resumedAt,
+          );
+          result.postponed.push({ jobId: id, scheduledUtc: nextUtc });
+        } catch (error) {
+          if (!(error instanceof DomainError)) throw error;
+          markReview(error.code);
+        }
+      }
+      return result;
+    });
+  }
+
   claimDueJob(deviceId: string, ownerId: string, at: number, ttl = 30000): QueueClaimResult {
     idSchema.parse(deviceId);
     idSchema.parse(ownerId);

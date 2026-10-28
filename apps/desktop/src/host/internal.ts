@@ -65,6 +65,7 @@ export type InternalRequest =
   | { command: 'queue.claim'; deviceId: string; ownerId: string; at: number; ttl: number }
   | { command: 'queue.renew'; jobId: string; lease: DeviceLease; at: number; ttl: number }
   | { command: 'queue.recover'; deviceId: string; at: number }
+  | { command: 'queue.reconcileSleep'; suspendedAt: number; resumedAt: number }
   | {
       command: 'source.register';
       processId: string;
@@ -164,6 +165,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.renewJobClaim(request.jobId, request.lease, request.at, request.ttl);
     case 'queue.recover':
       return db.recoverExpiredClaims(request.deviceId, request.at);
+    case 'queue.reconcileSleep':
+      return db.reconcileSleepGap(request.suspendedAt, request.resumedAt);
     case 'source.register':
       return db.registerNativeSources(request.processId, request.expectedRevision, request.grants);
     case 'source.grant':
