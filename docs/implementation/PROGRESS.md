@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment039 / P11-S094 — chẩn đoán preflight job chỉ đọc, không cấp quyền đăng
+
+Đã triển khai `jobPreflight(id)` qua typed API/host/Electron preload và màn Lịch đăng, đối chiếu snapshot đóng băng, version/hash/compiler effect-path, Process, trạng thái và identity thiết bị, lease, external effects, fingerprint/trạng thái media trên SQLite. Báo cáo chỉ có mã/lời giải thích an toàn, **không xuất account, caption, fingerprint, ADB serial, nguồn file hoặc mã thực thi**. Kết quả **luôn `canDispatch: false`** do chưa có bằng chứng app/version/locale/target, USB/LAN, provider và live-media verification; không tạo claim, không chạm Android và không đổi trạng thái job. Phân biệt external effect `CONFIRMED` với `INTENT/ATTEMPT_UNCERTAIN/NEEDS_REVIEW` để không báo review sai hoặc đăng lại mù.
+
+[Kế hoạch trước code](INCREMENT-039_PLAN.md) (commit `81e1cfa`), [kết quả](INCREMENT-039_RESULTS.md), [receipt checkpoint-032](../evidence/implementation/checkpoint-032.json). Latest code SHA `f7df8b3a`. **CI exact-source SUCCESS Ubuntu/Windows**: [40656226032](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40656226032), [40656233702](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40656233702). Ubuntu **291/291 unit/integration (33 files), 30/30 Chromium**; Windows **290 PASS +1 pre-existing Unix-only SDK skip /33 files**; type/lint/generated/build/plan/Windows launcher PASS. Trạng thái **TESTED_PERSISTED_ONLY_PREFLIGHT_NOT_P11_ACCEPTED**, không phải S094 nghiệm thu live hoặc quyền đăng. Runtime Android/Facebook/TikTok, 20→300 phones, installer, Windows10 GUI vẫn **NOT_RUN**.
+
 ## Increment038 / P06-S056 — sắp xếp SQLite theo trang, giữ nguyên scope chỉnh sửa
 
 Đã bổ sung phân trang nội dung theo **cũ nhất/mới nhất** từ SQLite trong trình duyệt chỉ đọc, cursor khóa cả thứ tự và Process/bộ lọc/epoch, thứ tự mặc định tương thích ngược. Selector giao diện reset lịch sử trang khi đổi sort; bảng authoring vẫn tải đủ hàng và giữ nguyên chọn tất cả, sửa/xuất hàng loạt và lịch, không được hiểu page view là toàn Process. **Kế hoạch đã commit trước code:** [INCREMENT-038_PLAN.md](INCREMENT-038_PLAN.md). **Source commit:** `4c7f46ae`; [kết quả](INCREMENT-038_RESULTS.md) và [receipt checkpoint-031](../evidence/implementation/checkpoint-031.json).
