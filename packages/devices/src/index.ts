@@ -134,7 +134,7 @@ async function sendPacket(socket: Socket, bytes: Buffer, signal?: AbortSignal): 
     if (socket.destroyed || signal?.aborted) aborted();
   });
 }
-function syncHeader(op: 'SEND' | 'DATA' | 'DONE', size: number): Buffer {
+function syncHeader(op: 'SEND' | 'DATA' | 'DONE' | 'RECV', size: number): Buffer {
   const result = Buffer.alloc(8);
   result.write(op, 0, 'ascii');
   result.writeUInt32LE(size, 4);
