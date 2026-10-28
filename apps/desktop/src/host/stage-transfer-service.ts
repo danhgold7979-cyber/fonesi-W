@@ -33,6 +33,7 @@ interface StageMediaPort {
 }
 interface SyncSender {
   sendOwnedStage(input: OwnedSyncInput, signal?: AbortSignal): Promise<OwnedSyncAck>;
+  probeOwnedStageMediaStore?(input: { serial: string; jobId: string; ordinal: number; nonce: string; extension: string; expectedBytes: number }, signal?: AbortSignal): Promise<{ status: 'INDEXED_EXACT'; rowId: string; displayName: string; relativePath: string; mimeType: string; bytes: number } | { status: 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' }>;
   readOwnedStage(input: {
     serial: string; jobId: string; ordinal: number; nonce: string; extension: string;
     expectedHash: string; expectedBytes: number;
@@ -58,6 +59,85 @@ export class HostStageTransferService {
    * Explicit private verification step. A successful receipt proves byte
    * equality at the generated remote path, not Android MediaStore indexing.
    */
+  async verifyMediaStoreRow(request: {
+    jobId: string; stageId: string; expectedJobRevision: number; expectedSnapshotHash: string;
+    lease: DeviceLease; transportSerial: string; transportGeneration: number;
+  }, signal?: AbortSignal): Promise<{
+    jobId: string; stageId: string; scope: 'MEDIASTORE_ROW_ONLY';
+    status: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED' | 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED';
+    canDispatch: false;
+  }> {
+    idSchema.parse(request.jobId);
+    idSchema.parse(request.stageId);
+    hashSchema.parse(request.expectedSnapshotHash);
+    if (request.lease.ownerKind !== 'JOB' || !request.lease.deviceId ||
+        !Number.isSafeInteger(request.expectedJobRevision) || request.expectedJobRevision < 0 ||
+        !Number.isSafeInteger(request.transportGeneration) || request.transportGeneration < 1 ||
+        !/^[A-Za-z0-9][A-Za-z0-9_.:[\]-]{0,199}$/.test(request.transportSerial) || signal?.aborted)
+      throw new DomainError('STAGE_MEDIASTORE_REQUEST_INVALID', 'Invalid trusted MediaStore probe request.');
+    const fence = async (): Promise<void> => {
+      if (signal?.aborted) throw new DomainError('CANCELLED', 'MediaStore probe cancelled.');
+      await this.db.internal({ command: 'lease.assert', lease: request.lease, at: Date.now() });
+      await this.db.internal({ command: 'device.assertTransport', hostId: this.hostId,
+        deviceId: request.lease.deviceId, serial: request.transportSerial, generation: request.transportGeneration });
+      const records = await this.db.internal<DeviceRecord[]>({ command: 'device.records', hostId: this.hostId });
+      const device = records.find((item) => item.id === request.lease.deviceId);
+      const transport = device?.transports.find((item) => item.serial === request.transportSerial &&
+        item.generation === request.transportGeneration && item.state === 'CONNECTED' && item.identityVerified);
+      const seenAt = transport ? Date.parse(transport.lastSeen) : NaN;
+      if (!device?.enabled || device.identity !== 'VERIFIED_PROPERTIES' || !transport ||
+          !Number.isFinite(seenAt) || Date.now() < seenAt || Date.now() - seenAt > 30000)
+        throw new DomainError('STAGE_TRANSPORT_STALE', 'Trusted transport observation is stale.');
+    };
+    const stages = await this.db.internal<DeviceStageTransfer[]>({ command: 'stage.list', jobId: request.jobId });
+    const stage = stages.find((item) => item.id === request.stageId);
+    if (!stage || stage.jobId !== request.jobId || stage.hostId !== this.hostId ||
+        stage.deviceId !== request.lease.deviceId || stage.claimGeneration !== request.lease.generation ||
+        stage.snapshotHash !== request.expectedSnapshotHash || stage.state !== 'SYNC_ACK_UNVERIFIED' ||
+        stage.remoteReadbackHash !== stage.expectedHash || stage.remoteReadbackBytes !== stage.expectedBytes)
+      throw new DomainError('STAGE_MEDIASTORE_NOT_ELIGIBLE', 'Matching remote byte evidence is required.');
+    if (stage.mediaStoreRowId !== null || stage.mediaStoreAt !== null)
+      throw new DomainError('STAGE_MEDIASTORE_ALREADY_RECORDED', 'MediaStore evidence already exists.');
+    const plan = await this.db.internal<JobMediaPreflightPlan>({
+      command: 'job.mediaPlan', jobId: request.jobId, hostId: this.hostId,
+    });
+    const asset = plan.entries[stage.ordinal];
+    if (!asset || plan.jobRevision !== request.expectedJobRevision ||
+        plan.snapshotHash !== request.expectedSnapshotHash || asset.assetId !== stage.assetId ||
+        asset.pinnedHash !== stage.expectedHash || asset.pinnedBytes !== stage.expectedBytes)
+      throw new DomainError('STAGE_SNAPSHOT_STALE', 'Pinned media or job snapshot changed.');
+    const extension = extname(asset.binding.relativePath).toLowerCase();
+    if (!/^\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension))
+      throw new DomainError('STAGE_EXTENSION_INVALID', 'Pinned media format is unsupported.');
+    const adapter = this.adapter().scoped(fence);
+    if (!adapter.probeOwnedStageMediaStore) return {
+      jobId: stage.jobId, stageId: stage.id, scope: 'MEDIASTORE_ROW_ONLY',
+      status: 'UNSUPPORTED', canDispatch: false,
+    };
+    await fence();
+    const result = await adapter.probeOwnedStageMediaStore({
+      serial: request.transportSerial, jobId: stage.jobId, ordinal: stage.ordinal,
+      nonce: stage.nonce, extension, expectedBytes: stage.expectedBytes,
+    }, signal);
+    await fence();
+    if (result.status !== 'INDEXED_EXACT') return {
+      jobId: stage.jobId, stageId: stage.id, scope: 'MEDIASTORE_ROW_ONLY',
+      status: result.status, canDispatch: false,
+    };
+    const recorded = await this.db.internal<DeviceStageTransfer>({
+      command: 'stage.recordMediaStore', stageId: stage.id, lease: request.lease,
+      expectedJobRevision: request.expectedJobRevision, rowId: result.rowId,
+      displayName: result.displayName, relativePath: result.relativePath,
+      mimeType: result.mimeType, observedBytes: result.bytes, at: Date.now(),
+    });
+    if (recorded.mediaStoreRowId !== result.rowId || recorded.mediaStoreAt === null)
+      throw new DomainError('STAGE_MEDIASTORE_NOT_STORED', 'MediaStore row evidence was not persisted.');
+    return {
+      jobId: stage.jobId, stageId: stage.id, scope: 'MEDIASTORE_ROW_ONLY',
+      status: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED', canDispatch: false,
+    };
+  }
+
   async verifyRemoteBytes(request: {
     jobId: string;
     stageId: string;
