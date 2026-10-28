@@ -173,32 +173,27 @@ export function Editor(props: Props) {
     const result = await promise;
     return generation.current !== savedGeneration.current ? save() : result;
   }
-  async function copyNodes(cut = false) {
+  function copyNodes(cut = false) {
     try {
       if (!selected.length) return;
       const content = copyPortableSelection(bundle, graphId, selected);
       const encoded = serializePortableSelection(content);
-      let systemCopy = false;
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(encoded);
-          systemCopy = true;
-        }
-      } catch {
-        // Restricted browser contexts can deny OS clipboard access.
-      }
-      if (cut && !systemCopy)
-        throw new Error('Không thể cắt: clipboard hệ thống không cấp quyền.');
       clipboard.current = content;
       pasteCount.current = 0;
-      if (!systemCopy)
-        props.notify('Clipboard hệ thống không khả dụng; chỉ sao chép tạm trong editor hiện tại.');
+      // Apply the local cut synchronously. A denied OS clipboard write must not
+      // break ordinary cut/undo or lose the in-editor copy.
       if (cut) {
-        // Do not remove nodes from a graph that changed during the async write.
-        if (actions.current.graphId !== graphId || actions.current.bundle.workflow.id !== bundle.workflow.id)
-          return;
         apply((b) => removeNodes(graphById(b, graphId), selected));
         setSelected([]);
+      }
+      const localOnly = () =>
+        props.notify('Clipboard hệ thống không khả dụng; chỉ dán trong editor hiện tại.');
+      try {
+        const pending = navigator.clipboard?.writeText?.(encoded);
+        if (pending) void pending.catch(localOnly);
+        else localOnly();
+      } catch {
+        localOnly();
       }
     } catch (error) {
       props.notify(error instanceof Error ? error.message : 'Không thể sao chép node.');

@@ -42,7 +42,7 @@ test('clipboard crosses same-app workflow editors, remaps nodes and ignores ordi
   });
   await page.reload();
   await page.locator('[data-route="library"]').click();
-  await page.getByRole('button', { name: /Portable source/ }).click();
+  await page.locator('button.card-open').filter({ hasText: 'Portable source' }).click();
   await expect(page.locator('.react-flow__node-studio')).toHaveCount(4);
   await page.locator('.react-flow__node[data-id="wait_a"]').click();
   await page.locator('.react-flow__node[data-id="log_a"]').click({ modifiers: ['Shift'] });
@@ -51,7 +51,7 @@ test('clipboard crosses same-app workflow editors, remaps nodes and ignores ordi
     'AUTOREELS_STUDIO_NODES_V1',
   );
   await page.locator('[data-route="library"]').click();
-  await page.getByRole('button', { name: /Portable destination/ }).click();
+  await page.locator('button.card-open').filter({ hasText: 'Portable destination' }).click();
   await expect(page.locator('.react-flow__node-studio')).toHaveCount(2);
   await page.locator('[data-testid="canvas"]').focus();
   await page.keyboard.press('Control+v');
