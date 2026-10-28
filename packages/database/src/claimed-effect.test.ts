@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import type { JobDefinition, JobSnapshot, DeviceLease, ProcessDefinition, WorkflowNode, WorkflowEdge } from '@autoreels/contracts';
+import type { JobDefinition, DeviceLease, ProcessDefinition, WorkflowNode, WorkflowEdge } from '@autoreels/contracts';
 import { contentHash } from '@autoreels/domain';
 import { StudioDatabase } from './index.js';
 import { dispatchInternal } from '../../../apps/desktop/src/host/internal.js';
@@ -28,6 +28,12 @@ const edge = (id: string, source: string, port: WorkflowEdge['port'], target: st
   ({ id, source, port, target });
 function fixture(deviceId = 'device_1', index = '1') {
   db.registerObservedDevice(deviceId, deviceId);
+  // A verified profile fixture is required even before the provider preflight.
+  const setup = new DatabaseSync(join(dir, 'studio.sqlite'));
+  setup.prepare(
+    "INSERT INTO device_profiles(device_id,fingerprint,metadata,identity,revision) VALUES(?,?,NULL,'VERIFIED_PROPERTIES',0)",
+  ).run(deviceId, contentHash({ deviceId, verifiedFixture: true }));
+  setup.close();
   const draft = db.createWorkflow('fb', 'Strict effect fixture');
   const bundle = structuredClone(draft.bundle),
     graph = bundle.graphs[0]!;
