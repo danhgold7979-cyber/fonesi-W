@@ -144,6 +144,14 @@ describe('P04 portable graph clipboard', () => {
     const broken = structuredClone(fragment);
     broken.selection.edges[0]!.target = 'unselected';
     expect(() => serializePortableSelection(broken)).toThrow('Dây nối');
+    const recursive = structuredClone(fragment);
+    recursive.graphs.find((g) => g.id === 'child_two')!.nodes[1]!.config = {
+      graphRef: 'child_one', inputMapping: {}, outputMapping: {},
+    };
+    recursive.graphs.find((g) => g.id === 'child_two')!.nodes[1]!.type = 'subflow';
+    expect(() => parsePortableSelection(
+      'AUTOREELS_STUDIO_NODES_V1\n' + JSON.stringify(recursive),
+    )).toThrow('đệ quy');
     expect(h.bundle).toEqual(before);
   });
 
