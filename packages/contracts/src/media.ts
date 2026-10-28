@@ -100,3 +100,25 @@ export interface MediaAssetBinding {
 export type MediaAdoptionPlan =
   | { status: 'APPLIED'; result: MediaAdoptionResult }
   | { status: 'PENDING'; binding: MediaAssetBinding; scanned: ScannedAsset };
+
+/** PRIVATE host/DB-worker grant plan. Never expose to StudioApi, HTTP or preload. */
+export interface JobMediaPreflightPlan {
+  jobId: string;
+  jobRevision: number;
+  snapshotHash: string;
+  entries: {
+    assetId: string;
+    pinnedHash: string;
+    pinnedBytes: number;
+    binding: MediaAssetBinding;
+  }[];
+}
+/** Redacted host-only observation, not durable evidence or execution permission. */
+export interface JobMediaByteReport {
+  jobId: string;
+  inspectedAt: string;
+  scope: 'HOST_BYTES_ONLY';
+  status: 'BYTES_MATCHED' | 'NO_MEDIA';
+  verifiedMediaCount: number;
+  canDispatch: false;
+}

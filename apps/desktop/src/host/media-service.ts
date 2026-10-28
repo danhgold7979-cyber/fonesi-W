@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { contentHash } from '@autoreels/domain';
 import {
   approveNativeSource,
   MediaCoordinator,
@@ -10,6 +11,8 @@ import {
   mediaKind,
 } from '@autoreels/media';
 import type {
+  JobMediaPreflightPlan,
+  JobMediaByteReport,
   MediaAssetBinding,
   MediaAdoptionPlan,
   MediaAdoptionResult,
@@ -86,6 +89,72 @@ export class HostMediaService {
     if (signal.aborted) throw new DomainError('CANCELLED', 'Đã hủy đọc media.');
     return { ...value, kind, relativePath: binding.relativePath, probe };
   }
+
+  /**
+   * Host-only byte-level diagnostic. Never a staging receipt, dispatch permit,
+   * network proof or Android operation. Re-observe inside the actual runner.
+   */
+  inspectJobMediaBytes(jobId: string): Promise<JobMediaByteReport> {
+    return this.withMediaRead(async (parentSignal) => {
+      const plan = await this.db.internal<JobMediaPreflightPlan>({
+        command: 'job.mediaPlan', jobId, hostId: this.hostId,
+      });
+      if (!plan.entries.length)
+        return {
+          jobId, inspectedAt: new Date().toISOString(), scope: 'HOST_BYTES_ONLY',
+          status: 'NO_MEDIA', verifiedMediaCount: 0, canDispatch: false,
+        };
+      let totalBytes = 0;
+      for (const entry of plan.entries) {
+        if (parentSignal.aborted)
+          throw new DomainError('CANCELLED', 'Đã dừng kiểm tra media.');
+        if (
+          !Number.isSafeInteger(entry.pinnedBytes) ||
+          entry.pinnedBytes <= 0 ||
+          entry.pinnedBytes > 4 * 1024 * 1024 * 1024 ||
+          totalBytes + entry.pinnedBytes > 8 * 1024 * 1024 * 1024
+        ) throw new DomainError('MEDIA_PREFLIGHT_BUDGET', 'Media exceeds host inspection budget.');
+        totalBytes += entry.pinnedBytes;
+        try {
+          const signal = AbortSignal.any([parentSignal, AbortSignal.timeout(120000)]);
+          const path = await resolveGrantedFile(
+            entry.binding.grant, entry.binding.relativePath, this.hostId,
+          );
+          const before = await stat(path);
+          if (!before.isFile() || before.size !== entry.pinnedBytes)
+            throw new DomainError('MEDIA_BYTES_CHANGED', 'Media size no longer matches the snapshot.');
+          const found = await fingerprint(path, signal);
+          const after = await stat(path);
+          if (
+            found.hash !== entry.pinnedHash ||
+            found.bytes !== entry.pinnedBytes ||
+            after.ino !== before.ino ||
+            after.mtimeMs !== before.mtimeMs ||
+            (await resolveGrantedFile(
+              entry.binding.grant, entry.binding.relativePath, this.hostId,
+            )) !== path
+          ) throw new DomainError('MEDIA_BYTES_CHANGED', 'Media bytes no longer match the snapshot.');
+        } catch (error) {
+          if (error instanceof DomainError) throw error;
+          throw new DomainError(
+            parentSignal.aborted ? 'CANCELLED' : 'MEDIA_READ_FAILED',
+            'Không đọc được media đã cấp quyền trên host.',
+          );
+        }
+      }
+      const fresh = await this.db.internal<JobMediaPreflightPlan>({
+        command: 'job.mediaPlan', jobId, hostId: this.hostId,
+      });
+      if (contentHash(plan) !== contentHash(fresh))
+        throw new DomainError('JOB_MEDIA_STALE', 'Job or host source changed during inspection.');
+      return {
+        jobId, inspectedAt: new Date().toISOString(), scope: 'HOST_BYTES_ONLY',
+        status: 'BYTES_MATCHED', verifiedMediaCount: plan.entries.length,
+        canDispatch: false,
+      };
+    });
+  }
+
   readonly coordinator: MediaCoordinator;
   private choosing = false;
   constructor(

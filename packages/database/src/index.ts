@@ -45,6 +45,7 @@ import type {
   SourceDefinition,
   ScannedAsset,
   ContentAssetInfo,
+  JobMediaPreflightPlan,
   SchedulePreviewDto,
   JobChangeRequest,
   JobChangePreview,
@@ -1904,6 +1905,53 @@ export class StudioDatabase {
         now(),
       );
   }
+
+  /**
+   * Private immutable media plan. Host path grants never leave DB worker except
+   * to the trusted host service, and are not accepted from public input.
+   */
+  jobMediaPreflightPlan(jobId: string, hostId: string): JobMediaPreflightPlan {
+    idSchema.parse(jobId);
+    idSchema.parse(hostId);
+    const { job, snapshot, snapshotHash } = this.getJob(jobId);
+    if (!['SCHEDULED', 'QUEUED', 'PREFLIGHT'].includes(job.state))
+      throw new DomainError('JOB_MEDIA_PHASE', 'Job is not eligible for media inspection.');
+    if (this.db.prepare('SELECT 1 FROM effects WHERE job_id=? LIMIT 1').get(jobId))
+      throw new DomainError('JOB_EFFECT_PRESENT', 'External effects require review first.');
+    const process = this.getProcess(job.processId);
+    if (process.archived)
+      throw new DomainError('PROCESS_ARCHIVED', 'Process is archived.');
+    if (snapshot.contentId !== job.contentId ||
+        snapshot.workflowHash !== bundleHash(snapshot.bundle) ||
+        process.deviceId !== job.deviceId)
+      throw new DomainError('JOB_MEDIA_SNAPSHOT_INVALID', 'Immutable job bindings do not match.');
+    const ids = snapshot.assetIds;
+    if (!Array.isArray(ids) || ids.length > 32 || new Set(ids).size !== ids.length)
+      throw new DomainError('MEDIA_PREFLIGHT_BUDGET', 'At most 32 distinct owned media in one check.');
+    const entries: JobMediaPreflightPlan['entries'] = [];
+    for (const assetId of ids) {
+      idSchema.parse(assetId);
+      const pinned = snapshot.assets?.filter((a) => a.id === assetId) ?? [];
+      if (pinned.length !== 1 ||
+          pinned[0]!.state !== 'READY' ||
+          !Number.isSafeInteger(pinned[0]!.bytes) ||
+          pinned[0]!.bytes <= 0 ||
+          !hashSchema.safeParse(pinned[0]!.hash).success)
+        throw new DomainError('MEDIA_PIN_UNVERIFIED', 'Frozen media evidence is incomplete.');
+      const binding = this.mediaAssetBinding(job.processId, assetId, hostId);
+      if (
+        binding.expectedHash !== pinned[0]!.hash ||
+        binding.observedHash !== pinned[0]!.hash ||
+        binding.state !== 'READY'
+      ) throw new DomainError('MEDIA_LEDGER_CHANGED', 'Registered source no longer matches the job.');
+      entries.push({
+        assetId, pinnedHash: pinned[0]!.hash,
+        pinnedBytes: pinned[0]!.bytes, binding,
+      });
+    }
+    return { jobId, jobRevision: job.revision, snapshotHash, entries };
+  }
+
   getJob(id: string): { job: JobDefinition; snapshot: JobSnapshot; snapshotHash: string } {
     const r = this.db.prepare('SELECT * FROM jobs WHERE id=?').get(id);
     if (!r) throw new DomainError('NOT_FOUND', 'Job not found');

@@ -12,6 +12,7 @@ export type InternalRequest =
   | { command: 'workspace.backup'; path: string }
   | { command: 'workspace.validateBackup'; path: string }
   | { command: 'asset.binding'; processId: string; assetId: string; hostId: string }
+  | { command: 'job.mediaPlan'; jobId: string; hostId: string }
   | { command: 'asset.adoptPreview'; binding: MediaAssetBinding; scanned: ScannedAsset }
   | { command: 'asset.adoptPlan'; token: string; hostId: string }
   | { command: 'asset.adoptApply'; token: string; hostId: string; scanned: ScannedAsset }
@@ -140,6 +141,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.validateBackup(request.path);
     case 'asset.binding':
       return db.mediaAssetBinding(request.processId, request.assetId, request.hostId);
+    case 'job.mediaPlan':
+      return db.jobMediaPreflightPlan(request.jobId, request.hostId);
     case 'asset.adoptPreview':
       return db.previewMediaAdoption(
         request.binding.grant.processId,
