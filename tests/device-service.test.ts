@@ -337,3 +337,47 @@ it('asks native operator and independently re-probes ADB, then disables controls
     }),
   ).rejects.toThrow();
 });
+
+
+it('rejects a handset swap between preview and the desktop confirmation without changing the old device', async () => {
+  const original = await device();
+  f.state.hardwareSerial = 'TEMP_REUSED_SERIAL';
+  await service.scan();
+  expect((await device()).identity).toBe('CONFLICT');
+  f.state.hardwareSerial = 'SERIAL_FIXTURE';
+  await service.close();
+  service = new HostDeviceService(
+    {
+      request: async (command, input = {}) =>
+        dispatch(db, { operationId: 'op_resolution_swap', command, input }),
+      internal: async <T>(request: Parameters<typeof dispatchInternal>[1]) =>
+        dispatchInternal(db, request) as T,
+    },
+    'host_fixture',
+    dir,
+    undefined,
+    { port: f.port },
+    async () => {
+      // Simulated physical swap exactly while the user approves the OS dialog.
+      f.state.hardwareSerial = 'ANOTHER_HANDSET_AT_CONFIRM';
+      return true;
+    },
+  );
+  await service.ready();
+  await service.scan();
+  const current = await device();
+  const preview = (await service.request('previewDeviceConflictResolution', {
+    id: current.id, expectedRevision: current.revision,
+  })) as DeviceResolutionPreview;
+  expect(preview.canApply).toBe(true);
+  await expect(
+    service.request('applyDeviceConflictResolution', {
+      id: original.id, token: preview.token, confirmedName: preview.name,
+    }),
+  ).rejects.toMatchObject({ code: 'RESOLUTION_PROOF_CHANGED' });
+  const after = await device();
+  expect(after.id).toBe(original.id);
+  expect(after.identity).toBe('CONFLICT');
+  expect(after.capabilities.manualControl).toBe(false);
+  expect(f.state.shells.some((s) => s.startsWith("'input'"))).toBe(false);
+});
