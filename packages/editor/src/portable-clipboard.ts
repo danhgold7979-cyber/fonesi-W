@@ -168,7 +168,7 @@ export function parsePortableSelection(text: string): PortableGraphClipboard | n
     !selection.nodes.every((n: unknown) => n !== null && typeof n === 'object' && !Array.isArray(n) && 'id' in n && typeof n.id === 'string' && 'x' in n && typeof n.x === 'number' && 'y' in n && typeof n.y === 'number' && 'config' in n && n.config !== null && typeof n.config === 'object' && !Array.isArray(n.config)) ||
     !selection.edges.every((e: unknown) => e !== null && typeof e === 'object' && !Array.isArray(e) && 'id' in e && typeof e.id === 'string' && 'source' in e && typeof e.source === 'string' && 'target' in e && typeof e.target === 'string') ||
     !selection.groups.every((g: unknown) => g !== null && typeof g === 'object' && !Array.isArray(g) && 'id' in g && typeof g.id === 'string' && 'nodeIds' in g && Array.isArray(g.nodeIds)) ||
-    !input.graphs.every((g: unknown) => g !== null && typeof g === 'object' && !Array.isArray(g) && 'id' in g && typeof g.id === 'string' && 'nodes' in g && Array.isArray(g.nodes) && 'edges' in g && Array.isArray(g.edges) && 'groups' in g && (g.groups === undefined || Array.isArray(g.groups)))
+    !input.graphs.every((g: unknown) => g !== null && typeof g === 'object' && !Array.isArray(g) && 'id' in g && typeof g.id === 'string' && 'nodes' in g && Array.isArray(g.nodes) && 'edges' in g && Array.isArray(g.edges) && (!('groups' in g) || g.groups === undefined || Array.isArray(g.groups)))
   ) throw new Error('Clipboard graph không hợp lệ.');
   const fragment = input as unknown as PortableGraphClipboard;
   validateFragment(fragment);
