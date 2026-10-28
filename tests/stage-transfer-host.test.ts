@@ -317,6 +317,50 @@ it('classifies fresh absent MediaStore index while preserving matching remote-by
   expect(receipt).toMatchObject({ classification: 'REMOTE_BYTES_MATCHED', mediaStoreStatus: 'NOT_INDEXED', canDispatch: false });
   expect(db.listDeviceStageTransfers(jobId)[0]?.state).toBe('SYNC_ACK_UNVERIFIED');
 });
+it('keeps reconciliation audit immutable and idempotent across SQLite reopen', async () => {
+  const f = await fixture();
+  const upload = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId: f.jobId, stageId: upload.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const receipt = await coordinator().reconcileStage({
+    requestId: 'reconcile_reopen_001', jobId: f.jobId, stageId: upload.stageId,
+    expectedJobRevision: f.expectedJobRevision, expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: f.lease, transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const stageBefore = db.listDeviceStageTransfers(jobId)[0]!;
+  const jobBefore = db.getJob(jobId).job;
+  db.close();
+  db = new StudioDatabase(filepath());
+  const repeat = db.recordClaimedDeviceStageReconciliation({
+    requestId: 'reconcile_reopen_001', stageId: upload.stageId, lease: f.lease,
+    expectedJobRevision: f.expectedJobRevision,
+    classification: receipt.classification, observedHash: stageBefore.expectedHash,
+    observedBytes: stageBefore.expectedBytes, mediaStoreStatus: receipt.mediaStoreStatus, at: Date.now(),
+  });
+  expect(repeat.id).toBeTruthy();
+  expect(repeat.requestId).toBe('reconcile_reopen_001');
+  expect(repeat.classification).toBe(receipt.classification);
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(stageBefore);
+  expect(db.getJob(jobId).job).toEqual(jobBefore);
+  let auditCount = 0;
+  sql((conn) => {
+    auditCount = Number(conn.prepare(
+      'SELECT COUNT(*) AS count FROM device_stage_reconciliations WHERE stage_id=? AND request_id=?',
+    ).get(upload.stageId, 'reconcile_reopen_001')?.count ?? 0);
+  });
+  expect(auditCount).toBe(1);
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    requestId: 'reconcile_reopen_001', stageId: upload.stageId, lease: f.lease,
+    expectedJobRevision: f.expectedJobRevision, classification: 'REMOTE_MISMATCH',
+    observedHash: 'f'.repeat(64), observedBytes: stageBefore.expectedBytes,
+    mediaStoreStatus: 'UNSUPPORTED', at: Date.now(),
+  })).toThrowError(/Request ID has different evidence/);
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(stageBefore);
+  expect(db.getJob(jobId).job).toEqual(jobBefore);
+});
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {
   const f = await fixture();
   await expect(coordinator('FAIL').transfer(f)).rejects.toThrow('simulated disconnect');
