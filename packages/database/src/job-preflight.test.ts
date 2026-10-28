@@ -170,5 +170,5 @@ it('fails safely on invalid clock and corrupt snapshot rather than authorizing d
   sql((connection) => connection.prepare('UPDATE jobs SET snapshot_hash=? WHERE id=?')
     .run(contentHash('tampered'), f.jobId));
   expect(() => db.inspectJobPreflight(f.jobId, at)).toThrow('snapshot');
-  expect(db.getJob(f.jobId)).toThrow();
+  expect(() => db.getJob(f.jobId)).toThrow();
 });
