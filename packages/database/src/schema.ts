@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -120,6 +120,17 @@ CREATE TABLE device_resolution_audit(
   created_at TEXT NOT NULL
 ) STRICT;
 CREATE INDEX device_resolution_audit_device ON device_resolution_audit(device_id,created_at);
+`,
+  },
+  {
+    version: 14,
+    sql: `
+INSERT INTO query_epochs(name,revision) VALUES('content',0);
+CREATE TRIGGER content_epoch_insert AFTER INSERT ON content_items BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
+CREATE TRIGGER content_epoch_update AFTER UPDATE ON content_items BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
+CREATE TRIGGER content_epoch_delete AFTER DELETE ON content_items BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
+CREATE TRIGGER content_assets_epoch_insert AFTER INSERT ON content_assets BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
+CREATE TRIGGER content_assets_epoch_delete AFTER DELETE ON content_assets BEGIN UPDATE query_epochs SET revision=revision+1 WHERE name='content'; END;
 `,
   },
 ] as const;
