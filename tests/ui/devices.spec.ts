@@ -243,3 +243,34 @@ test('Device Details exposes only real bounded resolution audit history with a c
   const body = (await res.json()) as { ok: boolean };
   expect(body.ok).toBe(false);
 });
+
+
+test('Inspector v2 ordered fallback shows exact winning strategy and refuses ambiguous selection', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:4177/');
+  const card = page.locator('.device-card').first();
+  await expect(card).toBeVisible();
+  await card.getByRole('button', { name: 'Inspector', exact: true }).click();
+  await page.getByRole('button', { name: 'Chụp cây và ảnh', exact: true }).click();
+  await expect(page.getByRole('img', { name: /Inspector/ })).toBeVisible();
+  const before = adb.state.shells.filter((s) => s.startsWith("'input'")).length;
+  const input = page.getByRole('textbox', { name: 'Selector JSON', exact: true });
+  await input.fill(JSON.stringify({
+    version: 2,
+    strategies: [
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'missing' }] },
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'com.facebook.katana:id/submit' }] },
+    ],
+  }));
+  await expect(page.getByRole('status')).toContainText('1 phần tử khớp · chiến lược 2/2');
+  await input.fill(JSON.stringify({
+    version: 2,
+    strategies: [
+      { all: [{ field: 'packageName', op: 'EQ', value: 'com.facebook.katana' }] },
+      { all: [{ field: 'resourceId', op: 'EQ', value: 'com.facebook.katana:id/submit' }] },
+    ],
+  }));
+  await expect(page.getByRole('status')).toContainText('2 phần tử khớp · chiến lược 1/2 — chưa duy nhất');
+  expect(adb.state.shells.filter((s) => s.startsWith("'input'")).length).toBe(before);
+});
