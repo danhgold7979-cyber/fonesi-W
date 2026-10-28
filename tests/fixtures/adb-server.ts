@@ -28,6 +28,7 @@ export async function startAdbFixture() {
   let closing = false;
   const state = {
     protocol: 41,
+    hardwareSerial: 'SERIAL_FIXTURE',
     connectAlias: '',
     connectError: false,
     autoConnect: false,
@@ -45,8 +46,8 @@ export async function startAdbFixture() {
     stall: false,
     split: false,
   };
-  const properties =
-    '[ro.serialno]: [SERIAL_FIXTURE]\n[ro.product.manufacturer]: [Fixture]\n[ro.product.model]: [Fixture Phone]\n[ro.product.device]: [fixture_product]\n[ro.build.version.sdk]: [34]\n[ro.build.version.release]: [14]\n[persist.sys.locale]: [vi-VN]\n';
+  const properties = () =>
+    '[ro.serialno]: [' + state.hardwareSerial + ']\n[ro.product.manufacturer]: [Fixture]\n[ro.product.model]: [Fixture Phone]\n[ro.product.device]: [fixture_product]\n[ro.build.version.sdk]: [34]\n[ro.build.version.release]: [14]\n[persist.sys.locale]: [vi-VN]\n';
   const server = createServer((socket) => {
     if (closing) {
       socket.destroy();
@@ -113,7 +114,7 @@ export async function startAdbFixture() {
           if (command.startsWith("'cat' '/data/local/tmp/autoreels-inspector-")) {
             stdout = state.xml;
             if (state.rotateOnXml) state.rotation = 1;
-          } else if (command === "'getprop'") stdout = properties;
+          } else if (command === "'getprop'") stdout = properties();
           else if (command === "'pm' 'list' 'packages'")
             stdout = 'package:com.facebook.katana\npackage:com.android.settings\n';
           else if (command === "'dumpsys' 'input'")
