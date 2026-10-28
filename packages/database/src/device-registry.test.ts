@@ -291,3 +291,38 @@ it('never remaps a verified transport on partial property probe with no hardware
   db.reconcileDeviceTransports('host', [observation('usb_1')]);
   expect(db.listDeviceRecords('host')[0]!.capabilities.manualControl).toBe(true);
 });
+
+it('exposes safe read-only conflict readiness after restart without altering ownership or identities', () => {
+  db.reconcileDeviceTransports('host', [observation('usb_1')]);
+  const original = db.listDeviceRecords('host')[0]!;
+  const baseline = db.conflictResolutionReadiness('host', original.id, Date.now());
+  expect(baseline).toMatchObject({
+    status: 'NOT_CONFLICT',
+    canResolveAutomatically: false,
+  });
+  expect(baseline.blockers).toContain('PHYSICAL_IDENTITY_CONFIRMATION_REQUIRED');
+  db.reconcileDeviceTransports('host', [{
+    ...observation('usb_1'),
+    metadata: { ...metadata, hardwareSerial: 'DIFFERENT_PHONE' },
+  }]);
+  const before = db.listDeviceRecords('host')[0]!;
+  const report = db.conflictResolutionReadiness('host', original.id, Date.now());
+  expect(report).toMatchObject({
+    deviceId: original.id,
+    status: 'CONFLICT',
+    canResolveAutomatically: false,
+    revision: before.revision,
+  });
+  expect(report.blockers).toContain('NO_FRESH_VERIFIED_PROOF');
+  expect(report.blockers).toContain('AUDITED_RESOLUTION_NOT_IMPLEMENTED');
+  expect(JSON.stringify(report)).not.toContain(metadata.hardwareSerial);
+  expect(JSON.stringify(report)).not.toContain('usb_1');
+  expect(db.conflictResolutionReadiness('host', original.id, Date.now())).toEqual(report);
+  expect(db.listDeviceRecords('host')[0]).toEqual(before);
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.conflictResolutionReadiness('host', original.id, Date.now()).blockers).toEqual(report.blockers);
+  expect(db.listDeviceRecords('host')[0]!.identity).toBe('CONFLICT');
+  expect(() => db.conflictResolutionReadiness('host', 'missing', Date.now())).toThrow();
+  expect(() => db.conflictResolutionReadiness('host', original.id, Number.NaN)).toThrow();
+});
