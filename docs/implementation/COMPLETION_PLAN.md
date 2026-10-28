@@ -16,7 +16,7 @@ Tổng scope giữ nguyên **15 phase / 125 bước / 375 đầu việc**. P00�
 | P03 | Shell | Diagnostics, lifecycle, navigation/accessibility; Windows DPI/multi-monitor |
 | P04 | Workflow editor | Đã test thêm group/collapse/drag, convert local subflow, routing/align/layout; còn external clipboard closure/preferences/command search và interaction gates |
 | P05 | Compiler/engine | Đã test typed mapping/pinned closure/immutable IR/debugger/UI và audit đường đi effect nội bộ; còn audit qua subflow/loop, journal runtime/providers/DEVICE_TEST thật |
-| P06 | Process/media | Đã test archive/restore, clone preview/scoped ownership, rebind và explicit adoption; còn thumbnails/cache, query/migration UI gaps |
+| P06 | Process/media | Đã test archive/restore, clone/rebind/adoption và ContentPage phân trang SQLite v13 có scope/epoch/cursor; còn thumbnails/cache, chuyển UI sang server paging an toàn, chọn/lọc/sort và các tương tác còn thiếu |
 | P07 | Scheduler | Đã test app/snapshot filter, local day/week/month, paging/virtual timeline và scoped spread/cancel; còn dispatch/recovery/overdue, auto-append/drag/sleep-resume |
 | P08 | Device/worker | Đã thêm security fence cho transport identity conflict, queue claim chặn device CONFLICT và kiểm thử DB; còn audited conflict resolution, worker coordination và nghiệm thu Windows/Android thật |
 | P09 | Stream/Inspector | Real stream decoder/control, richer selectors/OCR/Unicode/gestures, correlation |

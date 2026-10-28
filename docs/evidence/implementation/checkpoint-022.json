@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-28",
+  "increment": "029",
+  "phase": "P06",
+  "steps": [
+    "S056"
+  ],
+  "status": "TESTED_BACKEND_SLICE_NOT_FULL_PHASE_ACCEPTED",
+  "repository": "danhgold7979-cyber/fonesi-W",
+  "baseBranch": "feat/studio-workspace",
+  "baseline": "c55ca58235e8c1806c956c37f05b40713cffbcef",
+  "plan": "docs/implementation/INCREMENT-029_PLAN.md",
+  "testedCommit": "c36aed43a5a90128186863cb92424eb67276f693",
+  "scope": "Scoped read-only ContentPage API, epoch-fenced cursor, SQLite v13 migration, typed host and preload",
+  "ci": {
+    "id": 40643861666,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40643861666",
+    "conclusion": "success"
+  },
+  "checks": [
+    {
+      "platform": "ubuntu-latest",
+      "command": "pnpm check",
+      "files": 28,
+      "passed": 255,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "platform": "ubuntu-latest",
+      "command": "pnpm test:ui",
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "platform": "windows-latest",
+      "command": "pnpm check",
+      "files": 28,
+      "passed": 254,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "pre-existing Unix-only SDK executable fixture"
+    },
+    {
+      "platform": "Ubuntu+Windows",
+      "command": "pnpm check:plan",
+      "status": "PASS"
+    }
+  ],
+  "verified": [
+    "1003+13 Process isolated content rows",
+    "stable rowid cursor/no duplicates",
+    "count not inferred from prefix",
+    "cursor invalidation after media/content change",
+    "batch ordered asset reads",
+    "browser named host API",
+    "WAL backup and workspace compiled schema checks"
+  ],
+  "unrun": [
+    "Full client migration to contentPage with query-scoped selection",
+    "Windows10 desktop interactive acceptance",
+    "large external media corpus performance benchmark",
+    "real Android automation",
+    "15-phase full product completion"
+  ]
+}
