@@ -141,6 +141,12 @@ export interface DeviceStageTransfer {
   remoteReadbackHash: string | null;
   remoteReadbackBytes: number | null;
   remoteReadbackAt: string | null;
+  mediaStoreRowId: string | null;
+  mediaStoreDisplayName: string | null;
+  mediaStoreRelativePath: string | null;
+  mediaStoreMimeType: string | null;
+  mediaStoreBytes: number | null;
+  mediaStoreAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

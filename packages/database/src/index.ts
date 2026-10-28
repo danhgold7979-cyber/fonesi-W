@@ -2519,6 +2519,12 @@ export class StudioDatabase {
       remoteReadbackHash: row.remote_readback_hash == null ? null : String(row.remote_readback_hash),
       remoteReadbackBytes: row.remote_readback_bytes == null ? null : Number(row.remote_readback_bytes),
       remoteReadbackAt: row.remote_readback_at == null ? null : String(row.remote_readback_at),
+      mediaStoreRowId: row.mediastore_row_id == null ? null : String(row.mediastore_row_id),
+      mediaStoreDisplayName: row.mediastore_display_name == null ? null : String(row.mediastore_display_name),
+      mediaStoreRelativePath: row.mediastore_relative_path == null ? null : String(row.mediastore_relative_path),
+      mediaStoreMimeType: row.mediastore_mime_type == null ? null : String(row.mediastore_mime_type),
+      mediaStoreBytes: row.mediastore_bytes == null ? null : Number(row.mediastore_bytes),
+      mediaStoreAt: row.mediastore_at == null ? null : String(row.mediastore_at),
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at),
     };
@@ -2700,6 +2706,53 @@ export class StudioDatabase {
       if (Number(changed.changes) !== 1)
         throw new DomainError('STAGE_READBACK_CONFLICT', 'Remote readback changed concurrently.');
       this.queueEvent(stage.jobId, 'DEVICE_STAGE_REMOTE_BYTES_VERIFIED', {
+        stageId: stage.id, ordinal: stage.ordinal, claimGeneration: stage.claimGeneration,
+      }, args.at);
+      return this.stageTransfer(stage.id);
+    });
+  }
+
+
+  /** Persist one exact MediaStore row only after matching remote byte readback. */
+  recordClaimedDeviceStageMediaStore(args: {
+    stageId: string; lease: DeviceLease; expectedJobRevision: number;
+    rowId: string; displayName: string; relativePath: string; mimeType: string;
+    observedBytes: number; at: number;
+  }): DeviceStageTransfer {
+    idSchema.parse(args.stageId);
+    if (!/^\d+$/.test(args.rowId) || args.rowId.length > 20 ||
+        typeof args.displayName !== 'string' || args.displayName.length < 1 || args.displayName.length > 180 ||
+        typeof args.relativePath !== 'string' || args.relativePath.length > 300 ||
+        !/^(?:image|video)\/[a-z0-9.+-]+$/.test(args.mimeType) ||
+        !Number.isSafeInteger(args.observedBytes) || args.observedBytes <= 0 ||
+        !Number.isSafeInteger(args.at) || !Number.isFinite(new Date(args.at).getTime()))
+      throw new DomainError('STAGE_MEDIASTORE_INVALID', 'Invalid MediaStore observation.');
+    return this.transaction(() => {
+      const stage = this.stageTransfer(args.stageId);
+      this.assertStageClaim(stage, args.lease, args.expectedJobRevision, args.at);
+      if (stage.state !== 'SYNC_ACK_UNVERIFIED' ||
+          stage.remoteReadbackHash !== stage.expectedHash || stage.remoteReadbackBytes !== stage.expectedBytes)
+        throw new DomainError('STAGE_MEDIASTORE_READBACK_REQUIRED', 'Matching remote byte readback is required.');
+      if (stage.mediaStoreRowId !== null || stage.mediaStoreAt !== null)
+        throw new DomainError('STAGE_MEDIASTORE_ALREADY_RECORDED', 'MediaStore evidence is immutable.');
+      const expectedName = stage.remotePath.split('/').at(-1);
+      const expectedRelative = 'Download/AutoReelsStudio/job-' + stage.jobId + '/';
+      const extension = extname(expectedName ?? '').toLowerCase();
+      const family = /^\.(?:jpg|jpeg|png|webp|gif|bmp)$/.test(extension) ? 'image/' : 'video/';
+      if (!expectedName || args.displayName !== expectedName ||
+          args.relativePath.replace(/^\/+/, '') !== expectedRelative ||
+          args.observedBytes !== stage.expectedBytes || !args.mimeType.startsWith(family))
+        throw new DomainError('STAGE_MEDIASTORE_MISMATCH', 'MediaStore row does not match the owned stage.');
+      const timestamp = new Date(args.at).toISOString();
+      const changed = this.db.prepare(
+        'UPDATE device_stage_transfers SET mediastore_row_id=?,mediastore_display_name=?,' +
+        'mediastore_relative_path=?,mediastore_mime_type=?,mediastore_bytes=?,mediastore_at=?,updated_at=? ' +
+        'WHERE id=? AND state=? AND mediastore_row_id IS NULL',
+      ).run(args.rowId, args.displayName, expectedRelative, args.mimeType,
+        args.observedBytes, timestamp, timestamp, stage.id, 'SYNC_ACK_UNVERIFIED');
+      if (Number(changed.changes) !== 1)
+        throw new DomainError('STAGE_MEDIASTORE_CONFLICT', 'MediaStore evidence changed concurrently.');
+      this.queueEvent(stage.jobId, 'DEVICE_STAGE_MEDIASTORE_ROW_MATCHED', {
         stageId: stage.id, ordinal: stage.ordinal, claimGeneration: stage.claimGeneration,
       }, args.at);
       return this.stageTransfer(stage.id);

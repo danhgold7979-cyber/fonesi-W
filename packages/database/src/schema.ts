@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 16;
+export const SCHEMA_VERSION = 17;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -166,4 +166,12 @@ ALTER TABLE device_stage_transfers ADD COLUMN remote_readback_bytes INTEGER;
 ALTER TABLE device_stage_transfers ADD COLUMN remote_readback_at TEXT;
 `,
   },
+  { version: 17, sql: `
+ALTER TABLE device_stage_transfers ADD COLUMN mediastore_row_id TEXT;
+ALTER TABLE device_stage_transfers ADD COLUMN mediastore_display_name TEXT;
+ALTER TABLE device_stage_transfers ADD COLUMN mediastore_relative_path TEXT;
+ALTER TABLE device_stage_transfers ADD COLUMN mediastore_mime_type TEXT;
+ALTER TABLE device_stage_transfers ADD COLUMN mediastore_bytes INTEGER;
+ALTER TABLE device_stage_transfers ADD COLUMN mediastore_at TEXT;
+` },
 ] as const;

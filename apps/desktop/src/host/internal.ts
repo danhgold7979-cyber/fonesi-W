@@ -39,6 +39,7 @@ export type InternalRequest =
       observedBytes: number;
       at: number;
     }
+  | { command: 'stage.recordMediaStore'; stageId: string; lease: DeviceLease; expectedJobRevision: number; rowId: string; displayName: string; relativePath: string; mimeType: string; observedBytes: number; at: number }
   | { command: 'stage.list'; jobId: string }
   | {
       command: 'stage.assertClaim';
@@ -185,6 +186,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.recordClaimedDeviceStageSyncAck(request);
     case 'stage.verifyRemoteBytes':
       return db.recordClaimedDeviceStageRemoteReadback(request);
+    case 'stage.recordMediaStore':
+      return db.recordClaimedDeviceStageMediaStore(request);
     case 'stage.list':
       return db.listDeviceStageTransfers(request.jobId);
     case 'stage.assertClaim':
