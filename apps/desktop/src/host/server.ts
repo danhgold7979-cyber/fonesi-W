@@ -15,7 +15,7 @@ const renderer = resolve(fileURLToPath(new URL('../../renderer/', import.meta.ur
 const dataDirectory = resolve(process.env.AUTOREELS_DATA_DIR ?? resolve(root, '.data'));
 const hostId = await loadHostId(dataDirectory);
 const db = new DbClient(resolve(dataDirectory, 'studio.sqlite'), hostId);
-const media = new HostMediaService(db, hostId);
+const media = new HostMediaService(db, hostId, undefined, dataDirectory);
 const devices = new HostDeviceService(db, hostId, dataDirectory, undefined, {
   port: Number(process.env.AUTOREELS_ADB_SERVER_PORT ?? 5037),
   ...(process.env.AUTOREELS_ADB ? { path: process.env.AUTOREELS_ADB } : {}),

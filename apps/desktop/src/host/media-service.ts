@@ -9,6 +9,7 @@ import {
   fingerprint,
   probeMedia,
   mediaKind,
+  HostStagingLedger,
 } from '@autoreels/media';
 import type {
   JobMediaPreflightPlan,
@@ -155,13 +156,37 @@ export class HostMediaService {
     });
   }
 
+  /**
+   * Private host operation. This is neither an Android MediaStore upload nor
+   * a durable dispatch token; it is not routed to the public API.
+   */
+  stageJobHostMedia(jobId: string): Promise<import('@autoreels/media').HostStageResult> {
+    if (!this.staging)
+      return Promise.reject(new DomainError('STAGING_NOT_CONFIGURED', 'Host staging is unavailable.'));
+    return this.withMediaRead(async (signal) => {
+      const prior = await this.db.internal<JobMediaPreflightPlan>({
+        command: 'job.mediaPlan', jobId, hostId: this.hostId,
+      });
+      const staged = await this.staging!.stage(prior, this.hostId, signal);
+      const current = await this.db.internal<JobMediaPreflightPlan>({
+        command: 'job.mediaPlan', jobId, hostId: this.hostId,
+      });
+      if (contentHash(prior) !== contentHash(current))
+        throw new DomainError('JOB_MEDIA_STALE', 'Job/media changed during host staging.');
+      return staged;
+    });
+  }
+
   readonly coordinator: MediaCoordinator;
   private choosing = false;
+  private readonly staging: HostStagingLedger | null;
   constructor(
     private db: MediaHostPort,
     private hostId: string,
     private picker?: NativeSourcePicker,
+    appDataDirectory?: string,
   ) {
+    this.staging = appDataDirectory ? new HostStagingLedger(appDataDirectory) : null;
     this.coordinator = new MediaCoordinator(
       {
         grant: (id) => db.internal<SourceGrant>({ command: 'source.grant', id, hostId }),

@@ -79,7 +79,7 @@ else {
             : {}),
         });
         return result.canceled ? null : result.filePaths;
-      });
+      }, app.getPath('userData'));
       const devices = new HostDeviceService(
         db,
         hostId,

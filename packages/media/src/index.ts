@@ -196,4 +196,6 @@ export async function scanSource(
 }
 
 export { MediaCoordinator } from './coordinator.js';
+export { HostStagingLedger } from './staging.js';
+export type { HostStageResult } from './staging.js';
 export type { MediaRepository } from './coordinator.js';
