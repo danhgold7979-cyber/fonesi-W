@@ -30,6 +30,15 @@ export type InternalRequest =
       expectedJobRevision: number;
       at: number;
     }
+  | {
+      command: 'stage.verifyRemoteBytes';
+      stageId: string;
+      lease: DeviceLease;
+      expectedJobRevision: number;
+      observedHash: string;
+      observedBytes: number;
+      at: number;
+    }
   | { command: 'stage.list'; jobId: string }
   | {
       command: 'stage.assertClaim';
@@ -174,6 +183,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.beginClaimedDeviceStageAttempt(request);
     case 'stage.syncAck':
       return db.recordClaimedDeviceStageSyncAck(request);
+    case 'stage.verifyRemoteBytes':
+      return db.recordClaimedDeviceStageRemoteReadback(request);
     case 'stage.list':
       return db.listDeviceStageTransfers(request.jobId);
     case 'stage.assertClaim':
