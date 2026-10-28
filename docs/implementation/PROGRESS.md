@@ -1,5 +1,11 @@
 # Tiến độ implementation
 
+## Increment025 / P07-S068 + P13-S117 — sleep/resume recovery an toàn
+
+Đã triển khai khôi phục job bị lỡ **chỉ sau cặp sự kiện Electron suspend→resume thực sự**, không suy khoảng trống từ app restart/queue bận. `NEXT_FUTURE_SLOT`, `CATCH_UP`, `SKIP` dùng lịch đã frozen trong snapshot, không thay occurrenceKey/hash, chỉ đụng SCHEDULED/QUEUED chưa claim, reject/cần review nếu có effect hoặc DST/slot không chắc chắn; transaction idempotent với giới hạn tối đa 5.000 job/lần, không cắt mất kết quả ngầm. Đây là logic queue; **chưa chạy đăng bài Android**. Kế hoạch tại [INCREMENT-025_PLAN.md](INCREMENT-025_PLAN.md), kết quả [INCREMENT-025_RESULTS.md](INCREMENT-025_RESULTS.md), receipt [checkpoint-018.json](../evidence/implementation/checkpoint-018.json).
+
+**Chứng cứ tích hợp sau merge P04+P07:** [GitHub Actions 40640056106](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40640056106) **SUCCESS Ubuntu và Windows**, Ubuntu **236 unit/integration passed /26 files** cùng **23 Playwright UI passed**; hosted Windows **235 passed, 1 pre-existing Unix-only SDK skip /26 files**. P04 đã merge PR#2 `2400bee`, P07 đã merge PR#3 `efd40af` vào `feat/studio-workspace`; `main` chưa đổi. Đây không phải test Win10 sleep thật, 300 máy, chứng nhận ADB/OS, app Facebook/TikTok hay installer; các gates đó giữ OPEN/NOT_RUN.
+
 ## Increment024 / P04-S031/S037 — portable workflow clipboard
 
 Ngày 28/10/2026, branch `phase/p04-portable-clipboard-2026-10-28`, baseline `feat/studio-workspace` commit `8793584`. Plan trước code tại [INCREMENT-024_PLAN.md](INCREMENT-024_PLAN.md); kết quả chi tiết tại [INCREMENT-024_RESULTS.md](INCREMENT-024_RESULTS.md).

@@ -54,5 +54,18 @@
     "real device adapter and publish effect",
     "300-device load/soak",
     "full P07 or P13 acceptance"
-  ]
+  ],
+  "combinedIntegration": {
+    "mergeP04": "2400bee788bf6dcf0b63ff136dc07739615c7374",
+    "mergeP07": "efd40afdeb4e929d297f8d93509a754f76fc339a",
+    "ciRun": 40640056106,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40640056106",
+    "conclusion": "success",
+    "ubuntuUnit": 236,
+    "ubuntuFiles": 26,
+    "ubuntuBrowser": 23,
+    "windowsPassed": 235,
+    "windowsSkipped": 1,
+    "windowsFiles": 26
+  }
 }

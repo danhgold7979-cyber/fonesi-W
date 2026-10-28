@@ -21,3 +21,7 @@ Baseline `feat/studio-workspace@87935843613c6194d9a0ba1ed1bd9d9cb89f4801`; imple
 ## Unrun / open gates
 
 This is a **TESTED INCREMENT**, **not full S068 or P07/P13 acceptance**. Real Windows10 sleep-resume callback, hardware transport reprobe after resume, startup-offline-gap policy, OS clock rollback, real dispatch/physical phone, Facebook/TikTok app versions and 300-phone throughput remain **NOT_RUN/OPEN**. Resource ceiling of 5000 jobs is a safety bound, **not** measured capacity. Resume recovery never means a scheduled post has actually been published. Separate operator review is required for uncertain external effects.
+
+## Combined branch evidence after merge
+
+P04 portable clipboard merged to `feat/studio-workspace` as `2400bee`; this P07 increment merged as `efd40af`. The PR #3 combined integration [Actions run 40640056106](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40640056106) passed Ubuntu **236/236 tests across 26 files plus 23/23 Playwright browser scenarios**, Windows hosted **235 passed, 1 pre-existing Unix-only fixture skipped across 26 files**. This larger count includes the P04 tests (not a new P07-only count). Physical Windows10 power events and real Android remain NOT_RUN.
