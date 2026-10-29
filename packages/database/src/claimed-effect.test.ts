@@ -1636,3 +1636,184 @@ it('rejects stale/invalid cancellation requests and forged public command withou
   })).rejects.toThrow();
   expect(counts()).toEqual(before);
 });
+
+
+it('persists an immutable actor/evidence review note for an uncertain effect without granting actions', async () => {
+  const f = fixture('device_review_actor', 'review_actor');
+  const intent = prepare(f);
+  const cancel = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: intent.jobRevision,
+    actorId: 'operator_cancel_audit', at: at + 100,
+  });
+  expect(cancel.state).toBe('NEEDS_REVIEW');
+  const req = {
+    command: 'effect.reviewRecord' as const,
+    requestId: 'manual_review_001',
+    jobId: f.jobId,
+    effectId: intent.effectId,
+    expectedJobRevision: cancel.jobRevision,
+    expectedEffectState: 'INTENT' as const,
+    actorId: 'operator_review_one',
+    reasonCode: 'UNKNOWN_EFFECT' as const,
+    disposition: 'AWAITING_EVIDENCE' as const,
+    evidenceRefs: ['evidence_receipt_one', 'evidence_probe_two'],
+    at: at + 120,
+  };
+  const rowCounts = () => {
+    const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return [
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?').get(f.jobId)?.n),
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?').get(f.jobId)?.n),
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM effect_manual_reviews WHERE job_id=?')
+          .get(f.jobId)?.n),
+      ];
+    } finally { sql.close(); }
+  };
+  const before = rowCounts();
+  const result = dispatchInternal(db, req) as
+    ReturnType<StudioDatabase['recordEffectManualReview']>;
+  expect(result).toMatchObject({
+    requestId: req.requestId, jobId: f.jobId, effectId: intent.effectId,
+    jobRevision: cancel.jobRevision, evidenceCount: 2, alreadyRecorded: false,
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  expect(JSON.stringify(result)).not.toContain('evidence_receipt_one');
+  const after = rowCounts();
+  expect(after).toEqual([before[0], before[1], before[2]! + 1]);
+  const history = dispatchInternal(db, {
+    command: 'effect.reviewHistory',
+    jobId: f.jobId, effectId: intent.effectId, limit: 10,
+  }) as ReturnType<StudioDatabase['effectManualReviewHistory']>;
+  expect(history).toMatchObject({
+    scope: 'PRIVATE_EFFECT_MANUAL_REVIEW_NOT_CERTIFIED',
+    items: [{
+      requestId: req.requestId, actorId: req.actorId,
+      reasonCode: req.reasonCode, disposition: req.disposition,
+      evidenceCount: 2,
+    }],
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  expect(JSON.stringify(history)).not.toContain('evidence_probe_two');
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+  expect(db.claimDueJob(f.lease.deviceId, 'not_allowed_to_repost', at + 200).status)
+    .toBe('NEEDS_REVIEW');
+
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.effectManualReviewHistory({
+    jobId: f.jobId, effectId: intent.effectId, limit: 10,
+  })).toEqual(history);
+  expect(dispatchInternal(db, req)).toMatchObject({
+    requestId: req.requestId, alreadyRecorded: true, canRetry: false,
+  });
+  expect(rowCounts()).toEqual(after);
+
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(() => sql.prepare(
+    "UPDATE effect_manual_reviews SET disposition='ESCALATED' WHERE request_id=?",
+  ).run(req.requestId)).toThrow('immutable');
+  expect(() => sql.prepare(
+    'DELETE FROM effect_manual_reviews WHERE request_id=?',
+  ).run(req.requestId)).toThrow('immutable');
+  expect(Number(sql.prepare('SELECT COUNT(*) AS n FROM effect_manual_reviews').get()?.n))
+    .toBe(1);
+  sql.close();
+});
+
+it('rejects forged or stale operator review inputs, conflict IDs and public worker commands', async () => {
+  const f = fixture('device_review_invalid', 'review_invalid');
+  const intent = prepare(f);
+  const req = {
+    requestId: 'manual_review_invalid',
+    jobId: f.jobId, effectId: intent.effectId,
+    expectedJobRevision: intent.jobRevision,
+    expectedEffectState: 'INTENT' as const,
+    actorId: 'operator_review_invalid',
+    reasonCode: 'UNKNOWN_EFFECT' as const,
+    disposition: 'AWAITING_EVIDENCE' as const,
+    evidenceRefs: ['evidence_initial'],
+    at: at + 90,
+  };
+  const sqlCount = () => {
+    const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return Number(sql.prepare('SELECT COUNT(*) AS n FROM effect_manual_reviews').get()?.n);
+    } finally { sql.close(); }
+  };
+  expect(() => db.recordEffectManualReview(req)).toThrow('NEEDS_REVIEW');
+  expect(sqlCount()).toBe(0);
+  const cancel = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: intent.jobRevision,
+    actorId: req.actorId, at: at + 100,
+  });
+  const eligible = { ...req, expectedJobRevision: cancel.jobRevision };
+  const invalids: Array<Parameters<StudioDatabase['recordEffectManualReview']>[0]> = [
+    { ...eligible, expectedJobRevision: intent.jobRevision },
+    { ...eligible, expectedEffectState: 'ATTEMPT_UNCERTAIN' },
+    { ...eligible, effectId: 'effect_wrong_job' },
+    { ...eligible, actorId: '' },
+    { ...eligible, reasonCode: 'CONFIRMED_PROVIDER' as never },
+    { ...eligible, disposition: 'CONFIRMED_AND_RETRY' as never },
+    { ...eligible, evidenceRefs: [] },
+    { ...eligible, evidenceRefs: ['same_reference', 'same_reference'] },
+    { ...eligible, evidenceRefs: Array.from({ length: 9 }, (_, i) => 'evidence_' + i) },
+    { ...eligible, at: Number.NaN },
+  ];
+  for (const bad of invalids) {
+    expect(() => db.recordEffectManualReview(bad)).toThrow();
+    expect(sqlCount()).toBe(0);
+    expect(db.effectState(intent.effectId)).toBe('INTENT');
+  }
+  const first = db.recordEffectManualReview(eligible);
+  expect(first.alreadyRecorded).toBe(false);
+  expect(() => db.recordEffectManualReview({
+    ...eligible, evidenceRefs: ['evidence_changed'],
+  })).toThrow('already bound');
+  expect(sqlCount()).toBe(1);
+  expect(() => db.effectManualReviewHistory({
+    jobId: f.jobId, effectId: intent.effectId, limit: 33,
+  })).toThrow('1–32');
+  expect(() => db.effectManualReviewHistory({
+    jobId: f.jobId, effectId: 'effect_wrong_job', limit: 10,
+  })).toThrow('Effect does not belong');
+  await expect(dispatch(db, {
+    operationId: 'op_forged_manual_review',
+    command: 'effect.reviewRecord' as never,
+    input: eligible,
+  })).rejects.toThrow();
+  expect(sqlCount()).toBe(1);
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+});
+
+it('stores a pending COMMENT-only manual review without changing the synthetic parent post', () => {
+  const { f, publish, input } = confirmedCommentHostFixture(0);
+  const intent = db.prepareClaimedEffect({ ...input, at: at + 125 });
+  db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 140,
+  });
+  const current = db.getJob(f.jobId).job;
+  const held = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: current.revision,
+    actorId: 'operator_comment_review', at: at + 160,
+  });
+  const note = db.recordEffectManualReview({
+    requestId: 'manual_comment_review',
+    jobId: f.jobId, effectId: intent.effectId,
+    expectedJobRevision: held.jobRevision,
+    expectedEffectState: 'ATTEMPT_UNCERTAIN',
+    actorId: 'operator_comment_review',
+    reasonCode: 'COMMENT_UNCERTAIN',
+    disposition: 'ESCALATED',
+    evidenceRefs: ['evidence_comment_readback'],
+    at: at + 170,
+  });
+  expect(note).toMatchObject({
+    disposition: 'ESCALATED', evidenceCount: 1,
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  expect(db.effectState(publish.effectId)).toBe('CONFIRMED');
+  expect(db.effectState(intent.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+});
