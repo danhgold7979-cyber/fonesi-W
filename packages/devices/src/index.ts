@@ -10,6 +10,8 @@ import { DomainError } from '@autoreels/domain';
 import { AdbConnection } from './connection.js';
 import { ownedStageLocation, ownedStageExtensions } from './owned-stage.js';
 export { ownedStageLocation, assertOwnedStageLocation } from './owned-stage.js';
+export { assessOwnedCleanupReadback } from './owned-cleanup-reconcile.js';
+export type { OwnedCleanupReadbackSummary, OwnedRemoteStatReadback, OwnedMediaStoreReadback } from './owned-cleanup-reconcile.js';
 import { assertSerial, quoteAndroidArg, parseEndpoint, serverVersion } from './protocol.js';
 export { assertSerial, quoteAndroidArg, parseEndpoint, serverVersion } from './protocol.js';
 export { SdkManager } from './sdk.js';
