@@ -8,6 +8,8 @@ import type { DeviceMetadata, TransportObservation } from '@autoreels/contracts'
 import { idSchema, packageNameSchema, hashSchema } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
 import { AdbConnection } from './connection.js';
+import { ownedStageLocation, ownedStageExtensions } from './owned-stage.js';
+export { ownedStageLocation, assertOwnedStageLocation } from './owned-stage.js';
 import { assertSerial, quoteAndroidArg, parseEndpoint, serverVersion } from './protocol.js';
 export { assertSerial, quoteAndroidArg, parseEndpoint, serverVersion } from './protocol.js';
 export { SdkManager } from './sdk.js';
@@ -105,10 +107,7 @@ export interface OwnedSyncAck {
   /** ADB Sync ACK is NOT MediaStore index or post verification. */
   canDispatch: false;
 }
-const syncExtensions = new Set([
-  '.mp4', '.mov', '.mkv', '.webm', '.m4v', '.avi',
-  '.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp',
-]);
+const syncExtensions = ownedStageExtensions;
 const MAX_SYNC_BYTES = 512 * 1024 * 1024;
 async function sendPacket(socket: Socket, bytes: Buffer, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) throw new DomainError('CANCELLED', 'Staging transfer cancelled.');
@@ -262,7 +261,7 @@ export class AdbClient {
     idSchema.parse(input.jobId);
     hashSchema.parse(input.expectedHash);
     if (!/^[a-f0-9]{32}$/.test(input.nonce) ||
-        !Number.isSafeInteger(input.ordinal) || input.ordinal < 0 || input.ordinal > 999 ||
+        !Number.isSafeInteger(input.ordinal) || input.ordinal < 0 || input.ordinal >= 32 ||
         !Number.isSafeInteger(input.expectedBytes) || input.expectedBytes <= 0 ||
         input.expectedBytes > MAX_SYNC_BYTES)
       throw new DomainError('ADB_SYNC_INVALID', 'Invalid owned staged asset specification.');
@@ -318,8 +317,10 @@ export class AdbClient {
           fresh.ino !== before.ino || fresh.dev !== before.dev)
         throw new DomainError('ADB_SYNC_SOURCE', 'Staged file changed while verifying.');
 
-      const folder = '/sdcard/Download/AutoReelsStudio/job-' + input.jobId;
-      const remotePath = folder + '/asset-' + ordinalText + '-' + input.nonce + extension;
+      const location = ownedStageLocation({
+        jobId: input.jobId, ordinal: input.ordinal, nonce: input.nonce, extension,
+      });
+      const folder = location.remoteDirectory, remotePath = location.remotePath;
       // Shell command arguments are quoted by the existing restricted shell
       // provider. No generic path from renderer or user inputs is accepted.
       await this.shell(input.serial, ['mkdir', '-p', folder], signal);
@@ -412,9 +413,9 @@ export class AdbClient {
         !Number.isSafeInteger(input.expectedBytes) || input.expectedBytes <= 0 ||
         input.expectedBytes > MAX_SYNC_BYTES)
       throw new DomainError('ADB_SYNC_INVALID', 'Invalid remote stage readback specification.');
-    const ordinalText = String(input.ordinal).padStart(3, '0');
-    const remotePath = '/sdcard/Download/AutoReelsStudio/job-' + input.jobId +
-      '/asset-' + ordinalText + '-' + input.nonce + extension;
+    const { remotePath } = ownedStageLocation({
+      jobId: input.jobId, ordinal: input.ordinal, nonce: input.nonce, extension,
+    });
     if (signal?.aborted) throw new DomainError('CANCELLED', 'Remote readback cancelled.');
     await this.beforeDispatch();
     // Budget includes both ADB OKAY responses, DATA headers and final DONE.
@@ -490,8 +491,9 @@ export class AdbClient {
         !Number.isSafeInteger(input.expectedBytes) || input.expectedBytes <= 0 ||
         input.expectedBytes > MAX_SYNC_BYTES)
       throw new DomainError('ADB_MEDIASTORE_INVALID', 'Invalid owned MediaStore probe specification.');
-    const filename = 'asset-' + String(input.ordinal).padStart(3, '0') + '-' + input.nonce + extension;
-    const relativePath = 'Download/AutoReelsStudio/job-' + input.jobId + '/';
+    const { displayName: filename, relativePath } = ownedStageLocation({
+      jobId: input.jobId, ordinal: input.ordinal, nonce: input.nonce, extension,
+    });
     const where = "_display_name='" + filename + "' AND relative_path='" + relativePath +
       "' AND _size=" + String(input.expectedBytes);
     let raw: string;

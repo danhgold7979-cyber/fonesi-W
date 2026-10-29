@@ -139,6 +139,22 @@ export interface ReviewedStageMediaSnapshot {
   jobId: string; jobRevision: number; snapshotHash: string; ordinal: number;
   assetId: string; pinnedHash: string; pinnedBytes: number; extension: string;
 }
+/** Private dry-run: persisted cleanup preconditions never authorize Android deletion. */
+export type OwnedStageCleanupBlocker =
+  | 'TRANSFER_NOT_ACKNOWLEDGED' | 'REMOTE_READBACK_NOT_PINNED'
+  | 'MEDIASTORE_ROW_RECORDED' | 'MEDIASTORE_EVER_INDEXED'
+  | 'EXTERNAL_EFFECT_PRESENT' | 'CURRENT_MANUAL_OBSERVATION_REQUIRED'
+  | 'OBSERVATION_STALE' | 'REMOTE_OR_INDEX_NOT_CLEARED';
+export interface OwnedStageCleanupAssessment {
+  jobId: string;
+  ordinal: number;
+  scope: 'PERSISTED_PREFLIGHT_ONLY';
+  status: 'PREREQUISITES_MET' | 'BLOCKED';
+  blockers: OwnedStageCleanupBlocker[];
+  observationAt: string | null;
+  canDelete: false;
+  canDispatch: false;
+}
 /** Private DB/host remote staging journal; not a posting or MediaStore receipt. */
 export interface DeviceStageTransfer {
   id: string;

@@ -499,6 +499,136 @@ it('paginates redacted JOB and MANUAL audit history without changing review stat
   expect(jobBefore.state).toBe('NEEDS_REVIEW');
 });
 
+
+it('assesses cleanup preconditions only for a fresh same-MANUAL-generation remote-only observation', async () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  expect(db.recoverExpiredClaims(f.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  const manual = db.acquireLease(f.deviceId, 'stage_cleanup_operator', 'MANUAL', at + 3001, 120000);
+  const revision = db.getJob(f.jobId).job.revision;
+  const input = {
+    stageId: stage.id, hostId, expectedJobRevision: revision,
+    expectedSnapshotHash: f.snapshotHash, lease: manual, at: at + 3011,
+  };
+  expect(db.assessOwnedStageCleanup(input)).toMatchObject({
+    jobId: f.jobId, ordinal: 0, status: 'BLOCKED',
+    blockers: ['CURRENT_MANUAL_OBSERVATION_REQUIRED'], canDelete: false, canDispatch: false,
+  });
+  db.recordClaimedDeviceStageReconciliation({
+    ...input, requestId: 'cleanup_manual_fresh_001',
+    classification: 'REMOTE_BYTES_MATCHED', observedHash: stage.expectedHash,
+    observedBytes: stage.expectedBytes, mediaStoreStatus: 'NOT_INDEXED', at: at + 3010,
+  });
+  const stageBefore = db.listDeviceStageTransfers(f.jobId)[0]!,
+    jobBefore = db.getJob(f.jobId).job;
+  let eventsBefore = -1;
+  sql((conn) => { eventsBefore = Number(conn.prepare(
+    'SELECT COUNT(*) AS total FROM queue_events WHERE job_id=?',
+  ).get(f.jobId)?.total ?? -1); });
+  const assessment = db.assessOwnedStageCleanup(input);
+  expect(assessment).toEqual({
+    jobId: f.jobId, ordinal: 0, scope: 'PERSISTED_PREFLIGHT_ONLY',
+    status: 'PREREQUISITES_MET', blockers: [],
+    observationAt: new Date(at + 3010).toISOString(),
+    canDelete: false, canDispatch: false,
+  });
+  expect(dispatchInternal(db, { command: 'stage.cleanupReadiness', ...input }))
+    .toEqual(assessment);
+  await expect(dispatch(db, {
+    operationId: 'op_forged_cleanup', command: 'stage.cleanupReadiness' as never, input,
+  })).rejects.toThrow();
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stageBefore);
+  expect(db.getJob(f.jobId).job).toEqual(jobBefore);
+  sql((conn) => expect(Number(conn.prepare(
+    'SELECT COUNT(*) AS total FROM queue_events WHERE job_id=?',
+  ).get(f.jobId)?.total)).toBe(eventsBefore));
+
+  expect(db.assessOwnedStageCleanup({ ...input, at: at + 34012 }).blockers)
+    .toContain('OBSERVATION_STALE');
+  expect(() => db.assessOwnedStageCleanup({
+    ...input, lease: { ...manual, generation: manual.generation + 1 },
+  })).toThrow();
+  expect(() => db.assessOwnedStageCleanup({
+    ...input, expectedJobRevision: revision + 1,
+  })).toThrow();
+  expect(() => db.assessOwnedStageCleanup({ ...input, hostId: 'foreign_host' }))
+    .toThrow();
+  db.releaseLease(manual);
+  expect(() => db.assessOwnedStageCleanup(input)).toThrow();
+});
+
+it('blocks cleanup on unsupported, indexed or uncertain observations and any external effect', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  db.recordClaimedDeviceStageReconciliation({
+    stageId: stage.id, requestId: 'cleanup_historical_indexed',
+    lease: f.lease, expectedJobRevision: f.jobRevision,
+    classification: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED',
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'INDEXED_EXACT', at: at + 240,
+  });
+  db.recoverExpiredClaims(f.deviceId, at + 3000);
+  const manual = db.acquireLease(f.deviceId, 'stage_cleanup_operator', 'MANUAL', at + 3001, 120000);
+  const input = {
+    stageId: stage.id, hostId, expectedJobRevision: db.getJob(f.jobId).job.revision,
+    expectedSnapshotHash: f.snapshotHash, lease: manual, at: at + 3021,
+  };
+  db.recordClaimedDeviceStageReconciliation({
+    ...input, requestId: 'cleanup_manual_unsupported',
+    classification: 'PROBE_UNSUPPORTED', observedHash: stage.expectedHash,
+    observedBytes: stage.expectedBytes, mediaStoreStatus: 'UNSUPPORTED', at: at + 3010,
+  });
+  let assessment = db.assessOwnedStageCleanup(input);
+  expect(assessment.blockers).toEqual(expect.arrayContaining([
+    'MEDIASTORE_EVER_INDEXED', 'REMOTE_OR_INDEX_NOT_CLEARED',
+  ]));
+  db.recordClaimedDeviceStageReconciliation({
+    ...input, requestId: 'cleanup_manual_latest_matched',
+    classification: 'REMOTE_BYTES_MATCHED', observedHash: stage.expectedHash,
+    observedBytes: stage.expectedBytes, mediaStoreStatus: 'NOT_INDEXED', at: at + 3020,
+  });
+  assessment = db.assessOwnedStageCleanup(input);
+  expect(assessment.blockers).toContain('MEDIASTORE_EVER_INDEXED');
+  expect(assessment.blockers).not.toContain('REMOTE_OR_INDEX_NOT_CLEARED');
+  sql((conn) => conn.prepare(
+    'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,state,evidence_ref,created_at) ' +
+    'VALUES(?,?,?,?,?,?,?,?,?)',
+  ).run('effect_cleanup_fixture', f.jobId, 'node_publish', 'PUBLISH',
+    contentHash('cleanup effect'), contentHash('cleanup payload'), 'INTENT', null,
+    new Date(at + 3000).toISOString()));
+  expect(db.assessOwnedStageCleanup(input).blockers).toContain('EXTERNAL_EFFECT_PRESENT');
+  sql((conn) => conn.prepare(
+    "UPDATE device_stage_transfers SET state='TRANSFER_UNCERTAIN' WHERE id=?",
+  ).run(stage.id));
+  expect(db.assessOwnedStageCleanup(input).blockers).toContain('TRANSFER_NOT_ACKNOWLEDGED');
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+});
+
+it('fails closed before cleanup preflight on a tampered remote namespace, path or historical claim', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  db.recoverExpiredClaims(f.deviceId, at + 3000);
+  const manual = db.acquireLease(f.deviceId, 'stage_cleanup_operator', 'MANUAL', at + 3001, 120000);
+  const input = {
+    stageId: stage.id, hostId, expectedJobRevision: db.getJob(f.jobId).job.revision,
+    expectedSnapshotHash: f.snapshotHash, lease: manual, at: at + 3010,
+  };
+  for (const foreign of [
+    '/sdcard/Download/AutoReelsStudio/job-foreign/asset-000-' + stage.nonce + '.mp4',
+    stage.remotePath + '/../not-owned.mp4',
+    stage.remotePath.replace(stage.nonce, 'f'.repeat(32)),
+  ]) {
+    sql((conn) => conn.prepare('UPDATE device_stage_transfers SET remote_path=? WHERE id=?')
+      .run(foreign, stage.id));
+    expect(() => db.assessOwnedStageCleanup(input)).toThrow();
+  }
+  sql((conn) => conn.prepare('UPDATE device_stage_transfers SET remote_path=? WHERE id=?')
+    .run(stage.remotePath, stage.id));
+  sql((conn) => conn.prepare(
+    'UPDATE job_claims SET generation=generation+1 WHERE job_id=?',
+  ).run(f.jobId));
+  expect(() => db.assessOwnedStageCleanup(input)).toThrow();
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+});
+
 it('private DB worker tracks one stage; public HTTP dispatcher cannot forge stage intent', async () => {
   const f = fixture();
   await expect(dispatch(db, {

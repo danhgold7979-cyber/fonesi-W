@@ -4,7 +4,9 @@ import { mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { AdbClient, type OwnedSyncInput } from './index.js';
+import {
+  AdbClient, ownedStageLocation, assertOwnedStageLocation, type OwnedSyncInput,
+} from './index.js';
 
 const digest = (data: Buffer) => createHash('sha256').update(data).digest('hex');
 const cleanup: (() => Promise<void>)[] = [];
@@ -145,6 +147,51 @@ async function fixture() {
   });
   return { port: (server.address() as {port:number}).port, state, bytes, input, dir };
 }
+
+describe('P11/S095.3 canonical owned stage identity for cleanup safety', () => {
+  const owned = {
+    jobId: 'job_sync_1', ordinal: 0, nonce: 'b'.repeat(32), extension: '.mp4',
+  };
+  it('generates one exact owned target reused by SEND, RECV and MediaStore', () => {
+    const actual = ownedStageLocation(owned);
+    expect(actual).toEqual({
+      remoteDirectory: '/sdcard/Download/AutoReelsStudio/job-job_sync_1',
+      remotePath: '/sdcard/Download/AutoReelsStudio/job-job_sync_1/asset-000-' +
+        'b'.repeat(32) + '.mp4',
+      relativePath: 'Download/AutoReelsStudio/job-job_sync_1/',
+      displayName: 'asset-000-' + 'b'.repeat(32) + '.mp4',
+    });
+    expect(assertOwnedStageLocation({ ...owned, remotePath: actual.remotePath })).toEqual(actual);
+    for (const remotePath of [
+      '/sdcard/Download/AutoReelsStudio/job-other/asset-000-' + owned.nonce + '.mp4',
+      actual.remoteDirectory + '/asset-001-' + owned.nonce + '.mp4',
+      actual.remoteDirectory + '/asset-000-' + 'a'.repeat(32) + '.mp4',
+      actual.remotePath + '/../foreign.mp4',
+      '/sdcard/Download/AutoReelsStudio/job-job_sync_1//asset-000-' + owned.nonce + '.mp4',
+      actual.remotePath.toUpperCase(),
+    ]) {
+      expect(() => assertOwnedStageLocation({ ...owned, remotePath }))
+        .toThrowError(/durable owner/);
+    }
+  });
+  it('rejects traversal, unowned extensions and invalid ordinal/nonce', () => {
+    for (const invalid of [
+      { ...owned, jobId: '../other' },
+      { ...owned, jobId: 'a/b' },
+      { ...owned, ordinal: -1 },
+      { ...owned, ordinal: 32 },
+      { ...owned, ordinal: 0.5 },
+      { ...owned, nonce: 'B'.repeat(32) },
+      { ...owned, nonce: 'z'.repeat(32) },
+      { ...owned, extension: '.MP4' },
+      { ...owned, extension: '.mp4/../anything' },
+      { ...owned, extension: '.apk' },
+    ]) {
+      expect(() => ownedStageLocation(invalid))
+        .toThrowError(/not canonical/);
+    }
+  });
+});
 
 describe('P11/S095 bounded ADB Sync v1 transport-only spike', () => {
   it('streams exact DATA bytes and generated owner-only path, without claiming MediaStore', async () => {

@@ -51,6 +51,7 @@ import type {
   DeviceStageReconciliation,
   StageReconciliationClassification,
   ReviewedStageMediaSnapshot,
+  OwnedStageCleanupAssessment,
   SchedulePreviewDto,
   JobChangeRequest,
   JobChangePreview,
@@ -91,7 +92,7 @@ import {
   type SchedulePreview,
 } from '@autoreels/scheduler';
 import { validateBundle, compileWorkflow } from '@autoreels/workflow-engine';
-import { deviceFingerprint, parseEndpoint } from '@autoreels/devices';
+import { deviceFingerprint, parseEndpoint, assertOwnedStageLocation } from '@autoreels/devices';
 import { bulkPatch } from '@autoreels/import-export';
 import { migrations, SCHEMA_VERSION } from './schema.js';
 
@@ -2924,6 +2925,71 @@ export class StudioDatabase {
       jobId: stage.jobId, jobRevision: job.revision, snapshotHash,
       ordinal: stage.ordinal, assetId, pinnedHash: stage.expectedHash,
       pinnedBytes: stage.expectedBytes, extension,
+    };
+  }
+
+  /**
+   * Private non-destructive cleanup preflight. Current MANUAL ownership and
+   * stored observations are necessary but never sufficient for Android unlink.
+   */
+  assessOwnedStageCleanup(args: {
+    stageId: string; hostId: string; expectedJobRevision: number;
+    expectedSnapshotHash: string; lease: DeviceLease; at: number;
+  }): OwnedStageCleanupAssessment {
+    this.assertReviewedDeviceStage(args);
+    const stage = this.stageTransfer(args.stageId);
+    const frozen = this.reviewedDeviceStageMediaSnapshot(args);
+    assertOwnedStageLocation({
+      jobId: stage.jobId, ordinal: stage.ordinal, nonce: stage.nonce,
+      extension: frozen.extension, remotePath: stage.remotePath,
+    });
+    const blockers: OwnedStageCleanupAssessment['blockers'] = [];
+    const add = (reason: OwnedStageCleanupAssessment['blockers'][number]): void => {
+      if (!blockers.includes(reason)) blockers.push(reason);
+    };
+    if (stage.state !== 'SYNC_ACK_UNVERIFIED') add('TRANSFER_NOT_ACKNOWLEDGED');
+    if (stage.remoteReadbackHash !== stage.expectedHash ||
+        stage.remoteReadbackBytes !== stage.expectedBytes ||
+        stage.remoteReadbackAt === null)
+      add('REMOTE_READBACK_NOT_PINNED');
+    if (stage.mediaStoreRowId !== null || stage.mediaStoreAt !== null)
+      add('MEDIASTORE_ROW_RECORDED');
+    if (this.db.prepare('SELECT 1 FROM effects WHERE job_id=? LIMIT 1').get(stage.jobId))
+      add('EXTERNAL_EFFECT_PRESENT');
+    if (this.db.prepare(
+      "SELECT 1 FROM device_stage_reconciliations WHERE stage_id=? AND mediastore_status='INDEXED_EXACT' LIMIT 1",
+    ).get(stage.id))
+      add('MEDIASTORE_EVER_INDEXED');
+
+    const latest = this.db.prepare(
+      'SELECT lease_owner_kind,lease_generation,claim_generation,classification,' +
+      'observed_hash,observed_bytes,mediastore_status,created_at ' +
+      'FROM device_stage_reconciliations WHERE stage_id=? ' +
+      'ORDER BY created_at DESC,id DESC LIMIT 1',
+    ).get(stage.id);
+    const current = latest?.lease_owner_kind === 'MANUAL' &&
+      Number(latest.lease_generation) === args.lease.generation &&
+      Number(latest.claim_generation) === stage.claimGeneration;
+    if (!current) add('CURRENT_MANUAL_OBSERVATION_REQUIRED');
+    if (current) {
+      const observedAt = Date.parse(String(latest!.created_at));
+      if (!Number.isFinite(observedAt) || observedAt > args.at ||
+          args.at - observedAt > 30000)
+        add('OBSERVATION_STALE');
+      if (latest!.classification !== 'REMOTE_BYTES_MATCHED' ||
+          latest!.mediastore_status !== 'NOT_INDEXED' ||
+          latest!.observed_hash !== stage.expectedHash ||
+          Number(latest!.observed_bytes) !== stage.expectedBytes)
+        add('REMOTE_OR_INDEX_NOT_CLEARED');
+    }
+    return {
+      jobId: stage.jobId, ordinal: stage.ordinal,
+      scope: 'PERSISTED_PREFLIGHT_ONLY',
+      status: blockers.length ? 'BLOCKED' : 'PREREQUISITES_MET',
+      blockers,
+      observationAt: current ? String(latest!.created_at) : null,
+      canDelete: false,
+      canDispatch: false,
     };
   }
 

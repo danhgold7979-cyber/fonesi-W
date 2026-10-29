@@ -466,6 +466,56 @@ it('rejects a MANUAL review before recovery, on wrong host or after lease releas
   expect(db.getJob(jobId).job.state).toBe('NEEDS_REVIEW');
 });
 
+
+it('performs cleanup eligibility as a private DB-only fenced dry run with no new ADB I/O', async () => {
+  const f = await fixture();
+  const uploaded = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId, stageId: uploaded.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  const stageBefore = db.listDeviceStageTransfers(jobId)[0]!;
+  sql((conn) => {
+    conn.prepare('UPDATE leases SET expires_at=? WHERE device_id=?').run(f.at - 1, deviceId);
+    conn.prepare('UPDATE job_claims SET expires_at=? WHERE job_id=?').run(f.at - 1, jobId);
+  });
+  expect(db.recoverExpiredClaims(deviceId, Date.now()))
+    .toEqual({ requeued: [], review: [jobId] });
+  const manual = db.acquireLease(deviceId, 'cleanup_guard_operator', 'MANUAL', Date.now(), 240000);
+  const jobBefore = db.getJob(jobId).job;
+  await coordinator('NOT_INDEXED').reconcileStage({
+    requestId: 'cleanup_fresh_manual_probe', jobId, stageId: uploaded.stageId,
+    expectedJobRevision: jobBefore.revision, expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: manual, transportSerial: f.transportSerial,
+    transportGeneration: f.transportGeneration,
+  });
+  events.length = 0;
+  const report = await coordinator().inspectOwnedCleanupReadiness({
+    stageId: uploaded.stageId, expectedJobRevision: jobBefore.revision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: manual,
+  });
+  expect(report).toMatchObject({
+    jobId, ordinal: 0, scope: 'PERSISTED_PREFLIGHT_ONLY',
+    status: 'PREREQUISITES_MET', blockers: [], canDelete: false, canDispatch: false,
+  });
+  expect(events).toEqual(['stage.cleanupReadiness']);
+  expect(db.getJob(jobId).job).toEqual(jobBefore);
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(stageBefore);
+  await expect(coordinator().inspectOwnedCleanupReadiness({
+    stageId: uploaded.stageId, expectedJobRevision: jobBefore.revision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+  })).rejects.toMatchObject({ code: 'STAGE_CLEANUP_REVIEW_REQUIRED' });
+  db.releaseLease(manual);
+  await expect(coordinator().inspectOwnedCleanupReadiness({
+    stageId: uploaded.stageId, expectedJobRevision: jobBefore.revision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: manual,
+  })).rejects.toMatchObject({ code: 'STALE_LEASE' });
+  expect(events).not.toContain('fake.adb.send');
+  expect(events).not.toContain('fake.adb.readback');
+  expect(events).not.toContain('fake.adb.mediastore');
+});
+
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {
   const f = await fixture();
   await expect(coordinator('FAIL').transfer(f)).rejects.toThrow('simulated disconnect');

@@ -2,7 +2,7 @@ import { extname, join, resolve } from 'node:path';
 import { idSchema, hashSchema } from '@autoreels/contracts';
 import type {
   DeviceLease, DeviceRecord, DeviceStageTransfer, DeviceStageReconciliation, JobMediaPreflightPlan,
-  ReviewedStageMediaSnapshot,
+  ReviewedStageMediaSnapshot, OwnedStageCleanupAssessment,
 } from '@autoreels/contracts';
 import type { OwnedSyncInput, OwnedSyncAck } from '@autoreels/devices';
 import type { HostStageResult } from '@autoreels/media';
@@ -55,6 +55,26 @@ export class HostStageTransferService {
     private readonly appDataDirectory: string,
     private readonly adapter: () => SyncFactory,
   ) {}
+
+  /** DB-only operator cleanup preflight; no ADB call, delete, upload or permission grant. */
+  async inspectOwnedCleanupReadiness(request: {
+    stageId: string; expectedJobRevision: number; expectedSnapshotHash: string;
+    lease: DeviceLease;
+  }, signal?: AbortSignal): Promise<OwnedStageCleanupAssessment> {
+    idSchema.parse(request.stageId);
+    hashSchema.parse(request.expectedSnapshotHash);
+    if (signal?.aborted) throw new DomainError('CANCELLED', 'Cleanup preflight cancelled.');
+    if (request.lease.ownerKind !== 'MANUAL' ||
+        !Number.isSafeInteger(request.expectedJobRevision) ||
+        request.expectedJobRevision < 0)
+      throw new DomainError('STAGE_CLEANUP_REVIEW_REQUIRED', 'A current MANUAL review is required.');
+    return this.db.internal<OwnedStageCleanupAssessment>({
+      command: 'stage.cleanupReadiness', stageId: request.stageId,
+      hostId: this.hostId, expectedJobRevision: request.expectedJobRevision,
+      expectedSnapshotHash: request.expectedSnapshotHash,
+      lease: request.lease, at: Date.now(),
+    });
+  }
 
   /**
    * Explicit private verification step. A successful receipt proves byte
