@@ -380,17 +380,27 @@ describe('schema v18 to v19 durable reconciliation migration', () => {
     const path = join(dir, 'legacy-stage-v18.sqlite');
     const old = new DatabaseSync(path);
     old.exec('PRAGMA foreign_keys=OFF');
-    for (const step of migrations.filter((item) => item.version <= 18)) {
-      old.exec(step.sql);
-      old.prepare('INSERT INTO schema_migrations VALUES(?,?)')
-        .run(step.version, contentHash(step.sql));
+    // One fixture transaction: 18 autocommitted DDL/checksum writes caused
+    // avoidable Windows filesystem sync contention under parallel CI tests.
+    old.exec('BEGIN IMMEDIATE');
+    try {
+      for (const step of migrations.filter((item) => item.version <= 18)) {
+        old.exec(step.sql);
+        old.prepare('INSERT INTO schema_migrations VALUES(?,?)')
+          .run(step.version, contentHash(step.sql));
+      }
+      old.exec('PRAGMA user_version=18');
+      old.prepare('INSERT INTO device_stage_reconciliations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+        .run('legacy_audit', 'legacy_request', 'legacy_stage', 'legacy_job',
+          'legacy_device', 'legacy_host', 7, 'REMOTE_BYTES_MATCHED',
+          'a'.repeat(64), 24, 'NOT_INDEXED', '2026-10-28T00:00:00.000Z');
+      old.exec('COMMIT');
+    } catch (error) {
+      old.exec('ROLLBACK');
+      throw error;
+    } finally {
+      old.close();
     }
-    old.exec('PRAGMA user_version=18');
-    old.prepare('INSERT INTO device_stage_reconciliations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
-      .run('legacy_audit', 'legacy_request', 'legacy_stage', 'legacy_job',
-        'legacy_device', 'legacy_host', 7, 'REMOTE_BYTES_MATCHED',
-        'a'.repeat(64), 24, 'NOT_INDEXED', '2026-10-28T00:00:00.000Z');
-    old.close();
     const migrated = new StudioDatabase(path);
     migrated.close();
     const read = new DatabaseSync(path);
