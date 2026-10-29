@@ -4722,6 +4722,111 @@ export class StudioDatabase {
         .run(new Date(scheduledUtc).toISOString(), id);
     });
   }
+  /**
+   * S101.1 trusted cancellation boundary. A live worker might already have
+   * reached Android I/O; this journals a durable review stop, NOT proof that
+   * the in-flight provider action was prevented. Never clears any effect,
+   * stage, claim or lease and never grants retry/dispatch rights.
+   */
+  requestJobCancellation(args: {
+    jobId: string;
+    expectedRevision: number;
+    actorId: string;
+    at: number;
+  }): {
+    jobId: string;
+    jobRevision: number;
+    state: JobDefinition['state'];
+    disposition:
+      | 'CANCELLED_BEFORE_EFFECT'
+      | 'REVIEW_REQUIRED'
+      | 'ALREADY_CANCELLED'
+      | 'ALREADY_NEEDS_REVIEW';
+    canConfirm: false;
+    canRetry: false;
+    canDispatch: false;
+  } {
+    idSchema.parse(args.jobId);
+    idSchema.parse(args.actorId);
+    if (!Number.isSafeInteger(args.expectedRevision) ||
+        args.expectedRevision < 0 ||
+        !Number.isSafeInteger(args.at) ||
+        !Number.isFinite(new Date(args.at).getTime()))
+      throw new DomainError('CANCELLATION_REQUEST_INVALID',
+        'Cancellation requires a valid revision and clock.');
+    return this.transaction(() => {
+      const { job } = this.getJob(args.jobId);
+      if (job.revision !== args.expectedRevision)
+        throw new DomainError('REVISION_CONFLICT',
+          'The job changed before cancellation could be committed.');
+
+      const receipt = (
+        state: JobDefinition['state'],
+        revision: number,
+        disposition: 'CANCELLED_BEFORE_EFFECT' | 'REVIEW_REQUIRED' |
+          'ALREADY_CANCELLED' | 'ALREADY_NEEDS_REVIEW',
+      ) => ({
+        jobId: job.id,
+        jobRevision: revision,
+        state,
+        disposition,
+        canConfirm: false as const,
+        canRetry: false as const,
+        canDispatch: false as const,
+      });
+      if (job.state === 'CANCELLED')
+        return receipt(job.state, job.revision, 'ALREADY_CANCELLED');
+      if (job.state === 'NEEDS_REVIEW')
+        return receipt(job.state, job.revision, 'ALREADY_NEEDS_REVIEW');
+      if (terminalJobStates.has(job.state))
+        throw new DomainError('CANCELLATION_TERMINAL',
+          'A terminal job cannot be cancelled again.');
+
+      const hasEffect = Boolean(this.db.prepare(
+        'SELECT 1 FROM effects WHERE job_id=? LIMIT 1',
+      ).get(job.id));
+      const hasStage = Boolean(this.db.prepare(
+        'SELECT 1 FROM device_stage_transfers WHERE job_id=? LIMIT 1',
+      ).get(job.id));
+      const hasClaim = Boolean(this.db.prepare(
+        'SELECT 1 FROM job_claims WHERE job_id=? LIMIT 1',
+      ).get(job.id));
+      const safeBeforeExternal = [
+        'SCHEDULED', 'QUEUED', 'WAITING_DEVICE', 'WAITING_NETWORK',
+        'MEDIA_MISSING', 'MEDIA_CHANGED', 'TARGET_MISSING',
+      ].includes(job.state);
+      const activeOrReviewable = [
+        'SCHEDULED', 'QUEUED', 'PREFLIGHT', 'RUNNING',
+        'POST_INTENT', 'POST_PENDING', 'POSTED', 'COMMENT_PENDING',
+      ].includes(job.state);
+      if (!(safeBeforeExternal && !hasEffect && !hasStage && !hasClaim) &&
+          !activeOrReviewable)
+        throw new DomainError('CANCELLATION_REVIEW_GATE',
+          'This job requires a separate verified cancellation review.');
+
+      const nextState: JobDefinition['state'] =
+        safeBeforeExternal && !hasEffect && !hasStage && !hasClaim
+          ? 'CANCELLED' : 'NEEDS_REVIEW';
+      assertJobTransition(job.state, nextState, hasEffect);
+      this.db.prepare(
+        'UPDATE jobs SET state=?,revision=revision+1 WHERE id=? AND revision=?',
+      ).run(nextState, job.id, job.revision);
+      this.queueEvent(job.id, 'JOB_CANCELLATION_REQUESTED', {
+        actorId: args.actorId,
+        previousState: job.state,
+        outcome: nextState,
+        hadEffect: hasEffect,
+        hadStage: hasStage,
+        hadClaim: hasClaim,
+        /** Not a guarantee the provider action had not started. */
+        providerInputNotCertified: true,
+      }, args.at);
+      return receipt(job.state === nextState ? job.state : nextState,
+        job.revision + 1, nextState === 'CANCELLED'
+          ? 'CANCELLED_BEFORE_EFFECT' : 'REVIEW_REQUIRED');
+    });
+  }
+
   cancelScheduledJob(id: string, expectedRevision: number): void {
     this.transaction(() => {
       this.editableScheduledJob(id, expectedRevision);
