@@ -100,6 +100,8 @@ import { assessPersistedMediaOrder, type LastStageObservation } from './media-se
 import { deriveFrozenUnicodeTextPlan } from './unicode-compose.js';
 import { deriveFrozenComposeExpectation } from './compose-review.js';
 import { deriveFrozenCommentList, type FrozenCommentListPlan } from './comment-list.js';
+import { assessProviderCommentCandidates, type ProviderCommentObservation, type CommentCandidateAssessment } from './comment-verification.js';
+export type { ProviderCommentObservation } from './comment-verification.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
 const now = (): string => new Date().toISOString();
@@ -3527,6 +3529,66 @@ export class StudioDatabase {
       effectKey: item.effectKey,
       payloadHash: item.payloadHash,
     };
+  }
+
+  /**
+   * Private read-only post-crash candidate comparison. An SQLite CONFIRMED
+   * parent is only a persisted record, not live provider attestation.
+   * No live lease is required to REVIEW; nothing here permits retry.
+   */
+  reviewPersistedCommentCandidates(args: {
+    jobId: string;
+    expectedSnapshotHash: string;
+    effectId: string;
+    postEffectId: string;
+    parentExternalPostId: string;
+    fieldKey: string;
+    scope: 'row' | 'process';
+    ordinal: number;
+    observations: readonly ProviderCommentObservation[];
+    at: number;
+  }): CommentCandidateAssessment {
+    idSchema.parse(args.jobId);
+    idSchema.parse(args.effectId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    const { job, snapshot, snapshotHash } = this.getJob(args.jobId);
+    if (snapshotHash !== args.expectedSnapshotHash ||
+        !['COMMENT_PENDING', 'NEEDS_REVIEW'].includes(job.state))
+      throw new DomainError('COMMENT_READBACK_JOB_STALE',
+        'Frozen comment job is not eligible for review.');
+    const row = this.db.prepare(
+      'SELECT kind,state,effect_key,payload_hash,created_at FROM effects WHERE id=? AND job_id=?',
+    ).get(args.effectId, args.jobId);
+    if (!row || row.kind !== 'COMMENT' || row.state !== 'ATTEMPT_UNCERTAIN')
+      throw new DomainError('COMMENT_READBACK_EFFECT_INVALID',
+        'A persisted uncertain comment is required for review.');
+    const frozen = this.frozenCommentListPlan({
+      jobId: args.jobId, expectedSnapshotHash: snapshotHash,
+      postEffectId: args.postEffectId,
+      fieldKey: args.fieldKey, scope: args.scope,
+    });
+    const selected = frozen.items[args.ordinal];
+    if (frozen.status !== 'FROZEN_COMMENTS_PROVIDER_UNVERIFIED' ||
+        !selected || selected.ordinal !== args.ordinal ||
+        selected.effectKey !== row.effect_key ||
+        selected.payloadHash !== row.payload_hash)
+      throw new DomainError('COMMENT_READBACK_SOURCE_MISMATCH',
+        'Uncertain comment does not match the frozen journal item.');
+    return assessProviderCommentCandidates({
+      jobId: job.id,
+      appId: snapshot.bundle.workflow.appId,
+      accountId: snapshot.accountId ?? null,
+      targetId: snapshot.targetId,
+      parentExternalPostId: args.parentExternalPostId,
+      ordinal: args.ordinal,
+      effect: {
+        effectId: args.effectId, jobId: job.id, kind: 'COMMENT',
+        state: 'ATTEMPT_UNCERTAIN', effectKey: String(row.effect_key),
+        payloadHash: String(row.payload_hash),
+        intentCreatedAt: String(row.created_at),
+      },
+      frozen, observations: args.observations, at: args.at,
+    });
   }
 
   /** Persist uncertainty and job phase together before the provider dispatch boundary. */

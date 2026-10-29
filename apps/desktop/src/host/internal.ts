@@ -5,7 +5,7 @@ import type {
   DeviceLease,
   TransportObservation,
 } from '@autoreels/contracts';
-import type { StudioDatabase } from '@autoreels/database';
+import type { StudioDatabase, ProviderCommentObservation } from '@autoreels/database';
 /** This union is never exported through preload, HTTP or the public service dispatcher. */
 export type InternalRequest =
   | { command: 'workspace.status' }
@@ -186,6 +186,19 @@ export type InternalRequest =
       at: number;
     }
   | {
+      command: 'comment.reviewCandidates';
+      jobId: string;
+      expectedSnapshotHash: string;
+      effectId: string;
+      postEffectId: string;
+      parentExternalPostId: string;
+      fieldKey: string;
+      scope: 'row' | 'process';
+      ordinal: number;
+      observations: readonly ProviderCommentObservation[];
+      at: number;
+    }
+  | {
       command: 'source.register';
       processId: string;
       expectedRevision: number;
@@ -361,6 +374,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.frozenCommentListPlan(request);
     case 'comment.resolveClaimed':
       return db.resolveClaimedCommentDispatch(request);
+    case 'comment.reviewCandidates':
+      return db.reviewPersistedCommentCandidates(request);
     case 'source.register':
       return db.registerNativeSources(request.processId, request.expectedRevision, request.grants);
     case 'source.grant':

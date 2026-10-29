@@ -94,8 +94,8 @@ function fixture(deviceId = 'device_1', index = '1', withComment = false) {
     workflowId: draft.workflowId,
     workflowVersionId: version.id,
     deviceId,
-    accountId: null,
-    targetId: null,
+    accountId: withComment ? 'account_comment' : null,
+    targetId: withComment ? 'target_comment' : null,
     revision: 0,
     archived: false,
     schedule: {
@@ -983,6 +983,84 @@ function confirmedCommentHostFixture(ordinal = 0) {
   };
   return { f, publish, source, item, input };
 }
+
+it('compares private synthetic comment readback after restart, never writes effect or authorizes resend', async () => {
+  const { f, publish, input } = confirmedCommentHostFixture(0);
+  // The parent PUBLISH CONFIRMED here is a deliberately synthetic DB-only
+  // fixture and cannot attest any real Facebook/TikTok post.
+  const intent = db.prepareClaimedEffect({
+    ...input, at: at + 125,
+  });
+  db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 140,
+  });
+  const fixtureReadback = {
+    observationId: 'observation_comment_0',
+    source: 'PROVIDER_READBACK' as const,
+    providerAppId: 'fb',
+    accountId: 'account_comment', authorAccountId: 'account_comment',
+    targetId: 'target_comment',
+    externalPostId: 'post_exact_42', externalCommentId: 'comment_exact_42',
+    commentCreatedAt: new Date(at + 135).toISOString(),
+    observedAt: new Date(at + 400).toISOString(),
+    bodyUtf8Hash: db.frozenCommentListPlan({
+      jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+      postEffectId: publish.effectId, fieldKey: 'comments', scope: 'row',
+    }).items[0]!.utf8Hash,
+    bodyUtf8Bytes: Buffer.byteLength('Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp'),
+  };
+  const req = {
+    command: 'comment.reviewCandidates' as const,
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    effectId: intent.effectId, postEffectId: publish.effectId,
+    parentExternalPostId: 'post_exact_42',
+    fieldKey: 'comments', scope: 'row' as const, ordinal: 0,
+    observations: [fixtureReadback],
+    at: at + 1000,
+  };
+  const first = dispatchInternal(db, req) as ReturnType<StudioDatabase['reviewPersistedCommentCandidates']>;
+  // Identical frozen text at ordinal 1 is ambiguous even when exactly one
+  // provider body is reported: provider readback does not label ordinals.
+  expect(first).toMatchObject({
+    candidate: null,
+    summary: { status: 'AMBIGUOUS_REVIEW',
+      blockers: ['DUPLICATE_FROZEN_COMMENT_TEXT'],
+      canRetry: false, canConfirm: false, canDispatch: false },
+  });
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const before = [
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n),
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events').get()?.n),
+  ];
+  expect(() => db.reviewPersistedCommentCandidates({
+    ...req, ordinal: 1,
+  })).toThrow('frozen journal');
+  expect(db.reviewPersistedCommentCandidates({
+    ...req, parentExternalPostId: '../unsafe',
+  })).toMatchObject({
+    candidate: null, summary: { status: 'BLOCKED', canRetry: false },
+  });
+  await expect(dispatch(db, {
+    operationId: 'op_forged_comment_readback',
+    command: 'comment.reviewCandidates' as never,
+    input: req,
+  })).rejects.toThrow();
+  const after = [
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n),
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events').get()?.n),
+  ];
+  expect(after).toEqual(before);
+  sql.close();
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(dispatchInternal(db, req)).toEqual(first);
+  expect(db.effectState(intent.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(dispatchInternal(db, req)).toEqual(first);
+  expect(db.effectState(intent.effectId)).toBe('ATTEMPT_UNCERTAIN');
+});
 
 it('hydrates only the exact immutable multiline Unicode COMMENT into the private adapter after durable journal', async () => {
   const { f, item, input } = confirmedCommentHostFixture(1);
