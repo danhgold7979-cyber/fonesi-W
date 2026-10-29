@@ -29,7 +29,10 @@ const node = (
 ): WorkflowNode => ({ id, type, name: id, x: 10, y: 10, config });
 const edge = (id: string, source: string, port: WorkflowEdge['port'], target: string): WorkflowEdge =>
   ({ id, source, port, target });
-function fixture(deviceId = 'device_1', index = '1', withComment = false) {
+function fixture(
+  deviceId = 'device_1', index = '1', withComment = false,
+  commentValues?: string[],
+) {
   db.registerObservedDevice(deviceId, deviceId);
   // A verified profile fixture is required even before the provider preflight.
   const setup = new DatabaseSync(join(dir, 'studio.sqlite'));
@@ -124,7 +127,8 @@ function fixture(deviceId = 'device_1', index = '1', withComment = false) {
   db.saveContent({
     id: contentId, processId: process.id, revision: 0,
     fields: withComment
-      ? { comments: ['Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp', 'Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp'] }
+      ? { comments: commentValues ??
+          ['Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp', 'Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp'] }
       : {},
     assetIds: [], ignored: false,
   }, null);
@@ -1072,6 +1076,100 @@ it('compares private synthetic comment readback after restart, never writes effe
   expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
   expect(dispatchInternal(db, req)).toEqual(first);
   expect(db.effectState(intent.effectId)).toBe('ATTEMPT_UNCERTAIN');
+});
+
+it('compares one exact provider comment privately without certifying its synthetic readback', async () => {
+  const f = fixture('device_unique_comment', 'unique_comment', true,
+    ['Bình luận dòng một 👋\r\nDòng hai', 'Nội dung khác']);
+  const publish = prepare(f);
+  db.beginClaimedEffectAttempt({
+    effectId: publish.effectId, expectedJobRevision: publish.jobRevision,
+    lease: f.lease, at: at + 100,
+  });
+  // This journal state is manually injected for fixture testing only.
+  const seeded = new DatabaseSync(join(dir, 'studio.sqlite'));
+  seeded.prepare("UPDATE jobs SET state='POSTED',revision=revision+1 WHERE id=?")
+    .run(f.jobId);
+  seeded.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?")
+    .run(publish.effectId);
+  seeded.close();
+
+  const frozen = db.frozenCommentListPlan({
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    postEffectId: publish.effectId, fieldKey: 'comments', scope: 'row',
+  });
+  const item = frozen.items[1]!;
+  const intent = db.prepareClaimedEffect({
+    jobId: f.jobId, expectedJobRevision: db.getJob(f.jobId).job.revision,
+    expectedSnapshotHash: f.snapshotHash, nodeId: 'comment', kind: 'COMMENT',
+    effectKey: item.effectKey, payloadHash: item.payloadHash,
+    commentSource: {
+      postEffectId: publish.effectId, fieldKey: 'comments', scope: 'row', ordinal: 1,
+    },
+    lease: f.lease, at: at + 130,
+  });
+  db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 160,
+  });
+  const candidate = {
+    observationId: 'observation_exact_comment',
+    source: 'PROVIDER_READBACK' as const,
+    providerAppId: 'fb',
+    accountId: 'account_comment',
+    authorAccountId: 'account_comment',
+    targetId: 'target_comment',
+    externalPostId: 'post_exact_42',
+    externalCommentId: 'comment_exact_99',
+    commentCreatedAt: new Date(at + 180).toISOString(),
+    observedAt: new Date(at + 500).toISOString(),
+    bodyUtf8Hash: item.utf8Hash, bodyUtf8Bytes: item.utf8Bytes,
+  };
+  const req = {
+    command: 'comment.reviewCandidates' as const,
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    effectId: intent.effectId, postEffectId: publish.effectId,
+    parentExternalPostId: 'post_exact_42', fieldKey: 'comments',
+    scope: 'row' as const, ordinal: 1,
+    observations: [candidate], at: at + 1000,
+  };
+  const read = () => {
+    const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return [
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n),
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events').get()?.n),
+      ];
+    } finally { sql.close(); }
+  };
+  const before = read();
+  const review = dispatchInternal(db, req) as
+    ReturnType<StudioDatabase['reviewPersistedCommentCandidates']>;
+  expect(review).toMatchObject({
+    candidate,
+    summary: {
+      status: 'EXACT_CANDIDATE_UNCERTIFIED',
+      observationsChecked: 1, exactCandidates: 1,
+      canConfirm: false, canDispatch: false, canRetry: false,
+    },
+  });
+  expect(JSON.stringify(review.summary)).not.toContain(item.value);
+  expect(JSON.stringify(review.summary)).not.toContain(item.utf8Hash);
+  expect(read()).toEqual(before);
+  expect(db.reviewPersistedCommentCandidates({
+    ...req, parentExternalPostId: 'post_other_42',
+  })).toMatchObject({
+    candidate: null, summary: { status: 'NO_EXACT_CANDIDATE_REVIEW',
+      canRetry: false },
+  });
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(dispatchInternal(db, req)).toEqual(review);
+  expect(db.effectState(intent.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(dispatchInternal(db, req)).toEqual(review);
+  expect(read()).toEqual(before);
 });
 
 it('hydrates only the exact immutable multiline Unicode COMMENT into the private adapter after durable journal', async () => {
