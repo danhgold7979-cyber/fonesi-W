@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   JobStageReviewPage, NativeStageReviewResult, NativeStageCleanupReviewResult,
+  NativeStageCleanupAbsenceResult,
   MediaOrderBlocker, FrozenUnicodeBlocker, FrozenComposeBlocker,
 } from '@autoreels/contracts';
 import { api, nativeStageReview } from './api.js';
@@ -84,12 +85,17 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
   const [reviewError, setReviewError] = useState('');
   const [lastLive, setLastLive] = useState<NativeStageReviewResult | null>(null);
   const [cleanupResult, setCleanupResult] = useState<NativeStageCleanupReviewResult | null>(null);
+  const [absenceResult, setAbsenceResult] = useState<{
+    ordinal: number;
+    result: NativeStageCleanupAbsenceResult;
+  } | null>(null);
   const generation = useRef(0);
 
   useEffect(() => {
     const token = ++generation.current;
     setReport(null);
     setObservations([]);
+    setAbsenceResult(null);
     setError('');
     setLoading(true);
     setLoadingMore(false);
@@ -113,6 +119,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     setReviewError('');
     setLastLive(null);
     setCleanupResult(null);
+    setAbsenceResult(null);
     setReviewBusy(true);
     try {
       const result = await nativeStageReview.reobserve(jobId, ordinal);
@@ -137,6 +144,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     setReviewError('');
     setLastLive(null);
     setCleanupResult(null);
+    setAbsenceResult(null);
     setReviewBusy(true);
     try {
       const result = await nativeStageReview.requestCleanupReview(jobId, ordinal);
@@ -153,6 +161,54 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     } catch (cause) {
       if (token === generation.current)
         setReviewError(cause instanceof Error ? cause.message : 'Không ghi được yêu cầu rà soát.');
+    } finally {
+      if (token === generation.current) setReviewBusy(false);
+    }
+  }
+
+  async function reviewCleanupAbsence(ordinal: number): Promise<void> {
+    if (!nativeStageReview || reviewBusy || loading || loadingMore) return;
+    const token = generation.current;
+    setReviewError('');
+    setLastLive(null);
+    setCleanupResult(null);
+    setAbsenceResult(null);
+    setReviewBusy(true);
+    try {
+      const result = await nativeStageReview.reviewCleanupAbsence(jobId, ordinal);
+      if (token !== generation.current) return;
+      const validStatus = [
+        'BLOCKED', 'REMOTE_PRESENT_REVIEW', 'MEDIASTORE_PRESENT_REVIEW',
+        'UNSUPPORTED_REVIEW', 'ABSENCE_CANDIDATE_UNCERTIFIED',
+      ];
+      const validBlockers = [
+        'OWNED_EXPECTATION_INVALID', 'REMOTE_STAT_INVALID', 'REMOTE_BYTES_MISMATCH',
+        'MEDIASTORE_READBACK_INVALID', 'REMOTE_STILL_PRESENT',
+        'MEDIASTORE_STILL_INDEXED', 'MEDIASTORE_UNSUPPORTED_OR_AMBIGUOUS',
+        'PROVIDER_AND_CLEANUP_UNCERTIFIED',
+      ];
+      // Reject a malicious/incomplete receipt rather than render any private
+      // host path, ADB serial or MediaStore row accidentally attached to it.
+      if (result.scope !== 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED' ||
+          !validStatus.includes(result.status) ||
+          !['PRESENT', 'ABSENT', 'UNKNOWN'].includes(result.remote) ||
+          !['INDEXED_EXACT', 'NOT_INDEXED', 'AMBIGUOUS', 'UNSUPPORTED', 'UNKNOWN']
+            .includes(result.mediaStore) ||
+          result.canDelete !== false || result.canMarkClean !== false ||
+          result.canRetry !== false || result.canDispatch !== false ||
+          !Array.isArray(result.blockers) ||
+          result.blockers.length === 0 || result.blockers.length > 8 ||
+          !result.blockers.every((code) => validBlockers.includes(code)) ||
+          !result.blockers.includes('PROVIDER_AND_CLEANUP_UNCERTIFIED') ||
+          (result.status === 'ABSENCE_CANDIDATE_UNCERTIFIED' &&
+            (result.remote !== 'ABSENT' || result.mediaStore !== 'NOT_INDEXED')) ||
+          Object.keys(result).sort().join(',') !==
+            'blockers,canDelete,canDispatch,canMarkClean,canRetry,mediaStore,remote,scope,status')
+        throw new Error('Bằng chứng kiểm tra file staging không hợp lệ hoặc chưa an toàn.');
+      setAbsenceResult({ ordinal, result });
+    } catch (cause) {
+      if (token === generation.current)
+        setReviewError(cause instanceof Error ? cause.message : 'Không kiểm tra được file staging.');
     } finally {
       if (token === generation.current) setReviewBusy(false);
     }
@@ -209,6 +265,21 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
           {' '}Không xóa file Android và không cho phép đăng bài.
         </p>
       )}
+      {absenceResult && (
+        <p role="status" data-testid="stage-cleanup-absence-result">
+          Media {absenceResult.ordinal + 1}: {' '}
+          {absenceResult.result.status === 'ABSENCE_CANDIDATE_UNCERTIFIED'
+            ? 'Không thấy file ở đường dẫn staging sở hữu và MediaStore không trả hàng trong lần quan sát.'
+            : absenceResult.result.status === 'REMOTE_PRESENT_REVIEW'
+              ? 'File staging vẫn hiện diện trên Android trong lần quan sát.'
+              : absenceResult.result.status === 'MEDIASTORE_PRESENT_REVIEW'
+                ? 'MediaStore vẫn trả hàng tương ứng; không thể đánh dấu đã dọn.'
+                : absenceResult.result.status === 'UNSUPPORTED_REVIEW'
+                  ? 'MediaStore mơ hồ hoặc không hỗ trợ; cần kiểm tra thủ công.'
+                  : 'Bằng chứng file hoặc MediaStore không khớp; cần rà soát.'}
+          {' '}Không xác nhận đã xóa, không có quyền xóa, không cho phép đăng lại hay dọn dữ liệu PC.
+        </p>
+      )}
       {lastLive && (
         <p role="status" data-testid="stage-live-review-result">
           Media {lastLive.ordinal + 1}: {observationLabels[lastLive.classification]} ·
@@ -245,6 +316,16 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                         onClick={() => void reobserve(stage.ordinal)}
                       >
                         Kiểm tra lại Android (chỉ đọc)
+                      </button>
+                    )}
+                  {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
+                    ['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state) && (
+                      <button
+                        aria-label={'Kiểm tra file staging còn hay mất media ' + (stage.ordinal + 1)}
+                        disabled={reviewBusy || loading || loadingMore}
+                        onClick={() => void reviewCleanupAbsence(stage.ordinal)}
+                      >
+                        Kiểm tra file staging còn hay mất (chỉ đọc)
                       </button>
                     )}
                   {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
