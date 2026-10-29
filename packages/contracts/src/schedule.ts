@@ -256,11 +256,25 @@ export interface NativeStageCleanupAbsenceResult {
   canRetry: false;
   canDispatch: false;
 }
+/** Native-only audit receipt: one bounded readback, never an executable cleanup retry. */
+export interface NativeStageCleanupRecheckResult {
+  jobId: string;
+  ordinal: number;
+  scope: 'LIVE_ANDROID_CLEANUP_RECHECK_NOT_DELETE_CERTIFIED';
+  status: NativeStageCleanupAbsenceResult['status'];
+  attemptOrdinal: number;
+  recordedAt: string;
+  canDelete: false;
+  canMarkClean: false;
+  canRetry: false;
+  canDispatch: false;
+}
 /** Separate Electron-only bridge: never add this to public StudioApi/ApiCommand. */
 export interface NativeStageReviewApi {
   reobserve(jobId: string, ordinal: number): Promise<NativeStageReviewResult>;
   requestCleanupReview(jobId: string, ordinal: number): Promise<NativeStageCleanupReviewResult>;
   reviewCleanupAbsence(jobId: string, ordinal: number): Promise<NativeStageCleanupAbsenceResult>;
+  recordCleanupRecheck(jobId: string, ordinal: number): Promise<NativeStageCleanupRecheckResult>;
 }
 
 export type QueueClaimResult =
