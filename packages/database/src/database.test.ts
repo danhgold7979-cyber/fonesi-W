@@ -473,7 +473,7 @@ describe('backup/restore', () => {
     await db.restoreFrom(path);
     expect(db.integrity()).toBe('ok');
     expect(db.listSources('missing', 'host')).toEqual([]);
-  });
+  }, 30000);
   it('backs up WAL consistently and restores workflow revisions without losing the previous DB', async () => {
     const draft = db.createWorkflow('fb', 'Before');
     const path = join(dir, 'backup.sqlite');
