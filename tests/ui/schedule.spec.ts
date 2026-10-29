@@ -823,5 +823,65 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
     .toContainText('Biên nhận đối soát cleanup chứa quyền nguy hiểm');
   await expect(nativeDialog.getByTestId('stage-cleanup-recheck-result')).toHaveCount(0);
   await expect(nativeDialog).not.toContainText('/sdcard/DCIM/Camera/secret.mp4');
+
+  // Persist three immutable synthetic SQLite rechecks. A fresh browser
+  // session sees only bounded, redacted history and must disable a fourth
+  // native attempt without invoking the test-only native bridge.
+  const historyConn = new DatabaseSync(join(directory, 'studio.sqlite'));
+  try {
+    historyConn.exec('PRAGMA foreign_keys=ON');
+    const add = historyConn.prepare(
+      'INSERT INTO device_stage_cleanup_rechecks(' +
+      'request_id,stage_id,job_id,device_id,host_id,snapshot_hash,job_revision,' +
+      'claim_generation,lease_generation,actor_id,attempt_ordinal,result_status,' +
+      'remote_status,mediastore_status,blockers_json,request_hash,created_at) ' +
+      'VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    );
+    const records = [
+      { status: 'REMOTE_PRESENT_REVIEW', remote: 'PRESENT',
+        media: 'NOT_INDEXED', blockers: ['REMOTE_STILL_PRESENT', 'PROVIDER_AND_CLEANUP_UNCERTIFIED'] },
+      { status: 'UNSUPPORTED_REVIEW', remote: 'ABSENT',
+        media: 'UNSUPPORTED', blockers: ['MEDIASTORE_UNSUPPORTED_OR_AMBIGUOUS', 'PROVIDER_AND_CLEANUP_UNCERTIFIED'] },
+      { status: 'ABSENCE_CANDIDATE_UNCERTIFIED', remote: 'ABSENT',
+        media: 'NOT_INDEXED', blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'] },
+    ];
+    for (let n = 0; n < records.length; n++) {
+      const record = records[n]!;
+      add.run(
+        'private_cleanup_recheck_request_' + n, stageId, jobId,
+        'device_ui_fixture', 'host_stage_secret',
+        snapshotHash, 1, 1, 2, 'operator_private_cleanup_recheck',
+        n + 1, record.status, record.remote, record.media,
+        JSON.stringify(record.blockers),
+        contentHash('ui_cleanup_recheck_hash_' + n),
+        new Date(Date.parse('2026-10-28T00:05:00.000Z') + n * 1000).toISOString(),
+      );
+    }
+  } finally { historyConn.close(); }
+  await page.reload();
+  await page.locator('[data-route="schedule"]').click();
+  await page.getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
+    .selectOption(processId);
+  await page.getByRole('button', { name: 'Hồ sơ đối soát ' + jobId }).click();
+  const persisted = page.getByRole('dialog', { name: 'Hồ sơ đối soát staging' });
+  await expect(persisted.getByTestId('stage-cleanup-recheck-history')).toHaveCount(3);
+  await expect(persisted.getByTestId('stage-review-summary'))
+    .toContainText('Đã ghi 3/3 lượt đối soát cleanup');
+  await expect(persisted.getByRole('button', {
+    name: 'Ghi lần đối soát cleanup media 1',
+  })).toBeDisabled();
+  await expect(persisted).toContainText('chưa chứng nhận đã xóa');
+  const persistedBody = await persisted.innerText();
+  for (const secret of [
+    remotePath, stageId, nonce, mediaHash, 'host_stage_secret',
+    'operator_private_cleanup_recheck', 'private_cleanup_recheck_request_',
+  ]) expect(persistedBody).not.toContain(secret);
+  const persistedDto = JSON.stringify(await request<unknown>(page, 'jobStageReview', { id: jobId }));
+  for (const secret of [
+    remotePath, stageId, nonce, mediaHash, 'host_stage_secret',
+    'operator_private_cleanup_recheck', 'private_cleanup_recheck_request_',
+  ]) expect(persistedDto).not.toContain(secret);
+  await expect(persisted.getByRole('button', { name: /Xóa file|Đăng lại bài/ }))
+    .toHaveCount(0);
 });
 
