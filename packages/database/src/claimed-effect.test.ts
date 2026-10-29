@@ -1974,3 +1974,88 @@ it('blocks forged extra PUBLISH and foreign COMMENT journal rows in partial-resu
   });
   expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
 });
+
+
+it('refuses to mark synthetic DB-CONFIRMED PUBLISH as a successful provider post', () => {
+  const { f, publish } = confirmedCommentHostFixture(0);
+  const job = db.getJob(f.jobId).job;
+  expect(job.state).toBe('POSTED');
+  expect(db.effectState(publish.effectId)).toBe('CONFIRMED');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const countBefore = [
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?').get(f.jobId)?.n),
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?').get(f.jobId)?.n),
+  ];
+  expect(() => db.transitionJob(f.jobId, 'SUCCESS', job.revision))
+    .toThrow('independently verified');
+  expect(db.getJob(f.jobId).job).toEqual(job);
+  expect(db.effectState(publish.effectId)).toBe('CONFIRMED');
+  expect([
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?').get(f.jobId)?.n),
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?').get(f.jobId)?.n),
+  ]).toEqual(countBefore);
+  sql.close();
+});
+
+it('refuses DB-only rejected comment warning/failed/cancelled terminals without provider proof', () => {
+  const { f, publish, input } = confirmedCommentHostFixture(0);
+  const intent = db.prepareClaimedEffect({ ...input, at: at + 125 });
+  db.beginClaimedEffectAttempt({
+    effectId: intent.effectId,
+    expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 140,
+  });
+  // SQL fixture state deliberately has NO independent negative provider proof.
+  const sqlite = new DatabaseSync(join(dir, 'studio.sqlite'));
+  sqlite.prepare("UPDATE effects SET state='DEFINITIVELY_REJECTED' WHERE id=?")
+    .run(intent.effectId);
+  sqlite.close();
+  const job = db.getJob(f.jobId).job;
+  expect(job.state).toBe('COMMENT_PENDING');
+  expect(() => db.transitionJob(f.jobId, 'SUCCESS_WITH_WARNINGS', job.revision))
+    .toThrow('independently verified');
+  expect(db.getJob(f.jobId).job).toEqual(job);
+
+  const cancelled = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: job.revision,
+    actorId: 'operator_final_result_guard', at: at + 180,
+  });
+  expect(cancelled.state).toBe('NEEDS_REVIEW');
+  const review = db.getJob(f.jobId).job;
+  const conn = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const beforeEvents = conn.prepare(
+    'SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?',
+  ).get(f.jobId)?.n;
+  const beforeEffects = conn.prepare(
+    'SELECT COUNT(*) AS n FROM effects WHERE job_id=?',
+  ).get(f.jobId)?.n;
+  for (const terminal of ['FAILED', 'CANCELLED'] as const) {
+    expect(() => db.transitionJob(f.jobId, terminal, review.revision))
+      .toThrow('independently verified');
+    expect(db.getJob(f.jobId).job).toEqual(review);
+  }
+  expect(conn.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?')
+    .get(f.jobId)?.n).toBe(beforeEvents);
+  expect(conn.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?')
+    .get(f.jobId)?.n).toBe(beforeEffects);
+  expect(db.effectState(publish.effectId)).toBe('CONFIRMED');
+  expect(db.effectState(intent.effectId)).toBe('DEFINITIVELY_REJECTED');
+  expect(db.claimDueJob(f.lease.deviceId, 'no_replay_after_guard', at + 200).status)
+    .toBe('NEEDS_REVIEW');
+  conn.close();
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.getJob(f.jobId).job).toEqual(review);
+});
+
+it('still permits the ordinary failed terminal for a job with no external effect', () => {
+  const f = fixture('device_unattempted_terminal', 'unattempted_terminal');
+  const completed = db.transitionJob(f.jobId, 'FAILED', f.running.revision);
+  expect(completed).toMatchObject({
+    state: 'FAILED', revision: f.running.revision + 1,
+  });
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(sql.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?')
+    .get(f.jobId)?.n).toBe(0);
+  sql.close();
+  expect(db.getJob(f.jobId).job.state).toBe('FAILED');
+});
