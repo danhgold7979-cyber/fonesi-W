@@ -1,0 +1,22 @@
+# Increment084 RESULTS — P11/S102.3 native bounded cleanup-only recheck
+
+Date: 2026-10-30. Repository `danhgold7979-cyber/fonesi-W`, branch `feat/studio-workspace`. Plan-first [`65a7d0e2`](https://github.com/danhgold7979-cyber/fonesi-W/commit/65a7d0e28e9642b22819323106eea4ad5d06a6ed), starting after Increment083/checkpoint-076, SQLite schema22. `main` untouched.
+
+## Actual implementation
+- `packages/contracts/src/schedule.ts`: native-only `NativeStageCleanupRecheckResult` carries safe job/ordinal, attemptOrdinal (1–3), status and timestamp; all delete/mark-clean/retry/dispatch flags false. `NativeStageReviewApi.recordCleanupRecheck` is separate from the public StudioApi.
+- `apps/desktop/src/host/stage-transfer-service.ts`: `recordCleanupRecheck` performs a fresh real read-only ADB Sync STAT and independent MediaStore check by reusing `reviewOwnedCleanupAbsence` and all MANUAL stage/job/device/transport fences. Only after I/O, calls SQLite `stage.cleanupRecheckRecord` under the SAME lease, verifying the immutable audit receipt. No Android delete, File/MediaStore write, PUBLISH/COMMENT or source-file mutation.
+- `apps/desktop/src/host/native-stage-review.ts`: `recordCleanupRecheck(jobId,ordinal)` resolves exact owned stage, checks private journal history and refuses a fourth attempt **before** acquiring a MANUAL lease or contacting Android. Host mints unique request ID and strips stage, request, lease, path, serial and hash from renderer result. SQLite transaction independently enforces max 3 to handle races.
+- `apps/desktop/src/main/index.ts` and `preload.cts`: `studio:stage-cleanup-recheck` strict Electron main-frame/URL sender gate and Zod jobId/0–31 ordinal. No public loopback/HTTP command exposed.
+- `apps/desktop/src/renderer/JobStageReviewDialog.tsx`: a separate explicit native-only `Ghi lần đối soát cleanup (tối đa 3, không xóa)` action and redacted 1/3, 2/3, 3/3 status. Runtime rejects forged receipts, extra path fields or enabled delete/retry rights; never displays a delete button.
+- `tests/stage-transfer-host.test.ts`: real SQLite/fake ADB staged recovery, 3 successful readbacks and durable audits, fourth rejected before native lease/STAT/MediaStore, no upload/delete/post/comment, restart and immutable job/stage/queue/effects; invalid ordinal/host/stale revision/lost lease rejected.
+- `tests/ui/schedule.spec.ts`: browser loopback cannot call native cleanup recheck, injected native fixture displays a bounded non-executable receipt, then rejects forged `canDelete:true` + private DCIM path before rendering.
+
+## Commits / exact CI evidence
+- Plan commit `65a7d0e28e9642b22819323106eea4ad5d06a6ed`.
+- Contract `c5ebbbcf76eea851ab2694076eec960be2af076e`; trusted host `3ecf793b4faa777a04598c892044e0c1c463ff6a`; native bounded operator workflow `ba9b26f06b4bb591cff0e9c5403d5a773e36fcb3`.
+- Strict Electron IPC `6a5952751a08a9201f6a5026fa3a14096ff2e7ec`, native preload `bfe99f10c4e87da731c2101badbbab918d693d48`, renderer `983d2241bfbca1c98b340d5fe2d70bb1fc034e06`.
+- Host regression `9a0371dea24075e6d2cf78d0243ae81717694f65`. Browser regression and **exact tested source SHA** [`9cbfa78a`](https://github.com/danhgold7979-cyber/fonesi-W/commit/9cbfa78afea993f67b69c782f83e4f2cfce29f06).
+- [**Push CI #40921889192**](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40921889192) **SUCCESS Ubuntu+Windows on source SHA**: Ubuntu **611/611 unit/integration (49 files), 31/31 Chromium UI**; Windows **610 PASS + 1 platform-only skip (49 files)**. `pnpm check` generated contracts, typecheck, lint, unit/integration and build passed on both OS; Windows launcher VerifyOnly and both plan validators PASS. Actual GitHub Actions job steps and logs checked. No local phone/Windows10 evidence was produced.
+
+## Acceptance and external limitations
+Status **TESTED_S102_NATIVE_BOUNDED_CLEANUP_RECHECK_NOT_ACCEPTED**. This implements real native host re-read + immutable retry *audit* capped at 3, NOT a safe Android file deletion, provider-certified posting/negative proof or completed cleanup-retry executor. Remote missing+MediaStore NOT_INDEXED remains `ABSENCE_CANDIDATE_UNCERTIFIED`. No terminal job transition, publish/comment replay, PC source delete or fleet claim is authorized. Physical Windows10+Android USB/LAN, real app/provider account/target verification, S102.2 deletion+MediaStore after-delete proof, S102.3 deletion-only retry, S100.3/S101, S103/P12–P14 acceptance gates OPEN/NOT_RUN. Whole-tool percent not auditable from test counts.
