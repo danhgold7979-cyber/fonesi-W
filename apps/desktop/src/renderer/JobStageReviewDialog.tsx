@@ -707,7 +707,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                       </p>
                     )}
                     {nativeEffectReview && report.jobState === 'NEEDS_REVIEW' &&
-                      unresolved && entry.kind !== 'UNKNOWN' && (
+                      unresolved && entry.kind !== 'UNKNOWN' && entry.manualReviewCount < 32 && (
                         <div className="effect-manual-review-form" data-testid="effect-manual-review-form">
                           <p className="muted">
                             Ghi chú này không xác thực bài đăng, không thay đổi trạng thái effect,
