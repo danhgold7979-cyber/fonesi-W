@@ -129,3 +129,109 @@ describe('ADB protocol and command boundaries', () => {
     );
   });
 });
+
+
+describe('S102.2 fenced ADB Sync STAT of canonical owned media is read-only', () => {
+  const owned = {
+    serial: 'USB_FIXTURE',
+    jobId: 'job_owned_stat_fixture',
+    ordinal: 0,
+    nonce: 'a'.repeat(32),
+    extension: '.mp4',
+    expectedBytes: 1234,
+  };
+  it('reads a fragmented regular-file STAT and a canonical missing-file response without deleting', async () => {
+    const f = await fixture();
+    f.state.split = true;
+    let fenced = 0;
+    const adb = new AdbClient(f.port).scoped(async () => { fenced++; });
+    const expectedPath = '/sdcard/Download/AutoReelsStudio/job-' +
+      owned.jobId + '/asset-000-' + owned.nonce + '.mp4';
+    expect(await adb.statOwnedStage(owned)).toEqual({
+      status: 'REMOTE_PRESENT_OBSERVED',
+      remotePath: expectedPath,
+      observedBytes: 1234,
+      matchesExpectedBytes: true,
+      canDelete: false,
+      canMarkClean: false,
+    });
+    expect(fenced).toBeGreaterThanOrEqual(2);
+    expect(f.state.syncPaths).toEqual([expectedPath]);
+    f.state.syncStatMode = 0;
+    f.state.syncStatSize = 0;
+    f.state.syncStatMtime = 0;
+    expect(await adb.statOwnedStage(owned)).toEqual({
+      status: 'REMOTE_ABSENT_OBSERVED',
+      remotePath: expectedPath,
+      observedBytes: null,
+      matchesExpectedBytes: false,
+      canDelete: false,
+      canMarkClean: false,
+    });
+    expect(f.state.syncPaths).toEqual([expectedPath, expectedPath]);
+    expect(f.state.shells).toEqual([]);
+  });
+
+  it('reports mismatched remote length without asserting cleanup or retry', async () => {
+    const f = await fixture();
+    f.state.syncStatSize = 999;
+    const result = await new AdbClient(f.port).scoped(async () => undefined)
+      .statOwnedStage(owned);
+    expect(result).toMatchObject({
+      status: 'REMOTE_PRESENT_OBSERVED', observedBytes: 999,
+      matchesExpectedBytes: false, canDelete: false, canMarkClean: false,
+    });
+  });
+
+  it('rejects unscoped, stale-fenced or malformed owned paths before Sync dispatch', async () => {
+    const f = await fixture();
+    const unscoped = new AdbClient(f.port);
+    await expect(unscoped.statOwnedStage(owned)).rejects
+      .toMatchObject({ code: 'ADB_STAGE_LEASE_REQUIRED' });
+    const stale = new AdbClient(f.port).scoped(async () => {
+      throw new Error('STALE_DEVICE_LEASE_FIXTURE');
+    });
+    await expect(stale.statOwnedStage(owned)).rejects.toThrow('STALE_DEVICE_LEASE_FIXTURE');
+    const client = new AdbClient(f.port).scoped(async () => undefined);
+    for (const malformed of [
+      { ...owned, jobId: '../camera' },
+      { ...owned, nonce: 'not-a-nonce' },
+      { ...owned, extension: '.APK' },
+      { ...owned, extension: '.sh' },
+      { ...owned, ordinal: 32 },
+      { ...owned, ordinal: -1 },
+      { ...owned, expectedBytes: 0 },
+      { ...owned, expectedBytes: Number.NaN },
+      { ...owned, expectedBytes: 512 * 1024 * 1024 + 1 },
+      { ...owned, serial: 'USB_FIXTURE;rm -rf /' },
+    ]) await expect(client.statOwnedStage(malformed)).rejects.toThrow();
+    const abort = new AbortController();
+    abort.abort();
+    await expect(client.statOwnedStage(owned, abort.signal)).rejects
+      .toMatchObject({ code: 'CANCELLED' });
+    expect(f.state.syncPaths).toEqual([]);
+    expect(f.state.shells).toEqual([]);
+  });
+
+  it('never converts malformed STAT, symlink, nonzero missing fields or FAIL into confirmed absence', async () => {
+    const f = await fixture();
+    const client = new AdbClient(f.port).scoped(async () => undefined);
+    f.state.syncStatMode = 0;
+    f.state.syncStatSize = 5;
+    f.state.syncStatMtime = 0;
+    await expect(client.statOwnedStage(owned)).rejects
+      .toMatchObject({ code: 'ADB_OWNED_STAT_PROTOCOL' });
+    f.state.syncStatMode = 0o120777;
+    f.state.syncStatSize = 1234;
+    f.state.syncStatMtime = 1000;
+    await expect(client.statOwnedStage(owned)).rejects
+      .toMatchObject({ code: 'ADB_OWNED_STAT_TYPE' });
+    f.state.syncStatResponse = 'MALFORMED';
+    await expect(client.statOwnedStage(owned)).rejects
+      .toMatchObject({ code: 'ADB_OWNED_STAT_PROTOCOL' });
+    f.state.syncStatResponse = 'FAIL';
+    await expect(client.statOwnedStage(owned)).rejects
+      .toMatchObject({ code: 'ADB_OWNED_STAT_PROTOCOL' });
+    expect(f.state.shells).toEqual([]);
+  });
+});
