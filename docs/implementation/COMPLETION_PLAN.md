@@ -1,5 +1,9 @@
 # Kế hoạch hoàn thiện sau checkpoint 005
 
+## Current implementation not yet verified — Increment081 / P11-S102.2
+
+On `feat/studio-workspace`, Increment081 plan-first [INCREMENT-081_PLAN.md](INCREMENT-081_PLAN.md), latest implemented source `6062541c80ecd1c8d91b470e854b45fa2174a1f3`. Desktop trusted host now re-fences MANUAL ownership, job/stage revision, verified transport generation and canonical media before actual read-only ADB STAT and MediaStore queries. Native stage selection accepts only job/ordinal, no private path/ADB serial/lease from UI. See [INCREMENT-081_RESULTS.md](INCREMENT-081_RESULTS.md) and [PROGRESS.md](PROGRESS.md). **IMPLEMENTED_NOT_YET_TESTED** — no exact-SHA GitHub CI or local test evidence; no deletion or provider certification. The latest formally TESTED checkpoint remains Increment079/checkpoint-072 below.
+
 ## Current implementation not yet verified — Increment080 / P11-S102.2
 
 On `feat/studio-workspace`, Increment080 plan-first [INCREMENT-080_PLAN.md](INCREMENT-080_PLAN.md), source head `8085036ee9ea870d2909bdd3ecbaf1bf258ab20c`: a fenced, read-only ADB Sync STAT of canonical app-owned media, combined with non-certifying MediaStore absence classifier and fake-server regression tests. See [INCREMENT-080_RESULTS.md](INCREMENT-080_RESULTS.md) and [PROGRESS.md](PROGRESS.md). **IMPLEMENTED_NOT_YET_TESTED**: exact-SHA GitHub Actions PR run query returned none at last check; no CI or local execution was inferred. Latest verified TESTED checkpoint remains Increment079/checkpoint-072 below. No deletion, retry, provider attestation, Android hardware proof or phase acceptance.
