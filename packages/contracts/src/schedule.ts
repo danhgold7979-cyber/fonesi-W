@@ -238,10 +238,29 @@ export interface NativeStageCleanupReviewResult {
   canDelete: false;
   canDispatch: false;
 }
+/** Safe native-only, redacted ADB STAT + MediaStore readback, never deletion proof. */
+export interface NativeStageCleanupAbsenceResult {
+  scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED';
+  status: 'BLOCKED' | 'REMOTE_PRESENT_REVIEW' | 'MEDIASTORE_PRESENT_REVIEW' |
+    'UNSUPPORTED_REVIEW' | 'ABSENCE_CANDIDATE_UNCERTIFIED';
+  remote: 'PRESENT' | 'ABSENT' | 'UNKNOWN';
+  mediaStore: 'INDEXED_EXACT' | 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' | 'UNKNOWN';
+  blockers: Array<
+    'OWNED_EXPECTATION_INVALID' | 'REMOTE_STAT_INVALID' | 'REMOTE_BYTES_MISMATCH' |
+    'MEDIASTORE_READBACK_INVALID' | 'REMOTE_STILL_PRESENT' |
+    'MEDIASTORE_STILL_INDEXED' | 'MEDIASTORE_UNSUPPORTED_OR_AMBIGUOUS' |
+    'PROVIDER_AND_CLEANUP_UNCERTIFIED'
+  >;
+  canDelete: false;
+  canMarkClean: false;
+  canRetry: false;
+  canDispatch: false;
+}
 /** Separate Electron-only bridge: never add this to public StudioApi/ApiCommand. */
 export interface NativeStageReviewApi {
   reobserve(jobId: string, ordinal: number): Promise<NativeStageReviewResult>;
   requestCleanupReview(jobId: string, ordinal: number): Promise<NativeStageCleanupReviewResult>;
+  reviewCleanupAbsence(jobId: string, ordinal: number): Promise<NativeStageCleanupAbsenceResult>;
 }
 
 export type QueueClaimResult =
