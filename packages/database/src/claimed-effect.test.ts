@@ -298,14 +298,21 @@ it('does not allow a comment attempt until the previous publish is explicitly ve
     lease: f.lease,
     at: at + 100,
   });
+  const commentSource = {
+    postEffectId: publish.effectId, fieldKey: 'comments', scope: 'row' as const, ordinal: 0,
+  };
+  let commentHashes = {
+    effectKey: contentHash('comment_ordinal_0'),
+    payloadHash: contentHash('comment-payload'),
+  };
   const commentInput = (revision: number) => ({
     jobId: f.jobId,
     expectedJobRevision: revision,
     expectedSnapshotHash: f.snapshotHash,
     nodeId: 'comment',
     kind: 'COMMENT' as const,
-    effectKey: contentHash('comment_ordinal_0'),
-    payloadHash: contentHash('comment-payload'),
+    ...commentHashes,
+    commentSource,
     lease: f.lease,
     at: at + 130,
   });
@@ -320,6 +327,15 @@ it('does not allow a comment attempt until the previous publish is explicitly ve
   sql.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?").run(publish.effectId);
   sql.close();
 
+  const plan = db.frozenCommentListPlan({
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash, postEffectId: publish.effectId,
+    fieldKey: 'comments', scope: 'row',
+  });
+  expect(plan.status).toBe('FROZEN_COMMENTS_PROVIDER_UNVERIFIED');
+  commentHashes = {
+    effectKey: plan.items[0]!.effectKey, payloadHash: plan.items[0]!.payloadHash,
+  };
+  expect(plan.items[1]!.effectKey).not.toBe(commentHashes.effectKey);
   const intent = db.prepareClaimedEffect(commentInput(postedRevision));
   expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
   expect(db.effectState(intent.effectId)).toBe('INTENT');
@@ -826,4 +842,101 @@ it('reads exact frozen comment ordinals only after a persisted confirmed post, n
   expect(dispatchInternal(db, req)).toEqual(plan);
   expect(db.effectState(post.effectId)).toBe('CONFIRMED');
   expect(attempted.state).toBe('ATTEMPT_UNCERTAIN');
+});
+
+it('enforces frozen COMMENT ordinal/key/payload before any durable mutation', () => {
+  const f = fixture('device_1', '1', true);
+  const post = prepare(f);
+  db.beginClaimedEffectAttempt({
+    effectId: post.effectId, expectedJobRevision: post.jobRevision, lease: f.lease, at: at + 100,
+  });
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  sql.prepare("UPDATE jobs SET state='POSTED',revision=revision+1 WHERE id=?").run(f.jobId);
+  sql.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?").run(post.effectId);
+  sql.close();
+  const exact = db.frozenCommentListPlan({
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    postEffectId: post.effectId, fieldKey: 'comments', scope: 'row',
+  });
+  expect(exact.items).toHaveLength(2);
+  expect(exact.items[0]!.utf8Hash).toBe(exact.items[1]!.utf8Hash);
+  expect(exact.items[0]!.effectKey).not.toBe(exact.items[1]!.effectKey);
+  const request = {
+    jobId: f.jobId,
+    expectedJobRevision: db.getJob(f.jobId).job.revision,
+    expectedSnapshotHash: f.snapshotHash,
+    nodeId: 'comment', kind: 'COMMENT' as const,
+    effectKey: exact.items[0]!.effectKey, payloadHash: exact.items[0]!.payloadHash,
+    commentSource: {
+      postEffectId: post.effectId, fieldKey: 'comments', scope: 'row' as const, ordinal: 0,
+    },
+    lease: f.lease, at: at + 130,
+  };
+  const beforeJob = db.getJob(f.jobId).job;
+  const readCounts = () => {
+    const conn = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return [
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM queue_events').get()?.n),
+      ];
+    } finally { conn.close(); }
+  };
+  const beforeCounts = readCounts();
+  const invalid = [
+    { label: 'wrong source ordinal with ordinal-0 key',
+      args: { ...request, commentSource: { ...request.commentSource, ordinal: 1 } } },
+    { label: 'valid-format but wrong effect key',
+      args: { ...request, effectKey: contentHash('unbound_comment_key') } },
+    { label: 'valid-format but wrong payload hash',
+      args: { ...request, payloadHash: contentHash('unbound_comment_payload') } },
+    { label: 'wrong field key',
+      args: { ...request, commentSource: { ...request.commentSource, fieldKey: 'unknown' } } },
+    { label: 'wrong parent publish ID',
+      args: { ...request, commentSource: { ...request.commentSource, postEffectId: 'effect_other' } } },
+    { label: 'wrong source scope',
+      args: { ...request, commentSource: { ...request.commentSource, scope: 'process' as const } } },
+  ];
+  for (const testCase of invalid) {
+    expect(() => db.prepareClaimedEffect(testCase.args), testCase.label).toThrow();
+    expect(db.getJob(f.jobId).job).toEqual(beforeJob);
+    expect(readCounts()).toEqual(beforeCounts);
+  }
+  const { commentSource: _source, ...missing } = request;
+  expect(() => db.prepareClaimedEffect(missing)).toThrow('exact frozen source');
+  expect(() => db.prepareClaimedEffect({
+    ...request, commentSource: { ...request.commentSource, ordinal: 32 },
+  })).toThrow('exact frozen source');
+  expect(() => db.prepareClaimedEffect({
+    ...request, kind: 'PUBLISH', nodeId: 'publish',
+  })).toThrow('exact frozen source');
+  expect(db.getJob(f.jobId).job).toEqual(beforeJob);
+  expect(readCounts()).toEqual(beforeCounts);
+
+  const intent = db.prepareClaimedEffect(request);
+  expect(intent.state).toBe('INTENT');
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+  expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+  expect(() => db.prepareClaimedEffect(request)).toThrow();
+  expect(readCounts()[0]).toBe(beforeCounts[0]! + 1);
+});
+
+it('rejects a host COMMENT without frozen source or a PUBLISH carrying a comment source', async () => {
+  const f = fixture();
+  let sends = 0;
+  const adapter: ClaimedEffectAdapter = { sendOnce: async () => { sends++; return 'ACK'; } };
+  await expect(hostEffect(adapter).attempt({
+    ...claimedInput(f), kind: 'COMMENT', nodeId: 'comment',
+  })).rejects.toMatchObject({ code: 'EFFECT_HOST_INPUT_INVALID' });
+  await expect(hostEffect(adapter).attempt({
+    ...claimedInput(f),
+    commentSource: {
+      postEffectId: 'effect_fake', fieldKey: 'comments', scope: 'row', ordinal: 0,
+    },
+  })).rejects.toMatchObject({ code: 'EFFECT_HOST_INPUT_INVALID' });
+  expect(sends).toBe(0);
+  expect(db.getJob(f.jobId).job.state).toBe('RUNNING');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(Number(sql.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n)).toBe(0);
+  sql.close();
 });

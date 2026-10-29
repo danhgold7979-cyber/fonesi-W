@@ -1,4 +1,4 @@
-import { hashSchema, idSchema } from '@autoreels/contracts';
+import { hashSchema, idSchema, isSafeKey } from '@autoreels/contracts';
 import type { DeviceLease } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
 import type { InternalRequest } from './internal.js';
@@ -27,6 +27,10 @@ export interface ClaimedEffectRequest {
   kind: 'PUBLISH' | 'COMMENT';
   effectKey: string;
   payloadHash: string;
+  /** Private frozen list ordinal. No comment text is accepted from renderer. */
+  commentSource?: {
+    postEffectId: string; fieldKey: string; scope: 'row' | 'process'; ordinal: number;
+  };
   lease: DeviceLease;
 }
 export type ClaimedEffectResult = {
@@ -76,7 +80,17 @@ export class HostClaimedEffectService {
         !Number.isSafeInteger(request.expectedJobRevision) ||
         request.expectedJobRevision < 0 ||
         !['PUBLISH', 'COMMENT'].includes(request.kind) ||
-        request.lease.ownerKind !== 'JOB')
+        request.lease.ownerKind !== 'JOB' ||
+        (request.kind === 'PUBLISH' && request.commentSource !== undefined) ||
+        (request.kind === 'COMMENT' && (
+          !request.commentSource ||
+          !idSchema.safeParse(request.commentSource.postEffectId).success ||
+          !isSafeKey(request.commentSource.fieldKey) ||
+          !['row', 'process'].includes(request.commentSource.scope) ||
+          !Number.isSafeInteger(request.commentSource.ordinal) ||
+          request.commentSource.ordinal < 0 ||
+          request.commentSource.ordinal >= 32
+        )))
       throw new DomainError('EFFECT_HOST_INPUT_INVALID', 'Trusted claimed effect request is invalid.');
 
     const at = this.now();
@@ -91,6 +105,7 @@ export class HostClaimedEffectService {
       kind: request.kind,
       effectKey: request.effectKey,
       payloadHash: request.payloadHash,
+      ...(request.commentSource ? { commentSource: request.commentSource } : {}),
       lease: request.lease,
       at,
     });

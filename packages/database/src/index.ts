@@ -3324,6 +3324,10 @@ export class StudioDatabase {
     kind: 'PUBLISH' | 'COMMENT';
     effectKey: string;
     payloadHash: string;
+    /** Required only for COMMENT: bound to one immutable list item and its parent post. */
+    commentSource?: {
+      postEffectId: string; fieldKey: string; scope: 'row' | 'process'; ordinal: number;
+    };
     lease: DeviceLease;
     at: number;
   }): { effectId: string; jobId: string; jobRevision: number; state: 'INTENT' } {
@@ -3337,6 +3341,15 @@ export class StudioDatabase {
       args.expectedJobRevision < 0 ||
       (args.kind !== 'PUBLISH' && args.kind !== 'COMMENT')
     ) throw new DomainError('INVALID_EFFECT_INTENT', 'Invalid kind or job revision.');
+    const source = args.commentSource;
+    if ((args.kind === 'PUBLISH' && source !== undefined) ||
+        (args.kind === 'COMMENT' && (
+          !source || !idSchema.safeParse(source.postEffectId).success ||
+          !Number.isSafeInteger(source.ordinal) || source.ordinal < 0 || source.ordinal >= 32 ||
+          !['row', 'process'].includes(source.scope)
+        )))
+      throw new DomainError('COMMENT_BINDING_INVALID',
+        'Comment effects require one exact frozen source binding.');
     return this.transaction(() => {
       this.assertEffectClaim(args.jobId, args.lease, args.at);
       const { job, snapshot, snapshotHash } = this.getJob(args.jobId);
@@ -3372,6 +3385,19 @@ export class StudioDatabase {
           "SELECT 1 FROM effects WHERE job_id=? AND kind='PUBLISH' AND state='CONFIRMED' LIMIT 1",
         ).get(job.id)
       ) throw new DomainError('POST_NOT_VERIFIED', 'Comment requires verified publish evidence.');
+      if (args.kind === 'COMMENT') {
+        const source = args.commentSource!;
+        const plan = this.frozenCommentListPlan({
+          jobId: job.id, expectedSnapshotHash: snapshotHash,
+          postEffectId: source.postEffectId, fieldKey: source.fieldKey, scope: source.scope,
+        });
+        const item = plan.items[source.ordinal];
+        if (plan.status !== 'FROZEN_COMMENTS_PROVIDER_UNVERIFIED' ||
+            item?.ordinal !== source.ordinal ||
+            item.effectKey !== args.effectKey || item.payloadHash !== args.payloadHash)
+          throw new DomainError('COMMENT_EFFECT_BINDING_MISMATCH',
+            'Comment effect must match the exact pinned ordinal, key and payload.');
+      }
       assertJobTransition(job.state, toState, false);
       const effectId = makeId('effect');
       this.db.prepare("INSERT INTO effects VALUES(?,?,?,?,?,?,'INTENT',NULL,?)")

@@ -143,6 +143,9 @@ export type InternalRequest =
       kind: 'PUBLISH' | 'COMMENT';
       effectKey: string;
       payloadHash: string;
+      commentSource?: {
+        postEffectId: string; fieldKey: string; scope: 'row' | 'process'; ordinal: number;
+      };
       lease: DeviceLease;
       at: number;
     }
@@ -322,6 +325,7 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
         kind: request.kind,
         effectKey: request.effectKey,
         payloadHash: request.payloadHash,
+        ...(request.commentSource ? { commentSource: request.commentSource } : {}),
         lease: request.lease,
         at: request.at,
       });
