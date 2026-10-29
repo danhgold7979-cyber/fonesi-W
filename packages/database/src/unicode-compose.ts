@@ -27,7 +27,17 @@ const MAX_INPUT_DEFINITIONS = 256;
 const MAX_TEXT_FIELDS = 64;
 const MAX_UTF16_UNITS = 25000;
 const MAX_UTF8_BYTES = 32768;
-const forbiddenControls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u202a-\u202e\u2066-\u2069]/u;
+const bidiControls = /[\u202a-\u202e\u2066-\u2069]/u;
+function hasForbiddenControls(value: string): boolean {
+  if (bidiControls.test(value)) return true;
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if ((code < 0x20 && code !== 0x09 && code !== 0x0a && code !== 0x0d) ||
+        code === 0x7f)
+      return true;
+  }
+  return false;
+}
 
 /** Reject input which TextEncoder would silently replace with U+FFFD. */
 function countScalars(value: string): number | null {
@@ -115,7 +125,7 @@ export function deriveFrozenUnicodeTextPlan(snapshot: JobSnapshot): FrozenUnicod
       else {
         const units = value.length;
         const scalars = countScalars(value);
-        if (scalars === null || forbiddenControls.test(value) || hasBareCarriageReturn(value))
+        if (scalars === null || hasForbiddenControls(value) || hasBareCarriageReturn(value))
           block('UNSAFE_UNICODE');
         const utf8 = Buffer.from(value, 'utf8');
         if (units > MAX_UTF16_UNITS || utf8.byteLength > MAX_UTF8_BYTES)
