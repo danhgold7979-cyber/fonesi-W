@@ -600,13 +600,14 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   });
   expect(before.jobs).toHaveLength(1);
   await page.getByRole('button', { name: 'Hồ sơ đối soát ' + jobId }).click();
-  const dialog = page.getByRole('dialog', { name: 'Hồ sơ đối soát staging (chỉ đọc)' });
+  const dialog = page.getByRole('dialog', { name: 'Hồ sơ đối soát staging' });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('không kiểm tra điện thoại trực tiếp');
   await expect(dialog).toContainText('Có bản ghi byte khớp');
   await expect(dialog).toContainText('chưa xác minh picker');
   await expect(dialog.getByTestId('stage-review-summary')).toHaveCount(1);
   await expect(dialog.getByRole('button', { name: /Kiểm tra lại Android/ })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: /Ghi yêu cầu rà soát cleanup/ })).toHaveCount(0);
   expect(await page.evaluate(() => typeof (window as Window & {
     studioStageReview?: unknown;
   }).studioStageReview)).toBe('undefined');
@@ -621,6 +622,15 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
     },
   });
   expect(((await forbidden.json()) as { ok: boolean }).ok).toBe(false);
+  const forged = await page.request.post(origin + '/api', {
+    headers: { Origin: origin, 'X-Studio-Token': token! },
+    data: {
+      operationId: 'op_untrusted_cleanup_review',
+      command: 'stage.cleanupReviewRecord',
+      input: { jobId, ordinal: 0, confirmed: true },
+    },
+  });
+  expect(((await forged.json()) as { ok: boolean }).ok).toBe(false);
   await expect(dialog.getByTestId('stage-cleanup-review-request')).toHaveCount(1);
   await expect(dialog).toContainText('Đã ghi yêu cầu rà soát, đang chờ kiểm tra phần cứng');
   await expect(dialog).toContainText('không có file nào');

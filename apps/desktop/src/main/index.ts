@@ -185,6 +185,18 @@ else {
         }).parse(raw);
         return nativeStageReview.reobserve(selection.jobId, selection.ordinal);
       });
+      ipcMain.handle('studio:stage-cleanup-review', async (event, raw: unknown) => {
+        if (
+          event.sender !== window?.webContents ||
+          event.senderFrame !== window.webContents.mainFrame ||
+          event.senderFrame.url !== allowedUrl
+        ) throw new Error('Unauthorized sender');
+        const selection = z.strictObject({
+          jobId: idSchema,
+          ordinal: z.number().int().min(0).max(31),
+        }).parse(raw);
+        return nativeStageReview.requestCleanupReview(selection.jobId, selection.ordinal);
+      });
       window.webContents.setWindowOpenHandler(({ url }) => {
         if (url.startsWith('https://')) void shell.openExternal(url);
         return { action: 'deny' };

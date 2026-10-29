@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { idSchema } from '@autoreels/contracts';
 import type {
   DeviceLease, DeviceStageTransfer, JobStageReviewPage, NativeStageReviewResult,
+  NativeStageCleanupReviewResult, OwnedStageCleanupReviewReceipt,
   DeviceStageReconciliation,
 } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
@@ -28,6 +29,13 @@ interface StageReviewCoordinatorPort {
     mediaStoreStatus: DeviceStageReconciliation['mediaStoreStatus'];
     canDispatch: false;
   }>;
+  requestOwnedCleanupReview(request: {
+    requestId: string; stageId: string; expectedJobRevision: number;
+    expectedSnapshotHash: string; lease: DeviceLease;
+  }): Promise<
+    | { cancelled: true; receipt: null }
+    | { cancelled: false; receipt: OwnedStageCleanupReviewReceipt }
+  >;
 }
 
 /**
@@ -43,7 +51,11 @@ export class NativeStageReviewService {
     private readonly hostId: string,
   ) {}
 
-  async reobserve(jobId: string, ordinal: number): Promise<NativeStageReviewResult> {
+  /** Selection is resolved afresh at every native action; never trust a stage ID from UI. */
+  private async selectOwnedStage(jobId: string, ordinal: number): Promise<{
+    summary: JobStageReviewPage;
+    owned: DeviceStageTransfer;
+  }> {
     idSchema.parse(jobId);
     if (!Number.isSafeInteger(ordinal) || ordinal < 0 || ordinal >= 32)
       throw new DomainError('STAGE_REOBSERVE_INVALID', 'Invalid media ordinal.');
@@ -69,6 +81,11 @@ export class NativeStageReviewService {
       throw new DomainError('STAGE_REOBSERVE_OWNER_MISMATCH',
         'The durable stage owner is stale or ambiguous.');
 
+    return { summary, owned };
+  }
+
+  async reobserve(jobId: string, ordinal: number): Promise<NativeStageReviewResult> {
+    const { summary, owned } = await this.selectOwnedStage(jobId, ordinal);
     const receipt = await this.devices.withManualStageReviewLease(owned.deviceId,
       async (lease, transport) => this.stageCoordinator.reconcileStage({
         requestId: 'native_review_' + randomUUID().replaceAll('-', ''),
@@ -87,5 +104,57 @@ export class NativeStageReviewService {
       completedAt: new Date().toISOString(),
       canDelete: false, canDispatch: false,
     };
+  }
+
+  /**
+   * One lease across the fresh readback, native yes/no dialog and transactional
+   * journaling. Even confirmed requests never authorize Android unlink.
+   */
+  async requestCleanupReview(
+    jobId: string, ordinal: number,
+  ): Promise<NativeStageCleanupReviewResult> {
+    const { summary, owned } = await this.selectOwnedStage(jobId, ordinal);
+    return this.devices.withManualStageReviewLease(owned.deviceId,
+      async (lease, transport): Promise<NativeStageCleanupReviewResult> => {
+        const observed = await this.stageCoordinator.reconcileStage({
+          requestId: 'native_cleanup_probe_' + randomUUID().replaceAll('-', ''),
+          jobId, stageId: owned.id, expectedJobRevision: summary.jobRevision,
+          expectedSnapshotHash: owned.snapshotHash, lease,
+          transportSerial: transport.serial, transportGeneration: transport.generation,
+        });
+        if (observed.canDispatch !== false || observed.stageId !== owned.id)
+          throw new DomainError('STAGE_REOBSERVE_RECEIPT_INVALID',
+            'A matching read-only stage observation is required.');
+        if (observed.classification !== 'REMOTE_BYTES_MATCHED' ||
+            observed.mediaStoreStatus !== 'NOT_INDEXED')
+          throw new DomainError('STAGE_CLEANUP_LIVE_EVIDENCE_BLOCKED',
+            'Remote evidence or MediaStore is ambiguous. No cleanup request recorded.');
+        const reviewed = await this.stageCoordinator.requestOwnedCleanupReview({
+          requestId: 'native_cleanup_request_' + randomUUID().replaceAll('-', ''),
+          stageId: owned.id, expectedJobRevision: summary.jobRevision,
+          expectedSnapshotHash: owned.snapshotHash, lease,
+        });
+        if (reviewed.cancelled) return {
+          jobId, ordinal, scope: 'LIVE_ANDROID_REVIEW_REQUEST_ONLY',
+          status: 'CANCELLED', classification: observed.classification,
+          mediaStoreStatus: observed.mediaStoreStatus, recordedAt: null,
+          canDelete: false, canDispatch: false,
+        };
+        if (reviewed.receipt.jobId !== jobId ||
+            reviewed.receipt.ordinal !== ordinal ||
+            reviewed.receipt.canDelete !== false ||
+            reviewed.receipt.canDispatch !== false ||
+            reviewed.receipt.status !== 'REVIEW_REQUESTED_HARDWARE_PENDING')
+          throw new DomainError('STAGE_CLEANUP_REVIEW_RECEIPT_INVALID',
+            'The host returned an invalid non-executable review record.');
+        return {
+          jobId, ordinal, scope: 'LIVE_ANDROID_REVIEW_REQUEST_ONLY',
+          status: 'REVIEW_REQUEST_RECORDED',
+          classification: observed.classification,
+          mediaStoreStatus: observed.mediaStoreStatus,
+          recordedAt: reviewed.receipt.recordedAt,
+          canDelete: false, canDispatch: false,
+        };
+      });
   }
 }

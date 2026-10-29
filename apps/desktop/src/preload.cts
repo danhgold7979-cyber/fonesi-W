@@ -91,5 +91,7 @@ contextBridge.exposeInMainWorld('studioApi', api);
 const stageReview: NativeStageReviewApi = {
   reobserve: (jobId, ordinal) =>
     ipcRenderer.invoke('studio:stage-reobserve', { jobId, ordinal }),
+  requestCleanupReview: (jobId, ordinal) =>
+    ipcRenderer.invoke('studio:stage-cleanup-review', { jobId, ordinal }),
 };
 contextBridge.exposeInMainWorld('studioStageReview', stageReview);

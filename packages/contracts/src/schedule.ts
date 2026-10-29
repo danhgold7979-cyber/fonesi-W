@@ -136,9 +136,22 @@ export interface NativeStageReviewResult {
   canDelete: false;
   canDispatch: false;
 }
+/** A native-confirmed review request, not authorization to delete or publish. */
+export interface NativeStageCleanupReviewResult {
+  jobId: string;
+  ordinal: number;
+  scope: 'LIVE_ANDROID_REVIEW_REQUEST_ONLY';
+  status: 'REVIEW_REQUEST_RECORDED' | 'CANCELLED';
+  classification: import('./media.js').StageReconciliationClassification;
+  mediaStoreStatus: import('./media.js').DeviceStageReconciliation['mediaStoreStatus'];
+  recordedAt: string | null;
+  canDelete: false;
+  canDispatch: false;
+}
 /** Separate Electron-only bridge: never add this to public StudioApi/ApiCommand. */
 export interface NativeStageReviewApi {
   reobserve(jobId: string, ordinal: number): Promise<NativeStageReviewResult>;
+  requestCleanupReview(jobId: string, ordinal: number): Promise<NativeStageCleanupReviewResult>;
 }
 
 export type QueueClaimResult =

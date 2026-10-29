@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { JobStageReviewPage, NativeStageReviewResult } from '@autoreels/contracts';
+import type {
+  JobStageReviewPage, NativeStageReviewResult, NativeStageCleanupReviewResult,
+} from '@autoreels/contracts';
 import { api, nativeStageReview } from './api.js';
 import { Dialog } from './components.js';
 
@@ -33,6 +35,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
   const [reviewBusy, setReviewBusy] = useState(false);
   const [reviewError, setReviewError] = useState('');
   const [lastLive, setLastLive] = useState<NativeStageReviewResult | null>(null);
+  const [cleanupResult, setCleanupResult] = useState<NativeStageCleanupReviewResult | null>(null);
   const generation = useRef(0);
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     const token = generation.current;
     setReviewError('');
     setLastLive(null);
+    setCleanupResult(null);
     setReviewBusy(true);
     try {
       const result = await nativeStageReview.reobserve(jobId, ordinal);
@@ -74,6 +78,33 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     } catch (cause) {
       if (token === generation.current)
         setReviewError(cause instanceof Error ? cause.message : 'Không thể đối soát Android.');
+    } finally {
+      if (token === generation.current) setReviewBusy(false);
+    }
+  }
+
+  async function requestCleanupReview(ordinal: number): Promise<void> {
+    if (!nativeStageReview || reviewBusy || loading || loadingMore) return;
+    const token = generation.current;
+    setReviewError('');
+    setLastLive(null);
+    setCleanupResult(null);
+    setReviewBusy(true);
+    try {
+      const result = await nativeStageReview.requestCleanupReview(jobId, ordinal);
+      if (token !== generation.current) return;
+      if (result.jobId !== jobId || result.ordinal !== ordinal ||
+          result.scope !== 'LIVE_ANDROID_REVIEW_REQUEST_ONLY' ||
+          result.canDelete !== false || result.canDispatch !== false ||
+          !['CANCELLED', 'REVIEW_REQUEST_RECORDED'].includes(result.status) ||
+          (result.status === 'CANCELLED' && result.recordedAt !== null) ||
+          (result.status === 'REVIEW_REQUEST_RECORDED' && !result.recordedAt))
+        throw new Error('Phản hồi ghi yêu cầu đối soát không hợp lệ.');
+      setCleanupResult(result);
+      setReload((value) => value + 1);
+    } catch (cause) {
+      if (token === generation.current)
+        setReviewError(cause instanceof Error ? cause.message : 'Không ghi được yêu cầu rà soát.');
     } finally {
       if (token === generation.current) setReviewBusy(false);
     }
@@ -100,12 +131,12 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
   }
 
   return (
-    <Dialog title="Hồ sơ đối soát staging (chỉ đọc)" close={close}>
+    <Dialog title="Hồ sơ đối soát staging" close={close}>
       <p>Job: <code>{jobId}</code></p>
       <p className="muted">
         Dữ liệu bên dưới là lịch sử SQLite; việc mở hồ sơ không kiểm tra điện thoại trực tiếp.
         {nativeStageReview
-          ? ' Nút kiểm tra Android chỉ thực hiện một lần đọc byte từ xa và truy vấn MediaStore.'
+          ? ' Kiểm tra Android chỉ đọc byte từ xa và MediaStore; ghi yêu cầu rà soát cleanup cần thêm xác nhận native và KHÔNG xóa file.'
           : ' Chỉ ứng dụng Electron mới có thể yêu cầu quan sát Android trực tiếp.'}
         {' '}Không xác nhận tệp đã được chọn trong picker, bài đã đăng hay quyền thực thi.
         Không xóa tệp hoặc tự chạy lại công việc.
@@ -118,7 +149,18 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {reviewError && <p className="error" role="alert">{reviewError}</p>}
-      {reviewBusy && <p role="status">Đang kiểm tra lại byte Android và MediaStore (chỉ đọc)…</p>}
+      {reviewBusy && <p role="status">
+        Đang xác minh Android và, nếu được yêu cầu, mở hộp thoại xác nhận native…
+      </p>}
+      {cleanupResult && (
+        <p role="status" data-testid="stage-cleanup-review-result">
+          Media {cleanupResult.ordinal + 1}:
+          {' '}{cleanupResult.status === 'CANCELLED'
+            ? 'Đã hủy xác nhận; không ghi yêu cầu cleanup.'
+            : 'Đã ghi yêu cầu kiểm tra cleanup vào SQLite.'}
+          {' '}Không xóa file Android và không cho phép đăng bài.
+        </p>
+      )}
       {lastLive && (
         <p role="status" data-testid="stage-live-review-result">
           Media {lastLive.ordinal + 1}: {observationLabels[lastLive.classification]} ·
@@ -155,6 +197,18 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                         onClick={() => void reobserve(stage.ordinal)}
                       >
                         Kiểm tra lại Android (chỉ đọc)
+                      </button>
+                    )}
+                  {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
+                    stage.state === 'SYNC_ACK_UNVERIFIED' &&
+                    stage.remoteBytes === 'MATCH_RECORDED_NOT_LIVE' &&
+                    stage.mediaStore === 'NOT_RECORDED' && (
+                      <button
+                        aria-label={'Ghi yêu cầu rà soát cleanup media ' + (stage.ordinal + 1)}
+                        disabled={reviewBusy || loading || loadingMore}
+                        onClick={() => void requestCleanupReview(stage.ordinal)}
+                      >
+                        Ghi yêu cầu rà soát cleanup (không xóa)
                       </button>
                     )}
                 </li>
