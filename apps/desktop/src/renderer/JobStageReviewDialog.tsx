@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   JobStageReviewPage, NativeStageReviewResult, NativeStageCleanupReviewResult,
-  NativeStageCleanupAbsenceResult,
+  NativeStageCleanupAbsenceResult, NativeStageCleanupRecheckResult,
   MediaOrderBlocker, FrozenUnicodeBlocker, FrozenComposeBlocker,
 } from '@autoreels/contracts';
 import { api, nativeStageReview } from './api.js';
@@ -89,6 +89,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     ordinal: number;
     result: NativeStageCleanupAbsenceResult;
   } | null>(null);
+  const [recheckResult, setRecheckResult] = useState<NativeStageCleanupRecheckResult | null>(null);
   const generation = useRef(0);
 
   useEffect(() => {
@@ -96,6 +97,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     setReport(null);
     setObservations([]);
     setAbsenceResult(null);
+    setRecheckResult(null);
     setError('');
     setLoading(true);
     setLoadingMore(false);
@@ -120,6 +122,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     setLastLive(null);
     setCleanupResult(null);
     setAbsenceResult(null);
+    setRecheckResult(null);
     setReviewBusy(true);
     try {
       const result = await nativeStageReview.reobserve(jobId, ordinal);
@@ -145,6 +148,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     setLastLive(null);
     setCleanupResult(null);
     setAbsenceResult(null);
+    setRecheckResult(null);
     setReviewBusy(true);
     try {
       const result = await nativeStageReview.requestCleanupReview(jobId, ordinal);
@@ -173,6 +177,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     setLastLive(null);
     setCleanupResult(null);
     setAbsenceResult(null);
+    setRecheckResult(null);
     setReviewBusy(true);
     try {
       const result = await nativeStageReview.reviewCleanupAbsence(jobId, ordinal);
@@ -209,6 +214,42 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     } catch (cause) {
       if (token === generation.current)
         setReviewError(cause instanceof Error ? cause.message : 'Không kiểm tra được file staging.');
+    } finally {
+      if (token === generation.current) setReviewBusy(false);
+    }
+  }
+
+  async function recordCleanupRecheck(ordinal: number): Promise<void> {
+    if (!nativeStageReview || reviewBusy || loading || loadingMore) return;
+    const token = generation.current;
+    setReviewError('');
+    setAbsenceResult(null);
+    setLastLive(null);
+    setCleanupResult(null);
+    setRecheckResult(null);
+    setReviewBusy(true);
+    try {
+      const result = await nativeStageReview.recordCleanupRecheck(jobId, ordinal);
+      if (token !== generation.current) return;
+      const statuses = [
+        'BLOCKED', 'REMOTE_PRESENT_REVIEW', 'MEDIASTORE_PRESENT_REVIEW',
+        'UNSUPPORTED_REVIEW', 'ABSENCE_CANDIDATE_UNCERTIFIED',
+      ];
+      if (result.scope !== 'LIVE_ANDROID_CLEANUP_RECHECK_NOT_DELETE_CERTIFIED' ||
+          result.jobId !== jobId || result.ordinal !== ordinal ||
+          !statuses.includes(result.status) ||
+          !Number.isSafeInteger(result.attemptOrdinal) ||
+          result.attemptOrdinal < 1 || result.attemptOrdinal > 3 ||
+          !Number.isFinite(Date.parse(result.recordedAt)) ||
+          result.canDelete !== false || result.canMarkClean !== false ||
+          result.canRetry !== false || result.canDispatch !== false ||
+          Object.keys(result).sort().join(',') !==
+            'attemptOrdinal,canDelete,canDispatch,canMarkClean,canRetry,jobId,ordinal,recordedAt,scope,status')
+        throw new Error('Biên nhận đối soát cleanup chứa quyền nguy hiểm hoặc dữ liệu không hợp lệ.');
+      setRecheckResult(result);
+    } catch (cause) {
+      if (token === generation.current)
+        setReviewError(cause instanceof Error ? cause.message : 'Không thể ghi lần đối soát cleanup.');
     } finally {
       if (token === generation.current) setReviewBusy(false);
     }
@@ -263,6 +304,16 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
             ? 'Đã hủy xác nhận; không ghi yêu cầu cleanup.'
             : 'Đã ghi yêu cầu kiểm tra cleanup vào SQLite.'}
           {' '}Không xóa file Android và không cho phép đăng bài.
+        </p>
+      )}
+      {recheckResult && (
+        <p role="status" data-testid="stage-cleanup-recheck-result">
+          Media {recheckResult.ordinal + 1}:
+          {' '}Đã ghi lần đối soát cleanup số {recheckResult.attemptOrdinal}/3.
+          {' '}{recheckResult.status === 'ABSENCE_CANDIDATE_UNCERTIFIED'
+            ? 'Không tìm thấy file và MediaStore không có hàng trong lần kiểm tra; vẫn chưa xác nhận đã xóa.'
+            : 'Kết quả còn yêu cầu rà soát; chưa xác nhận đã dọn file.'}
+          {' '}Chỉ ghi nhật ký kiểm tra, không xóa file, không đăng lại bài và không tự retry.
         </p>
       )}
       {absenceResult && (
@@ -326,6 +377,16 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                         onClick={() => void reviewCleanupAbsence(stage.ordinal)}
                       >
                         Kiểm tra file staging còn hay mất (chỉ đọc)
+                      </button>
+                    )}
+                  {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
+                    ['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state) && (
+                      <button
+                        aria-label={'Ghi lần đối soát cleanup media ' + (stage.ordinal + 1)}
+                        disabled={reviewBusy || loading || loadingMore}
+                        onClick={() => void recordCleanupRecheck(stage.ordinal)}
+                      >
+                        Ghi lần đối soát cleanup (tối đa 3, không xóa)
                       </button>
                     )}
                   {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
