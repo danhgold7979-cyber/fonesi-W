@@ -4,7 +4,8 @@ import type {
   DeviceLease, DeviceRecord, DeviceStageTransfer, DeviceStageReconciliation, JobMediaPreflightPlan,
   ReviewedStageMediaSnapshot, OwnedStageCleanupAssessment, OwnedStageCleanupReviewReceipt,
 } from '@autoreels/contracts';
-import type { OwnedSyncInput, OwnedSyncAck } from '@autoreels/devices';
+import { assessOwnedCleanupReadback, assertOwnedStageLocation, assertSerial } from '@autoreels/devices';
+import type { OwnedSyncInput, OwnedSyncAck, OwnedRemoteStatReadback, OwnedCleanupReadbackSummary } from '@autoreels/devices';
 import type { HostStageResult } from '@autoreels/media';
 import { DomainError } from '@autoreels/domain';
 import type { InternalRequest } from './internal.js';
@@ -39,6 +40,11 @@ interface SyncSender {
     serial: string; jobId: string; ordinal: number; nonce: string; extension: string;
     expectedHash: string; expectedBytes: number;
   }, signal?: AbortSignal): Promise<{ remotePath: string; hash: string; bytes: number }>;
+  /** Only a trusted, fenced ADB adapter may answer non-destructive Sync STAT. */
+  statOwnedStage?(input: {
+    serial: string; jobId: string; ordinal: number; nonce: string; extension: string;
+    expectedBytes: number;
+  }, signal?: AbortSignal): Promise<OwnedRemoteStatReadback>;
 }
 interface SyncFactory {
   scoped(fence: () => Promise<void>): SyncSender;
@@ -59,6 +65,136 @@ export class HostStageTransferService {
       jobId: string; ordinal: number;
     }) => Promise<boolean>,
   ) {}
+
+  /**
+   * S102.2 trusted MANUAL-only recovery observation across actual ADB Sync
+   * STAT and MediaStore. Does not delete any remote file or prove that a
+   * previous cleanup happened. Every Android I/O boundary is re-fenced.
+   * This method is intentionally not routed through public StudioApi/HTTP.
+   */
+  async reviewOwnedCleanupAbsence(request: {
+    jobId: string;
+    stageId: string;
+    expectedJobRevision: number;
+    expectedSnapshotHash: string;
+    lease: DeviceLease;
+    transportSerial: string;
+    transportGeneration: number;
+  }, signal?: AbortSignal): Promise<OwnedCleanupReadbackSummary> {
+    idSchema.parse(request.jobId);
+    idSchema.parse(request.stageId);
+    hashSchema.parse(request.expectedSnapshotHash);
+    assertSerial(request.transportSerial);
+    if (request.lease.ownerKind !== 'MANUAL' ||
+        !Number.isSafeInteger(request.expectedJobRevision) ||
+        request.expectedJobRevision < 0 ||
+        !Number.isSafeInteger(request.transportGeneration) ||
+        request.transportGeneration < 1 ||
+        signal?.aborted)
+      throw new DomainError('OWNED_CLEANUP_READBACK_INVALID',
+        'A current MANUAL review lease and pinned transport are required.');
+
+    const fence = async (): Promise<void> => {
+      if (signal?.aborted)
+        throw new DomainError('CANCELLED', 'Owned-stage absence readback cancelled.');
+      await this.db.internal({ command: 'lease.assert', lease: request.lease, at: Date.now() });
+      await this.db.internal({
+        command: 'stage.assertReview', stageId: request.stageId, hostId: this.hostId,
+        expectedJobRevision: request.expectedJobRevision,
+        expectedSnapshotHash: request.expectedSnapshotHash,
+        lease: request.lease, at: Date.now(),
+      });
+      await this.db.internal({
+        command: 'device.assertTransport', hostId: this.hostId,
+        deviceId: request.lease.deviceId,
+        serial: request.transportSerial, generation: request.transportGeneration,
+      });
+      const records = await this.db.internal<DeviceRecord[]>({
+        command: 'device.records', hostId: this.hostId,
+      });
+      const device = records.find((item) => item.id === request.lease.deviceId);
+      const matching = device?.transports.filter((item) =>
+        item.serial === request.transportSerial &&
+        item.generation === request.transportGeneration &&
+        item.state === 'CONNECTED' && item.identityVerified) ?? [];
+      const lastSeen = matching.length === 1 ?
+        Date.parse(matching[0]!.lastSeen) : NaN;
+      if (!device?.enabled || device.identity !== 'VERIFIED_PROPERTIES' ||
+          matching.length !== 1 || !Number.isFinite(lastSeen) ||
+          lastSeen > Date.now() || Date.now() - lastSeen > 30000)
+        throw new DomainError('STAGE_TRANSPORT_STALE',
+          'A fresh identity-verified Android transport is required.');
+    };
+
+    // Use actual persisted private stage and frozen media; no caller-supplied
+    // path, nonce, asset/hash or MediaStore row can influence the target.
+    await fence();
+    const stages = await this.db.internal<DeviceStageTransfer[]>({
+      command: 'stage.list', jobId: request.jobId,
+    });
+    const matches = stages.filter((item) => item.id === request.stageId);
+    const stage = matches[0];
+    if (matches.length !== 1 || !stage ||
+        stage.jobId !== request.jobId ||
+        stage.deviceId !== request.lease.deviceId ||
+        stage.hostId !== this.hostId ||
+        !['TRANSFER_UNCERTAIN','SYNC_ACK_UNVERIFIED'].includes(stage.state) ||
+        stage.snapshotHash !== request.expectedSnapshotHash)
+      throw new DomainError('OWNED_CLEANUP_STAGE_STALE',
+        'Exact persisted owner and uncertain stage are required.');
+
+    const frozen = await this.db.internal<ReviewedStageMediaSnapshot>({
+      command: 'stage.reviewSnapshot', stageId: stage.id, hostId: this.hostId,
+      expectedJobRevision: request.expectedJobRevision,
+      expectedSnapshotHash: request.expectedSnapshotHash,
+      lease: request.lease, at: Date.now(),
+    });
+    if (frozen.jobId !== request.jobId ||
+        frozen.ordinal !== stage.ordinal ||
+        frozen.jobRevision !== request.expectedJobRevision ||
+        frozen.snapshotHash !== request.expectedSnapshotHash ||
+        frozen.assetId !== stage.assetId ||
+        frozen.pinnedHash !== stage.expectedHash ||
+        frozen.pinnedBytes !== stage.expectedBytes)
+      throw new DomainError('OWNED_CLEANUP_SNAPSHOT_STALE',
+        'The immutable job media no longer match the stage owner.');
+    const location = assertOwnedStageLocation({
+      jobId: stage.jobId, ordinal: stage.ordinal,
+      nonce: stage.nonce, extension: frozen.extension,
+      remotePath: stage.remotePath,
+    });
+    if (location.remotePath !== stage.remotePath)
+      throw new DomainError('OWNED_CLEANUP_STAGE_STALE',
+        'Only an exact app-owned remote stage can be inspected.');
+
+    const adb = this.adapter().scoped(fence);
+    if (!adb.statOwnedStage || !adb.probeOwnedStageMediaStore)
+      throw new DomainError('OWNED_CLEANUP_READBACK_UNSUPPORTED',
+        'Independent remote and MediaStore readers are required.');
+    const argumentsToAndroid = {
+      serial: request.transportSerial,
+      jobId: stage.jobId,
+      ordinal: stage.ordinal,
+      nonce: stage.nonce,
+      extension: frozen.extension,
+      expectedBytes: stage.expectedBytes,
+    };
+    await fence();
+    const remote = await adb.statOwnedStage(argumentsToAndroid, signal);
+    await fence();
+    const mediaStore = await adb.probeOwnedStageMediaStore(argumentsToAndroid, signal);
+    await fence();
+    const assessment = assessOwnedCleanupReadback({
+      jobId: stage.jobId, ordinal: stage.ordinal, nonce: stage.nonce,
+      extension: frozen.extension, expectedBytes: stage.expectedBytes,
+      remote, mediaStore,
+    });
+    if (assessment.canDelete !== false || assessment.canMarkClean !== false ||
+        assessment.canRetry !== false || assessment.canDispatch !== false)
+      throw new DomainError('OWNED_CLEANUP_READBACK_RECEIPT_INVALID',
+        'A cleanup observation cannot authorize deletion or a retry.');
+    return assessment;
+  }
 
   /** DB-only operator cleanup preflight; no ADB call, delete, upload or permission grant. */
   async inspectOwnedCleanupReadiness(request: {
