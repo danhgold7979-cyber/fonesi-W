@@ -206,6 +206,15 @@ export interface JobStageReviewPage {
     status: 'REVIEW_REQUESTED_HARDWARE_PENDING';
   }[];
   cleanupHasMore: boolean;
+  /** At most 32 owned stages × 3 immutable, non-executable rechecks. */
+  cleanupRechecks: {
+    stageOrdinal: number;
+    attemptOrdinal: number;
+    status: NativeStageCleanupAbsenceResult['status'];
+    remote: NativeStageCleanupAbsenceResult['remote'];
+    mediaStore: NativeStageCleanupAbsenceResult['mediaStore'];
+    recordedAt: string;
+  }[];
   /** Frozen asset order reconciled with owned stage and indexed-row journals. */
   mediaOrder: PersistedOrderedMediaReport;
   frozenUnicode: FrozenUnicodePreflight;
