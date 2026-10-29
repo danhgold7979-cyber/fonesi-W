@@ -1000,6 +1000,84 @@ function confirmedCommentHostFixture(ordinal = 0) {
   return { f, publish, source, item, input };
 }
 
+it('inventories all frozen comment ordinals from SQLite before and after restart without retry rights', async () => {
+  const { f, publish, input } = confirmedCommentHostFixture(0);
+  // The fixture parent post is DB-CONFIRMED only, never actual provider evidence.
+  const req = {
+    command: 'comment.reviewList' as const,
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    postEffectId: publish.effectId, fieldKey: 'comments', scope: 'row' as const,
+  };
+  const counts = () => {
+    const conn = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return [
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM queue_events').get()?.n),
+      ];
+    } finally { conn.close(); }
+  };
+  const review = () => dispatchInternal(db, req) as
+    ReturnType<StudioDatabase['reviewPersistedCommentListProgress']>;
+  const expectReadOnly = (expected: string, total: number) => {
+    const before = counts();
+    const result = review();
+    expect(result).toMatchObject({
+      scope: 'PRIVATE_COMMENT_JOURNAL_NOT_PROVIDER_CERTIFIED',
+      status: 'READ_ONLY_UNCERTIFIED', journalCount: total,
+      items: [
+        { ordinal: 0, journal: expected },
+        { ordinal: 1, journal: 'NO_JOURNAL_UNVERIFIED' },
+      ],
+      canRetry: false, canConfirm: false, canDispatch: false,
+    });
+    expect(JSON.stringify(result)).not.toContain(input.effectKey);
+    expect(counts()).toEqual(before);
+    return result;
+  };
+
+  expectReadOnly('NO_JOURNAL_UNVERIFIED', 0);
+  const intent = db.prepareClaimedEffect({ ...input, at: at + 125 });
+  expectReadOnly('INTENT_JOURNALED', 1);
+  db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 140,
+  });
+  const uncertain = expectReadOnly('ATTEMPT_UNCERTAIN', 1);
+  await expect(dispatch(db, {
+    operationId: 'op_forged_list_review',
+    command: 'comment.reviewList' as never,
+    input: req,
+  })).rejects.toThrow();
+
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(review()).toEqual(uncertain);
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(review()).toEqual(uncertain);
+
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  try {
+    sql.prepare('UPDATE effects SET payload_hash=? WHERE id=?')
+      .run(contentHash('forged_comment_journal_payload'), intent.effectId);
+  } finally { sql.close(); }
+  const beforeBlocked = counts();
+  expect(review()).toMatchObject({
+    status: 'BLOCKED', items: [],
+    blockers: ['JOURNAL_BINDING_MISMATCH'], canRetry: false,
+  });
+  expect(counts()).toEqual(beforeBlocked);
+
+  const fix = new DatabaseSync(join(dir, 'studio.sqlite'));
+  try {
+    fix.prepare("UPDATE effects SET payload_hash=?,state='CONFIRMED' WHERE id=?")
+      .run(input.payloadHash, intent.effectId);
+  } finally { fix.close(); }
+  // Synthetic DB state must never be presented as a certified provider comment.
+  expectReadOnly('CONFIRMED_DB_ONLY', 1);
+});
+
 it('compares private synthetic comment readback after restart, never writes effect or authorizes resend', async () => {
   const { f, publish, input } = confirmedCommentHostFixture(0);
   // The parent PUBLISH CONFIRMED here is a deliberately synthetic DB-only
