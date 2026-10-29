@@ -1,0 +1,28 @@
+# Increment054 — P11/S095.3 native-confirmed durable cleanup review request (NO Android deletion)
+
+Date: 2026-10-29.
+Repository: `danhgold7979-cyber/fonesi-W` · branch: `feat/studio-workspace`.
+Plan-first baseline: `72bc44fd14b8949578f508cdd42f7ff2abc053e6` — Increment053 tested/source + checkpoint-046.
+Source-of-truth scope: V2.1 S095.2–S095.3; **no hardware/AT-095 acceptance**.
+
+## Goal and prerequisite
+Increment053 can reject unsafe cleanup candidates, but cannot preserve an *explicit operator request* as an immutable, crash-safe audit event. This slice closes that hole without acting on Android. Implement a private, native-dialog-confirmed, append-only operator request journal. It must never become a runnable cleanup queue or deletion token. An operator can decline without a write; an accepted review request is recorded only after revalidating exactly current stage/lease/observation.
+
+## Source and implementation plan
+1. `packages/database/src/schema.ts`: append-only v20 migration (never edit v1–v19), `device_stage_cleanup_reviews` with immutable request ID, stage/job/device/host identity, frozen snapshot SHA, expected job revision, historical JOB claim generation, current MANUAL lease generation, exact latest reconciliation ID, creation timestamp and constant state `REVIEW_REQUESTED_HARDWARE_PENDING`. Enforce UNIQUE(stage_id,manual_generation,reconciliation_id), indexed lookup, deny DB UPDATE/DELETE with triggers. No remote path/nonce/raw serial/account data duplicated in this journal.
+2. `packages/contracts/src/media.ts`: private `OwnedStageCleanupReviewReceipt` limited to requestId, jobId, ordinal, recordedAt, constant state, `canDelete:false`, `canDispatch:false`. Nothing that looks like a transferable execution credential.
+3. `packages/database/src/index.ts`: `recordOwnedStageCleanupReviewRequest` in one immediate transaction after `assessOwnedStageCleanup`: require explicit `confirmed:true` from private host, live MANUAL lease, `NEEDS_REVIEW`, correct host/device/current revision/frozen snapshot/owned target, latest reconciliation exact same generation/hash/bytes + NOT_INDEXED and <=30s, no external effects or ever-indexed MediaStore. Capture exact latest audit row ID. Existing request ID only replays if all identity/observation fields match and lease is still current; changed evidence/lease/requestId is a conflict, never a new approval. Repeated unique stage+lease+observation with another requestId rejected; no partial writes. `listOwnedStageCleanupReviewRequests(jobId)` returns bounded historical status only, no automatic recovery side effects. Every receipt has `canDelete:false`.
+4. `apps/desktop/src/host/internal.ts`: private DB worker commands `stage.cleanupReviewRecord`, `stage.cleanupReviewHistory`. Never register them in public `StudioApi`, HTTP or preload.
+5. `apps/desktop/src/host/stage-transfer-service.ts`: trusted private `requestOwnedCleanupReview` method; fail closed without native-confirm callback, require validated MANUAL review lease, call preflight before prompting, present bounded redacted job/ordinal to callback, then **revalidate in SQLite transaction** on commit; cancelled confirmation returns `null` with no new journal event. Reject abort before/after dialog. No ADB/shell/MediaStore operations.
+6. `apps/desktop/src/main/index.ts`: supply native Electron `dialog.showMessageBox` callback only in desktop main; explicit cancel/default option; explanatory text says recording a request will **not delete** the Android file or authorize publish. Loopback host has no such callback and remains unable to request.
+7. Tests `packages/database/src/device-stage.test.ts`, `tests/stage-transfer-host.test.ts`, `packages/database/src/database.test.ts`, `packages/database/src/content-page-upgrade.test.ts`: persistence across close/reopen and v19→v20 migration; successful exact receipt; same-ID idempotency; different-ID duplicate rejection; wrong device/host/revision/historical generation/nonce/path/lease; stale observation, expired/cancelled lease, indexed or external-effect presence; cancellation and absence of native callback; native confirmation challenge + post-dialog TOCTOU; absolutely no ADB delete/send/claim or changes to stage/job; public API cannot forge journal operation.
+8. Exact-source GitHub CI: `pnpm check` generated/type/lint/build/unit, Ubuntu Chromium, Windows VerifyOnly, both plan validators. Fix any CI failure. Then write `INCREMENT-054_RESULTS.md`, checkpoint-047, PROGRESS with exact SHA/OS evidence; commit/push and verify.
+
+## State machine and failure behavior
+- `NOT_REQUESTED` → (fresh preflight AND explicit native yes) → durable `REVIEW_REQUESTED_HARDWARE_PENDING`; no other state transitions in this increment.
+- Native cancel/unsupported, stale MANUAL lease/observation, changed stage/claim/job/path, effects, indexed media or duplicate request **must not create a row**.
+- Crash/restart: immutable history remains; **no worker drains it**, no job claim and no Android cleanup. Review requests are historical only; a new current MANUAL lease/re-observation is required for any future effect.
+- `REVIEW_REQUESTED_HARDWARE_PENDING` is not a cleanup authorization. `canDelete:false` and `canDispatch:false` always.
+
+## Acceptance boundary
+Strongest status with exact Ubuntu/Windows CI is `TESTED_DURABLE_NATIVE_REVIEW_REQUEST_NOT_S095_ACCEPTED`. Remaining open: operator-triggered physical-device re-observation UI; non-root Android remote delete protocol + exact-row/lease/fence checks; negative proof of selection/publish; hardware USB/LAN; 20→100→300 scale; P12 providers, P13 operations and P14 release. Never call fixture tests physical acceptance.
