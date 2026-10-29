@@ -712,7 +712,8 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                           <p className="muted">
                             Ghi chú này không xác thực bài đăng, không thay đổi trạng thái effect,
                             không cấp quyền retry/dispatch và không xóa uncertainty.
-                            Actor ID do người vận hành tự khai báo, chưa được xác thực.
+                            Actor ID và ID tham chiếu chứng cứ do người vận hành tự khai báo;
+                            danh tính và nội dung chứng cứ không được xác thực bởi ghi chú này.
                           </p>
                           <label>
                             Actor ID tự khai báo
@@ -755,7 +756,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                             </select>
                           </label>
                           <label>
-                            ID chứng cứ đã lưu (tối đa 8, phân tách bằng dấu phẩy)
+                            ID tham chiếu chứng cứ tự khai báo (tối đa 8, phân tách bằng dấu phẩy)
                             <input
                               aria-label={'ID chứng cứ effect ' + (entry.ordinal + 1)}
                               value={draft.evidenceRefsText}
