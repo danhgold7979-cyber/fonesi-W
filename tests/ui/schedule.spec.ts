@@ -640,6 +640,8 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog.getByRole('button', { name: /Kiểm tra lại Android/ })).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: /Kiểm tra file staging còn hay mất/ }))
     .toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: /Ghi lần đối soát cleanup/ }))
+    .toHaveCount(0);
   await expect(dialog.getByRole('button', { name: /Ghi yêu cầu rà soát cleanup/ })).toHaveCount(0);
   expect(await page.evaluate(() => typeof (window as Window & {
     studioStageReview?: unknown;
@@ -673,6 +675,15 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
     },
   });
   expect(((await forgedAbsence.json()) as { ok: boolean }).ok).toBe(false);
+  const forgedRecheck = await page.request.post(origin + '/api', {
+    headers: { Origin: origin, 'X-Studio-Token': token! },
+    data: {
+      operationId: 'op_untrusted_cleanup_recheck',
+      command: 'stage.cleanupRecheckRecord',
+      input: { jobId, ordinal: 0, canDelete: true },
+    },
+  });
+  expect(((await forgedRecheck.json()) as { ok: boolean }).ok).toBe(false);
   await expect(dialog.getByTestId('stage-cleanup-review-request')).toHaveCount(1);
   await expect(dialog).toContainText('Đã ghi yêu cầu rà soát, đang chờ kiểm tra phần cứng');
   await expect(dialog).toContainText('không có file nào');
@@ -723,6 +734,13 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
           blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
           canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
         }),
+        recordCleanupRecheck: async (jobId: string, ordinal: number) => ({
+          jobId, ordinal,
+          scope: 'LIVE_ANDROID_CLEANUP_RECHECK_NOT_DELETE_CERTIFIED',
+          status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+          attemptOrdinal: 1, recordedAt: '2026-10-29T17:00:00.000Z',
+          canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+        }),
       },
     });
   });
@@ -771,5 +789,39 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
     .toContainText('Bằng chứng kiểm tra file staging không hợp lệ');
   await expect(nativeDialog.getByTestId('stage-cleanup-absence-result')).toHaveCount(0);
   await expect(nativeDialog).not.toContainText('/sdcard/DCIM/Camera/private.mp4');
+
+  const recheckButton = nativeDialog.getByRole('button', {
+    name: 'Ghi lần đối soát cleanup media 1',
+  });
+  await expect(recheckButton).toBeVisible();
+  await recheckButton.click();
+  await expect(nativeDialog.getByTestId('stage-cleanup-recheck-result'))
+    .toContainText('Đã ghi lần đối soát cleanup số 1/3');
+  await expect(nativeDialog.getByTestId('stage-cleanup-recheck-result'))
+    .toContainText('không xóa file');
+  await expect(nativeDialog.getByRole('button', { name: /Xóa file|Đăng lại bài/ }))
+    .toHaveCount(0);
+
+  // An attempted native forgery cannot grant delete/repost or leak a remote
+  // path, and the earlier success receipt must be cleared before rejection.
+  await page.evaluate(() => {
+    const w = window as unknown as {
+      studioStageReview?: { recordCleanupRecheck: () => Promise<unknown> };
+    };
+    if (!w.studioStageReview) throw new Error('Missing simulated native review');
+    w.studioStageReview.recordCleanupRecheck = async () => ({
+      jobId: 'job_stage_review_ui', ordinal: 0,
+      scope: 'LIVE_ANDROID_CLEANUP_RECHECK_NOT_DELETE_CERTIFIED',
+      status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+      attemptOrdinal: 1, recordedAt: '2026-10-29T17:00:00.000Z',
+      canDelete: true, canMarkClean: false, canRetry: false, canDispatch: false,
+      remotePath: '/sdcard/DCIM/Camera/secret.mp4',
+    });
+  });
+  await recheckButton.click();
+  await expect(nativeDialog.getByRole('alert'))
+    .toContainText('Biên nhận đối soát cleanup chứa quyền nguy hiểm');
+  await expect(nativeDialog.getByTestId('stage-cleanup-recheck-result')).toHaveCount(0);
+  await expect(nativeDialog).not.toContainText('/sdcard/DCIM/Camera/secret.mp4');
 });
 
