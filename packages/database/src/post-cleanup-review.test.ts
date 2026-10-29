@@ -104,13 +104,13 @@ describe('S102.1 job-wide post cleanup ledger is never Android-delete authorizat
   it('rejects duplicate/extra stage or duplicate frozen asset descriptors', () => {
     const f = fixture(); f.stages.push({ ...f.stages[0]!, id: 'stage_copy' });
     expect(assess(f)).toMatchObject({
-      ...noRights, ledger: 'INCOMPLETE', blockers: ['LEDGER_SET_INVALID'],
+      ...noRights, ledger: 'INCOMPLETE', blockers: ['LEDGER_SET_INVALID', 'PROVIDER_CERTIFICATION_UNAVAILABLE'],
     });
     const bad = fixture();
     bad.snapshot.assets!.push({ ...bad.snapshot.assets![0]! });
     bad.snapshotHash = contentHash(bad.snapshot);
     expect(assess(bad)).toMatchObject({
-      ...noRights, ledger: 'INVALID', blockers: ['FROZEN_SNAPSHOT_INVALID'],
+      ...noRights, ledger: 'INVALID', blockers: ['FROZEN_SNAPSHOT_INVALID', 'PROVIDER_CERTIFICATION_UNAVAILABLE'],
     });
   });
 
@@ -129,7 +129,7 @@ describe('S102.1 job-wide post cleanup ledger is never Android-delete authorizat
       const f = fixture(); mutate(f);
       expect(assess(f)).toMatchObject({
         ...noRights, ledger: 'INVALID',
-        blockers: ['LEDGER_BINDING_MISMATCH'],
+        blockers: ['LEDGER_BINDING_MISMATCH', 'PROVIDER_CERTIFICATION_UNAVAILABLE'],
       });
     }
   });
@@ -199,7 +199,7 @@ describe('S102.1 job-wide post cleanup ledger is never Android-delete authorizat
     const corrupt = fixture();
     corrupt.snapshotHash = contentHash('invalid_frozen_snapshot');
     expect(assess(corrupt)).toMatchObject({
-      ...noRights, ledger: 'INVALID', blockers: ['FROZEN_SNAPSHOT_INVALID'],
+      ...noRights, ledger: 'INVALID', blockers: ['FROZEN_SNAPSHOT_INVALID', 'PROVIDER_CERTIFICATION_UNAVAILABLE'],
     });
   });
 });
