@@ -64,7 +64,9 @@ describe('host device integration', () => {
       });
     expect(output).toEqual({ seen: true });
     expect((await device()).owner).toBeNull();
-    expect(f.state.shells).toEqual(priorShells);
+    // A fresh scan legitimately re-reads Android getprop, but never sends
+    // touch, delete, reboot or other mutation from a stage-review lease.
+    expect(f.state.shells.slice(priorShells.length)).toEqual(["'getprop'"]);
     expect(f.state.requests.filter((r) => r.startsWith('shell,v2,raw:') &&
       /input|rm|reboot/.test(r))).toHaveLength(0);
   });
