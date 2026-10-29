@@ -136,6 +136,31 @@ describe('S096.2 exact frozen Unicode value plan (never a verified typing method
       blocker: 'URL_UNSAFE',
     },
     {
+      label: 'URL contains an embedded tab ignored by the URL parser',
+      edit: (s) => { s.processFields!.pageUrl = 'https://example.com/a\tb'; },
+      blocker: 'URL_UNSAFE',
+    },
+    {
+      label: 'URL contains an embedded LF ignored by the URL parser',
+      edit: (s) => { s.processFields!.pageUrl = 'https://example.com/a\nb'; },
+      blocker: 'URL_UNSAFE',
+    },
+    {
+      label: 'URL contains an embedded CRLF ignored by the URL parser',
+      edit: (s) => { s.processFields!.pageUrl = 'https://example.com/a\r\nb'; },
+      blocker: 'URL_UNSAFE',
+    },
+    {
+      label: 'URL has leading whitespace that would be trimmed by the parser',
+      edit: (s) => { s.processFields!.pageUrl = ' https://example.com/path'; },
+      blocker: 'URL_UNSAFE',
+    },
+    {
+      label: 'URL has trailing whitespace that would be trimmed by the parser',
+      edit: (s) => { s.processFields!.pageUrl = 'https://example.com/path '; },
+      blocker: 'URL_UNSAFE',
+    },
+    {
       label: 'duplicate declared row field',
       edit: (s) => { s.bundle.inputs.push({ ...s.bundle.inputs[0]! }); },
       blocker: 'DECLARATION_INVALID',

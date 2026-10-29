@@ -62,6 +62,19 @@ function hasBareCarriageReturn(value: string): boolean {
 }
 
 /**
+ * WHATWG URL parsing discards ASCII tabs/line breaks and trims leading/trailing
+ * whitespace. Detect these bytes without changing the frozen URL value.
+ */
+function hasParserIgnoredUrlWhitespace(value: string): boolean {
+  if (value.trim() !== value) return true;
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code >= 0x09 && code <= 0x0d) return true;
+  }
+  return false;
+}
+
+/**
  * S096.2: typed immutable data preparation, NOT a Unicode input capability.
  * Values and UTF-8 digests stay in the private plan. Public report contains
  * only declared field ordinals, scope/kind, and finite blocker codes.
@@ -133,6 +146,8 @@ export function deriveFrozenUnicodeTextPlan(snapshot: JobSnapshot): FrozenUnicod
         if (def.required && value.length === 0)
           block('REQUIRED_VALUE_MISSING');
         if (kind === 'URL') {
+          // Do not let URL parsing silently reinterpret the exact frozen bytes.
+          if (hasParserIgnoredUrlWhitespace(value)) block('URL_UNSAFE');
           try {
             const url = new URL(value);
             if (!['https:', 'http:'].includes(url.protocol) ||
