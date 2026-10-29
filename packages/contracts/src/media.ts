@@ -155,6 +155,16 @@ export interface OwnedStageCleanupAssessment {
   canDelete: false;
   canDispatch: false;
 }
+/** Historical, non-executable operator request. No deletion capability. */
+export interface OwnedStageCleanupReviewReceipt {
+  requestId: string;
+  jobId: string;
+  ordinal: number;
+  recordedAt: string;
+  status: 'REVIEW_REQUESTED_HARDWARE_PENDING';
+  canDelete: false;
+  canDispatch: false;
+}
 /** Private DB/host remote staging journal; not a posting or MediaStore receipt. */
 export interface DeviceStageTransfer {
   id: string;

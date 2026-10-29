@@ -2,7 +2,7 @@ import { extname, join, resolve } from 'node:path';
 import { idSchema, hashSchema } from '@autoreels/contracts';
 import type {
   DeviceLease, DeviceRecord, DeviceStageTransfer, DeviceStageReconciliation, JobMediaPreflightPlan,
-  ReviewedStageMediaSnapshot, OwnedStageCleanupAssessment,
+  ReviewedStageMediaSnapshot, OwnedStageCleanupAssessment, OwnedStageCleanupReviewReceipt,
 } from '@autoreels/contracts';
 import type { OwnedSyncInput, OwnedSyncAck } from '@autoreels/devices';
 import type { HostStageResult } from '@autoreels/media';
@@ -54,6 +54,10 @@ export class HostStageTransferService {
     private readonly hostId: string,
     private readonly appDataDirectory: string,
     private readonly adapter: () => SyncFactory,
+    /** Available only from trusted native Electron main, never loopback HTTP. */
+    private readonly confirmCleanupReview?: (summary: {
+      jobId: string; ordinal: number;
+    }) => Promise<boolean>,
   ) {}
 
   /** DB-only operator cleanup preflight; no ADB call, delete, upload or permission grant. */
@@ -74,6 +78,44 @@ export class HostStageTransferService {
       expectedSnapshotHash: request.expectedSnapshotHash,
       lease: request.lease, at: Date.now(),
     });
+  }
+
+  /**
+   * Explicit native operator request: persist only after a fresh, transactionally
+   * fenced cleanup preflight. Never performs Android I/O or deletion.
+   */
+  async requestOwnedCleanupReview(request: {
+    requestId: string; stageId: string; expectedJobRevision: number;
+    expectedSnapshotHash: string; lease: DeviceLease;
+  }, signal?: AbortSignal): Promise<
+    | { cancelled: true; receipt: null }
+    | { cancelled: false; receipt: OwnedStageCleanupReviewReceipt }
+  > {
+    idSchema.parse(request.requestId);
+    if (!this.confirmCleanupReview)
+      throw new DomainError('NATIVE_DIALOG_REQUIRED',
+        'A native operator confirmation is required.');
+    const preflight = await this.inspectOwnedCleanupReadiness(request, signal);
+    if (preflight.status !== 'PREREQUISITES_MET')
+      throw new DomainError('CLEANUP_REVIEW_NOT_ELIGIBLE',
+        'Durable evidence is not ready for operator review.');
+    if (signal?.aborted) throw new DomainError('CANCELLED', 'Review request cancelled.');
+    if (!(await this.confirmCleanupReview({
+      jobId: preflight.jobId, ordinal: preflight.ordinal,
+    }))) return { cancelled: true, receipt: null };
+    if (signal?.aborted) throw new DomainError('CANCELLED', 'Review request cancelled.');
+    const receipt = await this.db.internal<OwnedStageCleanupReviewReceipt>({
+      command: 'stage.cleanupReviewRecord', requestId: request.requestId,
+      stageId: request.stageId, hostId: this.hostId,
+      expectedJobRevision: request.expectedJobRevision,
+      expectedSnapshotHash: request.expectedSnapshotHash,
+      lease: request.lease, confirmed: true, at: Date.now(),
+    });
+    if (receipt.canDelete !== false || receipt.canDispatch !== false ||
+        receipt.status !== 'REVIEW_REQUESTED_HARDWARE_PENDING')
+      throw new DomainError('CLEANUP_REVIEW_RECEIPT_INVALID',
+        'A review receipt must never authorize a device action.');
+    return { cancelled: false, receipt };
   }
 
   /**

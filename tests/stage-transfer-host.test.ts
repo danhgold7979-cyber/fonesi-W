@@ -104,6 +104,7 @@ async function fixture() {
 type Fixture = Awaited<ReturnType<typeof fixture>>;
 function coordinator(
   outcome: 'OK' | 'FAIL' | 'WRONG_ACK' | 'WRONG_READBACK' | 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' = 'OK',
+  confirmReview?: (summary: { jobId: string; ordinal: number }) => Promise<boolean>,
 ) {
   return new HostStageTransferService({
     internal: async <T>(request: InternalRequest) => {
@@ -159,7 +160,7 @@ function coordinator(
         };
       },
     }),
-  }));
+  }), confirmReview);
 }
 
 it('orders host stage → SQLite intent → uncertainty → ADB → ACK without publish', async () => {
@@ -514,6 +515,116 @@ it('performs cleanup eligibility as a private DB-only fenced dry run with no new
   expect(events).not.toContain('fake.adb.send');
   expect(events).not.toContain('fake.adb.readback');
   expect(events).not.toContain('fake.adb.mediastore');
+});
+
+
+async function cleanupReviewFixture() {
+  const f = await fixture();
+  const uploaded = await coordinator().transfer(f);
+  await coordinator().verifyRemoteBytes({
+    jobId, stageId: uploaded.stageId, expectedJobRevision: f.expectedJobRevision,
+    expectedSnapshotHash: f.expectedSnapshotHash, lease: f.lease,
+    transportSerial: f.transportSerial, transportGeneration: f.transportGeneration,
+  });
+  sql((conn) => {
+    conn.prepare('UPDATE leases SET expires_at=? WHERE device_id=?').run(f.at - 1, deviceId);
+    conn.prepare('UPDATE job_claims SET expires_at=? WHERE job_id=?').run(f.at - 1, jobId);
+  });
+  db.recoverExpiredClaims(deviceId, Date.now());
+  const manual = db.acquireLease(
+    deviceId, 'operator_cleanup_native', 'MANUAL', Date.now(), 240000,
+  );
+  const jobBefore = db.getJob(jobId).job;
+  await coordinator('NOT_INDEXED').reconcileStage({
+    requestId: 'cleanup_native_preflight_observation',
+    jobId, stageId: uploaded.stageId,
+    expectedJobRevision: jobBefore.revision,
+    expectedSnapshotHash: f.expectedSnapshotHash,
+    lease: manual, transportSerial: f.transportSerial,
+    transportGeneration: f.transportGeneration,
+  });
+  return {
+    requestId: 'cleanup_native_operator_request',
+    stageId: uploaded.stageId, lease: manual,
+    expectedJobRevision: jobBefore.revision,
+    expectedSnapshotHash: f.expectedSnapshotHash,
+    jobBefore, stageBefore: db.listDeviceStageTransfers(jobId)[0]!,
+  };
+}
+
+it('native confirmation records a durable non-executable cleanup review and survives SQLite reopen', async () => {
+  const ready = await cleanupReviewFixture();
+  const confirmSeen: string[] = [];
+  const native = coordinator('OK', async ({ jobId: confirmedJob, ordinal }) => {
+    confirmSeen.push(confirmedJob + ':' + ordinal);
+    events.push('native.cleanup.review');
+    return true;
+  });
+  events.length = 0;
+  const accepted = await native.requestOwnedCleanupReview(ready);
+  expect(accepted.cancelled).toBe(false);
+  if (accepted.cancelled) throw new Error('Expected a native review receipt');
+  expect(accepted.receipt).toMatchObject({
+    requestId: ready.requestId, jobId, ordinal: 0,
+    status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
+    canDelete: false, canDispatch: false,
+  });
+  expect(confirmSeen).toEqual([jobId + ':0']);
+  expect(events).toEqual([
+    'stage.cleanupReadiness', 'native.cleanup.review', 'stage.cleanupReviewRecord',
+  ]);
+  expect(db.getJob(jobId).job).toEqual(ready.jobBefore);
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(ready.stageBefore);
+  db.close();
+  db = new StudioDatabase(filepath());
+  expect(db.listOwnedStageCleanupReviewRequests(jobId)).toEqual([accepted.receipt]);
+  expect(db.claimDueJob(deviceId, 'no_dispatch_worker', Date.now()).status)
+    .toBe('NEEDS_REVIEW');
+  expect(events).not.toContain('fake.adb.send');
+  expect(events).not.toContain('fake.adb.readback');
+  expect(events).not.toContain('fake.adb.mediastore');
+});
+
+it('requires native confirmation: cancellation and missing native host produce no journal write', async () => {
+  const ready = await cleanupReviewFixture();
+  await expect(coordinator().requestOwnedCleanupReview(ready))
+    .rejects.toMatchObject({ code: 'NATIVE_DIALOG_REQUIRED' });
+  expect(db.listOwnedStageCleanupReviewRequests(jobId)).toHaveLength(0);
+  const cancelled = await coordinator('OK', async () => false).requestOwnedCleanupReview(ready);
+  expect(cancelled).toEqual({ cancelled: true, receipt: null });
+  expect(db.listOwnedStageCleanupReviewRequests(jobId)).toHaveLength(0);
+  await expect(dispatch(db, {
+    operationId: 'op_cleanup_review_forged', command: 'stage.cleanupReviewRecord' as never,
+    input: { ...ready, hostId, confirmed: true, at: Date.now() },
+  })).rejects.toThrow();
+  expect(db.listOwnedStageCleanupReviewRequests(jobId)).toHaveLength(0);
+});
+
+it('revalidates the MANUAL lease after the native prompt and rejects a TOCTOU release', async () => {
+  const ready = await cleanupReviewFixture();
+  const native = coordinator('OK', async () => {
+    db.releaseLease(ready.lease);
+    return true;
+  });
+  await expect(native.requestOwnedCleanupReview(ready))
+    .rejects.toMatchObject({ code: 'STALE_LEASE' });
+  expect(db.listOwnedStageCleanupReviewRequests(jobId)).toHaveLength(0);
+  expect(db.getJob(jobId).job).toEqual(ready.jobBefore);
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(ready.stageBefore);
+});
+
+it('an abort during the native prompt cannot append a cleanup request', async () => {
+  const ready = await cleanupReviewFixture();
+  const controller = new AbortController();
+  const native = coordinator('OK', async () => {
+    controller.abort();
+    return true;
+  });
+  await expect(native.requestOwnedCleanupReview(ready, controller.signal))
+    .rejects.toMatchObject({ code: 'CANCELLED' });
+  expect(db.listOwnedStageCleanupReviewRequests(jobId)).toHaveLength(0);
+  expect(db.getJob(jobId).job).toEqual(ready.jobBefore);
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(ready.stageBefore);
 });
 
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {

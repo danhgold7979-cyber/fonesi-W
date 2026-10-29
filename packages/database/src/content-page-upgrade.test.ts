@@ -10,11 +10,11 @@ import { migrations, SCHEMA_VERSION } from './schema.js';
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'autoreels-v13-to-v19-'));
+  dir = mkdtempSync(join(tmpdir(), 'autoreels-v13-to-v20-'));
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-it('upgrades P08 schema13 through content epoch and reconciliation schema19 without historical data loss', () => {
+it('upgrades P08 schema13 through content epoch and cleanup-review schema20 without historical data loss', () => {
   const path = join(dir, 'studio.sqlite');
   const legacy = new DatabaseSync(path);
   legacy.exec('PRAGMA foreign_keys=ON;');
@@ -49,7 +49,7 @@ it('upgrades P08 schema13 through content epoch and reconciliation schema19 with
 
   const db = new StudioDatabase(path);
   try {
-    expect(SCHEMA_VERSION).toBe(19);
+    expect(SCHEMA_VERSION).toBe(20);
     const history = db.deviceResolutionHistory('device_historical');
     expect(history.entries).toHaveLength(1);
     expect(history.entries[0]).toMatchObject({
@@ -97,7 +97,7 @@ it('upgrades P08 schema13 through content epoch and reconciliation schema19 with
     db.close();
   }
   const check = new DatabaseSync(path, { readOnly: true });
-  expect(check.prepare('PRAGMA user_version').get()?.user_version).toBe(19);
+  expect(check.prepare('PRAGMA user_version').get()?.user_version).toBe(20);
   expect(
     check.prepare('SELECT version,checksum FROM schema_migrations WHERE version<=13 ORDER BY version')
       .all(),

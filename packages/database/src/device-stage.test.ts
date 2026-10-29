@@ -629,6 +629,118 @@ it('fails closed before cleanup preflight on a tampered remote namespace, path o
   expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
 });
 
+
+it('records a native-confirmed cleanup review durably but never authorizes or mutates the stage', async () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  db.recoverExpiredClaims(f.deviceId, at + 3000);
+  const manual = db.acquireLease(f.deviceId, 'cleanup_review_operator', 'MANUAL', at + 3001, 5000);
+  const revision = db.getJob(f.jobId).job.revision;
+  db.recordClaimedDeviceStageReconciliation({
+    stageId: stage.id, requestId: 'cleanup_native_evidence_001',
+    lease: manual, hostId, expectedJobRevision: revision,
+    expectedSnapshotHash: f.snapshotHash, at: at + 3010,
+    classification: 'REMOTE_BYTES_MATCHED', observedHash: stage.expectedHash,
+    observedBytes: stage.expectedBytes, mediaStoreStatus: 'NOT_INDEXED',
+  });
+  const record = {
+    requestId: 'cleanup_native_request_001', stageId: stage.id, hostId,
+    lease: manual, expectedJobRevision: revision,
+    expectedSnapshotHash: f.snapshotHash, confirmed: true as const, at: at + 3011,
+  };
+  const before = db.getJob(f.jobId).job, stageBefore = db.listDeviceStageTransfers(f.jobId)[0]!;
+  let queueBefore = -1;
+  sql((conn) => { queueBefore = Number(conn.prepare(
+    'SELECT COUNT(*) AS count FROM queue_events WHERE job_id=?',
+  ).get(f.jobId)?.count); });
+  const receipt = db.recordOwnedStageCleanupReviewRequest(record);
+  expect(receipt).toEqual({
+    requestId: record.requestId, jobId: f.jobId, ordinal: 0,
+    recordedAt: new Date(at + 3011).toISOString(),
+    status: 'REVIEW_REQUESTED_HARDWARE_PENDING', canDelete: false, canDispatch: false,
+  });
+  expect(db.recordOwnedStageCleanupReviewRequest(record)).toEqual(receipt);
+  expect(dispatchInternal(db, { command: 'stage.cleanupReviewHistory', jobId: f.jobId }))
+    .toEqual([receipt]);
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...record, requestId: 'cleanup_native_duplicate_002',
+  })).toThrow('already has an operator request');
+  await expect(dispatch(db, {
+    operationId: 'op_forged_cleanup_review', command: 'stage.cleanupReviewRecord' as never,
+    input: record,
+  })).rejects.toThrow();
+  expect(db.getJob(f.jobId).job).toEqual(before);
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stageBefore);
+  sql((conn) => expect(Number(conn.prepare(
+    'SELECT COUNT(*) AS count FROM queue_events WHERE job_id=?',
+  ).get(f.jobId)?.count)).toBe(queueBefore));
+  db.close();
+  db = new StudioDatabase(dbPath());
+  expect(db.listOwnedStageCleanupReviewRequests(f.jobId)).toEqual([receipt]);
+  expect(db.getJob(f.jobId).job).toEqual(before);
+  expect(() => sql((conn) => conn.prepare(
+    'UPDATE device_stage_cleanup_reviews SET state=state WHERE request_id=?',
+  ).run(record.requestId))).toThrow('cleanup review immutable');
+  expect(() => sql((conn) => conn.prepare(
+    'DELETE FROM device_stage_cleanup_reviews WHERE request_id=?',
+  ).run(record.requestId))).toThrow('cleanup review immutable');
+  expect(db.listOwnedStageCleanupReviewRequests(f.jobId)).toEqual([receipt]);
+});
+
+it('fences cleanup review journal against consent forgery, changed observations, stale lease and effects', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  db.recoverExpiredClaims(f.deviceId, at + 3000);
+  const firstLease = db.acquireLease(f.deviceId, 'cleanup_operator_1', 'MANUAL', at + 3001, 120000);
+  const revision = db.getJob(f.jobId).job.revision;
+  const common = {
+    requestId: 'cleanup_fenced_request', stageId: stage.id, hostId,
+    expectedJobRevision: revision, expectedSnapshotHash: f.snapshotHash,
+    lease: firstLease, confirmed: true as const, at: at + 3015,
+  };
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...common, confirmed: false as never,
+  })).toThrow('privately confirmed');
+  expect(() => db.recordOwnedStageCleanupReviewRequest(common))
+    .toThrow('prerequisites changed');
+  db.recordClaimedDeviceStageReconciliation({
+    ...common, requestId: 'cleanup_native_observation_1',
+    classification: 'REMOTE_BYTES_MATCHED', observedHash: stage.expectedHash,
+    observedBytes: stage.expectedBytes, mediaStoreStatus: 'NOT_INDEXED', at: at + 3010,
+  });
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...common, hostId: 'other_host',
+  })).toThrow();
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...common, expectedJobRevision: revision + 1,
+  })).toThrow();
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...common, at: at + 34012,
+  })).toThrow('prerequisites changed');
+  const prior = db.recordOwnedStageCleanupReviewRequest(common);
+  db.releaseLease(firstLease);
+  expect(() => db.recordOwnedStageCleanupReviewRequest(common)).toThrow();
+  const secondLease = db.acquireLease(f.deviceId, 'cleanup_operator_2', 'MANUAL', at + 3020, 4000);
+  db.recordClaimedDeviceStageReconciliation({
+    ...common, requestId: 'cleanup_native_observation_2', lease: secondLease,
+    classification: 'REMOTE_BYTES_MATCHED', observedHash: stage.expectedHash,
+    observedBytes: stage.expectedBytes, mediaStoreStatus: 'NOT_INDEXED', at: at + 3025,
+  });
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...common, lease: secondLease, at: at + 3026,
+  })).toThrow('already bound to another observation');
+  sql((conn) => conn.prepare(
+    'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,state,evidence_ref,created_at)' +
+    ' VALUES(?,?,?,?,?,?,?,?,?)',
+  ).run('cleanup_review_effect', f.jobId, 'node_1', 'PUBLISH',
+    contentHash('cleanup_review_effect_key'), contentHash('cleanup_review_payload'),
+    'INTENT', null, new Date(at + 3027).toISOString()));
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...common, lease: secondLease, requestId: 'cleanup_after_effect',
+    at: at + 3028,
+  })).toThrow('prerequisites changed');
+  expect(db.listOwnedStageCleanupReviewRequests(f.jobId)).toEqual([prior]);
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+});
+
 it('private DB worker tracks one stage; public HTTP dispatcher cannot forge stage intent', async () => {
   const f = fixture();
   await expect(dispatch(db, {

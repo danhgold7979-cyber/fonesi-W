@@ -411,10 +411,54 @@ describe('schema v18 to v19 durable reconciliation migration', () => {
       expect(row).toMatchObject({
         claim_generation: 7, lease_owner_kind: 'JOB', lease_generation: 7,
       });
-      expect(read.prepare('PRAGMA user_version').get()?.user_version).toBe(19);
+      expect(read.prepare('PRAGMA user_version').get()?.user_version).toBe(20);
+      expect(read.prepare(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='device_stage_cleanup_reviews'",
+      ).get()).toBeTruthy();
     } finally {
       read.close();
     }
+  });
+});
+
+
+describe('schema v19 to v20 immutable cleanup review migration', () => {
+  it('upgrades a historical v19 database without touching old migration checksums', () => {
+    const path = join(dir, 'legacy-cleanup-v19.sqlite'), legacy = new DatabaseSync(path);
+    legacy.exec('PRAGMA foreign_keys=OFF');
+    legacy.exec('BEGIN IMMEDIATE');
+    try {
+      for (const step of migrations.filter((item) => item.version <= 19)) {
+        legacy.exec(step.sql);
+        legacy.prepare('INSERT INTO schema_migrations VALUES(?,?)')
+          .run(step.version, contentHash(step.sql));
+      }
+      legacy.exec('PRAGMA user_version=19');
+      legacy.exec('COMMIT');
+    } catch (error) {
+      legacy.exec('ROLLBACK');
+      throw error;
+    } finally { legacy.close(); }
+    const migrated = new StudioDatabase(path);
+    expect(migrated.integrity()).toBe('ok');
+    migrated.close();
+    const conn = new DatabaseSync(path);
+    try {
+      expect(conn.prepare('PRAGMA user_version').get()?.user_version).toBe(20);
+      const first19 = conn.prepare(
+        'SELECT version,checksum FROM schema_migrations WHERE version<=19 ORDER BY version',
+      ).all();
+      expect(first19).toHaveLength(19);
+      for (const [index, row] of first19.entries()) {
+        expect(row?.version).toBe(index + 1);
+        expect(row?.checksum).toBe(contentHash(migrations[index]!.sql));
+      }
+      expect(conn.prepare('SELECT COUNT(*) AS count FROM device_stage_cleanup_reviews')
+        .get()?.count).toBe(0);
+      expect(conn.prepare(
+        "SELECT 1 FROM sqlite_master WHERE type='trigger' AND name='cleanup_reviews_immutable_update'",
+      ).get()).toBeTruthy();
+    } finally { conn.close(); }
   });
 });
 

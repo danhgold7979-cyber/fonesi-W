@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 19;
+export const SCHEMA_VERSION = 20;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -192,5 +192,27 @@ CREATE INDEX stage_reconciliation_job ON device_stage_reconciliations(job_id,cre
 ALTER TABLE device_stage_reconciliations ADD COLUMN lease_owner_kind TEXT NOT NULL DEFAULT 'JOB' CHECK(lease_owner_kind IN('JOB','MANUAL'));
 ALTER TABLE device_stage_reconciliations ADD COLUMN lease_generation INTEGER NOT NULL DEFAULT 1 CHECK(lease_generation>0);
 UPDATE device_stage_reconciliations SET lease_generation=claim_generation;
+` },
+  { version: 20, sql: `
+CREATE TABLE device_stage_cleanup_reviews(
+ request_id TEXT PRIMARY KEY,
+ stage_id TEXT NOT NULL REFERENCES device_stage_transfers(id),
+ job_id TEXT NOT NULL REFERENCES jobs(id),
+ device_id TEXT NOT NULL REFERENCES devices(id),
+ host_id TEXT NOT NULL,
+ snapshot_hash TEXT NOT NULL CHECK(length(snapshot_hash)=64),
+ job_revision INTEGER NOT NULL CHECK(job_revision>=0),
+ claim_generation INTEGER NOT NULL CHECK(claim_generation>0),
+ lease_generation INTEGER NOT NULL CHECK(lease_generation>0),
+ reconciliation_id TEXT NOT NULL REFERENCES device_stage_reconciliations(id),
+ state TEXT NOT NULL CHECK(state='REVIEW_REQUESTED_HARDWARE_PENDING'),
+ created_at TEXT NOT NULL,
+ UNIQUE(stage_id,lease_generation,reconciliation_id)
+) STRICT;
+CREATE INDEX cleanup_reviews_job_created ON device_stage_cleanup_reviews(job_id,created_at,request_id);
+CREATE TRIGGER cleanup_reviews_immutable_update BEFORE UPDATE ON device_stage_cleanup_reviews
+ BEGIN SELECT RAISE(ABORT,'cleanup review immutable'); END;
+CREATE TRIGGER cleanup_reviews_immutable_delete BEFORE DELETE ON device_stage_cleanup_reviews
+ BEGIN SELECT RAISE(ABORT,'cleanup review immutable'); END;
 ` },
 ] as const;

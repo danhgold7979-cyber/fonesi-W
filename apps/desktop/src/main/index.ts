@@ -117,6 +117,19 @@ else {
         new HostStageTransferService(
           db, media, hostId, app.getPath('userData'),
           () => devices.stageTransportAdapter(),
+          async ({ jobId, ordinal }) => {
+            const response = await dialog.showMessageBox(window!, {
+              type: 'warning',
+              title: 'Ghi nhận yêu cầu rà soát staging',
+              message: 'Xác nhận đã xem đúng công việc và media?',
+              detail: 'Job: ' + jobId + ', media ' + (ordinal + 1) +
+                '. Việc này CHỈ ghi nhật ký yêu cầu rà soát. Không xóa file Android, ' +
+                'không chạy lại job và không cho phép đăng bài. Cần kiểm tra điện thoại thật riêng.',
+              buttons: ['Hủy', 'Ghi nhận yêu cầu rà soát (không xóa)'],
+              defaultId: 0, cancelId: 0, noLink: true,
+            });
+            return response.response === 1;
+          },
         ),
       );
       await services.ready();

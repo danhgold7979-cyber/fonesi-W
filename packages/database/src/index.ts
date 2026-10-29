@@ -52,6 +52,7 @@ import type {
   StageReconciliationClassification,
   ReviewedStageMediaSnapshot,
   OwnedStageCleanupAssessment,
+  OwnedStageCleanupReviewReceipt,
   SchedulePreviewDto,
   JobChangeRequest,
   JobChangePreview,
@@ -2991,6 +2992,109 @@ export class StudioDatabase {
       canDelete: false,
       canDispatch: false,
     };
+  }
+
+  /**
+   * Append an immutable operator review request under an active MANUAL lease.
+   * No Android action is queued; persisted consent is NOT deletion permission.
+   */
+  recordOwnedStageCleanupReviewRequest(args: {
+    requestId: string; stageId: string; hostId: string;
+    expectedJobRevision: number; expectedSnapshotHash: string;
+    lease: DeviceLease; confirmed: true; at: number;
+  }): OwnedStageCleanupReviewReceipt {
+    idSchema.parse(args.requestId);
+    if (args.confirmed !== true)
+      throw new DomainError('CLEANUP_REVIEW_CONFIRMATION_REQUIRED',
+        'Only a privately confirmed operator request may be stored.');
+    return this.transaction(() => {
+      // BEGIN IMMEDIATE guarantees revalidation and insert see one state.
+      const assessment = this.assessOwnedStageCleanup(args);
+      if (assessment.status !== 'PREREQUISITES_MET')
+        throw new DomainError('CLEANUP_REVIEW_NOT_ELIGIBLE',
+          'Cleanup review prerequisites changed; no request was stored.');
+      const stage = this.stageTransfer(args.stageId);
+      const latest = this.db.prepare(
+        'SELECT id,lease_owner_kind,lease_generation,claim_generation,classification,' +
+        'mediastore_status,observed_hash,observed_bytes,created_at ' +
+        'FROM device_stage_reconciliations WHERE stage_id=? ' +
+        'ORDER BY created_at DESC,id DESC LIMIT 1',
+      ).get(stage.id);
+      if (!latest || latest.lease_owner_kind !== 'MANUAL' ||
+          Number(latest.lease_generation) !== args.lease.generation ||
+          Number(latest.claim_generation) !== stage.claimGeneration ||
+          latest.classification !== 'REMOTE_BYTES_MATCHED' ||
+          latest.mediastore_status !== 'NOT_INDEXED' ||
+          latest.observed_hash !== stage.expectedHash ||
+          Number(latest.observed_bytes) !== stage.expectedBytes ||
+          assessment.observationAt !== String(latest.created_at))
+        throw new DomainError('CLEANUP_REVIEW_OBSERVATION_STALE',
+          'Exact current observation is required.');
+      const prior = this.db.prepare(
+        'SELECT * FROM device_stage_cleanup_reviews WHERE request_id=?',
+      ).get(args.requestId);
+      if (prior) {
+        if (prior.stage_id !== stage.id || prior.job_id !== stage.jobId ||
+            prior.device_id !== stage.deviceId || prior.host_id !== args.hostId ||
+            prior.snapshot_hash !== args.expectedSnapshotHash ||
+            Number(prior.job_revision) !== args.expectedJobRevision ||
+            Number(prior.claim_generation) !== stage.claimGeneration ||
+            Number(prior.lease_generation) !== args.lease.generation ||
+            prior.reconciliation_id !== latest.id)
+          throw new DomainError('CLEANUP_REVIEW_IDEMPOTENCY_CONFLICT',
+            'Request ID is already bound to another observation.');
+        return {
+          requestId: String(prior.request_id), jobId: stage.jobId,
+          ordinal: stage.ordinal, recordedAt: String(prior.created_at),
+          status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
+          canDelete: false, canDispatch: false,
+        };
+      }
+      if (this.db.prepare(
+        'SELECT 1 FROM device_stage_cleanup_reviews WHERE stage_id=? ' +
+        'AND lease_generation=? AND reconciliation_id=? LIMIT 1',
+      ).get(stage.id, args.lease.generation, latest.id))
+        throw new DomainError('CLEANUP_REVIEW_ALREADY_RECORDED',
+          'This observation already has an operator request.');
+      const recordedAt = new Date(args.at).toISOString();
+      this.db.prepare(
+        'INSERT INTO device_stage_cleanup_reviews(' +
+        'request_id,stage_id,job_id,device_id,host_id,snapshot_hash,' +
+        'job_revision,claim_generation,lease_generation,reconciliation_id,state,created_at) ' +
+        'VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+      ).run(
+        args.requestId, stage.id, stage.jobId, stage.deviceId, args.hostId,
+        args.expectedSnapshotHash, args.expectedJobRevision,
+        stage.claimGeneration, args.lease.generation, String(latest.id),
+        'REVIEW_REQUESTED_HARDWARE_PENDING', recordedAt,
+      );
+      return {
+        requestId: args.requestId, jobId: stage.jobId, ordinal: stage.ordinal,
+        recordedAt, status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
+        canDelete: false, canDispatch: false,
+      };
+    });
+  }
+
+  /** Persisted history never doubles as an executable recovery queue. */
+  listOwnedStageCleanupReviewRequests(jobId: string): OwnedStageCleanupReviewReceipt[] {
+    idSchema.parse(jobId);
+    // Fail on unknown jobs instead of exposing whether arbitrary IDs exist in the journal.
+    this.getJob(jobId);
+    const rows = this.db.prepare(
+      'SELECT r.request_id,r.created_at,r.state,s.ordinal ' +
+      'FROM device_stage_cleanup_reviews r ' +
+      'JOIN device_stage_transfers s ON s.id=r.stage_id ' +
+      'WHERE r.job_id=? ORDER BY r.created_at DESC,r.request_id DESC LIMIT 51',
+    ).all(jobId);
+    if (rows.length > 50)
+      throw new DomainError('CLEANUP_REVIEW_HISTORY_LIMIT', 'Review history requires pagination.');
+    return rows.map((row) => ({
+      requestId: String(row.request_id), jobId, ordinal: Number(row.ordinal),
+      recordedAt: String(row.created_at),
+      status: 'REVIEW_REQUESTED_HARDWARE_PENDING' as const,
+      canDelete: false as const, canDispatch: false as const,
+    }));
   }
 
   /** Append fenced reconciliation evidence; never mutates stage/job state. */
