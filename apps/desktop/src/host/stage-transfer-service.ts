@@ -196,6 +196,56 @@ export class HostStageTransferService {
     return assessment;
   }
 
+  /**
+   * Explicit non-destructive cleanup-only recheck. Perform one real ADB STAT
+   * and independent MediaStore observation under existing MANUAL fences, then
+   * journal the result under the SAME lease. This cannot dispatch cleanup,
+   * publish, comment or any retry, and returns no private device target.
+   */
+  async recordCleanupRecheck(request: {
+    requestId: string;
+    jobId: string;
+    stageId: string;
+    expectedJobRevision: number;
+    expectedSnapshotHash: string;
+    lease: DeviceLease;
+    transportSerial: string;
+    transportGeneration: number;
+  }, signal?: AbortSignal): Promise<{
+    requestId: string; ordinal: number; attemptOrdinal: number;
+    status: import('@autoreels/contracts').NativeStageCleanupAbsenceResult['status'];
+    recordedAt: string; alreadyRecorded: boolean;
+    canDelete: false; canMarkClean: false; canRetry: false; canDispatch: false;
+  }> {
+    idSchema.parse(request.requestId);
+    const result = await this.reviewOwnedCleanupAbsence(request, signal);
+    if (signal?.aborted)
+      throw new DomainError('CANCELLED', 'Cleanup-only readback was cancelled before journaling.');
+    const receipt = await this.db.internal<{
+      requestId: string; ordinal: number; attemptOrdinal: number;
+      status: import('@autoreels/contracts').NativeStageCleanupAbsenceResult['status'];
+      recordedAt: string; alreadyRecorded: boolean;
+      canDelete: false; canMarkClean: false; canRetry: false; canDispatch: false;
+    }>({
+      command: 'stage.cleanupRecheckRecord', requestId: request.requestId,
+      stageId: request.stageId, hostId: this.hostId,
+      expectedJobRevision: request.expectedJobRevision,
+      expectedSnapshotHash: request.expectedSnapshotHash,
+      lease: request.lease, result, at: Date.now(),
+    });
+    if (receipt.requestId !== request.requestId ||
+        receipt.status !== result.status ||
+        receipt.ordinal < 0 || receipt.ordinal >= 32 ||
+        !Number.isSafeInteger(receipt.attemptOrdinal) ||
+        receipt.attemptOrdinal < 1 || receipt.attemptOrdinal > 3 ||
+        !Number.isFinite(Date.parse(receipt.recordedAt)) ||
+        receipt.canDelete !== false || receipt.canMarkClean !== false ||
+        receipt.canRetry !== false || receipt.canDispatch !== false)
+      throw new DomainError('CLEANUP_RECHECK_RECEIPT_INVALID',
+        'Cleanup readback journal returned an invalid non-executable receipt.');
+    return receipt;
+  }
+
   /** DB-only operator cleanup preflight; no ADB call, delete, upload or permission grant. */
   async inspectOwnedCleanupReadiness(request: {
     stageId: string; expectedJobRevision: number; expectedSnapshotHash: string;
