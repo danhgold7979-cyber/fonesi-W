@@ -64,6 +64,9 @@ function fixture(deviceId = 'device_1', index = '1', withComment = false) {
     edge('cleanup_error', 'cleanup', 'error', 'review'),
   ];
   if (withComment) {
+    bundle.inputs.push({
+      key: 'comments', type: 'list', scope: 'row', required: true, itemType: 'text',
+    });
     graph.nodes.push(
       node('commentIntent', 'transaction', {
         effectKind: 'COMMENT', idempotencyScope: 'comment-item', payloadHash: 'pinned-comment',
@@ -107,7 +110,11 @@ function fixture(deviceId = 'device_1', index = '1', withComment = false) {
   db.saveProcess(process, null);
   const contentId = 'content_' + index;
   db.saveContent({
-    id: contentId, processId: process.id, revision: 0, fields: {}, assetIds: [], ignored: false,
+    id: contentId, processId: process.id, revision: 0,
+    fields: withComment
+      ? { comments: ['Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp', 'Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp'] }
+      : {},
+    assetIds: [], ignored: false,
   }, null);
   const preview = db.previewSchedule(process.id, [contentId], null, '2026-10-26T00:00:00Z', 1);
   const [jobId] = db.applySchedule(preview.token, null, '2026-10-26T00:00:00Z').jobIds;
@@ -758,4 +765,63 @@ it('refuses an expired lease at dispatch fence even if the earlier attempt was j
   sql.close();
   expect(db.effectState(effectId)).toBe('ATTEMPT_UNCERTAIN');
   expect(db.getJob(f.jobId).job.state).toBe('POST_PENDING');
+});
+
+it('reads exact frozen comment ordinals only after a persisted confirmed post, never sends', async () => {
+  const f = fixture('device_1', '1', true);
+  const post = prepare(f);
+  const attempted = db.beginClaimedEffectAttempt({
+    effectId: post.effectId, expectedJobRevision: post.jobRevision,
+    lease: f.lease, at: at + 100,
+  });
+  const req = {
+    command: 'comment.planFrozen' as const,
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    postEffectId: post.effectId, fieldKey: 'comments', scope: 'row' as const,
+  };
+  expect(() => dispatchInternal(db, req)).toThrow('not confirmed');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  sql.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?").run(post.effectId);
+  sql.prepare("UPDATE jobs SET state='POSTED',revision=revision+1 WHERE id=?")
+    .run(f.jobId);
+  // Mutable Content may subsequently change without altering the job snapshot.
+  const contentId = db.getJob(f.jobId).job.contentId;
+  sql.prepare('UPDATE content_items SET fields=? WHERE id=?')
+    .run(JSON.stringify({ comments: ['Mutable later edit'] }), contentId);
+  const counters = () => [
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n),
+    Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events').get()?.n),
+  ];
+  const before = counters();
+  const plan = dispatchInternal(db, req) as ReturnType<StudioDatabase['frozenCommentListPlan']>;
+  expect(plan).toMatchObject({
+    scope: 'FROZEN_COMMENT_LIST_NOT_PROVIDER_VERIFIED',
+    status: 'FROZEN_COMMENTS_PROVIDER_UNVERIFIED',
+    blockers: [], canDispatch: false, canRetry: false, canConfirm: false,
+  });
+  expect(plan.items).toHaveLength(2);
+  expect(plan.items[0]?.value).toBe('Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp');
+  expect(plan.items[1]?.value).toBe(plan.items[0]?.value);
+  expect(plan.items[0]?.effectKey).not.toBe(plan.items[1]?.effectKey);
+  expect(plan.items[0]?.effectKey).toMatch(/^[a-f0-9]{64}$/);
+  expect(counters()).toEqual(before);
+  expect(() => db.frozenCommentListPlan({
+    ...req, expectedSnapshotHash: contentHash('stale'),
+  })).toThrow('not available');
+  expect(() => db.frozenCommentListPlan({
+    ...req, postEffectId: 'effect_foreign',
+  })).toThrow('not confirmed');
+  expect(() => dispatch(db, {
+    operationId: 'op_forge_frozen_comment_plan',
+    command: 'comment.planFrozen' as never,
+    input: req,
+  })).toThrow();
+  sql.close();
+
+  const beforeJob = db.getJob(f.jobId);
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.getJob(f.jobId)).toEqual(beforeJob);
+  expect(dispatchInternal(db, req)).toEqual(plan);
+  expect(db.effectState(post.effectId)).toBe('CONFIRMED');
+  expect(attempted.state).toBe('ATTEMPT_UNCERTAIN');
 });

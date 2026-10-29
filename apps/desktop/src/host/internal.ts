@@ -162,6 +162,14 @@ export type InternalRequest =
       at: number;
     }
   | {
+      command: 'comment.planFrozen';
+      jobId: string;
+      expectedSnapshotHash: string;
+      postEffectId: string;
+      fieldKey: string;
+      scope: 'row' | 'process';
+    }
+  | {
       command: 'source.register';
       processId: string;
       expectedRevision: number;
@@ -332,6 +340,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
         lease: request.lease,
         at: request.at,
       });
+    case 'comment.planFrozen':
+      return db.frozenCommentListPlan(request);
     case 'source.register':
       return db.registerNativeSources(request.processId, request.expectedRevision, request.grants);
     case 'source.grant':

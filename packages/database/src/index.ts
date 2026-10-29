@@ -99,6 +99,7 @@ import { migrations, SCHEMA_VERSION } from './schema.js';
 import { assessPersistedMediaOrder, type LastStageObservation } from './media-selection.js';
 import { deriveFrozenUnicodeTextPlan } from './unicode-compose.js';
 import { deriveFrozenComposeExpectation } from './compose-review.js';
+import { deriveFrozenCommentList, type FrozenCommentListPlan } from './comment-list.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
 const now = (): string => new Date().toISOString();
@@ -3384,6 +3385,39 @@ export class StudioDatabase {
         effectId, kind: args.kind, claimGeneration: args.lease.generation,
       }, args.at);
       return { effectId, jobId: job.id, jobRevision: job.revision + 1, state: 'INTENT' };
+    });
+  }
+
+  /**
+   * Private read-only source for one frozen text-list of comments. Even a
+   * persisted CONFIRMED publish effect is not live provider proof by itself.
+   * No mutable Content/Process lookup and no effect permission is returned.
+   */
+  frozenCommentListPlan(args: {
+    jobId: string;
+    expectedSnapshotHash: string;
+    postEffectId: string;
+    fieldKey: string;
+    scope: 'row' | 'process';
+  }): FrozenCommentListPlan {
+    idSchema.parse(args.jobId);
+    idSchema.parse(args.postEffectId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    const { job, snapshot, snapshotHash } = this.getJob(args.jobId);
+    if (snapshotHash !== args.expectedSnapshotHash ||
+        !['POSTED', 'COMMENT_PENDING', 'NEEDS_REVIEW'].includes(job.state))
+      throw new DomainError('COMMENT_FROZEN_JOB_NOT_READY',
+        'Frozen job is not available for comment-source review.');
+    const effect = this.db.prepare(
+      'SELECT kind,state,effect_key FROM effects WHERE id=? AND job_id=?',
+    ).get(args.postEffectId, args.jobId);
+    if (!effect || effect.kind !== 'PUBLISH' || effect.state !== 'CONFIRMED')
+      throw new DomainError('COMMENT_POST_NOT_VERIFIED',
+        'The required persisted publish effect is not confirmed.');
+    return deriveFrozenCommentList({
+      jobId: job.id, snapshot, snapshotHash,
+      postEffectId: args.postEffectId, postEffectKey: String(effect.effect_key),
+      fieldKey: args.fieldKey, scope: args.scope,
     });
   }
 
