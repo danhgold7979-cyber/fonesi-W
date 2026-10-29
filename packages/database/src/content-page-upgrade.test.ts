@@ -10,11 +10,11 @@ import { migrations, SCHEMA_VERSION } from './schema.js';
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'autoreels-v13-to-v20-'));
+  dir = mkdtempSync(join(tmpdir(), 'autoreels-v13-to-v21-'));
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-it('upgrades P08 schema13 through content epoch and cleanup-review schema20 without historical data loss', () => {
+it('upgrades P08 schema13 through content epoch, cleanup-review and effect-review schema21 without data loss', () => {
   const path = join(dir, 'studio.sqlite');
   const legacy = new DatabaseSync(path);
   legacy.exec('PRAGMA foreign_keys=ON;');
@@ -49,7 +49,7 @@ it('upgrades P08 schema13 through content epoch and cleanup-review schema20 with
 
   const db = new StudioDatabase(path);
   try {
-    expect(SCHEMA_VERSION).toBe(20);
+    expect(SCHEMA_VERSION).toBe(21);
     const history = db.deviceResolutionHistory('device_historical');
     expect(history.entries).toHaveLength(1);
     expect(history.entries[0]).toMatchObject({
@@ -97,7 +97,7 @@ it('upgrades P08 schema13 through content epoch and cleanup-review schema20 with
     db.close();
   }
   const check = new DatabaseSync(path, { readOnly: true });
-  expect(check.prepare('PRAGMA user_version').get()?.user_version).toBe(20);
+  expect(check.prepare('PRAGMA user_version').get()?.user_version).toBe(SCHEMA_VERSION);
   expect(
     check.prepare('SELECT version,checksum FROM schema_migrations WHERE version<=13 ORDER BY version')
       .all(),
@@ -106,6 +106,12 @@ it('upgrades P08 schema13 through content epoch and cleanup-review schema20 with
     .toBeGreaterThan(0);
   expect(check.prepare('SELECT COUNT(*) AS n FROM device_resolution_audit').get()?.n).toBe(1);
   expect(check.prepare('SELECT COUNT(*) AS n FROM device_stage_transfers').get()?.n).toBe(0);
+  expect(check.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='effect_manual_reviews'",
+  ).get()).toBeTruthy();
+  expect(check.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='trigger' AND name='effect_manual_reviews_immutable_update'",
+  ).get()).toBeTruthy();
   check.close();
 
   const again = new StudioDatabase(path);
