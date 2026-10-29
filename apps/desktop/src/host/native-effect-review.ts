@@ -30,9 +30,9 @@ export class NativeEffectReviewService implements NativeEffectReviewApi {
     disposition: NativeEffectManualReviewResult['disposition'];
     evidenceRefs: string[];
   }): Promise<NativeEffectManualReviewResult> {
-    idSchema.parse(input.jobId);
-    idSchema.parse(input.actorId);
-    if (!idSchema.safeParse(this.hostId).success ||
+    if (!idSchema.safeParse(input.jobId).success ||
+        !idSchema.safeParse(input.actorId).success ||
+        !idSchema.safeParse(this.hostId).success ||
         !Number.isSafeInteger(input.ordinal) || input.ordinal < 0 || input.ordinal >= 20 ||
         !['UNKNOWN_EFFECT', 'CANCEL_REQUESTED', 'PROVIDER_EVIDENCE_MISSING',
           'COMMENT_UNCERTAIN'].includes(input.reasonCode) ||
