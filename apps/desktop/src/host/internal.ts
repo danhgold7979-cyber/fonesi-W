@@ -53,6 +53,11 @@ export type InternalRequest =
       lease: DeviceLease; confirmed: true; at: number;
     }
   | { command: 'stage.cleanupReviewHistory'; jobId: string }
+  | {
+      command: 'stage.postCleanupReview';
+      jobId: string;
+      expectedSnapshotHash: string;
+    }
   | { command: 'stage.list'; jobId: string }
   | {
       command: 'stage.assertClaim';
@@ -301,6 +306,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.recordOwnedStageCleanupReviewRequest(request);
     case 'stage.cleanupReviewHistory':
       return db.listOwnedStageCleanupReviewRequests(request.jobId);
+    case 'stage.postCleanupReview':
+      return db.reviewPostCleanupReadiness(request);
     case 'stage.list':
       return db.listDeviceStageTransfers(request.jobId);
     case 'stage.assertClaim':
