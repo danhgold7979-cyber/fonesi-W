@@ -114,6 +114,13 @@ export interface JobStageReviewPage {
     leaseOwnerKind: 'JOB' | 'MANUAL';
     createdAt: string;
   }[];
+  /** Newest 20 historical review requests, never cleanup permissions. */
+  cleanupRequests: {
+    stageOrdinal: number;
+    recordedAt: string;
+    status: 'REVIEW_REQUESTED_HARDWARE_PENDING';
+  }[];
+  cleanupHasMore: boolean;
   hasMore: boolean;
   nextCursor: string | null;
 }

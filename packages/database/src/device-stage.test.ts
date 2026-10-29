@@ -410,7 +410,8 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
   expect(page).toEqual({
     jobId: f.jobId, jobRevision: f.jobRevision, jobState: 'PREFLIGHT',
     scope: 'PERSISTED_ONLY', canDispatch: false,
-    stages: [], observations: [], hasMore: false, nextCursor: null,
+    stages: [], observations: [], cleanupRequests: [], cleanupHasMore: false,
+    hasMore: false, nextCursor: null,
   });
   const publicPage = await dispatch(db, {
     operationId: 'op_review_read_only', command: 'jobStageReview', input: { id: f.jobId },
@@ -659,6 +660,17 @@ it('records a native-confirmed cleanup review durably but never authorizes or mu
     status: 'REVIEW_REQUESTED_HARDWARE_PENDING', canDelete: false, canDispatch: false,
   });
   expect(db.recordOwnedStageCleanupReviewRequest(record)).toEqual(receipt);
+  const reviewPage = db.jobStageReview(f.jobId);
+  expect(reviewPage.cleanupRequests).toEqual([{
+    stageOrdinal: 0, recordedAt: receipt.recordedAt,
+    status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
+  }]);
+  expect(reviewPage.cleanupHasMore).toBe(false);
+  const redacted = JSON.stringify(reviewPage);
+  for (const sensitive of [
+    record.requestId, stage.id, stage.remotePath, stage.nonce,
+    stage.expectedHash, f.snapshotHash, hostId, manual.ownerId,
+  ]) expect(redacted).not.toContain(sensitive);
   expect(dispatchInternal(db, { command: 'stage.cleanupReviewHistory', jobId: f.jobId }))
     .toEqual([receipt]);
   expect(() => db.recordOwnedStageCleanupReviewRequest({
@@ -676,6 +688,10 @@ it('records a native-confirmed cleanup review durably but never authorizes or mu
   db.close();
   db = new StudioDatabase(dbPath());
   expect(db.listOwnedStageCleanupReviewRequests(f.jobId)).toEqual([receipt]);
+  expect(db.jobStageReview(f.jobId).cleanupRequests).toEqual([{
+    stageOrdinal: 0, recordedAt: receipt.recordedAt,
+    status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
+  }]);
   expect(db.getJob(f.jobId).job).toEqual(before);
   expect(() => sql((conn) => conn.prepare(
     'UPDATE device_stage_cleanup_reviews SET state=state WHERE request_id=?',

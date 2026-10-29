@@ -2621,6 +2621,19 @@ export class StudioDatabase {
       leaseOwnerKind: row.lease_owner_kind as 'JOB' | 'MANUAL',
       createdAt: String(row.created_at),
     }));
+    const reviewRows = this.db.prepare(
+      'SELECT r.created_at,r.state,s.ordinal ' +
+      'FROM device_stage_cleanup_reviews r ' +
+      'JOIN device_stage_transfers s ON s.id=r.stage_id ' +
+      'WHERE r.job_id=? ORDER BY r.created_at DESC,r.request_id DESC LIMIT 21',
+    ).all(jobId);
+    const cleanupHasMore = reviewRows.length > 20;
+    const cleanupRequests: JobStageReviewPage['cleanupRequests'] =
+      reviewRows.slice(0, 20).map((row) => ({
+        stageOrdinal: Number(row.ordinal),
+        recordedAt: String(row.created_at),
+        status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
+      }));
     const last = page.at(-1);
     const nextCursor = hasMore && last
       ? Buffer.from(JSON.stringify({
@@ -2630,7 +2643,8 @@ export class StudioDatabase {
       : null;
     return {
       jobId, jobRevision: job.revision, jobState: job.state, scope: 'PERSISTED_ONLY',
-      canDispatch: false, stages, observations, hasMore, nextCursor,
+      canDispatch: false, stages, observations, cleanupRequests, cleanupHasMore,
+      hasMore, nextCursor,
     };
   }
 

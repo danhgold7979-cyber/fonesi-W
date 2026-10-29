@@ -111,6 +111,31 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
               ))}
             </ol>
           )}
+          <h3>Yêu cầu rà soát cleanup đã lưu</h3>
+          <p className="muted">
+            Đây chỉ là lịch sử người vận hành yêu cầu kiểm tra; không có file nào
+            được xóa và không cho phép chuyển công việc sang trạng thái có thể đăng.
+            Tất cả thông tin đều là bản ghi cũ, không phải kết quả kiểm tra điện thoại hiện tại.
+          </p>
+          {!report.cleanupRequests.length ? (
+            <p>Chưa ghi nhận yêu cầu rà soát cleanup cho công việc này.</p>
+          ) : (
+            <ol aria-label="Yêu cầu rà soát cleanup đã lưu">
+              {report.cleanupRequests.map((entry, index) => (
+                <li key={entry.recordedAt + '-' + entry.stageOrdinal + '-' + index}
+                    data-testid="stage-cleanup-review-request">
+                  <strong>Media {entry.stageOrdinal + 1}</strong> ·
+                  {' '}{new Date(entry.recordedAt).toLocaleString('vi-VN')} ·
+                  {' '}Đã ghi yêu cầu rà soát, đang chờ kiểm tra phần cứng.
+                </li>
+              ))}
+            </ol>
+          )}
+          {report.cleanupHasMore && (
+            <p role="status">
+              Chỉ hiển thị 20 yêu cầu rà soát cleanup gần nhất; còn lịch sử cũ hơn.
+            </p>
+          )}
           <h3>Lịch sử quan sát (mới nhất trước)</h3>
           {!observations.length ? (
             <p>Chưa có lần quan sát đối soát được lưu.</p>

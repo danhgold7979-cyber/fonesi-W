@@ -578,6 +578,16 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
         mediaHash, 72, 'INDEXED_EXACT',
         new Date(Date.parse('2026-10-28T00:01:00.000Z') + i * 1000).toISOString(),
       );
+    connection.prepare(
+      'INSERT INTO device_stage_cleanup_reviews(' +
+      'request_id,stage_id,job_id,device_id,host_id,snapshot_hash,job_revision,' +
+      'claim_generation,lease_generation,reconciliation_id,state,created_at) ' +
+      'VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+    ).run(
+      'cleanup_ui_private_request', stageId, jobId, 'device_ui_fixture',
+      'host_stage_secret', snapshotHash, 1, 1, 2, 'audit_review_ui_23',
+      'REVIEW_REQUESTED_HARDWARE_PENDING', '2026-10-28T00:03:00.000Z',
+    );
   } finally { connection.close(); }
 
   await page.goto('http://127.0.0.1:4176/');
@@ -596,6 +606,9 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).toContainText('Có bản ghi byte khớp');
   await expect(dialog).toContainText('chưa xác minh picker');
   await expect(dialog.getByTestId('stage-review-summary')).toHaveCount(1);
+  await expect(dialog.getByTestId('stage-cleanup-review-request')).toHaveCount(1);
+  await expect(dialog).toContainText('Đã ghi yêu cầu rà soát, đang chờ kiểm tra phần cứng');
+  await expect(dialog).toContainText('không có file nào');
   await expect(dialog.getByTestId('stage-review-observation')).toHaveCount(20);
   await dialog.getByRole('button', { name: 'Tải thêm lịch sử' }).click();
   await expect(dialog.getByTestId('stage-review-observation')).toHaveCount(24);
@@ -604,10 +617,12 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).not.toContainText(mediaHash);
   await expect(dialog).not.toContainText(nonce);
   await expect(dialog).not.toContainText('host_stage_secret');
+  await expect(dialog).not.toContainText('cleanup_ui_private_request');
   await expect(dialog.getByRole('button', { name: /Đăng|Xóa|Chạy lại/ })).toHaveCount(0);
   const report = await request<unknown>(page, 'jobStageReview', { id: jobId });
   const response = JSON.stringify(report);
-  for (const secret of [remotePath, nonce, mediaHash, secretCaption, stageId, 'host_stage_secret'])
+  for (const secret of [remotePath, nonce, mediaHash, secretCaption, stageId,
+    'host_stage_secret', 'cleanup_ui_private_request'])
     expect(response).not.toContain(secret);
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   const after = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
