@@ -684,6 +684,20 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
     },
   });
   expect(((await forgedRecheck.json()) as { ok: boolean }).ok).toBe(false);
+  const forgedEffectReview = await page.request.post(origin + '/api', {
+    headers: { Origin: origin, 'X-Studio-Token': token! },
+    data: {
+      operationId: 'op_untrusted_effect_manual_review',
+      command: 'effect.reviewRecord',
+      input: {
+        jobId, ordinal: 0, actorId: 'spoofed_operator',
+        reasonCode: 'PROVIDER_EVIDENCE_MISSING',
+        disposition: 'AWAITING_EVIDENCE', evidenceRefs: [],
+        canRetry: true,
+      },
+    },
+  });
+  expect(((await forgedEffectReview.json()) as { ok: boolean }).ok).toBe(false);
   await expect(dialog.getByTestId('stage-cleanup-review-request')).toHaveCount(1);
   await expect(dialog).toContainText('Đã ghi yêu cầu rà soát, đang chờ kiểm tra phần cứng');
   await expect(dialog).toContainText('không có file nào');
