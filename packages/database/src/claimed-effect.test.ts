@@ -902,7 +902,8 @@ it('enforces frozen COMMENT ordinal/key/payload before any durable mutation', ()
     expect(db.getJob(f.jobId).job).toEqual(beforeJob);
     expect(readCounts()).toEqual(beforeCounts);
   }
-  const { commentSource: _source, ...missing } = request;
+  const { commentSource: boundSource, ...missing } = request;
+  expect(boundSource.ordinal).toBe(0);
   expect(() => db.prepareClaimedEffect(missing)).toThrow('exact frozen source');
   expect(() => db.prepareClaimedEffect({
     ...request, commentSource: { ...request.commentSource, ordinal: 32 },
