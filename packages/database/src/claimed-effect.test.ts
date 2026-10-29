@@ -1,4 +1,7 @@
 import { beforeEach, afterEach, expect, it } from 'vitest';
+import { HostClaimedEffectService } from '../../../apps/desktop/src/host/claimed-effect-service.js';
+import type { ClaimedEffectAdapter } from '../../../apps/desktop/src/host/claimed-effect-service.js';
+import type { InternalRequest } from '../../../apps/desktop/src/host/internal.js';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -337,4 +340,191 @@ it('blocks new intent on a device that becomes identity-conflicted after queue c
   sql.close();
   expect(() => prepare(f)).toThrow('Verified');
   expect(db.getJob(f.jobId).job.state).toBe('RUNNING');
+});
+const claimedInput = (f: ReturnType<typeof fixture>) => ({
+  jobId: f.jobId,
+  expectedJobRevision: f.running.revision,
+  expectedSnapshotHash: f.snapshotHash,
+  nodeId: 'publish',
+  kind: 'PUBLISH' as const,
+  effectKey: contentHash('host_effect_unique'),
+  payloadHash: contentHash('host_exact_frozen_payload'),
+  lease: f.lease,
+});
+function hostEffect(
+  adapter: ClaimedEffectAdapter | null,
+  options: {
+    internal?: <T>(request: InternalRequest) => Promise<T>;
+    clock?: () => number;
+  } = {},
+) {
+  return new HostClaimedEffectService({
+    internal: options.internal ?? (async <T>(request: InternalRequest): Promise<T> =>
+      dispatchInternal(db, request) as T),
+  }, adapter, options.clock ?? (() => at + 50));
+}
+
+it('does not record an intent when no real provider is installed or the signal is pre-aborted', async () => {
+  const f = fixture(), input = claimedInput(f);
+  await expect(hostEffect(null).attempt(input)).rejects.toMatchObject({
+    code: 'EFFECT_ADAPTER_UNAVAILABLE',
+  });
+  const controller = new AbortController();
+  controller.abort();
+  const adapter: ClaimedEffectAdapter = { sendOnce: async () => 'ACK' };
+  await expect(hostEffect(adapter).attempt(input, controller.signal))
+    .rejects.toMatchObject({ code: 'CANCELLED' });
+  expect(db.getJob(f.jobId).job).toEqual(f.running);
+  const rows = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(rows.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n).toBe(0);
+  rows.close();
+});
+
+it('writes both journal transitions before calling one trusted adapter; ACK is never posting proof', async () => {
+  const f = fixture(), events: string[] = [];
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async ({ effectId, lease }) => {
+      events.push('adapter');
+      expect(lease).toEqual(f.lease);
+      expect(db.effectState(effectId)).toBe('ATTEMPT_UNCERTAIN');
+      expect(db.getJob(f.jobId).job.state).toBe('POST_PENDING');
+      return 'ACK';
+    },
+  };
+  const host = hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      events.push(request.command);
+      return dispatchInternal(db, request) as T;
+    },
+  });
+  const result = await host.attempt(claimedInput(f));
+  expect(events).toEqual(['effect.prepareClaimed', 'effect.beginClaimedAttempt', 'adapter']);
+  expect(result).toMatchObject({
+    jobId: f.jobId, state: 'ATTEMPT_UNCERTAIN', observation: 'ACK_UNVERIFIED',
+    canConfirm: false, canRetry: false, canDispatchAgain: false,
+  });
+  expect(db.effectState(result.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  await expect(host.attempt(claimedInput(f))).rejects.toThrow();
+  expect(events.filter((event) => event === 'adapter')).toHaveLength(1);
+});
+
+it('keeps provider failure uncertain across SQLite restart and never replays publish', async () => {
+  const f = fixture();
+  let sends = 0;
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => {
+      sends++;
+      throw new Error('SENSITIVE_PROVIDER_FAILURE no post ID');
+    },
+  };
+  const output = await hostEffect(adapter).attempt(claimedInput(f));
+  expect(output.observation).toBe('UNKNOWN');
+  expect(output.state).toBe('ATTEMPT_UNCERTAIN');
+  expect(JSON.stringify(output)).not.toContain('SENSITIVE_PROVIDER_FAILURE');
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.effectState(output.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  await expect(hostEffect(adapter).attempt(claimedInput(f))).rejects.toThrow();
+  expect(sends).toBe(1);
+});
+
+it('fails before any external adapter on an invalid snapshot/lease or forged public command', async () => {
+  const f = fixture();
+  let sends = 0;
+  const adapter: ClaimedEffectAdapter = { sendOnce: async () => { sends++; return 'ACK'; } };
+  await expect(hostEffect(adapter).attempt({
+    ...claimedInput(f), expectedSnapshotHash: contentHash('incorrect-snapshot'),
+  })).rejects.toThrow('snapshot');
+  await expect(hostEffect(adapter).attempt({
+    ...claimedInput(f), lease: { ...f.lease, generation: f.lease.generation + 1 },
+  })).rejects.toThrow();
+  await expect(dispatch(db, {
+    operationId: 'op_forge_host_effect',
+    command: 'effect.submitClaimed' as never,
+    input: claimedInput(f),
+  })).rejects.toThrow();
+  expect(sends).toBe(0);
+  expect(db.getJob(f.jobId).job.state).toBe('RUNNING');
+});
+
+it('keeps an INTENT when the second transaction fails, never entering the provider callback', async () => {
+  const f = fixture(), events: string[] = [];
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { events.push('adapter'); return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      events.push(request.command);
+      if (request.command === 'effect.beginClaimedAttempt')
+        throw new Error('DB_BUSY_SYNTHETIC');
+      return dispatchInternal(db, request) as T;
+    },
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toThrow('DB_BUSY_SYNTHETIC');
+  expect(events).toEqual(['effect.prepareClaimed', 'effect.beginClaimedAttempt']);
+  const connection = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(connection.prepare("SELECT state FROM effects WHERE job_id=?").get(f.jobId)?.state)
+    .toBe('INTENT');
+  connection.close();
+  expect(db.getJob(f.jobId).job.state).toBe('POST_INTENT');
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+});
+
+it('preserves INTENT when cancelled before begin, with no adapter call', async () => {
+  const f = fixture(), controller = new AbortController();
+  let sends = 0;
+  const adapter: ClaimedEffectAdapter = { sendOnce: async () => { sends++; return 'ACK'; } };
+  const output = await hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const result = dispatchInternal(db, request) as T;
+      if (request.command === 'effect.prepareClaimed') controller.abort();
+      return result;
+    },
+  }).attempt(claimedInput(f), controller.signal);
+  expect(output).toMatchObject({
+    state: 'INTENT_HELD_FOR_REVIEW', observation: 'NOT_DISPATCHED',
+    canRetry: false, canConfirm: false,
+  });
+  expect(db.effectState(output.effectId)).toBe('INTENT');
+  expect(sends).toBe(0);
+});
+
+it('preserves ATTEMPT_UNCERTAIN when aborted after begin, never making the tap', async () => {
+  const f = fixture(), controller = new AbortController();
+  let sends = 0;
+  const adapter: ClaimedEffectAdapter = { sendOnce: async () => { sends++; return 'ACK'; } };
+  const output = await hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const result = dispatchInternal(db, request) as T;
+      if (request.command === 'effect.beginClaimedAttempt') controller.abort();
+      return result;
+    },
+  }).attempt(claimedInput(f), controller.signal);
+  expect(output).toMatchObject({
+    state: 'ATTEMPT_UNCERTAIN', observation: 'NOT_DISPATCHED',
+    canRetry: false, canConfirm: false, canDispatchAgain: false,
+  });
+  expect(db.effectState(output.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(sends).toBe(0);
+});
+
+it('unknown adapter acknowledgement leaves the durable effect unresolved and never retries', async () => {
+  const f = fixture(), events: string[] = [];
+  const adapter: ClaimedEffectAdapter = { sendOnce: async () => {
+    events.push('adapter');
+    return 'UNKNOWN';
+  } };
+  const host = hostEffect(adapter);
+  const result = await host.attempt(claimedInput(f));
+  expect(result).toMatchObject({
+    state: 'ATTEMPT_UNCERTAIN', observation: 'UNKNOWN', canConfirm: false,
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toThrow();
+  expect(events).toEqual(['adapter']);
 });
