@@ -550,7 +550,7 @@ test('read-only job preflight shows persisted blockers without claiming a phone 
   // A forged native receipt containing an execution capability or raw
   // private path is rejected before rendering a follow-up status.
   await page.evaluate(() => {
-    const w = window as Window & {
+    const w = window as unknown as {
       studioStageReview?: { reviewCleanupAbsence: () => Promise<unknown> };
     };
     if (!w.studioStageReview) throw new Error('Missing fake native review bridge');
