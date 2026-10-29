@@ -1,5 +1,14 @@
 # Increment080 RESULTS — P11/S102.2 fenced ADB Sync STAT and post-cleanup MediaStore pre-verifier
 
+## Verified CI addendum — source 8085036e (29/10/2026)
+
+The earlier "CI NOT VERIFIED" paragraph above documents only the initial PR-only lookup: this connector filters `pull_request` runs, while GitHub actually recorded this SHA's checks under event `push`. The read-only GitHub Actions runs collection and exact job logs have now been verified:
+- **Source SHA:** `8085036ee9ea870d2909bdd3ecbaf1bf258ab20c`, [CI run 40911879488](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40911879488), event `push`, completed **SUCCESS Ubuntu+Windows**.
+- **Ubuntu:** 603/603 unit/integration (49 files), 31/31 Chromium UI. `pnpm check`, `pnpm check:plan` PASS.
+- **Windows:** 602 PASS + 1 platform skip (49 files), Windows launcher `-VerifyOnly`, `pnpm check`, `pnpm check:plan` PASS. Generated contracts, typecheck, lint, build included in `pnpm check` on both platforms.
+- Updated status **TESTED_S102_ADB_OWNED_ABSENCE_READBACK_NOT_ACCEPTED**; no authenticated post, Android delete or hardware evidence. [checkpoint-073](../evidence/implementation/checkpoint-073.json).
+
+
 Date: 2026-10-29. Repository `danhgold7979-cyber/fonesi-W`, branch `feat/studio-workspace`. Plan-first commit [`e542ca77`](https://github.com/danhgold7979-cyber/fonesi-W/commit/e542ca77c19cfcefe2221b0281f763f252c3a929), baseline HEAD `7e0be60efd773f00c8a73b6b7ac5c60f0ed1c8ae`. Do NOT modify or merge `main`.
 
 ## Source implemented and committed
