@@ -12,6 +12,7 @@ import { HostDeviceService } from '../host/device-service.js';
 import { HostServices } from '../host/services.js';
 import { HostStageTransferService } from '../host/stage-transfer-service.js';
 import { NativeStageReviewService } from '../host/native-stage-review.js';
+import { NativeEffectReviewService } from '../host/native-effect-review.js';
 import { HostWorkspaceService } from '../host/workspace-service.js';
 
 app.setName('AutoReels Studio');
@@ -136,6 +137,7 @@ else {
       );
       await services.ready();
       const nativeStageReview = new NativeStageReviewService(db, devices, services.stage!, hostId);
+      const nativeEffectReview = new NativeEffectReviewService(db, hostId);
       // Only a paired, observed native suspend/resume can classify missed slots.
       // A startup, clock jump, busy queue or device reconnect is NOT a sleep gap.
       powerMonitor.on('suspend', () => { suspendedAt = Date.now(); });
@@ -172,6 +174,27 @@ else {
             operationId: 'op_' + randomUUID().replaceAll('-', ''),
           });
         return services!.request(envelope.command, envelope.input);
+      });
+      ipcMain.handle('studio:effect-manual-review', async (event, raw: unknown) => {
+        if (
+          event.sender !== window?.webContents ||
+          event.senderFrame !== window.webContents.mainFrame ||
+          event.senderFrame.url !== allowedUrl
+        ) throw new Error('Unauthorized sender');
+        const selection = z.strictObject({
+          jobId: idSchema,
+          ordinal: z.number().int().min(0).max(19),
+          actorId: idSchema,
+          reasonCode: z.enum([
+            'UNKNOWN_EFFECT', 'CANCEL_REQUESTED',
+            'PROVIDER_EVIDENCE_MISSING', 'COMMENT_UNCERTAIN',
+          ]),
+          disposition: z.enum([
+            'AWAITING_EVIDENCE', 'ESCALATED', 'INSPECTED_UNCERTIFIED',
+          ]),
+          evidenceRefs: z.array(idSchema).max(8),
+        }).strict().parse(raw);
+        return nativeEffectReview.recordManualReview(selection);
       });
       ipcMain.handle('studio:stage-reobserve', async (event, raw: unknown) => {
         if (
