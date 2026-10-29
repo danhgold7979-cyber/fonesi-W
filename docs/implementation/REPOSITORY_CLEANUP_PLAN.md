@@ -7,7 +7,7 @@ Planning baseline HEAD: `9d414ae869e136b201902bdae7a421c66d394f5b`.
 
 - GitHub reports repository size as 21,077 KB (~20.6 MiB), well below GitHub's recommended repository-size guidance.
 - The current branch tree contains 492 files and 57.06 MiB of file contents.
-- Five historical ZIP bundles under `archives/` account for approximately 42.3 MiB in the current tree. The live source has advanced well beyond those snapshots; `archives/README.md` and the adjacent receipt/checksum files identify them as downloadable historical snapshots.
+- Five historical ZIP bundles under `archives/` account for approximately 42.22 MB (40.27 MiB) in the current tree. The live source has advanced well beyond those snapshots; `archives/README.md` and the adjacent receipt/checksum files identify them as downloadable historical snapshots.
 - The ZIPs are not required by source-plan validators or application build/test scripts. The source-plan validator does depend on the 4.36 MiB `docs/source-plan/v2/evidence/controls-observed.json`; that evidence, all source, tests, plans, receipts, and checksum sidecars are explicitly out of scope for deletion.
 
 ## Scope

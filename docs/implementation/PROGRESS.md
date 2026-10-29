@@ -1,3 +1,9 @@
+## Repository maintenance — historical ZIP cleanup
+
+Plan: [REPOSITORY_CLEANUP_PLAN.md](REPOSITORY_CLEANUP_PLAN.md), plan commit [1e1f486e](https://github.com/danhgold7979-cyber/fonesi-W/commit/1e1f486e316b6169c68e84696b92d437a2b864f4). Removed only five obsolete snapshot ZIPs from the current branch tree; retained all five receipt JSON files and SHA-256 sidecars. Source, tests, V2.1 plan registries, screenshots, and implementation evidence were not deleted. Historical downloads are linked from [archives/README.md](../../archives/README.md) at pre-cleanup commit [9d414ae869e136b201902bdae7a421c66d394f5b](https://github.com/danhgold7979-cyber/fonesi-W/commit/9d414ae869e136b201902bdae7a421c66d394f5b).
+
+Pre-cleanup GitHub API repository size: 21,077 KB (~20.6 MiB); current tree: 57.06 MiB, including 42,223,661 bytes (~40.27 MiB) across the five ZIPs. Expected current-tree footprint reduction is ~40.27 MiB. **This does not reclaim historical Git objects** because history is not rewritten. CI for the cleanup commit: pending verification.
+
 ## Increment051 / P11-S095.2 — MANUAL-lease reconciliation after JOB expiry (plan committed)
 
 Plan-first: [INCREMENT-051_PLAN.md](INCREMENT-051_PLAN.md), commit [e7453457](https://github.com/danhgold7979-cyber/fonesi-W/commit/e74534577069e6f07edaa0b4ad6f892243f6d0b4), baseline Increment050 tested source `1c260738cf4451cad4bab4efa0ae2c7ee38ba16c`. Goal: allow fresh, read-only reconciliation for a stage whose JOB claim expired and job entered `NEEDS_REVIEW`, under a current explicit MANUAL lease. Implementation/CI pending; this is not dispatch or recovery-to-runnable.
