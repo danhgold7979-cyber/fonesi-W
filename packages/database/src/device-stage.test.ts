@@ -5,6 +5,7 @@ import { basename, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type {
   DeviceLease, DeviceStageTransfer, JobDefinition, ProcessDefinition,
+  NativeStageCleanupAbsenceResult,
 } from '@autoreels/contracts';
 import { contentHash } from '@autoreels/domain';
 import { StudioDatabase } from './index.js';
@@ -1111,4 +1112,225 @@ it('reviews full post-success cleanup readiness from SQLite without deleting or 
     canDelete: false, canRetry: false,
   });
   expect(db.listDeviceStageTransfers(f.jobId)[0]!.remotePath).toBe(stage.remotePath);
+});
+
+
+it('journals exactly three non-executable MANUAL cleanup rechecks and survives restart without altering job/effects', async () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  expect(db.recoverExpiredClaims(f.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  const manual = db.acquireLease(
+    f.deviceId, 'operator_recheck_fixture', 'MANUAL', at + 3001, 120000,
+  );
+  const jobBefore = db.getJob(f.jobId).job;
+  const stageBefore = db.listDeviceStageTransfers(f.jobId)[0]!;
+  const counts = () => {
+    const conn = new DatabaseSync(dbPath());
+    try {
+      return [
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?')
+          .get(f.jobId)?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?')
+          .get(f.jobId)?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM device_stage_cleanup_rechecks WHERE stage_id=?')
+          .get(stage.id)?.n),
+      ];
+    } finally { conn.close(); }
+  };
+  const safeAbsence: NativeStageCleanupAbsenceResult = {
+    scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
+    status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+    remote: 'ABSENT', mediaStore: 'NOT_INDEXED',
+    blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+    canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+  };
+  const req = {
+    command: 'stage.cleanupRecheckRecord' as const,
+    requestId: 'cleanup_recheck_first',
+    stageId: stage.id, hostId,
+    expectedJobRevision: jobBefore.revision,
+    expectedSnapshotHash: f.snapshotHash,
+    lease: manual, result: safeAbsence, at: at + 3010,
+  };
+  const before = counts();
+  const first = dispatchInternal(db, req) as
+    ReturnType<StudioDatabase['recordOwnedStageCleanupRecheck']>;
+  expect(first).toEqual({
+    requestId: req.requestId, ordinal: 0, attemptOrdinal: 1,
+    status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+    recordedAt: new Date(req.at).toISOString(),
+    alreadyRecorded: false,
+    canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+  });
+  expect(dispatchInternal(db, req)).toMatchObject({
+    attemptOrdinal: 1, alreadyRecorded: true, canDelete: false,
+  });
+  const second = db.recordOwnedStageCleanupRecheck({
+    ...req, requestId: 'cleanup_recheck_second', at: at + 3011,
+    result: {
+      ...safeAbsence, status: 'REMOTE_PRESENT_REVIEW', remote: 'PRESENT',
+      blockers: ['REMOTE_STILL_PRESENT', 'PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+    },
+  });
+  expect(second).toMatchObject({
+    attemptOrdinal: 2, status: 'REMOTE_PRESENT_REVIEW', canRetry: false,
+  });
+  const third = db.recordOwnedStageCleanupRecheck({
+    ...req, requestId: 'cleanup_recheck_third', at: at + 3012,
+    result: {
+      ...safeAbsence, status: 'MEDIASTORE_PRESENT_REVIEW', mediaStore: 'INDEXED_EXACT',
+      blockers: ['MEDIASTORE_STILL_INDEXED', 'PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+    },
+  });
+  expect(third).toMatchObject({
+    attemptOrdinal: 3, status: 'MEDIASTORE_PRESENT_REVIEW', canMarkClean: false,
+  });
+  expect(() => db.recordOwnedStageCleanupRecheck({
+    ...req, requestId: 'cleanup_recheck_fourth', at: at + 3013,
+  })).toThrow('Three read-only recheck records');
+  expect(db.recordOwnedStageCleanupRecheck({
+    ...req, requestId: 'cleanup_recheck_third', at: at + 3012,
+    result: {
+      ...safeAbsence, status: 'MEDIASTORE_PRESENT_REVIEW', mediaStore: 'INDEXED_EXACT',
+      blockers: ['MEDIASTORE_STILL_INDEXED', 'PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+    },
+  })).toMatchObject({ attemptOrdinal: 3, alreadyRecorded: true });
+
+  const history = dispatchInternal(db, {
+    command: 'stage.cleanupRecheckHistory', jobId: f.jobId,
+  }) as ReturnType<StudioDatabase['listOwnedStageCleanupRechecks']>;
+  expect(history).toMatchObject({
+    scope: 'PRIVATE_CLEANUP_RECHECK_HISTORY_NOT_DELETE_CERTIFIED',
+    items: expect.arrayContaining([
+      { ordinal: 0, attemptOrdinal: 1,
+        status: 'ABSENCE_CANDIDATE_UNCERTIFIED', remote: 'ABSENT',
+        mediaStore: 'NOT_INDEXED', recordedAt: first.recordedAt },
+      { ordinal: 0, attemptOrdinal: 2,
+        status: 'REMOTE_PRESENT_REVIEW', remote: 'PRESENT',
+        mediaStore: 'NOT_INDEXED', recordedAt: second.recordedAt },
+      { ordinal: 0, attemptOrdinal: 3,
+        status: 'MEDIASTORE_PRESENT_REVIEW', remote: 'ABSENT',
+        mediaStore: 'INDEXED_EXACT', recordedAt: third.recordedAt },
+    ]),
+    canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+  });
+  const text = JSON.stringify(history);
+  for (const secret of [stage.id, stage.remotePath, stage.nonce,
+    f.snapshotHash, manual.ownerId, stage.expectedHash])
+    expect(text).not.toContain(secret);
+  expect(counts()).toEqual([before[0], before[1], 3]);
+  expect(db.getJob(f.jobId).job).toEqual(jobBefore);
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stageBefore);
+  expect(db.claimDueJob(f.deviceId, 'replay_not_permitted', at + 3200).status)
+    .toBe('NEEDS_REVIEW');
+  await expect(dispatch(db, {
+    operationId: 'op_forged_cleanup_recheck', command: 'stage.cleanupRecheckRecord' as never,
+    input: req,
+  })).rejects.toThrow();
+
+  db.close(); db = new StudioDatabase(dbPath());
+  expect(db.listOwnedStageCleanupRechecks(f.jobId)).toEqual(history);
+  expect(db.getJob(f.jobId).job).toEqual(jobBefore);
+  expect(counts()).toEqual([before[0], before[1], 3]);
+  sql((conn) => {
+    expect(() => conn.prepare(
+      "UPDATE device_stage_cleanup_rechecks SET result_status='BLOCKED' WHERE request_id=?",
+    ).run(req.requestId)).toThrow('immutable');
+    expect(() => conn.prepare(
+      'DELETE FROM device_stage_cleanup_rechecks WHERE request_id=?',
+    ).run(req.requestId)).toThrow('immutable');
+  });
+});
+
+it('rejects forged cleanup recheck rights, contradictory status or mutated request identity without effects', async () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  const early = db.acquireLease(f.deviceId, 'recheck_job_still_claimed', 'MANUAL',
+    at + 3010, 120000);
+  const base: Parameters<StudioDatabase['recordOwnedStageCleanupRecheck']>[0] = {
+    requestId: 'cleanup_recheck_invalid', stageId: stage.id, hostId,
+    expectedJobRevision: db.getJob(f.jobId).job.revision,
+    expectedSnapshotHash: f.snapshotHash,
+    lease: early, at: at + 3020,
+    result: {
+      scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
+      status: 'ABSENCE_CANDIDATE_UNCERTIFIED', remote: 'ABSENT',
+      mediaStore: 'NOT_INDEXED', blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+      canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+    },
+  };
+  expect(() => db.recordOwnedStageCleanupRecheck(base)).toThrow();
+  db.releaseLease(early);
+  db.recoverExpiredClaims(f.deviceId, at + 5000);
+  const manual = db.acquireLease(f.deviceId, 'cleanup_recheck_operator', 'MANUAL',
+    at + 5001, 120000);
+  const revision = db.getJob(f.jobId).job.revision;
+  const valid = { ...base, lease: manual, expectedJobRevision: revision, at: at + 5010 };
+  const count = (): number => {
+    let n = -1;
+    sql(conn => { n = Number(conn.prepare(
+      'SELECT COUNT(*) AS n FROM device_stage_cleanup_rechecks WHERE stage_id=?',
+    ).get(stage.id)?.n); });
+    return n;
+  };
+  for (const bad of [
+    { ...valid, hostId: 'host_foreign' },
+    { ...valid, expectedJobRevision: revision - 1 },
+    { ...valid, expectedSnapshotHash: contentHash('wrong_snapshot') },
+    { ...valid, requestId: '' },
+    { ...valid, at: Number.NaN },
+    { ...valid, result: { ...valid.result, canDelete: true as never } },
+    { ...valid, result: { ...valid.result, canRetry: true as never } },
+    { ...valid, result: { ...valid.result, canDispatch: true as never } },
+    { ...valid, result: { ...valid.result, remotePath: '/sdcard/DCIM/Camera/private.mp4' } },
+    { ...valid, result: { ...valid.result, blockers: [] } },
+    { ...valid, result: { ...valid.result, blockers: ['REMOTE_STAT_INVALID'] as never } },
+    { ...valid, result: { ...valid.result, status: 'MEDIASTORE_PRESENT_REVIEW' as never } },
+    { ...valid, result: { ...valid.result, mediaStore: 'INDEXED_EXACT' as never } },
+    { ...valid, result: { ...valid.result, status: 'BLOCKED' as never } },
+  ]) {
+    expect(() => db.recordOwnedStageCleanupRecheck(bad)).toThrow();
+    expect(count()).toBe(0);
+  }
+  const result = db.recordOwnedStageCleanupRecheck(valid);
+  expect(result).toMatchObject({ attemptOrdinal: 1, alreadyRecorded: false });
+  expect(() => db.recordOwnedStageCleanupRecheck({
+    ...valid, result: {
+      ...valid.result, status: 'REMOTE_PRESENT_REVIEW',
+      remote: 'PRESENT',
+      blockers: ['REMOTE_STILL_PRESENT', 'PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+    },
+  })).toThrow('already bound to different evidence');
+  expect(count()).toBe(1);
+  db.releaseLease(manual);
+  expect(() => db.recordOwnedStageCleanupRecheck({
+    ...valid, requestId: 'cleanup_recheck_lease_lost', at: at + 5020,
+  })).toThrow();
+  expect(count()).toBe(1);
+});
+
+it('rejects recheck if frozen owned path is altered or historical review state is no longer current', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  db.recoverExpiredClaims(f.deviceId, at + 3000);
+  const manual = db.acquireLease(f.deviceId, 'cleanup_recheck_fence', 'MANUAL',
+    at + 3001, 120000);
+  const valid: Parameters<StudioDatabase['recordOwnedStageCleanupRecheck']>[0] = {
+    requestId: 'recheck_path_fence', stageId: stage.id, hostId,
+    expectedJobRevision: db.getJob(f.jobId).job.revision,
+    expectedSnapshotHash: f.snapshotHash, lease: manual, at: at + 3011,
+    result: {
+      scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
+      status: 'REMOTE_PRESENT_REVIEW', remote: 'PRESENT', mediaStore: 'NOT_INDEXED',
+      blockers: ['REMOTE_STILL_PRESENT', 'PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+      canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+    },
+  };
+  sql(conn => conn.prepare('UPDATE device_stage_transfers SET remote_path=? WHERE id=?')
+    .run('/sdcard/DCIM/Camera/not-owned.mp4', stage.id));
+  expect(() => db.recordOwnedStageCleanupRecheck(valid)).toThrow();
+  sql(conn => conn.prepare('UPDATE device_stage_transfers SET remote_path=? WHERE id=?')
+    .run(stage.remotePath, stage.id));
+  sql(conn => conn.prepare('UPDATE jobs SET revision=revision+1 WHERE id=?').run(f.jobId));
+  expect(() => db.recordOwnedStageCleanupRecheck(valid)).toThrow();
+  sql(conn => conn.prepare('UPDATE jobs SET revision=revision-1 WHERE id=?').run(f.jobId));
+  expect(db.listOwnedStageCleanupRechecks(f.jobId).items).toHaveLength(0);
 });
