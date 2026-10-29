@@ -102,6 +102,7 @@ export function assessOwnedCleanupReadback(input: {
       ? 'image/' : 'video/';
     if (typeof ms.rowId !== 'string' || !/^\d{1,20}$/.test(ms.rowId) ||
         ms.displayName !== owned.displayName ||
+        typeof ms.relativePath !== 'string' ||
         ms.relativePath.replace(/^\/+/, '') !== owned.relativePath ||
         typeof ms.mimeType !== 'string' || !ms.mimeType.startsWith(family) ||
         ms.bytes !== input.expectedBytes)
