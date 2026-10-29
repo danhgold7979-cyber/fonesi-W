@@ -36,6 +36,18 @@ function fixture(deviceId = 'device_1', index = '1', withComment = false) {
   setup.prepare(
     "INSERT INTO device_profiles(device_id,fingerprint,metadata,identity,revision) VALUES(?,?,NULL,'VERIFIED_PROPERTIES',0)",
   ).run(deviceId, contentHash({ deviceId, verifiedFixture: true }));
+  if (withComment) {
+    // Process must use registered app/device-matching identities. These are
+    // deliberately synthetic SQLite fixtures, not observed provider accounts.
+    for (const [id, kind] of [
+      ['account_comment', 'account'],
+      ['target_comment', 'target'],
+    ] as const) {
+      setup.prepare(
+        'INSERT INTO identities(id,app_id,device_id,kind,fingerprint) VALUES(?,?,?,?,?)',
+      ).run(id, 'fb', deviceId, kind, contentHash({ id, deviceId, fixture: true }));
+    }
+  }
   setup.close();
   const draft = db.createWorkflow('fb', 'Strict effect fixture');
   const bundle = structuredClone(draft.bundle),
