@@ -133,6 +133,26 @@ export type InternalRequest =
   | { command: 'queue.claim'; deviceId: string; ownerId: string; at: number; ttl: number }
   | { command: 'queue.renew'; jobId: string; lease: DeviceLease; at: number; ttl: number }
   | {
+      command: 'effect.reviewRecord';
+      requestId: string;
+      jobId: string;
+      effectId: string;
+      expectedJobRevision: number;
+      expectedEffectState: 'INTENT' | 'ATTEMPT_UNCERTAIN' | 'NEEDS_REVIEW';
+      actorId: string;
+      reasonCode: 'UNKNOWN_EFFECT' | 'CANCEL_REQUESTED' |
+        'PROVIDER_EVIDENCE_MISSING' | 'COMMENT_UNCERTAIN';
+      disposition: 'AWAITING_EVIDENCE' | 'ESCALATED' | 'INSPECTED_UNCERTIFIED';
+      evidenceRefs: readonly string[];
+      at: number;
+    }
+  | {
+      command: 'effect.reviewHistory';
+      jobId: string;
+      effectId: string;
+      limit: number;
+    }
+  | {
       command: 'job.requestCancellation';
       jobId: string;
       expectedRevision: number;
@@ -353,6 +373,10 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.claimDueJob(request.deviceId, request.ownerId, request.at, request.ttl);
     case 'queue.renew':
       return db.renewJobClaim(request.jobId, request.lease, request.at, request.ttl);
+    case 'effect.reviewRecord':
+      return db.recordEffectManualReview(request);
+    case 'effect.reviewHistory':
+      return db.effectManualReviewHistory(request);
     case 'job.requestCancellation':
       return db.requestJobCancellation(request);
     case 'queue.recover':
