@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-29",
+  "repository": "danhgold7979-cyber/fonesi-W",
+  "branch": "feat/studio-workspace",
+  "phase": "P11",
+  "increment": "067",
+  "steps": [
+    "S097.3",
+    "S099"
+  ],
+  "plan": "docs/implementation/INCREMENT-067_PLAN.md",
+  "planCommit": "22ee0b900d368f35f552f3ce5d6690a3c181a9be",
+  "testedSourceSha": "0e13eb496c0114c7b6faf486e971daae987ec1ae",
+  "status": "TESTED_S097_HOST_RECEIPT_SEQUENCE_NOT_ACCEPTED",
+  "ci": [
+    {
+      "runId": 40880481353,
+      "event": "push",
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "conclusion": "success",
+      "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40880481353"
+    },
+    {
+      "runId": 40880491801,
+      "event": "pull_request",
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "conclusion": "success",
+      "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40880491801"
+    }
+  ],
+  "tests": {
+    "ubuntu": {
+      "unitPassed": 488,
+      "files": 43,
+      "chromiumPassed": 31
+    },
+    "windows": {
+      "unitPassed": 487,
+      "skipped": 1,
+      "files": 43
+    }
+  },
+  "implemented": [
+    "validate monotonic durable INTENT/ATTEMPT job revision receipts before any adapter invocation",
+    "fault-inject stale receipts after real SQLite commits and recover without replay"
+  ],
+  "notRun": [
+    "real provider/Android posting",
+    "live effect recovery and USB/LAN fault injection",
+    "fleet scale and installer"
+  ],
+  "overallCompletionPercent": null
+}
