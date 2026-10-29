@@ -114,6 +114,9 @@ export function assessProviderCommentCandidates(input: {
       input.ordinal < 0 || input.ordinal >= MAX_ITEMS ||
       input.frozen?.scope !== 'FROZEN_COMMENT_LIST_NOT_PROVIDER_VERIFIED' ||
       input.frozen?.status !== 'FROZEN_COMMENTS_PROVIDER_UNVERIFIED' ||
+      !Array.isArray(input.frozen?.blockers) || input.frozen.blockers.length !== 0 ||
+      input.frozen.canConfirm !== false || input.frozen.canRetry !== false ||
+      input.frozen.canDispatch !== false ||
       !Array.isArray(items) || items.length === 0 || items.length > MAX_ITEMS ||
       items.some((item, i) =>
         !item || item.ordinal !== i || typeof item.value !== 'string' ||
