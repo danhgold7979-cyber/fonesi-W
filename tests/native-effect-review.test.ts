@@ -88,8 +88,11 @@ describe('S101.3 native-only manual effect review note', () => {
     const persistedRequestId = secondCall?.command === 'effect.reviewRecord'
       ? secondCall.requestId : '';
     for (const secret of [
-      target.effectId, input.actorId, persistedRequestId, 'effect_review_',
+      target.effectId, input.actorId, persistedRequestId,
     ]) expect(redacted).not.toContain(secret);
+    expect(result).not.toHaveProperty('requestId');
+    expect(result).not.toHaveProperty('effectId');
+    expect(result).not.toHaveProperty('actorId');
   });
 
   it('rejects invalid inputs before reading a target or writing a note', async () => {
