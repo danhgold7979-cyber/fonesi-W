@@ -166,11 +166,11 @@ export function assessProviderPostCandidates(input: {
         observedAt < postedAt || observedAt > input.at ||
         !Array.isArray(record.orderedMedia) ||
         record.orderedMedia.length > MAX_MEDIA ||
-        record.orderedMedia.some(item =>
+        record.orderedMedia.some((item: ProviderPostObservation['orderedMedia'][number]) =>
           !item || !hashSchema.safeParse(item.hash).success || !validBytes(item.bytes)) ||
         !Array.isArray(record.orderedFields) ||
         record.orderedFields.length > MAX_FIELDS ||
-        record.orderedFields.some((item, index) =>
+        record.orderedFields.some((item: ProviderPostObservation['orderedFields'][number], index: number) =>
           !item || item.ordinal !== index ||
           !['row','process'].includes(item.scope) ||
           !['TEXT','URL'].includes(item.kind) ||
@@ -189,10 +189,10 @@ export function assessProviderPostCandidates(input: {
       continue;
     }
     const exactMedia = record.orderedMedia.length === media.length &&
-      record.orderedMedia.every((item, i) =>
+      record.orderedMedia.every((item: ProviderPostObservation['orderedMedia'][number], i: number) =>
         item.hash === media[i]!.pinnedHash && item.bytes === media[i]!.pinnedBytes);
     const exactFields = record.orderedFields.length === fields.length &&
-      record.orderedFields.every((item, i) =>
+      record.orderedFields.every((item: ProviderPostObservation['orderedFields'][number], i: number) =>
         item.ordinal === fields[i]!.ordinal &&
         item.scope === fields[i]!.scope &&
         item.kind === fields[i]!.kind &&
