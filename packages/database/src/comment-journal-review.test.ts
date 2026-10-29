@@ -70,6 +70,22 @@ describe('S100.3 private persisted comment journal list (not provider certified)
     expect(JSON.stringify(rows)).toBe(before);
   });
 
+  it('reports DB-only definitive rejection without inferring provider negative proof or retry', () => {
+    const f = fixture(), rows = [f.row(0, 'DEFINITIVELY_REJECTED')];
+    const before = JSON.stringify({f, rows});
+    const result = assessPersistedCommentJournal({ frozen: f.frozen, rows });
+    expect(result).toMatchObject({
+      status: 'READ_ONLY_UNCERTIFIED', journalCount: 1,
+      items: [
+        { ordinal: 0, journal: 'DEFINITIVELY_REJECTED_DB_ONLY' },
+        { ordinal: 1, journal: 'NO_JOURNAL_UNVERIFIED' },
+      ],
+      blockers: [], canConfirm: false, canRetry: false, canDispatch: false,
+    });
+    expect(JSON.stringify(result)).not.toContain(f.frozen.items[0]!.effectKey);
+    expect(JSON.stringify({f, rows})).toBe(before);
+  });
+
   it('retains list ordering across out-of-order persisted rows', () => {
     const f = fixture();
     const review = assessPersistedCommentJournal({
