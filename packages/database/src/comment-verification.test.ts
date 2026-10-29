@@ -69,6 +69,29 @@ describe('S100.2 private comment candidate readback, never certified or safe ret
       expect(shown).not.toContain(secret);
     expect(JSON.stringify(f)).toBe(before);
   });
+  it('rejects forged frozen planning blockers and execution rights before matching', () => {
+    const mutations: Array<(f: ReturnType<typeof fixture>) => void> = [
+      f => { f.frozen.blockers = ['UNVERIFIED'] as never; },
+      f => { f.frozen.blockers = null as never; },
+      f => { f.frozen.canConfirm = true as never; },
+      f => { f.frozen.canRetry = true as never; },
+      f => { f.frozen.canDispatch = true as never; },
+      f => { delete (f.frozen as { canRetry?: boolean }).canRetry; },
+    ];
+    for (const mutate of mutations) {
+      const f = fixture();
+      mutate(f);
+      const before = JSON.stringify(f);
+      expect(assess(f)).toMatchObject({
+        candidate: null,
+        summary: {
+          status: 'BLOCKED', blockers: ['EXPECTATION_INVALID'],
+          exactCandidates: 0, canConfirm: false, canRetry: false, canDispatch: false,
+        },
+      });
+      expect(JSON.stringify(f)).toBe(before);
+    }
+  });
   it('cannot use an empty scan to infer definitive failure or permission to retry', () => {
     const f = fixture();f.observations = [];
     expect(assess(f)).toMatchObject({
