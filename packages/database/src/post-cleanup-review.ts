@@ -148,22 +148,18 @@ export function assessPostCleanupReadiness(input: {
           bindingOk = false;
           continue;
         }
-        let canonical = false;
+        let location: ReturnType<typeof assertOwnedStageLocation> | null = null;
         try {
           const extension = extname(stage.remotePath).toLowerCase();
-          if (supportedExtensions.has(extension)) {
-            const location = assertOwnedStageLocation({
+          if (supportedExtensions.has(extension))
+            location = assertOwnedStageLocation({
               jobId: input.job.id, ordinal, nonce: stage.nonce,
               extension, remotePath: stage.remotePath,
             });
-            canonical =
-              stage.mediaStoreRelativePath === location.relativePath &&
-              stage.mediaStoreDisplayName === location.displayName;
-          }
         } catch {
           // A non-owned Android path is never accepted, even if the DB row says READY.
         }
-        if (!canonical ||
+        if (!location ||
             !idSchema.safeParse(stage.id).success ||
             stage.jobId !== input.job.id ||
             stage.deviceId !== input.job.deviceId ||
@@ -187,7 +183,9 @@ export function assessPostCleanupReadiness(input: {
           stageEvidenceOk = false;
           block('REMOTE_READBACK_UNVERIFIED');
         }
-        if (typeof stage.mediaStoreRowId !== 'string' ||
+        if (stage.mediaStoreRelativePath !== location.relativePath ||
+            stage.mediaStoreDisplayName !== location.displayName ||
+            typeof stage.mediaStoreRowId !== 'string' ||
             !stage.mediaStoreRowId.length ||
             typeof stage.mediaStoreMimeType !== 'string' ||
             !stage.mediaStoreMimeType.length ||
