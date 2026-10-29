@@ -221,6 +221,14 @@ export type InternalRequest =
       scope: 'row' | 'process';
     }
   | {
+      command: 'comment.reviewPartialOutcome';
+      jobId: string;
+      expectedSnapshotHash: string;
+      postEffectId: string;
+      fieldKey: string;
+      scope: 'row' | 'process';
+    }
+  | {
       command: 'comment.reviewCandidates';
       jobId: string;
       expectedSnapshotHash: string;
@@ -417,6 +425,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.resolveClaimedCommentDispatch(request);
     case 'comment.reviewList':
       return db.reviewPersistedCommentListProgress(request);
+    case 'comment.reviewPartialOutcome':
+      return db.reviewPersistedCommentPartialOutcome(request);
     case 'comment.reviewCandidates':
       return db.reviewPersistedCommentCandidates(request);
     case 'source.register':
