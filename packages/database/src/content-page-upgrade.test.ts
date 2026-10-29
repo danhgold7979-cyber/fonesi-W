@@ -10,11 +10,11 @@ import { migrations, SCHEMA_VERSION } from './schema.js';
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'autoreels-v13-to-v21-'));
+  dir = mkdtempSync(join(tmpdir(), 'autoreels-v13-to-v22-'));
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-it('upgrades P08 schema13 through content epoch, cleanup-review and effect-review schema21 without data loss', () => {
+it('upgrades P08 schema13 through content epoch, effect-review and cleanup rechecks schema22 without data loss', () => {
   const path = join(dir, 'studio.sqlite');
   const legacy = new DatabaseSync(path);
   legacy.exec('PRAGMA foreign_keys=ON;');
@@ -49,7 +49,7 @@ it('upgrades P08 schema13 through content epoch, cleanup-review and effect-revie
 
   const db = new StudioDatabase(path);
   try {
-    expect(SCHEMA_VERSION).toBe(21);
+    expect(SCHEMA_VERSION).toBe(22);
     const history = db.deviceResolutionHistory('device_historical');
     expect(history.entries).toHaveLength(1);
     expect(history.entries[0]).toMatchObject({
@@ -111,6 +111,12 @@ it('upgrades P08 schema13 through content epoch, cleanup-review and effect-revie
   ).get()).toBeTruthy();
   expect(check.prepare(
     "SELECT 1 FROM sqlite_master WHERE type='trigger' AND name='effect_manual_reviews_immutable_update'",
+  ).get()).toBeTruthy();
+  expect(check.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='device_stage_cleanup_rechecks'",
+  ).get()).toBeTruthy();
+  expect(check.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='trigger' AND name='stage_cleanup_rechecks_immutable_delete'",
   ).get()).toBeTruthy();
   check.close();
 
