@@ -779,11 +779,13 @@ it('reads exact frozen comment ordinals only after a persisted confirmed post, n
     jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
     postEffectId: post.effectId, fieldKey: 'comments', scope: 'row' as const,
   };
-  expect(() => dispatchInternal(db, req)).toThrow('not confirmed');
+  expect(() => dispatchInternal(db, req)).toThrow('not available');
   const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
-  sql.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?").run(post.effectId);
+  // Simulate the distinct persistence gates in order, never an external post.
   sql.prepare("UPDATE jobs SET state='POSTED',revision=revision+1 WHERE id=?")
     .run(f.jobId);
+  expect(() => dispatchInternal(db, req)).toThrow('not confirmed');
+  sql.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?").run(post.effectId);
   // Mutable Content may subsequently change without altering the job snapshot.
   const contentId = db.getJob(f.jobId).job.contentId;
   sql.prepare('UPDATE content_items SET fields=? WHERE id=?')
