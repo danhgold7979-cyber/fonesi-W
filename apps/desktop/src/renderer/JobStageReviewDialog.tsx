@@ -2,13 +2,39 @@ import { useEffect, useRef, useState } from 'react';
 import type {
   JobStageReviewPage, NativeStageReviewResult, NativeStageCleanupReviewResult,
   NativeStageCleanupAbsenceResult, NativeStageCleanupRecheckResult,
+  NativeEffectManualReviewResult,
   MediaOrderBlocker, FrozenUnicodeBlocker, FrozenComposeBlocker,
 } from '@autoreels/contracts';
-import { api, nativeStageReview } from './api.js';
+import { api, nativeStageReview, nativeEffectReview } from './api.js';
 import { Dialog } from './components.js';
 
 interface Props { jobId: string; close: () => void }
 type Observation = JobStageReviewPage['observations'][number];
+type EffectReviewReason = NativeEffectManualReviewResult['reasonCode'];
+type EffectReviewDisposition = NativeEffectManualReviewResult['disposition'];
+interface EffectReviewDraft {
+  actorId: string;
+  reasonCode: EffectReviewReason;
+  disposition: EffectReviewDisposition;
+  evidenceRefsText: string;
+}
+const defaultEffectReviewDraft: EffectReviewDraft = {
+  actorId: '',
+  reasonCode: 'PROVIDER_EVIDENCE_MISSING',
+  disposition: 'AWAITING_EVIDENCE',
+  evidenceRefsText: '',
+};
+const effectReviewReasonLabels: Record<EffectReviewReason, string> = {
+  UNKNOWN_EFFECT: 'Không rõ effect đã xảy ra hay chưa',
+  CANCEL_REQUESTED: 'Đã yêu cầu hủy, cần rà soát effect',
+  PROVIDER_EVIDENCE_MISSING: 'Thiếu chứng cứ từ provider',
+  COMMENT_UNCERTAIN: 'Kết quả bình luận chưa chắc chắn',
+};
+const effectReviewDispositionLabels: Record<EffectReviewDisposition, string> = {
+  AWAITING_EVIDENCE: 'Chờ chứng cứ',
+  ESCALATED: 'Chuyển cấp xử lý',
+  INSPECTED_UNCERTIFIED: 'Đã xem nhưng chưa chứng nhận',
+};
 
 const stageLabels: Record<JobStageReviewPage['stages'][number]['state'], string> = {
   INTENT: 'Đã lưu ý định chuyển tệp · chưa có ACK',
@@ -99,6 +125,8 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     result: NativeStageCleanupAbsenceResult;
   } | null>(null);
   const [recheckResult, setRecheckResult] = useState<NativeStageCleanupRecheckResult | null>(null);
+  const [effectReviewDrafts, setEffectReviewDrafts] =
+    useState<Record<number, EffectReviewDraft>>({});
   const generation = useRef(0);
 
   useEffect(() => {
@@ -259,6 +287,75 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     } catch (cause) {
       if (token === generation.current)
         setReviewError(cause instanceof Error ? cause.message : 'Không thể ghi lần đối soát cleanup.');
+    } finally {
+      if (token === generation.current) setReviewBusy(false);
+    }
+  }
+
+  function updateEffectReviewDraft(
+    ordinal: number, patch: Partial<EffectReviewDraft>,
+  ): void {
+    setEffectReviewDrafts((current) => ({
+      ...current,
+      [ordinal]: { ...(current[ordinal] ?? defaultEffectReviewDraft), ...patch },
+    }));
+  }
+
+  async function recordManualEffectReview(
+    ordinal: number,
+    kind: 'PUBLISH' | 'COMMENT',
+    state: 'INTENT' | 'ATTEMPT_UNCERTAIN' | 'NEEDS_REVIEW',
+  ): Promise<void> {
+    if (!nativeEffectReview || reviewBusy || loading || loadingMore ||
+        report?.jobState !== 'NEEDS_REVIEW') return;
+    const token = generation.current;
+    const draft = effectReviewDrafts[ordinal] ?? defaultEffectReviewDraft;
+    const actorId = draft.actorId.trim();
+    const evidenceRefs = draft.evidenceRefsText.split(',')
+      .map((item) => item.trim()).filter(Boolean);
+    const missingEvidenceOnly =
+      draft.reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
+      draft.disposition === 'AWAITING_EVIDENCE';
+    if (!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(actorId) ||
+        evidenceRefs.length > 8 ||
+        evidenceRefs.some((item) => !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(item)) ||
+        new Set(evidenceRefs).size !== evidenceRefs.length ||
+        (!missingEvidenceOnly && evidenceRefs.length === 0)) {
+      setReviewError(missingEvidenceOnly
+        ? 'Nhập actor ID tự khai báo hợp lệ; nếu có chứng cứ, nhập 1–8 ID duy nhất.'
+        : 'Cần actor ID tự khai báo và 1–8 ID chứng cứ hợp lệ cho lựa chọn này.');
+      return;
+    }
+    setReviewError('');
+    setLastLive(null);
+    setCleanupResult(null);
+    setAbsenceResult(null);
+    setRecheckResult(null);
+    setReviewBusy(true);
+    try {
+      const result = await nativeEffectReview.recordManualReview({
+        jobId, ordinal, actorId,
+        reasonCode: draft.reasonCode,
+        disposition: draft.disposition,
+        evidenceRefs,
+      });
+      if (token !== generation.current) return;
+      if (result.scope !== 'PRIVATE_EFFECT_MANUAL_REVIEW_NOTE_NOT_CERTIFIED' ||
+          result.jobId !== jobId || result.ordinal !== ordinal ||
+          result.kind !== kind || result.state !== state ||
+          result.reasonCode !== draft.reasonCode ||
+          result.disposition !== draft.disposition ||
+          result.evidenceCount !== evidenceRefs.length ||
+          !Number.isFinite(Date.parse(result.createdAt)) ||
+          result.canConfirm !== false || result.canRetry !== false ||
+          result.canDispatch !== false ||
+          Object.keys(result).sort().join(',') !==
+            'alreadyRecorded,canConfirm,canDispatch,canRetry,createdAt,disposition,evidenceCount,jobId,kind,ordinal,reasonCode,scope,state')
+        throw new Error('Biên nhận rà soát effect không hợp lệ hoặc có quyền thực thi.');
+      setReload((value) => value + 1);
+    } catch (cause) {
+      if (token === generation.current)
+        setReviewError(cause instanceof Error ? cause.message : 'Không thể ghi chú rà soát effect.');
     } finally {
       if (token === generation.current) setReviewBusy(false);
     }
