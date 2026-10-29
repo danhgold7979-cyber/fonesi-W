@@ -186,6 +186,14 @@ export type InternalRequest =
       at: number;
     }
   | {
+      command: 'comment.reviewList';
+      jobId: string;
+      expectedSnapshotHash: string;
+      postEffectId: string;
+      fieldKey: string;
+      scope: 'row' | 'process';
+    }
+  | {
       command: 'comment.reviewCandidates';
       jobId: string;
       expectedSnapshotHash: string;
@@ -374,6 +382,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.frozenCommentListPlan(request);
     case 'comment.resolveClaimed':
       return db.resolveClaimedCommentDispatch(request);
+    case 'comment.reviewList':
+      return db.reviewPersistedCommentListProgress(request);
     case 'comment.reviewCandidates':
       return db.reviewPersistedCommentCandidates(request);
     case 'source.register':
