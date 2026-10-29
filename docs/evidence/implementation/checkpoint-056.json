@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-29",
+  "repository": "danhgold7979-cyber/fonesi-W",
+  "branch": "feat/studio-workspace",
+  "phase": "P11",
+  "increment": "063",
+  "steps": [
+    "S096.1",
+    "S096.3"
+  ],
+  "schemaVersion": 20,
+  "plan": "docs/implementation/INCREMENT-063_PLAN.md",
+  "planCommit": "0f3d8d6fbe990f62f7faca3ab9989df460004295",
+  "implementationCommit": "e18f1d0a19c1cef1efc67e3d96af3c4a38cdbad0",
+  "intermediateCommit": "35a103f4117a30c6c6ed629724298d4e106c666e",
+  "testedSourceSha": "51dee5b45f177d4635ba127eb75493628afcf2e6",
+  "status": "TESTED_S096_PINNED_FINGERPRINTS_NOT_ACCEPTED",
+  "ci": [
+    {
+      "runId": 40866320913,
+      "event": "push",
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "conclusion": "success",
+      "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40866320913"
+    },
+    {
+      "runId": 40866328763,
+      "event": "pull_request",
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "conclusion": "success",
+      "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40866328763"
+    }
+  ],
+  "tests": {
+    "ubuntu": {
+      "unitPassed": 450,
+      "files": 42,
+      "chromiumPassed": 31,
+      "generatedContracts": "PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS",
+      "plan": "PASS"
+    },
+    "windows": {
+      "unitPassed": 449,
+      "skipped": 1,
+      "files": 42,
+      "generatedContracts": "PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS",
+      "windowsVerifyOnly": "PASS",
+      "plan": "PASS"
+    }
+  },
+  "implemented": [
+    "exact canonical workflow SHA and job snapshot SHA binding within frozen compose preflight",
+    "exact selected media ordinal ID/hash/byte/kind fingerprints independent of filename and descriptor enumeration",
+    "private ordered asset manifest and redacted UI blockers, no public raw IDs or content",
+    "negative cases for mutated frozen inputs and read-only SQLite/Chromium regressions"
+  ],
+  "notRun": [
+    "physical Windows 10 + Android USB/LAN exact picker, Unicode typing and target/account verification",
+    "live Facebook/TikTok post and provider confirmation",
+    "Android owned cleanup, crash/restart hardware fault injection",
+    "fleet 20–100–300 benchmark, Windows installer/release and main merge"
+  ],
+  "overallCompletionPercent": null
+}

@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-27", "baselineRevision": "2ee43ab", "increment": "022", "phases": ["P00", "P14"], "steps": ["S005", "S119"],
+  "status": "CHECKOUT_AND_LINUX_WINDOWS_CI_PASS_NOT_WIN10_HARDWARE_ACCEPTANCE",
+  "checks": [
+    {"scope": "BEFORE_FIX_CORE_AUTOCRLF_TRUE_CHECKOUT", "hasCRLF": true, "matchesTrackedLF": false},
+    {"scope": "AFTER_FIX_CORE_AUTOCRLF_TRUE_CHECKOUT", "filesChecked": 44, "frozenReferenceFiles": 42, "mismatches": []},
+    {"command": "pnpm check:generated", "exitStatus": 0},
+    {"command": "pnpm check:plan", "exitStatus": 0}
+  ],
+  "previousApplicationChecks": {"increment": "021", "unitIntegrationPassed": 220, "filesPassed": 23, "browserPassed": 21},
+  "remoteCi": {
+    "revision": "49dcb777ae4d0c8b492289d7e41e9390659acf1d",
+    "runId": 40458714335,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40458714335",
+    "conclusion": "success",
+    "ubuntu": {"applicationTestsPassed": 220, "planValidators": "PASS"},
+    "windows": {"applicationTestsPassed": 219, "testsSkipped": 1, "skipReason": "pre-existing Unix executable SDK fixture", "setupScript": "PASS", "launcherVerifyOnly": "PASS", "planValidators": "PASS"}
+  },
+  "limitations": ["hosted Windows CI is distinct from Win10 GUI/phone acceptance", "source launcher is not a published installer"]
+}

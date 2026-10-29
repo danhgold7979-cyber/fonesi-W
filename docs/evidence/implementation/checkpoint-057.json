@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-29",
+  "repository": "danhgold7979-cyber/fonesi-W",
+  "branch": "feat/studio-workspace",
+  "phase": "P11",
+  "increment": "064",
+  "steps": [
+    "S097.1",
+    "S097.2",
+    "S097.3"
+  ],
+  "schemaVersion": 20,
+  "plan": "docs/implementation/INCREMENT-064_PLAN.md",
+  "planCommit": "390ecb33435c3e7d3b4620465d2b81f98d8b47f5",
+  "implementationCommit": "e5f05a6ed691604eba159c499c3321669342627b",
+  "testedSourceSha": "e5f05a6ed691604eba159c499c3321669342627b",
+  "status": "TESTED_S097_TRUSTED_HOST_JOURNAL_ORDER_NOT_ACCEPTED",
+  "ci": [
+    {
+      "runId": 40868602384,
+      "event": "push",
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "conclusion": "success",
+      "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40868602384"
+    },
+    {
+      "runId": 40868610462,
+      "event": "pull_request",
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "conclusion": "success",
+      "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40868610462"
+    }
+  ],
+  "tests": {
+    "ubuntu": {
+      "unitPassed": 458,
+      "files": 42,
+      "chromiumPassed": 31,
+      "generatedContracts": "PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS",
+      "plan": "PASS"
+    },
+    "windows": {
+      "unitPassed": 457,
+      "skipped": 1,
+      "files": 42,
+      "generatedContracts": "PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS",
+      "windowsVerifyOnly": "PASS",
+      "plan": "PASS"
+    }
+  },
+  "implemented": [
+    "host-only claimed effect coordinator enforces durable INTENT and ATTEMPT_UNCERTAIN before a trusted adapter callback",
+    "no provider registered, no public IPC/HTTP capability; adapter ACK remains unverified",
+    "cancellation/crash uncertainty remains durable with no automatic replay",
+    "eight real SQLite and fake-adapter ordering/recovery/security regressions"
+  ],
+  "notRun": [
+    "real Windows10/Android USB and LAN provider dispatch with verified app profile",
+    "exact Android picker, Unicode input, account and target verification",
+    "verified Facebook/TikTok external posts/comments and crash fault injection",
+    "20→100→300 fleet load, installer packaging/release, main merge"
+  ],
+  "overallCompletionPercent": null
+}

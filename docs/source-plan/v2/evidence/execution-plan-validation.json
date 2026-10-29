@@ -1,0 +1,20 @@
+{
+  "scope": "EXECUTION_PLAN_INTEGRITY_NOT_APPLICATION_ACCEPTANCE",
+  "status": "PASS",
+  "baselinePlanVersion": "2.1",
+  "phaseCount": 15,
+  "stepCount": 125,
+  "taskCount": 375,
+  "plannedScenarioCount": 250,
+  "featureCount": 330,
+  "mappingSizes": {
+    "1": 186,
+    "2": 112,
+    "3": 31,
+    "4": 1
+  },
+  "dependencyGraph": "ACYCLIC",
+  "recognitionAndGestureProviders": "MAPPED_NOT_IMPLEMENTED",
+  "productionApplicationTests": "NOT_EVALUATED_BY_PLAN_CHECKER",
+  "windowsAndroidTests": "NOT_EVALUATED_BY_PLAN_CHECKER"
+}

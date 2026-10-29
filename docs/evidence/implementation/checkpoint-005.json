@@ -1,0 +1,116 @@
+{
+  "scope": "DEVICE_CONTROL_XML_INSPECTOR_EDITOR_AND_TRACE_CODE_NOT_FULL_PRODUCT_ACCEPTANCE",
+  "revision": "6bb95de98b2a67da9c5bc37488369b531d235da2",
+  "dateUtc": "2026-10-26T13:29:22.939599+00:00",
+  "plansReadBeforeCode": [
+    "docs/source-plan/v2/16_MASTER_EXECUTION_PLAN.md",
+    "docs/source-plan/v2/17_STEP_RUNBOOK.md",
+    "docs/source-plan/v2/07_IPC_AND_CAPABILITIES.md",
+    "docs/source-plan/v2/08_OPERATION_POLICIES.md",
+    "docs/source-plan/v2/10_ACCEPTANCE_GATES.md",
+    "docs/implementation/P04_PLAN.md",
+    "docs/implementation/P05_PLAN.md",
+    "docs/implementation/P08_PLAN.md",
+    "docs/implementation/P09_PLAN.md",
+    "docs/implementation/INCREMENT-007_PLAN.md",
+    "docs/implementation/INCREMENT-008_PLAN.md",
+    "docs/implementation/INCREMENT-009_PLAN.md",
+    "docs/implementation/INCREMENT-010_PLAN.md",
+    "docs/implementation/INCREMENT-011_PLAN.md"
+  ],
+  "commands": {
+    "pnpm check": {
+      "status": "PASS",
+      "files": 17,
+      "tests": 166,
+      "includes": [
+        "generated contract parity",
+        "strict host/renderer/browser-source types",
+        "lint",
+        "unit/integration",
+        "host/renderer production build"
+      ]
+    },
+    "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test": {
+      "status": "PASS",
+      "scenarios": 11,
+      "fixtureHardware": "REAL_LOCAL_TCP_ADB_PROTOCOL_FIXTURE_NOT_PHYSICAL_ANDROID",
+      "temporaryDatabases": true
+    },
+    "pnpm install --offline --frozen-lockfile --ignore-scripts": {
+      "status": "PASS",
+      "workspaceProjects": 11
+    },
+    "pnpm check:plan": {
+      "status": "PASS",
+      "frozenReferenceFilesVerified": 42,
+      "scope": "PLAN_CONSISTENCY_ONLY"
+    },
+    "electron headless --smoke": {
+      "status": "PASS",
+      "testOnlyLaunchFlags": [
+        "no-sandbox",
+        "headless",
+        "disable-gpu",
+        "ozone-platform=headless"
+      ],
+      "rendererSandboxInProduction": true,
+      "checks": [
+        "named sandboxed API/no require",
+        "six routes",
+        "save reload via preload/DB worker",
+        "XLSX parse preview apply",
+        "native chooser capability",
+        "private API absent"
+      ]
+    },
+    "node tools/smoke-media-host.mjs": {
+      "status": "PASS",
+      "nativePicker": "TEST_ADAPTER",
+      "filesystem": "ACTUAL_TEMP_FILES",
+      "checks": [
+        "private source grant",
+        "scan ignore rescan",
+        "public raw grant rejection"
+      ]
+    },
+    "git push origin feat/studio-workspace": {
+      "status": "PASS",
+      "remoteHeadVerified": "6bb95de98b2a67da9c5bc37488369b531d235da2"
+    }
+  },
+  "actualUnitIntegrationTestCount": 166,
+  "actualBrowserScenarioCount": 11,
+  "testCountIsIndependentOfPlannedUnitCount": true,
+  "implementation": [
+    "SDK hash/discovery and direct smart-socket provider without shared-server kills",
+    "host-bound registry and USB/LAN property identity merge/fresh metadata fences",
+    "shared leases and serial per-device manual actors",
+    "PNG, coordinate geometry guards, tap/swipe/keys, managed app/system actions",
+    "transient PIN, explicit endpoint policies/reconnect/backoff and scoped disconnect",
+    "XML parser/correlation/pick/search/query/password redaction and editor test-device panel",
+    "clipboard internal wires/group identity remap and visual group outlines/undo",
+    "lexical body graph loops/nested cursor/loop-scope checks/time-step-depth budgets/mid-run cancel"
+  ],
+  "fullPhaseAcceptance": false,
+  "fullProductCompletion": false,
+  "windows": "NOT_RUN",
+  "physicalAndroid": "NOT_RUN",
+  "genfamerComparison": "NOT_RUN",
+  "installerPublished": false,
+  "sdkArtifacts": "docs/implementation/platform-tools-manifest.json",
+  "sdkLinuxNativeProbe": "HOST_PERMISSION_BLOCKED_READ_ONLY_ANDROID_HOME_NO_HOME_OVERRIDE",
+  "androidTransportTests": "PASS_TEST_ONLY_TCP_FIXTURES",
+  "originalFullTransferArchive": "NOT_READ_32_MIB_TRANSFER_LIMIT",
+  "remaining": [
+    "video stream/decoder/session profiles and popup/group control",
+    "OCR/image/Unicode/multitouch/XPath-relative-fallback providers",
+    "full compiler/dependency mapping/debugger and remaining editor operations",
+    "media thumbnails/adopt/rebind/Process clone/archive/query pagination",
+    "actual scheduler dispatch/overdue/calendar/spread/auto-append/power lifecycle",
+    "actual device workflow executor/effect verification/review/app identity/target adapters",
+    "proxy/APK/workspace import/retention/installer and Windows/Android acceptance"
+  ],
+  "progress": "docs/implementation/PROGRESS.md",
+  "deviceGuide": "docs/implementation/DEVICE_HOST_GUIDE.md"
+}

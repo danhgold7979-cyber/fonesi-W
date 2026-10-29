@@ -1,0 +1,11 @@
+# Increment 013 — P05 typed calls và TRACE debugger thật
+
+Plan trước code. S043/S044/S046/S047/S049 và editor S038. P04 increment012 đã có code và typecheck/lint; regression gom sau đợt implementation này. Không tuyên bố pinned dependency resolver/production effect compiler hoàn tất bởi debugger.
+
+1. Kiểm tra mappings của local subflow: graph ref tồn tại; required inputs có mapping; unknown key/unsafe AST/type mismatch/unsafe output target bị reject. Input expressions dùng DSL allowlist. Validate values theo field schema khi gọi; child local/output isolated, input mapped theo row/process scope; output mapping chỉ về caller local sau child return thành công. Không tạo verified post/comment IDs trong TRACE.
+2. Engine hook semantic boundary cung cấp graph/node/depth/call stack/bindings; snapshot clone, session đóng băng bundle. Debug start PAUSED trước start; Continue bỏ breakpoint đang đứng đúng một lần; Step Into dừng boundary kế; Over bỏ qua child depth; Out dừng sau caller return. Pause tại boundary, Stop đánh thức promise đang chờ và abort. Thời gian đang pause không tiêu budget chạy; giới hạn steps/time/depth hiện hữu giữ nguyên.
+3. Host debug service riêng ngoài serialized DB worker để Continue/Stop không bị xếp sau start đang pause. Session ID không đoán được, tối đa 4 active và bounded event log, TTL/close cleanup. Named schemas/StudioApi/preload, không public arbitrary invoke/hardware/provider command.
+4. Editor: Debug TRACE ở workflow overflow; panel mode/status/current node/call stack/locals/events, controls có enablement đúng status, source navigation tách authoring breadcrumbs. Poll state trong active panel/session, abort/update generation khi đổi workflow/unmount. Hardware actions vẫn không chạy từ TRACE.
+5. Regression sau implementation: typed 0/false/list/missing/wrong types; child scope/output atomicity; initial pause/one-time breakpoint resume/into-over-out/stop-paused/limits; integration host API có shape validation và no DB blocking; browser debug session điều khiển thật + P04 group/conversion/reroute save/reload.
+
+Phần chưa thuộc increment: immutable external dependency closure resolver, compiled effect dominance/recovery, DEVICE_TEST executor, physical certification. Giữ status PARTIAL rõ trong tracker, không dựng stub success để đóng phase.

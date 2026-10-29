@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-28",
+  "increment": "036",
+  "phase": "P06",
+  "steps": [
+    "S056"
+  ],
+  "baseBranch": "feat/studio-workspace",
+  "baseline": "58987bc9f39e5864dff4a0c8aca36e0eb4a6711d",
+  "sourceCommit": "828df10a7b447d6e4b12273415915e0af6da0f5c",
+  "status": "TESTED_UI_READ_ONLY_SLICE_NOT_FULL_PHASE_ACCEPTED",
+  "ci": {
+    "runId": 40650844449,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40650844449",
+    "conclusion": "success",
+    "ubuntu": {
+      "unitsPassed": 272,
+      "unitFiles": 30,
+      "browserPassed": 29
+    },
+    "windows": {
+      "unitsPassed": 271,
+      "unitFiles": 30,
+      "skipped": 1,
+      "skipReason": "pre-existing Unix-only SDK fixture"
+    }
+  },
+  "verified": [
+    "paged SQLite UI 50 row bound",
+    "stable previous/next keyset",
+    "search and ignored filters",
+    "stale cursor invalidation after edits",
+    "global Process select-all unchanged",
+    "no write effects"
+  ],
+  "notRun": [
+    "full authoring table server-side paging",
+    "query-scoped edit/bulk/schedule",
+    "Windows10 physical UI",
+    "large media corpus benchmark",
+    "real phone automation",
+    "production adapters",
+    "installer"
+  ]
+}

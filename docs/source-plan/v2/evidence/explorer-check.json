@@ -1,0 +1,39 @@
+{
+  "scope": "REVIEW_ARTIFACT_ONLY_NOT_APPLICATION_TEST",
+  "version": "2.1",
+  "status": "PASS",
+  "checks": [
+    {
+      "tab": "actions",
+      "rows": 124
+    },
+    {
+      "tab": "fields",
+      "rows": 110
+    },
+    {
+      "tab": "nodes",
+      "rows": 40
+    },
+    {
+      "tab": "events",
+      "rows": 26
+    },
+    {
+      "tab": "ux",
+      "rows": 30
+    },
+    {
+      "tab": "steps",
+      "rows": 125
+    },
+    {
+      "tab": "findings",
+      "rows": 25
+    }
+  ],
+  "searchAndDetail": "PASS",
+  "expandedExecutionDetails": "PASS_125_STEPS_LOADED",
+  "fieldContextVariants": "PASS",
+  "uncaughtErrors": []
+}

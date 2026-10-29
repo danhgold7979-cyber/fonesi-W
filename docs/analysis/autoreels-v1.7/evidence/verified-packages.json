@@ -1,0 +1,48 @@
+[
+  {
+    "name": "xlsx",
+    "version": "0.18.5",
+    "integrity": "sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==",
+    "verified": true,
+    "paths": [
+      "dist/xlsx.full.min.js"
+    ]
+  },
+  {
+    "name": "interactjs",
+    "version": "1.10.28",
+    "integrity": "sha512-QCa4ksTPd2p/FZ4I6hrH6fogjLqru1TxYywRiKYNuLZtrlAxTIYUa/MYsE7PnUgWZJU3SrGVDjiz065BeaXYng==",
+    "verified": true,
+    "paths": [
+      "dist/interact.min.js"
+    ]
+  },
+  {
+    "name": "selecto",
+    "version": "1.26.3",
+    "integrity": "sha512-gZHgqMy5uyB6/2YDjv3Qqaf7bd2hTDOpPdxXlrez4R3/L0GiEWDCFaUfrflomgqdb3SxHF2IXY0Jw0EamZi7cw==",
+    "verified": true,
+    "paths": [
+      "dist/selecto.min.js"
+    ]
+  },
+  {
+    "name": "screenfull",
+    "version": "5.2.0",
+    "integrity": "sha512-9BakfsO2aUQN2K9Fdbj87RJIEZ82Q9IGim7FqM5OsebfoFC6ZHXgDq/KvniuLTPdeM8wY2o6Dj3WQ7KeQCj3cA==",
+    "verified": true,
+    "paths": [
+      "dist/screenfull.js"
+    ]
+  },
+  {
+    "name": "choices.js",
+    "version": "10.2.0",
+    "integrity": "sha512-8PKy6wq7BMjNwDTZwr3+Zry6G2+opJaAJDDA/j3yxvqSCnvkKe7ZIFfIyOhoc7htIWFhsfzF9tJpGUATcpUtPg==",
+    "verified": true,
+    "paths": [
+      "public/assets/styles/choices.min.css",
+      "public/assets/scripts/choices.min.js"
+    ]
+  }
+]

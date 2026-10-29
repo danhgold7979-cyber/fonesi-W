@@ -1,0 +1,17 @@
+{
+  "name": "@autoreels/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "zod": "4.6.7"
+  }
+}

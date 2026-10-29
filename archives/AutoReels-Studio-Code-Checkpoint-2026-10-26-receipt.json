@@ -1,0 +1,12 @@
+{
+  "scope": "SNAPSHOT_ARCHIVE_VERIFICATION_ONLY",
+  "status": "PASS",
+  "archiveFilename": "AutoReels-Studio-Code-Checkpoint-2026-10-26.zip",
+  "sourceCommit": "a1af6dcb14f5e5f515426cc2785c3b864a3aee97",
+  "sourceBranch": "feat/studio-workspace",
+  "zipBytes": 8242493,
+  "sha256": "79b7b0c381b4fbaa282e3e7acd5c795082f2d81efe8b85a6f6dae92396a67de2",
+  "sourceFilesVerified": 252,
+  "checksumEntriesVerified": 253,
+  "githubUpload": "NOT_PERFORMED_BY_THIS_TOOL"
+}

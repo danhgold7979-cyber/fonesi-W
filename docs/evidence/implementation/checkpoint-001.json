@@ -1,0 +1,45 @@
+{
+  "scope": "AUTHORING_CHECKPOINT_NOT_ANDROID_ACCEPTANCE",
+  "revision": "bcfdda6637d0686d66865494986e59d270e65113",
+  "dateUtc": "2026-10-26T09:34:56.888052+00:00",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "checks": {
+    "frozenInstall": "PASS",
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "unitIntegration": {
+      "status": "PASS",
+      "files": 5,
+      "tests": 59
+    },
+    "rendererBuild": "PASS",
+    "browserE2E": {
+      "status": "PASS",
+      "scenarios": 3,
+      "sourceReport": "test-results/ui-report.json"
+    },
+    "electronSqliteMain": {
+      "status": "PASS",
+      "electron": "45.0.0",
+      "node": "24.22.0",
+      "sqlite": "3.53.4"
+    },
+    "electronSandboxedRenderer": {
+      "status": "PASS",
+      "namedApi": true,
+      "nodeIntegration": false,
+      "routes": 6,
+      "saveReload": true
+    },
+    "hostFunctionalRequest": "PASS",
+    "planIntegrity": "PASS"
+  },
+  "fullPhasesAccepted": false,
+  "windowsAcceptance": "NOT_RUN",
+  "androidAcceptance": "NOT_RUN",
+  "limitations": [
+    "P04/P05 advanced features and P06/P07 services remain incomplete; see PROGRESS.md",
+    "No device automation or app certification",
+    "GitHub push previously returned 403"
+  ]
+}

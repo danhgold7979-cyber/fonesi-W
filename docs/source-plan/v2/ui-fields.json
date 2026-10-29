@@ -1,0 +1,3741 @@
+[
+  {
+    "id": "FIELD-001",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "device-filter",
+    "binding": {},
+    "placeholder": "Tìm tên, model hoặc mã máy…",
+    "options": null,
+    "observedIn": [
+      "screen-devices",
+      "device-manager",
+      "device-bulk"
+    ],
+    "ownerPhase": "P08",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-001",
+    "plannedSteps": [
+      "S075"
+    ]
+  },
+  {
+    "id": "FIELD-002",
+    "tag": "input",
+    "inputType": "range",
+    "domId": "device-size",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-devices",
+      "device-manager",
+      "device-bulk"
+    ],
+    "ownerPhase": "P08",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-002",
+    "plannedSteps": [
+      "S075"
+    ]
+  },
+  {
+    "id": "FIELD-003",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-devices",
+      "device-manager",
+      "device-bulk"
+    ],
+    "ownerPhase": "P08",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-003",
+    "plannedSteps": [
+      "S075"
+    ]
+  },
+  {
+    "id": "FIELD-004",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "",
+    "binding": {
+      "deviceEnable": "*"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-devices",
+      "device-manager",
+      "device-bulk"
+    ],
+    "ownerPhase": "P08",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-004",
+    "plannedSteps": [
+      "S075"
+    ]
+  },
+  {
+    "id": "FIELD-005",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "node-search",
+    "binding": {},
+    "placeholder": "Tìm node…",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "inspector-tab-tree",
+      "inspector-tab-variables",
+      "inspector-tab-logs",
+      "inspector-tab-debug",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "subgraph-account",
+      "subgraph-page",
+      "subgraph-compose",
+      "subgraph-comment",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-005",
+    "plannedSteps": [
+      "S029"
+    ]
+  },
+  {
+    "id": "FIELD-006",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {
+      "prop": "name"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-006",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-007",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "",
+    "binding": {
+      "prop": "method"
+    },
+    "placeholder": "",
+    "options": [
+      {
+        "value": "XPath / thuộc tính",
+        "label": "XPath / thuộc tính"
+      },
+      {
+        "value": "Ảnh mẫu",
+        "label": "Ảnh mẫu"
+      },
+      {
+        "value": "OCR / văn bản",
+        "label": "OCR / văn bản"
+      },
+      {
+        "value": "Vị trí tương đối",
+        "label": "Vị trí tương đối"
+      },
+      {
+        "value": "Tọa độ",
+        "label": "Tọa độ"
+      }
+    ],
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-007",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-008",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "",
+    "binding": {
+      "prop": "timeout"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-008",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-009",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {
+      "prop": "value"
+    },
+    "placeholder": "{{row.caption}}",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-009",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-010",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {
+      "prop": "selector"
+    },
+    "placeholder": "Chọn phần tử trên điện thoại",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-010",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-011",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "",
+    "binding": {
+      "prop": "delayMin"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-011",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-012",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "",
+    "binding": {
+      "prop": "delayMax"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-012",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-013",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "test-device",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "d1",
+        "label": "Samsung A52"
+      },
+      {
+        "value": "d2",
+        "label": "Xiaomi Note 12"
+      },
+      {
+        "value": "d3",
+        "label": "OPPO Reno8"
+      },
+      {
+        "value": "d4",
+        "label": "Samsung A32 · Offline"
+      }
+    ],
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "inspector-tab-tree",
+      "inspector-tab-variables",
+      "inspector-tab-logs",
+      "inspector-tab-debug",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "subgraph-account",
+      "subgraph-page",
+      "subgraph-compose",
+      "subgraph-comment",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P09",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-013",
+    "plannedSteps": [
+      "S081"
+    ]
+  },
+  {
+    "id": "FIELD-014",
+    "tag": "input",
+    "inputType": "range",
+    "domId": "phone-zoom",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-inspector",
+      "node-properties",
+      "node-advanced",
+      "node-condition",
+      "inputs",
+      "run-data",
+      "pick-element",
+      "phone-layout",
+      "phone-info",
+      "subflow-new",
+      "subflow-convert",
+      "node-rename",
+      "canvas-menu",
+      "node-menu",
+      "edge-menu",
+      "settings",
+      "reset-confirm",
+      "help",
+      "coverage",
+      "notifications",
+      "library-subs",
+      "inspector-tab-properties",
+      "inspector-tab-tree",
+      "inspector-tab-variables",
+      "inspector-tab-logs",
+      "inspector-tab-debug",
+      "node-type-start",
+      "node-type-end",
+      "node-type-condition",
+      "node-type-loop",
+      "node-type-break",
+      "node-type-continue",
+      "node-type-subflow",
+      "node-type-launch",
+      "node-type-installed",
+      "node-type-current",
+      "node-type-closeapp",
+      "node-type-back",
+      "node-type-tap",
+      "node-type-doubletap",
+      "node-type-hold",
+      "node-type-drag",
+      "node-type-swipe",
+      "node-type-scroll",
+      "node-type-pinch",
+      "node-type-type",
+      "node-type-clear",
+      "node-type-keyboard",
+      "node-type-find",
+      "node-type-image",
+      "node-type-ocr",
+      "node-type-read",
+      "node-type-wait",
+      "node-type-waitfor",
+      "node-type-screenshot",
+      "node-type-setvar",
+      "node-type-row",
+      "node-type-stage",
+      "node-type-index",
+      "node-type-selectmedia",
+      "node-type-cleanup",
+      "node-type-transaction",
+      "node-type-verify",
+      "node-type-output",
+      "node-type-review",
+      "node-type-log",
+      "subgraph-account",
+      "subgraph-page",
+      "subgraph-compose",
+      "subgraph-comment",
+      "phone-top",
+      "phone-floating"
+    ],
+    "ownerPhase": "P09",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-014",
+    "plannedSteps": [
+      "S084"
+    ]
+  },
+  {
+    "id": "FIELD-015",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "setup-app",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "fb",
+        "label": "Facebook"
+      },
+      {
+        "value": "lite",
+        "label": "Facebook Lite"
+      },
+      {
+        "value": "ig",
+        "label": "Instagram"
+      },
+      {
+        "value": "tt",
+        "label": "TikTok"
+      },
+      {
+        "value": "th",
+        "label": "Threads"
+      }
+    ],
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-015",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-016",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "setup-workflow",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "w1",
+        "label": "Đăng video fanpage · v3"
+      },
+      {
+        "value": "w2",
+        "label": "Đăng ảnh bảng tin · v1"
+      }
+    ],
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-016",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-017",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "setup-account",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "a1",
+        "label": "Minh Anh · 2 đối tượng"
+      },
+      {
+        "value": "a2",
+        "label": "Hoàng Nam · 1 đối tượng"
+      }
+    ],
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-017",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-018",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "setup-target",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "p1",
+        "label": "Green Living"
+      },
+      {
+        "value": "p2",
+        "label": "Daily Moments"
+      }
+    ],
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-018",
+    "plannedSteps": [
+      "S050",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-019",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "row-filter",
+    "binding": {},
+    "placeholder": "Tìm nội dung…",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-019",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-020",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "row-status",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "",
+        "label": "Tất cả trạng thái"
+      },
+      {
+        "value": "Chưa lên lịch",
+        "label": "Chưa lên lịch"
+      },
+      {
+        "value": "Đã lên lịch",
+        "label": "Đã lên lịch"
+      },
+      {
+        "value": "Đã đăng · mẫu",
+        "label": "Đã đăng · mẫu"
+      },
+      {
+        "value": "Cần kiểm tra",
+        "label": "Cần kiểm tra"
+      }
+    ],
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-020",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-021",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "check-all",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-021",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-022",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "",
+    "binding": {
+      "rowCheck": "*"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-022",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-023",
+    "tag": "textarea",
+    "inputType": "textarea",
+    "domId": "",
+    "binding": {
+      "rowField": "caption"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-023",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-024",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {
+      "rowField": "hashtags"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-024",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-025",
+    "tag": "textarea",
+    "inputType": "textarea",
+    "domId": "",
+    "binding": {
+      "rowField": "comments"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-025",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-026",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {
+      "rowField": "affiliate"
+    },
+    "placeholder": "https://…",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-026",
+    "plannedSteps": [
+      "S056",
+      "S051"
+    ]
+  },
+  {
+    "id": "FIELD-027",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "daily",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-027",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-028",
+    "tag": "input",
+    "inputType": "date",
+    "domId": "start-date",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-028",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-029",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "0"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-029",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-030",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "1"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-030",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-031",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "2"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-031",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-032",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "random-schedule",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-032",
+    "plannedSteps": [
+      "S061"
+    ]
+  },
+  {
+    "id": "FIELD-033",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "random-minutes",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-033",
+    "plannedSteps": [
+      "S061"
+    ]
+  },
+  {
+    "id": "FIELD-034",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "schedule-scope",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "unscheduled",
+        "label": "Các dòng chưa lên lịch"
+      },
+      {
+        "value": "selected",
+        "label": "Các dòng đã chọn"
+      },
+      {
+        "value": "pending",
+        "label": "Tất cả dòng chưa chạy"
+      }
+    ],
+    "observedIn": [
+      "screen-process",
+      "bulk-edit",
+      "remove-content",
+      "data-import",
+      "input-mapping",
+      "process-clone",
+      "process-options",
+      "source-options",
+      "schedule-preview",
+      "queue",
+      "scan-identities",
+      "slots-paged",
+      "custom-fields",
+      "data-import-preview"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-034",
+    "plannedSteps": [
+      "S062"
+    ]
+  },
+  {
+    "id": "FIELD-035",
+    "tag": "input",
+    "inputType": "date",
+    "domId": "timeline-date",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "screen-schedule"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-035",
+    "plannedSteps": [
+      "S065"
+    ]
+  },
+  {
+    "id": "FIELD-036",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "timeline-device",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "all",
+        "label": "Tất cả máy"
+      },
+      {
+        "value": "d1",
+        "label": "Samsung A52"
+      },
+      {
+        "value": "d2",
+        "label": "Xiaomi Note 12"
+      },
+      {
+        "value": "d3",
+        "label": "OPPO Reno8"
+      },
+      {
+        "value": "d4",
+        "label": "Samsung A32"
+      }
+    ],
+    "observedIn": [
+      "screen-schedule"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-036",
+    "plannedSteps": [
+      "S065"
+    ]
+  },
+  {
+    "id": "FIELD-037",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "adv-name",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-037",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-038",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "adv-retries",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-038",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-039",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "adv-effect",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "",
+        "label": "Thao tác thông thường"
+      },
+      {
+        "value": "publish",
+        "label": "Đăng nội dung · không retry mù"
+      },
+      {
+        "value": "comment",
+        "label": "Gửi bình luận · kiểm tra trước retry"
+      }
+    ],
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-039",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-040",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "adv-duration",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-040",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-041",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "adv-loops",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-041",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-042",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "adv-confidence",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-042",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-043",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "adv-from",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-043",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-044",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "adv-to",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-044",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-045",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "adv-inputmode",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "Unicode / clipboard",
+        "label": "Unicode / clipboard"
+      },
+      {
+        "value": "Gõ từng ký tự",
+        "label": "Gõ từng ký tự"
+      },
+      {
+        "value": "Nối thêm nội dung",
+        "label": "Nối thêm nội dung"
+      },
+      {
+        "value": "Thay nội dung",
+        "label": "Thay nội dung"
+      }
+    ],
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-045",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-046",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "adv-errorscope",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "Node → nhánh lỗi",
+        "label": "Node → nhánh lỗi"
+      },
+      {
+        "value": "Dòng công việc",
+        "label": "Dòng công việc"
+      },
+      {
+        "value": "Tiến trình / đối tượng",
+        "label": "Tiến trình / đối tượng"
+      },
+      {
+        "value": "Điện thoại",
+        "label": "Điện thoại"
+      }
+    ],
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-046",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-047",
+    "tag": "textarea",
+    "inputType": "textarea",
+    "domId": "adv-fallback",
+    "binding": {},
+    "placeholder": "resource-id=…\nocr=Đăng\nimage=publish-button",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-047",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-048",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "adv-desc",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-advanced",
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-048",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-049",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "adv-branch",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "true",
+        "label": "Đúng"
+      },
+      {
+        "value": "false",
+        "label": "Sai"
+      },
+      {
+        "value": "error",
+        "label": "Lỗi"
+      }
+    ],
+    "observedIn": [
+      "node-condition"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-049",
+    "productionMeaning": "Fixture branch scenario only in TRACE; no forced branch override for REAL_JOB.",
+    "plannedSteps": [
+      "S036",
+      "S049"
+    ]
+  },
+  {
+    "id": "FIELD-050",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {
+      "inputKey": ""
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "inputs"
+    ],
+    "ownerPhase": "P01",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-050",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-051",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "",
+    "binding": {
+      "inputType": ""
+    },
+    "placeholder": "",
+    "options": [
+      {
+        "value": "text",
+        "label": "text"
+      },
+      {
+        "value": "file",
+        "label": "file"
+      },
+      {
+        "value": "file[]",
+        "label": "file[]"
+      },
+      {
+        "value": "number",
+        "label": "number"
+      },
+      {
+        "value": "boolean",
+        "label": "boolean"
+      },
+      {
+        "value": "url",
+        "label": "url"
+      },
+      {
+        "value": "list",
+        "label": "list"
+      },
+      {
+        "value": "identity",
+        "label": "identity"
+      },
+      {
+        "value": "datetime",
+        "label": "datetime"
+      }
+    ],
+    "observedIn": [
+      "inputs"
+    ],
+    "ownerPhase": "P01",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-051",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-052",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "",
+    "binding": {
+      "inputScope": ""
+    },
+    "placeholder": "",
+    "options": [
+      {
+        "value": "row",
+        "label": "row"
+      },
+      {
+        "value": "process",
+        "label": "process"
+      },
+      {
+        "value": "output",
+        "label": "output"
+      }
+    ],
+    "observedIn": [
+      "inputs"
+    ],
+    "ownerPhase": "P01",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-052",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-053",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "",
+    "binding": {
+      "inputRequired": ""
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "inputs"
+    ],
+    "ownerPhase": "P01",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-053",
+    "plannedSteps": [
+      "S010",
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-054",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "test-row",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "0",
+        "label": "1. video_001.mp4"
+      },
+      {
+        "value": "1",
+        "label": "2. video_002.mp4"
+      },
+      {
+        "value": "2",
+        "label": "3. video_003.mp4"
+      },
+      {
+        "value": "3",
+        "label": "4. video_004.mp4"
+      },
+      {
+        "value": "4",
+        "label": "5. video_005.mp4"
+      },
+      {
+        "value": "5",
+        "label": "6. video_006.mp4"
+      }
+    ],
+    "observedIn": [
+      "run-data"
+    ],
+    "ownerPhase": "P05",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-054",
+    "plannedSteps": [
+      "S049"
+    ]
+  },
+  {
+    "id": "FIELD-055",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "test-scenario",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "success",
+        "label": "Đăng thành công, có bình luận"
+      },
+      {
+        "value": "no-comment",
+        "label": "Đăng thành công, không bình luận"
+      },
+      {
+        "value": "ambiguous",
+        "label": "Chưa rõ kết quả đăng → đối soát"
+      },
+      {
+        "value": "error",
+        "label": "Lỗi đọc kết quả → đối soát"
+      }
+    ],
+    "observedIn": [
+      "run-data"
+    ],
+    "ownerPhase": "P05",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-055",
+    "plannedSteps": [
+      "S049"
+    ]
+  },
+  {
+    "id": "FIELD-056",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "pick-element",
+      "workflow-manage",
+      "settings"
+    ],
+    "ownerPhase": "P03",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-056",
+    "contextVariants": [
+      {
+        "context": "pick-element",
+        "ownerPhase": "P09",
+        "plannedSteps": [
+          "S083"
+        ],
+        "meaning": "Actual selector/element detail from snapshot."
+      },
+      {
+        "context": "workflow-manage",
+        "ownerPhase": "P04",
+        "plannedSteps": [
+          "S029"
+        ],
+        "meaning": "Workflow metadata, validated by its form."
+      },
+      {
+        "context": "settings",
+        "ownerPhase": "P03",
+        "plannedSteps": [
+          "S025",
+          "S017"
+        ],
+        "meaning": "Workspace setting with its own key and validation."
+      }
+    ],
+    "plannedSteps": [
+      "S025",
+      "S083",
+      "S029"
+    ]
+  },
+  {
+    "id": "FIELD-057",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "new-sub-name",
+    "binding": {},
+    "placeholder": "Ví dụ: Kiểm tra màn hình Home",
+    "options": null,
+    "observedIn": [
+      "subflow-new"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-057",
+    "plannedSteps": [
+      "S037"
+    ]
+  },
+  {
+    "id": "FIELD-058",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "convert-name",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "subflow-convert"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-058",
+    "plannedSteps": [
+      "S037"
+    ]
+  },
+  {
+    "id": "FIELD-059",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "rename-node-value",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "node-rename"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-059",
+    "plannedSteps": [
+      "S036"
+    ]
+  },
+  {
+    "id": "FIELD-060",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "new-wf-app",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "fb",
+        "label": "Facebook · com.facebook.katana"
+      },
+      {
+        "value": "lite",
+        "label": "Facebook Lite · com.facebook.lite"
+      },
+      {
+        "value": "ig",
+        "label": "Instagram · com.instagram.android"
+      },
+      {
+        "value": "tt",
+        "label": "TikTok · com.zhiliaoapp.musically"
+      },
+      {
+        "value": "th",
+        "label": "Threads · com.instagram.barcelona"
+      }
+    ],
+    "observedIn": [
+      "workflow-new"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-060",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
+  },
+  {
+    "id": "FIELD-061",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "new-wf-kind",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "main",
+        "label": "Quy trình chính"
+      },
+      {
+        "value": "sub",
+        "label": "Quy trình con"
+      }
+    ],
+    "observedIn": [
+      "workflow-new"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-061",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
+  },
+  {
+    "id": "FIELD-062",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "new-wf-name",
+    "binding": {},
+    "placeholder": "Ví dụ: Đăng ảnh bảng tin",
+    "options": null,
+    "observedIn": [
+      "workflow-new"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-062",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
+  },
+  {
+    "id": "FIELD-063",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "wf-name",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "workflow-manage"
+    ],
+    "ownerPhase": "P04",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-063",
+    "plannedSteps": [
+      "S029",
+      "S016"
+    ]
+  },
+  {
+    "id": "FIELD-064",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "192.168.1.100:5555",
+    "options": null,
+    "observedIn": [
+      "device-manager"
+    ],
+    "ownerPhase": "P08",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-064",
+    "plannedSteps": [
+      "S071"
+    ]
+  },
+  {
+    "id": "FIELD-065",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "USB · ADB",
+        "label": "USB · ADB"
+      },
+      {
+        "value": "LAN · TCP",
+        "label": "LAN · TCP"
+      }
+    ],
+    "observedIn": [
+      "device-manager",
+      "process-options",
+      "review-result",
+      "settings"
+    ],
+    "ownerPhase": "P03",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-065",
+    "referenceOptionsOnly": true,
+    "contextVariants": [
+      {
+        "context": "device-manager",
+        "ownerPhase": "P08",
+        "plannedSteps": [
+          "S071"
+        ],
+        "meaning": "USB/LAN transport, pairing state from actual device service."
+      },
+      {
+        "context": "process-options",
+        "ownerPhase": "P06",
+        "plannedSteps": [
+          "S050"
+        ],
+        "meaning": "Process options schema, not transport options reused from prototype."
+      },
+      {
+        "context": "review-result",
+        "ownerPhase": "P11",
+        "plannedSteps": [
+          "S101"
+        ],
+        "meaning": "Review resolution enums/evidence, never USB/LAN values."
+      },
+      {
+        "context": "settings",
+        "ownerPhase": "P03",
+        "plannedSteps": [
+          "S025",
+          "S017"
+        ],
+        "meaning": "Setting-specific options; no shared mutable select model."
+      }
+    ],
+    "plannedSteps": [
+      "S025",
+      "S071",
+      "S050",
+      "S101"
+    ]
+  },
+  {
+    "id": "FIELD-066",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "bulk-field",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "caption",
+        "label": "Caption"
+      },
+      {
+        "value": "hashtags",
+        "label": "Hashtag"
+      },
+      {
+        "value": "comments",
+        "label": "Bình luận"
+      },
+      {
+        "value": "affiliate",
+        "label": "Affiliate"
+      }
+    ],
+    "observedIn": [
+      "bulk-edit"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-066",
+    "plannedSteps": [
+      "S057"
+    ]
+  },
+  {
+    "id": "FIELD-067",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "bulk-mode",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "replace",
+        "label": "Thay thế"
+      },
+      {
+        "value": "append",
+        "label": "Nối cuối"
+      },
+      {
+        "value": "prepend",
+        "label": "Chèn đầu"
+      }
+    ],
+    "observedIn": [
+      "bulk-edit"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-067",
+    "plannedSteps": [
+      "S057"
+    ]
+  },
+  {
+    "id": "FIELD-068",
+    "tag": "textarea",
+    "inputType": "textarea",
+    "domId": "bulk-value",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "bulk-edit"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-068",
+    "plannedSteps": [
+      "S057"
+    ]
+  },
+  {
+    "id": "FIELD-069",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "clone-device",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "d1",
+        "label": "Samsung A52"
+      },
+      {
+        "value": "d2",
+        "label": "Xiaomi Note 12"
+      },
+      {
+        "value": "d3",
+        "label": "OPPO Reno8"
+      },
+      {
+        "value": "d4",
+        "label": "Samsung A32"
+      }
+    ],
+    "observedIn": [
+      "process-clone"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-069",
+    "plannedSteps": [
+      "S050"
+    ]
+  },
+  {
+    "id": "FIELD-070",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "clone-target",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "p1",
+        "label": "Green Living"
+      },
+      {
+        "value": "p2",
+        "label": "Daily Moments"
+      },
+      {
+        "value": "p3",
+        "label": "Travel Notes"
+      }
+    ],
+    "observedIn": [
+      "process-clone"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-070",
+    "plannedSteps": [
+      "S050"
+    ]
+  },
+  {
+    "id": "FIELD-071",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "clone-data",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "process-clone"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-071",
+    "plannedSteps": [
+      "S050"
+    ]
+  },
+  {
+    "id": "FIELD-072",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "source-subfolders",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "source-options"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-072",
+    "plannedSteps": [
+      "S053"
+    ]
+  },
+  {
+    "id": "FIELD-073",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "source-watcher",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "source-options"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-073",
+    "plannedSteps": [
+      "S053"
+    ]
+  },
+  {
+    "id": "FIELD-074",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "source-append",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "source-options"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-074",
+    "plannedSteps": [
+      "S053"
+    ]
+  },
+  {
+    "id": "FIELD-075",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "source-dedupe",
+    "binding": {},
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "source-options"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-075",
+    "plannedSteps": [
+      "S053"
+    ]
+  },
+  {
+    "id": "FIELD-076",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "URL / post ID",
+    "options": null,
+    "observedIn": [
+      "review-result"
+    ],
+    "ownerPhase": "P11",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-076",
+    "plannedSteps": [
+      "S101"
+    ]
+  },
+  {
+    "id": "FIELD-077",
+    "tag": "textarea",
+    "inputType": "textarea",
+    "domId": "",
+    "binding": {},
+    "placeholder": "Tài khoản, thời điểm, nội dung khớp…",
+    "options": null,
+    "observedIn": [
+      "review-result"
+    ],
+    "ownerPhase": "P11",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-077",
+    "plannedSteps": [
+      "S101"
+    ]
+  },
+  {
+    "id": "FIELD-078",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "set-theme",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "light",
+        "label": "Sáng"
+      },
+      {
+        "value": "dark",
+        "label": "Tối"
+      }
+    ],
+    "observedIn": [
+      "settings"
+    ],
+    "ownerPhase": "P03",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-078",
+    "plannedSteps": [
+      "S023"
+    ]
+  },
+  {
+    "id": "FIELD-079",
+    "tag": "select",
+    "inputType": "select-one",
+    "domId": "set-overdue",
+    "binding": {},
+    "placeholder": "",
+    "options": [
+      {
+        "value": "next",
+        "label": "Chuyển tới khung tương lai"
+      },
+      {
+        "value": "catchup",
+        "label": "Xếp hàng chạy bù"
+      },
+      {
+        "value": "skip",
+        "label": "Bỏ qua lượt"
+      }
+    ],
+    "observedIn": [
+      "settings"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-079",
+    "productionMeaning": "Workspace default for NEW Processes only; actual overdue policy persists per Process. Does not rewrite existing jobs/process policies.",
+    "plannedSteps": [
+      "S061",
+      "S017"
+    ]
+  },
+  {
+    "id": "FIELD-080",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "3"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-080",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-081",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "4"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-081",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-082",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "5"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-082",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-083",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "6"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-083",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-084",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "7"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-084",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-085",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "8"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-085",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-086",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "9"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-086",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-087",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "10"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-087",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-088",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "11"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-088",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-089",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "12"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-089",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-090",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "13"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-090",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-091",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "14"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-091",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-092",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "15"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-092",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-093",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "16"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-093",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-094",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "17"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-094",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-095",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "18"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-095",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-096",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "19"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-096",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-097",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "20"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-097",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-098",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "21"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-098",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-099",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "22"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-099",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-100",
+    "tag": "input",
+    "inputType": "time",
+    "domId": "",
+    "binding": {
+      "slot": "23"
+    },
+    "placeholder": "",
+    "options": null,
+    "observedIn": [
+      "slots-paged"
+    ],
+    "ownerPhase": "P07",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-100",
+    "plannedSteps": [
+      "S060"
+    ]
+  },
+  {
+    "id": "FIELD-101",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {
+      "processExtra": "*"
+    },
+    "placeholder": "text",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-101",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-102",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "text",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-102",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-103",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "file",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-103",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-104",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "file[]",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-104",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-105",
+    "tag": "input",
+    "inputType": "number",
+    "domId": "",
+    "binding": {},
+    "placeholder": "number",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-105",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-106",
+    "tag": "input",
+    "inputType": "checkbox",
+    "domId": "",
+    "binding": {},
+    "placeholder": "boolean",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-106",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-107",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "url",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-107",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-108",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "list",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-108",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-109",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "identity",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-109",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  },
+  {
+    "id": "FIELD-110",
+    "tag": "input",
+    "inputType": "text",
+    "domId": "",
+    "binding": {},
+    "placeholder": "datetime",
+    "options": null,
+    "observedIn": [
+      "custom-fields"
+    ],
+    "ownerPhase": "P06",
+    "productionStatus": "PLANNED",
+    "contract": "Typed schema by scope; no derived row-index persistence; invalid values rejected before save",
+    "acceptance": "Edit/read/reload đúng scope; keyboard focus; invalid import không ghi đè",
+    "testId": "UI-FIELD-110",
+    "plannedSteps": [
+      "S051",
+      "S058"
+    ]
+  }
+]

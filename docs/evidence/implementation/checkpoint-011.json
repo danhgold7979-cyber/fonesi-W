@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-27", "baselineRevision": "0155037", "increment": "018", "phase": "P06", "steps": ["S052", "S054"],
+  "status": "TESTED_NATIVE_REBIND_SLICE_NOT_FULL_PHASE_ACCEPTANCE",
+  "checks": [
+    {"command": "pnpm check", "exitStatus": 0, "filesPassed": 21, "testsPassed": 204},
+    {"command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test", "exitStatus": 0, "passed": 18, "failed": 0, "skipped": 0, "flaky": 0}
+  ],
+  "verified": ["actual filesystem folder relocation", "file rename with stable content/asset IDs", "foreign-host grant changes only after picker approval", "changed bytes remain CHANGED", "cancel/stale picker/path rejection", "source revision fences old callbacks"],
+  "limitations": ["picker is a test adapter; Windows dialog interaction NOT_RUN", "media adoption/thumbnails/query/migration UI remain", "remaining phase gates in completion tracker"]
+}

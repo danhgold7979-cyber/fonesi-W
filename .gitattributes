@@ -1,0 +1,17 @@
+# Generated contracts/migration strings must have identical bytes on every host.
+* text=auto eol=lf
+
+# Frozen inputs must retain their original bytes on Windows and Linux.
+docs/reference/** -text
+*.zip -text
+*.png -text
+*.jpg -text
+*.xlsx -text
+
+# The double-click launcher uses native Windows line endings.
+*.cmd text eol=crlf
+
+# Source snapshots must not recursively include older archive binaries.
+archives/*.zip export-ignore
+archives/*.sha256 export-ignore
+archives/*-receipt.json export-ignore

@@ -1,0 +1,44 @@
+{
+  "scope": "AUTHORING_MEDIA_SCHEDULER_CHECKPOINT_NOT_ANDROID_ACCEPTANCE",
+  "revision": "d3a677f92da271b207e04504804c0b9a76232705",
+  "dateUtc": "2026-10-26T09:57:23.331511+00:00",
+  "commands": {
+    "pnpm check": {
+      "status": "PASS",
+      "testFiles": 7,
+      "tests": 76
+    },
+    "pnpm exec playwright test": {
+      "status": "PASS",
+      "scenarios": 3,
+      "coverage": [
+        "workflow/full-bundle/version/import-export",
+        "Process save/context races and timezone preview",
+        "host origin/token/command boundary"
+      ]
+    },
+    "Electron renderer smoke": {
+      "status": "PASS",
+      "nodeIntegration": false,
+      "routes": 6,
+      "saveReload": true
+    },
+    "pnpm install --frozen-lockfile": "PASS",
+    "pnpm check:plan": "PASS"
+  },
+  "databaseSchemaVersion": 2,
+  "phasePlans": "docs/implementation/P00_PLAN.md through P07_PLAN.md",
+  "progress": "docs/implementation/PROGRESS.md",
+  "fullPhaseAcceptance": false,
+  "android": "NOT_IMPLEMENTED_NOT_RUN",
+  "windows": "NOT_RUN",
+  "unimplemented": [
+    "native source chooser/coordinator/watchers/UI",
+    "thumbnails/bulk/CSV/XLSX/virtualization",
+    "schedule apply/queue/timeline/recovery",
+    "advanced editor/typed mappings/full debugger",
+    "ADB/stream/recognition/app adapters/network/APK/installer"
+  ],
+  "environmentDraft": "INSTALL_AND_START_INSTRUCTIONS_SAVED_NOT_PUBLISHED",
+  "githubPush": "BLOCKED_403_ACCOUNT_SANFRANKIM"
+}

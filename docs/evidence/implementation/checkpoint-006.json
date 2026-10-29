@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-27",
+  "baselineRevision": "385607d648f1d14a57b5559def3e71e664148ae7",
+  "branch": "feat/studio-workspace",
+  "increments": ["012", "013"],
+  "phases": ["P04", "P05"],
+  "status": "TESTED_IMPLEMENTATION_SLICES_NOT_FULL_PHASE_ACCEPTANCE",
+  "commands": [
+    {"command": "pnpm check", "exitStatus": 0, "filesPassed": 19, "testsPassed": 181},
+    {"command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test", "exitStatus": 0, "passed": 14, "failed": 0, "skipped": 0, "flaky": 0}
+  ],
+  "environment": {"os": "Linux", "node": "24.19.0", "pnpm": "11.25.0", "chromium": "154.0.8037.57"},
+  "verified": [
+    "group collapse/crossing wires/movement and persisted geometry",
+    "single-entry single-exit extraction preserves bundle closure and TRACE behavior",
+    "reroute persistence and atomic history",
+    "typed subflow inputs and isolated outputs with caller mappings",
+    "real paused TRACE sessions, breakpoint resume and stepping by call depth",
+    "host debug session bounds and close cancellation",
+    "sensitive bindings redacted from TRACE logs and debugger snapshots",
+    "double-click into subflow after save/reload"
+  ],
+  "limitations": [
+    "No full P04/P05 phase acceptance claim",
+    "External dependency resolver and compiled IR are next work",
+    "DEVICE_TEST/REAL_JOB and remaining P06-P14 runtime work is incomplete",
+    "Windows native, physical Android profiles and installer acceptance NOT_RUN"
+  ]
+}

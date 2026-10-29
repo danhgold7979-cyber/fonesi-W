@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-29",
+  "repository": "danhgold7979-cyber/fonesi-W",
+  "branch": "feat/studio-workspace",
+  "phase": "P11",
+  "increment": "075",
+  "steps": [
+    "S101.1"
+  ],
+  "plan": "docs/implementation/INCREMENT-075_PLAN.md",
+  "planCommit": "4b7e5d53186f9286885b0d495111aed307285b88",
+  "implementationCommits": [
+    "ff53a2be50694b686e38b259408d8cb8a11d4eec",
+    "e4c99b4ce18006e392091db21175332c683f66ee",
+    "1cfef0f291e2eee41507c9fab236255af2ba3b76",
+    "f518a0895c2b317899e38e87f1786e2e91bac490"
+  ],
+  "regressionCommit": "7a5070805b82951d9b0a7006a17aeb28a6112e77",
+  "correctionCommits": [
+    "57a118954e3741089e3ddd43b8785f1e29a00378"
+  ],
+  "testedSourceSha": "57a118954e3741089e3ddd43b8785f1e29a00378",
+  "status": "TESTED_S101_CANCELLATION_DB_FENCE_NOT_ACCEPTED",
+  "ci": [
+    {
+      "runId": 40901200886,
+      "sourceSha": "7a5070805b82951d9b0a7006a17aeb28a6112e77",
+      "event": "pull_request",
+      "os": [
+        "ubuntu-latest"
+      ],
+      "conclusion": "failure",
+      "reason": "TypeScript TS2367 in cancellation receipt; fixed without weakening tests"
+    },
+    {
+      "runId": 40901392864,
+      "sourceSha": "57a118954e3741089e3ddd43b8785f1e29a00378",
+      "event": "pull_request",
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "conclusion": "success",
+      "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40901392864"
+    }
+  ],
+  "tests": {
+    "ubuntu": {
+      "unitPassed": 568,
+      "files": 46,
+      "chromiumPassed": 31,
+      "generatedContracts": "PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS",
+      "plan": "PASS"
+    },
+    "windows": {
+      "unitPassed": 567,
+      "skipped": 1,
+      "files": 46,
+      "generatedContracts": "PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS",
+      "windowsVerifyOnly": "PASS",
+      "plan": "PASS"
+    }
+  },
+  "implemented": [
+    "atomic trusted-only SQLite cancellation request with revision and actor audit",
+    "safe preclaim cancellation vs active/posted/comment phase NEEDS_REVIEW, preserving effects, claims, leases and stage",
+    "POSTED to NEEDS_REVIEW allowed; INTENT included in pending terminal-state fence",
+    "tests for stale/forged input, crash, post/comment synthetic fixture and host dispatch callback rejection"
+  ],
+  "notRun": [
+    "provider input-side cancellation verification when Android I/O has already started",
+    "physical Windows10+Android USB/LAN and Facebook/TikTok post/comment verification",
+    "S100.3 comment-only retry, S101.2-S101.3, S102-S103",
+    "P12 profile certification, P13 fleet 20-300, P14 Windows installer/release"
+  ],
+  "overallCompletionPercent": null
+}

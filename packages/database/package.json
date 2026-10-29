@@ -1,0 +1,20 @@
+{
+  "name": "@autoreels/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@autoreels/contracts": "workspace:*",
+    "@autoreels/domain": "workspace:*",
+    "@autoreels/scheduler": "workspace:*",
+    "@autoreels/workflow-engine": "workspace:*",
+    "@autoreels/import-export": "workspace:*",
+    "@autoreels/devices": "workspace:*"
+  }
+}

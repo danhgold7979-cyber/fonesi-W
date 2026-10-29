@@ -1,0 +1,10 @@
+**/generated/**
+docs/reference/**
+docs/analysis/**
+docs/previews/**
+docs/source-plan/**
+archives/**
+**/dist/**
+**/node_modules/**
+**/.cache/**
+pnpm-lock.yaml

@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-27", "baselineRevision": "49dcb77", "increment": "023", "phase": "P07", "steps": ["S065"],
+  "status": "TESTED_CALENDAR_APP_SCOPE_SLICE_NOT_FULL_PHASE_ACCEPTANCE",
+  "checks": [
+    {"command": "pnpm check", "exitStatus": 0, "filesPassed": 24, "testsPassed": 226},
+    {"command": "pnpm typecheck && pnpm lint && pnpm build && PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test", "exitStatus": 0, "passed": 22, "failed": 0, "skipped": 0, "flaky": 0},
+    {"command": "pnpm install --frozen-lockfile", "exitStatus": 0},
+    {"command": "python docs/source-plan/v2/tools/validate_plan.py && python docs/source-plan/v2/tools/validate_execution_plan.py", "exitStatus": 0},
+    {"command": "node tools/smoke-host.mjs", "status": "PASS_AFTER_RESTART", "schemaVersion": 12, "previousSchema11HostCorrectlyRejected": true},
+    {"scope": "PRE_SCHEMA12_LIVE_BACKUP", "status": "PASS", "schemaVersion": 11, "integrity": "ok", "bytes": 368640},
+    {"scope": "ELECTRON_SQLITE_BACKUP_WORKER_SMOKE", "status": "PASS", "electron": "45.0.0", "node": "24.22.0", "schema": 12}
+  ],
+  "verified": ["local calendar boundaries/DST/leap/week rollover", "immutable job app filter after Process rebind", "app-bound keyset cursor", "bounded calendar cards with full virtualized day access", "snapshot timezone editing", "multi-app browser scope", "backup before runtime upgrade and actual schema12 readiness"],
+  "remoteCi": {
+    "revision": "e16940442ece6a2f6f0ae29bc179138ab0690d19",
+    "runId": 40459468100,
+    "url": "https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40459468100",
+    "conclusion": "success",
+    "ubuntu": {"testsPassed": 226, "filesPassed": 24, "planValidators": "PASS"},
+    "windows": {"testsPassed": 225, "filesPassed": 24, "testsSkipped": 1, "skipReason": "pre-existing Unix executable SDK fixture", "setupScript": "PASS", "launcherVerifyOnly": "PASS", "planValidators": "PASS"}
+  },
+  "limitations": ["drag/overdue/auto-append/actual dispatch/sleep remain", "Win10 GUI/physical Android NOT_RUN", "full15-phase completion not claimed"]
+}

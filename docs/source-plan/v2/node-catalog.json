@@ -1,0 +1,1314 @@
+[
+  {
+    "id": "NODE-001",
+    "type": "start",
+    "label": "Bắt đầu",
+    "group": "Luồng điều khiển",
+    "iconReference": "play",
+    "colorReference": "#129c7c",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next"
+    ],
+    "configFields": [
+      "inputSchemaRef"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-001",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-002",
+    "type": "end",
+    "label": "Kết thúc",
+    "group": "Luồng điều khiển",
+    "iconReference": "flag",
+    "colorReference": "#129c7c",
+    "referencePorts": [],
+    "productionPorts": [],
+    "configFields": [
+      "outputMapping"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-002",
+    "status": "PLANNED",
+    "requiredPorts": [],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-003",
+    "type": "condition",
+    "label": "If / Else",
+    "group": "Luồng điều khiển",
+    "iconReference": "branch",
+    "colorReference": "#c18a28",
+    "referencePorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "productionPorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "configFields": [
+      "expression"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-003",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "true",
+      "false"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-004",
+    "type": "loop",
+    "label": "Vòng lặp giới hạn",
+    "group": "Luồng điều khiển",
+    "iconReference": "refresh",
+    "colorReference": "#c18a28",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "body",
+      "done",
+      "error"
+    ],
+    "configFields": [
+      "maxIterations",
+      "bodyGraphRef",
+      "itemBinding"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-004",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "body",
+      "done"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S042",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-005",
+    "type": "break",
+    "label": "Thoát vòng lặp",
+    "group": "Luồng điều khiển",
+    "iconReference": "stop",
+    "colorReference": "#c18a28",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [],
+    "configFields": [
+      "loopScope"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-005",
+    "status": "PLANNED",
+    "requiredPorts": [],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S042",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-006",
+    "type": "continue",
+    "label": "Lượt tiếp theo",
+    "group": "Luồng điều khiển",
+    "iconReference": "step",
+    "colorReference": "#c18a28",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [],
+    "configFields": [
+      "loopScope"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-006",
+    "status": "PLANNED",
+    "requiredPorts": [],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S042",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-007",
+    "type": "subflow",
+    "label": "Quy trình con",
+    "group": "Luồng điều khiển",
+    "iconReference": "box",
+    "colorReference": "#7862d6",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error",
+      "review"
+    ],
+    "configFields": [
+      "workflowVersionRef",
+      "graphRef",
+      "inputMapping",
+      "outputMapping"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-007",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S043",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-008",
+    "type": "launch",
+    "label": "Mở ứng dụng",
+    "group": "Ứng dụng & hệ thống",
+    "iconReference": "external",
+    "colorReference": "#5b78cc",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "packageRole",
+      "expectedForeground"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-008",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
+  },
+  {
+    "id": "NODE-009",
+    "type": "installed",
+    "label": "Kiểm tra đã cài app",
+    "group": "Ứng dụng & hệ thống",
+    "iconReference": "check",
+    "colorReference": "#5b78cc",
+    "referencePorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "productionPorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "configFields": [
+      "packageRole"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-009",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "true",
+      "false"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
+  },
+  {
+    "id": "NODE-010",
+    "type": "current",
+    "label": "Kiểm tra app hiện tại",
+    "group": "Ứng dụng & hệ thống",
+    "iconReference": "phone",
+    "colorReference": "#5b78cc",
+    "referencePorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "productionPorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "configFields": [
+      "packageRole"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-010",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "true",
+      "false"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
+  },
+  {
+    "id": "NODE-011",
+    "type": "closeapp",
+    "label": "Đóng / mở lại app",
+    "group": "Ứng dụng & hệ thống",
+    "iconReference": "refresh",
+    "colorReference": "#5b78cc",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "packageRole",
+      "restart",
+      "expectedState"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-011",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
+  },
+  {
+    "id": "NODE-012",
+    "type": "back",
+    "label": "Back / Home / Recent",
+    "group": "Ứng dụng & hệ thống",
+    "iconReference": "back",
+    "colorReference": "#5b78cc",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "key"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-012",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S076",
+      "S094"
+    ]
+  },
+  {
+    "id": "NODE-013",
+    "type": "tap",
+    "label": "Bấm phần tử",
+    "group": "Thao tác điện thoại",
+    "iconReference": "tap",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "effectClassification"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-013",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-014",
+    "type": "doubletap",
+    "label": "Bấm đúp",
+    "group": "Thao tác điện thoại",
+    "iconReference": "tap",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "intervalMs"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-014",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-015",
+    "type": "hold",
+    "label": "Nhấn giữ",
+    "group": "Thao tác điện thoại",
+    "iconReference": "hand",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "durationMs"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-015",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-016",
+    "type": "drag",
+    "label": "Kéo thả",
+    "group": "Thao tác điện thoại",
+    "iconReference": "mouse",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "from",
+      "to",
+      "durationMs"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-016",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-017",
+    "type": "swipe",
+    "label": "Vuốt màn hình",
+    "group": "Thao tác điện thoại",
+    "iconReference": "swipe",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "from",
+      "to",
+      "durationMs"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-017",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-018",
+    "type": "scroll",
+    "label": "Cuộn tới phần tử",
+    "group": "Thao tác điện thoại",
+    "iconReference": "swipe",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "direction",
+      "maxScrolls",
+      "stableLimit"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-018",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-019",
+    "type": "pinch",
+    "label": "Chụm / mở hai ngón",
+    "group": "Thao tác điện thoại",
+    "iconReference": "zoom",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "center",
+      "scale",
+      "durationMs"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-019",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-020",
+    "type": "type",
+    "label": "Nhập văn bản",
+    "group": "Thao tác điện thoại",
+    "iconReference": "text",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "textTemplate",
+      "unicodeMode",
+      "verifyMode"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-020",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S087",
+      "S096"
+    ]
+  },
+  {
+    "id": "NODE-021",
+    "type": "clear",
+    "label": "Xóa nội dung ô nhập",
+    "group": "Thao tác điện thoại",
+    "iconReference": "close",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "verifyEmpty"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-021",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-022",
+    "type": "keyboard",
+    "label": "Ẩn / thao tác bàn phím",
+    "group": "Thao tác điện thoại",
+    "iconReference": "table",
+    "colorReference": "#5c83d5",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "operation"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-022",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083",
+      "S074"
+    ]
+  },
+  {
+    "id": "NODE-023",
+    "type": "find",
+    "label": "Tìm XPath / thuộc tính",
+    "group": "Nhận diện & chờ",
+    "iconReference": "search",
+    "colorReference": "#399c92",
+    "referencePorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "productionPorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "matchPolicy"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-023",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "true",
+      "false"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
+  },
+  {
+    "id": "NODE-024",
+    "type": "image",
+    "label": "Tìm ảnh mẫu",
+    "group": "Nhận diện & chờ",
+    "iconReference": "image",
+    "colorReference": "#399c92",
+    "referencePorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "productionPorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "configFields": [
+      "templateAssetRef",
+      "confidence",
+      "region"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-024",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "true",
+      "false"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
+  },
+  {
+    "id": "NODE-025",
+    "type": "ocr",
+    "label": "Đọc chữ OCR",
+    "group": "Nhận diện & chờ",
+    "iconReference": "text",
+    "colorReference": "#399c92",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "locale",
+      "region",
+      "confidence",
+      "outputBinding"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-025",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
+  },
+  {
+    "id": "NODE-026",
+    "type": "read",
+    "label": "Đọc thuộc tính / văn bản",
+    "group": "Nhận diện & chờ",
+    "iconReference": "eye",
+    "colorReference": "#399c92",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "selector",
+      "attribute",
+      "outputBinding"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-026",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
+  },
+  {
+    "id": "NODE-027",
+    "type": "wait",
+    "label": "Chờ thời gian / ngẫu nhiên",
+    "group": "Nhận diện & chờ",
+    "iconReference": "clock",
+    "colorReference": "#399c92",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "minMs",
+      "maxMs"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-027",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-028",
+    "type": "waitfor",
+    "label": "Chờ điều kiện",
+    "group": "Nhận diện & chờ",
+    "iconReference": "clock",
+    "colorReference": "#399c92",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "condition",
+      "pollInterval",
+      "deadlineMs"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-028",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S083"
+    ]
+  },
+  {
+    "id": "NODE-029",
+    "type": "screenshot",
+    "label": "Chụp màn hình",
+    "group": "Nhận diện & chờ",
+    "iconReference": "image",
+    "colorReference": "#399c92",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "region",
+      "outputAssetRef"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-029",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S082",
+      "S076"
+    ]
+  },
+  {
+    "id": "NODE-030",
+    "type": "setvar",
+    "label": "Gán / biến đổi biến",
+    "group": "Dữ liệu & nội dung",
+    "iconReference": "code",
+    "colorReference": "#a06eae",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "targetPath",
+      "expression"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-030",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-031",
+    "type": "row",
+    "label": "Đọc dòng công việc",
+    "group": "Dữ liệu & nội dung",
+    "iconReference": "table",
+    "colorReference": "#a06eae",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "contentItemRef",
+      "fieldMapping"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-031",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-032",
+    "type": "stage",
+    "label": "Chuyển nội dung sang máy",
+    "group": "Dữ liệu & nội dung",
+    "iconReference": "upload",
+    "colorReference": "#a06eae",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "assetRefs",
+      "ownedNamespace",
+      "progressPolicy"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-032",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S095"
+    ]
+  },
+  {
+    "id": "NODE-033",
+    "type": "index",
+    "label": "Chờ MediaStore",
+    "group": "Dữ liệu & nội dung",
+    "iconReference": "refresh",
+    "colorReference": "#a06eae",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "stagedAssetRef",
+      "readinessPolicy"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-033",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S095"
+    ]
+  },
+  {
+    "id": "NODE-034",
+    "type": "selectmedia",
+    "label": "Chọn đúng nội dung",
+    "group": "Dữ liệu & nội dung",
+    "iconReference": "video",
+    "colorReference": "#a06eae",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "stagedAssetRefs",
+      "selectionProof"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-034",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S096"
+    ]
+  },
+  {
+    "id": "NODE-035",
+    "type": "cleanup",
+    "label": "Xóa tệp staging đã sở hữu",
+    "group": "Dữ liệu & nội dung",
+    "iconReference": "trash",
+    "colorReference": "#a06eae",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "ownershipLedgerRef",
+      "terminalPolicy"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-035",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S102"
+    ]
+  },
+  {
+    "id": "NODE-036",
+    "type": "transaction",
+    "label": "Ghi ý định gửi / đăng",
+    "group": "Giao dịch & kết quả",
+    "iconReference": "lock",
+    "colorReference": "#d48363",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "effectKind",
+      "idempotencyScope",
+      "payloadHash"
+    ],
+    "runtime": "TRANSACTION_SERVICE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-036",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S097"
+    ]
+  },
+  {
+    "id": "NODE-037",
+    "type": "verify",
+    "label": "Xác minh kết quả",
+    "group": "Giao dịch & kết quả",
+    "iconReference": "check",
+    "colorReference": "#d48363",
+    "referencePorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "productionPorts": [
+      "true",
+      "false",
+      "error"
+    ],
+    "configFields": [
+      "verificationProfile",
+      "evidenceMapping"
+    ],
+    "runtime": "ADAPTER_OR_DEVICE_SERVICE",
+    "hardwareAcceptanceRequired": true,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-037",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "true",
+      "false"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S098"
+    ]
+  },
+  {
+    "id": "NODE-038",
+    "type": "output",
+    "label": "Ghi dữ liệu đầu ra",
+    "group": "Giao dịch & kết quả",
+    "iconReference": "download",
+    "colorReference": "#d48363",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "schemaRef",
+      "valueMapping"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-038",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-039",
+    "type": "review",
+    "label": "Dừng để kiểm tra",
+    "group": "Giao dịch & kết quả",
+    "iconReference": "flag",
+    "colorReference": "#d48363",
+    "referencePorts": [],
+    "productionPorts": [],
+    "configFields": [
+      "reasonCode",
+      "evidenceRefs"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-039",
+    "status": "PLANNED",
+    "requiredPorts": [],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  },
+  {
+    "id": "NODE-040",
+    "type": "log",
+    "label": "Ghi nhật ký",
+    "group": "Giao dịch & kết quả",
+    "iconReference": "list",
+    "colorReference": "#d48363",
+    "referencePorts": [
+      "next"
+    ],
+    "productionPorts": [
+      "next",
+      "error"
+    ],
+    "configFields": [
+      "level",
+      "messageTemplate",
+      "redactionPolicy"
+    ],
+    "runtime": "PURE_ENGINE",
+    "hardwareAcceptanceRequired": false,
+    "errorPolicy": "Bounded timeout/cancel, redetect if external state changed; effect uncertainty resolves before retry",
+    "testId": "RT-NODE-040",
+    "status": "PLANNED",
+    "requiredPorts": [
+      "next"
+    ],
+    "unwiredErrorPolicy": "STOP_FOR_REVIEW",
+    "plannedSteps": [
+      "S048",
+      "S046"
+    ]
+  }
+]

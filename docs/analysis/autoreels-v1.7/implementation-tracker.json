@@ -1,0 +1,431 @@
+{
+  "planVersion": 1,
+  "phaseCount": 9,
+  "stepCount": 60,
+  "status": "PLANNED",
+  "phases": [
+    {
+      "phase": 0,
+      "title": "Nền repository và công cụ",
+      "original": "0",
+      "steps": [
+        {
+          "step": 1,
+          "title": "Kiểm kê baseline, lưu reference và checksum",
+          "acceptance": "Phân biệt source thực, prototype và ghi chú chưa có evidence; bảo toàn file gốc.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 2,
+          "title": "Chốt cấu trúc workspace và quy trình cloud/Windows",
+          "acceptance": "Ghi quyết định môi trường; mỗi gate có mục tiêu và nơi thực hiện.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 3,
+          "title": "Viết AGENTS.md, README và .gitignore",
+          "acceptance": "Hướng dẫn tái lập, invariant và dữ liệu không đưa vào Git đầy đủ.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 4,
+          "title": "Ghim Node, pnpm và dependency nền",
+          "acceptance": "Cài bằng lockfile tái lập; chính sách build scripts tường minh.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 5,
+          "title": "Thiết lập TypeScript, lint, format và test runner",
+          "acceptance": "Có kiểm tra hành vi nền có ý nghĩa; báo số test thực sự chạy.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 6,
+          "title": "Thiết lập CI và kiểm tra nền",
+          "acceptance": "Linux checks và Windows checks tách biệt; có kết quả clean install/build.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 1,
+      "title": "Ứng dụng Electron và giao diện khung",
+      "original": "0 + phần nền 1",
+      "steps": [
+        {
+          "step": 7,
+          "title": "Khởi tạo Electron, React và Vite",
+          "acceptance": "App khởi động/đóng đúng; entry Main/preload/renderer tách biệt.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 8,
+          "title": "Thiết lập sandbox và bảo mật renderer",
+          "acceptance": "Không có Node/shell tùy ý từ renderer; navigation/CSP có chính sách.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 9,
+          "title": "Tạo typed IPC, validation và lỗi chuẩn",
+          "acceptance": "Sender/payload sai bị từ chối; batch có kết quả từng thiết bị.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 10,
+          "title": "Thiết lập data root, logger và single-instance",
+          "acceptance": "Dữ liệu tách source; log redaction; instance thứ hai không chạy scheduler riêng.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 11,
+          "title": "Tạo SQLite nền và settings",
+          "acceptance": "Migrate/restart giữ settings; module native chạy dưới Electron ABI đã pin.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 12,
+          "title": "Dựng shell V17, dark/light và empty states",
+          "acceptance": "Bố cục trái/giữa/phải đúng; chưa có thiết bị không hiện dữ liệu giả.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 13,
+          "title": "Hoàn thiện tray, close, background và Quit",
+          "acceptance": "Toggle lưu thật; Quit checkpoint; kiểm tra vòng đời trên Windows.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "title": "Dữ liệu, job và lập lịch",
+      "original": "1 + 6 + nền 11",
+      "steps": [
+        {
+          "step": 14,
+          "title": "Thiết kế domain và schema đầy đủ",
+          "acceptance": "ID, relationships, indexes, state/error labels nhất quán.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 15,
+          "title": "Thực hiện migrations, transactions, backup/restore",
+          "acceptance": "Integrity và migration fixtures pass; backup nhất quán với WAL.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 16,
+          "title": "Làm Campaign CRUD và cấu hình riêng",
+          "acceptance": "Hai Campaign không rò folder, schedule, defaults; archive giữ lịch sử.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 17,
+          "title": "Làm Job snapshot và transaction ledger",
+          "acceptance": "Snapshot versioned/immutable; uncertainty được ghi trước side effect.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 18,
+          "title": "Làm timezone, slots và policy lịch",
+          "acceptance": "UTC+7 round-trip đúng; chốt overdue, overlap, reapply và auto-append.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 19,
+          "title": "Làm generator, queue và ownership nền",
+          "acceptance": "Generate idempotent; một device một job; recovery từ crash.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 20,
+          "title": "Làm Schedule Editor và Timeline backend/UI",
+          "acceptance": "Query toàn bộ jobs đúng range/máy; kéo/clear/spread an toàn và lưu thật.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "title": "Thư mục video và bảng media",
+      "original": "5, trừ phần clone phụ thuộc account",
+      "steps": [
+        {
+          "step": 21,
+          "title": "Làm folder picker và binding Campaign",
+          "acceptance": "Chọn đúng đường dẫn; missing/permission error hiển thị rõ.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 22,
+          "title": "Làm watcher và reconcile không chồng",
+          "acceptance": "Sự kiện gắn Campaign/generation; auto-append không đổi job cũ.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 23,
+          "title": "Làm fingerprint, validation và phát hiện đổi file",
+          "acceptance": "Copy dở/corrupt/missing/changed không bị coi là media sẵn sàng.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 24,
+          "title": "Làm thumbnail queue và cache",
+          "acceptance": "Giới hạn concurrency; lỗi một file không chặn các file khác.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 25,
+          "title": "Làm bảng virtualized và sửa từng dòng",
+          "acceptance": "Các trường lưu thật; đúng identity ID; dữ liệu lớn vẫn tương tác.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 26,
+          "title": "Làm chọn nhóm, bulk edit, clone metadata và ignore",
+          "acceptance": "Phân biệt unchanged/set/clear; không xóa nhầm file gốc hoặc lịch sử.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 27,
+          "title": "Làm Excel import/export",
+          "acceptance": "Stable ID/path matching; preview lỗi/trùng; round-trip giữ dữ liệu.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "title": "Kết nối Android và quyền điều khiển",
+      "original": "2",
+      "steps": [
+        {
+          "step": 28,
+          "title": "Phát hiện và kiểm tra Platform-Tools",
+          "acceptance": "Executable/version đúng; lỗi cài đặt có chẩn đoán.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 29,
+          "title": "Nhận USB và kết nối/pair LAN",
+          "acceptance": "Thiết bị thật; authorization, endpoint và kết quả connect được xác minh.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 30,
+          "title": "Lưu device identity, connections và capability",
+          "acceptance": "Đổi transport không tự tạo sai device; hỗ trợ manual/automation tách biệt.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 31,
+          "title": "Làm heartbeat, reconnect và sidebar thật",
+          "acceptance": "Kết nối thay đổi cập nhật live; lỗi một máy độc lập.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 32,
+          "title": "Làm acquire/release và pause/redetect ownership",
+          "acceptance": "Mọi control/app/network mutation đi qua quyền điều khiển.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 33,
+          "title": "Nghiệm thu registry nhiều máy",
+          "acceptance": "Ít nhất hai máy thực; reconnect/authorization độc lập; ghi evidence Windows/Android.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "title": "Kiểm chứng khả thi trên thiết bị thật",
+      "original": "2.5",
+      "steps": [
+        {
+          "step": 34,
+          "title": "R1: Stream/control nhúng Electron",
+          "acceptance": "Hai máy thực có video H.264, tap/swipe, clipboard, reconnect và profiles.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 35,
+          "title": "R2: Unicode trên Facebook",
+          "acceptance": "Tiếng Việt, emoji, URL và newline đúng trên field thật.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 36,
+          "title": "R3: PC → Android → đúng video trong picker",
+          "acceptance": "Đúng source trên hai Android/vendor profiles, video dọc/ngang.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 37,
+          "title": "R4: Quét account/Profile/Page",
+          "acceptance": "Đối chiếu với kiểm tra thủ công; scroll/deduplicate đúng.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 38,
+          "title": "R5: Nhận diện trạng thái Facebook",
+          "acceptance": "Các state chính nhận đúng; unknown có diagnostics, không đoán.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 39,
+          "title": "R6: Xác minh bài đăng",
+          "acceptance": "Controlled test Page có tín hiệu phân biệt posted/pending/ambiguous.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 40,
+          "title": "R7: Proxy routing thực",
+          "acceptance": "Mỗi loại claimed-supported có evidence Android egress/Facebook; loại khác DEFERRED rõ.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 41,
+          "title": "R8: ADB coexistence",
+          "acceptance": "Chốt chính sách chung/riêng/exclusive bằng kiểm tra thực, không giết server khác tùy tiện.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "title": "Màn hình thật, điều khiển nhóm và danh tính",
+      "original": "3 + 4 + 7 + 8 + 9 + clone của 5/7",
+      "steps": [
+        {
+          "step": 42,
+          "title": "Làm stream lifecycle và profiles production",
+          "acceptance": "Server/client pinned; bounded buffers; reconnect không mất job state.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 43,
+          "title": "Làm Overview, Detail và panel resize/zoom",
+          "acceptance": "Real frames; aspect ratio/scroll/visibility policy đúng.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 44,
+          "title": "Làm floating MASTER",
+          "acceptance": "Drag/resize/Ctrl+wheel hoạt động; chất lượng độc lập preview.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 45,
+          "title": "Làm chọn nhóm, normalized input và context/quick actions",
+          "acceptance": "Khác độ phân giải/rotation vẫn mapping đúng; per-device ownership/results.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 46,
+          "title": "Làm manual login, account scanner và identity verification",
+          "acceptance": "Không lưu Facebook credentials; unknown app/locale chặn automation.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 47,
+          "title": "Làm metrics snapshots và rich combobox",
+          "acceptance": "1/7/30 ngày có nguồn thật; thiếu lịch sử hiện dấu gạch.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 48,
+          "title": "Làm semantic detector/adapters và clone cấu hình",
+          "acceptance": "Selectors versioned; clone settings không tạo identity/clone session.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 7,
+      "title": "Đăng Reel và phục hồi giao dịch",
+      "original": "10 + 11 + 12",
+      "steps": [
+        {
+          "step": 49,
+          "title": "Làm preflight đầy đủ",
+          "acceptance": "Đúng device/session/identity/file/network/capability trước hành động.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 50,
+          "title": "Làm staging, transfer và MediaStore",
+          "acceptance": "Source fingerprint khớp; readiness quan sát được; staging ownership lưu bền.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 51,
+          "title": "Làm chọn đúng video và điền nội dung",
+          "acceptance": "Picker identity, Unicode, audience/remix/story được verify trước Publish.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 52,
+          "title": "Nối Publish vào transaction và verify thật",
+          "acceptance": "Ghi intent/uncertainty trước click; pending không tự click lại.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 53,
+          "title": "Làm crash recovery và xử lý ambiguous",
+          "acceptance": "Kill trước/sau click/verify không dẫn tới retry mù; NEEDS_REVIEW khi thiếu chứng cứ.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 54,
+          "title": "Làm comment transaction và retry riêng",
+          "acceptance": "Xác minh đúng bài/comment; không repost hoặc duplicate comment từ uncertainty.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 55,
+          "title": "Làm cleanup an toàn và nghiệm thu end-to-end",
+          "acceptance": "Chỉ xóa staging owned sau điều kiện an toàn; giữ media khi pending; không đụng video khác.",
+          "status": "PLANNED"
+        }
+      ]
+    },
+    {
+      "phase": 8,
+      "title": "Công cụ bổ sung, hardening và phát hành",
+      "original": "13 + 14 + 15",
+      "steps": [
+        {
+          "step": 56,
+          "title": "Hoàn thiện Proxy/VPN và UI quản lý",
+          "acceptance": "Adapter theo capability, mutual exclusion, routing verify, secret protection.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 57,
+          "title": "Hoàn thiện APK manager",
+          "acceptance": "Install/uninstall file/package thật; bounded queue, cancellation và per-device results.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 58,
+          "title": "Hoàn thiện vận hành và diagnostics",
+          "acceptance": "Retention, export, notifications, low disk, backup/restore, shutdown/sleep/resume.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 59,
+          "title": "Kiểm tra tải và audit toàn bộ tính năng",
+          "acceptance": "Traceability accepted cho scope phát hành; không thiếu backend; đo resource/device scale.",
+          "status": "PLANNED"
+        },
+        {
+          "step": 60,
+          "title": "Đóng gói và nghiệm thu Windows clean-machine",
+          "acceptance": "Bundled binaries/licenses, migration, installer/uninstaller; signing/update theo scope; publish riêng.",
+          "status": "PLANNED"
+        }
+      ]
+    }
+  ]
+}

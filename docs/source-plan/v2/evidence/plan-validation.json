@@ -1,0 +1,135 @@
+{
+  "scope": "SOURCE_PLAN_CONSISTENCY_NOT_APPLICATION_ACCEPTANCE",
+  "planVersion": "2.1",
+  "status": "PASS",
+  "phaseCount": 15,
+  "stepCount": 125,
+  "commandCount": 124,
+  "fieldSignatureCount": 110,
+  "nodeCount": 40,
+  "eventFamilyCount": 26,
+  "traceabilityCount": 330,
+  "findingsCount": 25,
+  "browserStatesSurveyed": 101,
+  "schemaChecks": "PASS_SHAPE_CONFORMANCE_ONLY",
+  "checks": [
+    {
+      "name": "Phase count matches actual unique ordered IDs",
+      "status": "PASS"
+    },
+    {
+      "name": "Step count matches unique sequential tasks",
+      "status": "PASS"
+    },
+    {
+      "name": "Dependencies reference earlier existing phases",
+      "status": "PASS"
+    },
+    {
+      "name": "Every step has modules acceptance and test identity",
+      "status": "PASS"
+    },
+    {
+      "name": "All 124 source dispatcher actions accounted exactly once",
+      "status": "PASS"
+    },
+    {
+      "name": "All source action controls observed and no unknown controls",
+      "status": "PASS"
+    },
+    {
+      "name": "All action classifications and contracts explicit",
+      "status": "PASS"
+    },
+    {
+      "name": "Forty node types and ports have explicit contracts",
+      "status": "PASS"
+    },
+    {
+      "name": "Thirty compact UX additions retain production status distinction",
+      "status": "PASS"
+    },
+    {
+      "name": "Feature registry IDs unique",
+      "status": "PASS"
+    },
+    {
+      "name": "Every command field node and event has exactly one traceability row",
+      "status": "PASS"
+    },
+    {
+      "name": "Feature ownership tests and task references valid",
+      "status": "PASS"
+    },
+    {
+      "name": "All 121 legacy feature IDs mapped without dropping",
+      "status": "PASS"
+    },
+    {
+      "name": "All 42 frozen reference files match SHA256",
+      "status": "PASS"
+    },
+    {
+      "name": "Five apps not falsely certified",
+      "status": "PASS"
+    },
+    {
+      "name": "Reproduced findings cite actual browser observations",
+      "status": "PASS"
+    },
+    {
+      "name": "Browser audit scenarios recorded without claiming runtime acceptance",
+      "status": "PASS"
+    },
+    {
+      "name": "Internal Markdown file links resolve",
+      "status": "PASS"
+    },
+    {
+      "name": "Planning workflow example conforms to schema",
+      "status": "PASS"
+    },
+    {
+      "name": "Workflow shape allows dynamic registered app identifiers",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects malformed app identifier",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects unknown node type",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects injected identifier",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects unknown root properties",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects invalid port enum",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects string geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects reserved input key",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects unknown field type",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema rejects unknown node configuration",
+      "status": "PASS"
+    }
+  ],
+  "applicationTests": "NOT_EVALUATED_BY_PLAN_CHECKER",
+  "hardwareTests": "NOT_EVALUATED_BY_PLAN_CHECKER"
+}

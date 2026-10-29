@@ -1,0 +1,17 @@
+{
+  "name": "@autoreels/devices",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@autoreels/contracts": "workspace:*",
+    "@autoreels/domain": "workspace:*",
+    "saxes": "6.0.0"
+  }
+}

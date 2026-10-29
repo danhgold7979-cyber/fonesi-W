@@ -1,0 +1,18 @@
+# Increment035 — P11/S097 durable effect attempt guard on claimed jobs
+
+**Written before editing implementation (2026-10-28).** Baseline `feat/studio-workspace@58987bc9f39e5864dff4a0c8aca36e0eb4a6711d`. Read master V2.1, S094/S097–S103 runbook, domain state transitions, existing SQLite `queue.claim/renew/recover`, `effects` table and `recordIntent/beginEffectAttempt`, P05 static intent checks and latest P09 verified no-touch probe. This is the first P11-specific implementation slice, not a production posting executor.
+
+## Existing gap and safety invariant
+- Existing legacy `recordIntent(jobId,...)` inserts an intent without a claim/revision/state gate; `beginEffectAttempt` checks only matching lease and effect state but not the exact `job_claims` generation or phase. Neither changes the job state alongside the effect. The newer executor must not use those legacy APIs as proof that a publish was safe to dispatch.
+- Add a **strict private journal path** only. Commit effect intent and job `POST_INTENT` in one DB transaction, then mark effect `ATTEMPT_UNCERTAIN` and job `POST_PENDING` in one later transaction **before** any irreversible Android action. ADB/provider code must call these in sequence and must never claim an ACK is a confirmed external post.
+- Fail closed for missing/expired/wrong-kind lease, stale claim owner/generation, failed snapshot hash, disabled/identity-CONFLICT device, incompatible job state, malformed IDs/hash/time or any previous active/uncertain effect. Unique effectKey across jobs remains the durability/idempotency fence; duplicate callers do not retry. No attempt state is rewritten to "definitely rejected" without provider evidence.
+
+## Implementation steps
+1. P11/S097.1 `StudioDatabase.prepareClaimedEffect`: strict typed arguments, `BEGIN IMMEDIATE`, lease and job claim fencing, immutable snapshot integrity, publish only from `RUNNING`, comment only from `POSTED` after external verification in a future phase; insert effect INTENT with unique effect key and transition job `POST_INTENT` / `COMMENT_PENDING` atomically; append safe queue event without payload/credentials.
+2. P11/S097.2 `StudioDatabase.beginClaimedEffectAttempt`: checks same lease/job claim and intent ownership, valid state; transitions effect to `ATTEMPT_UNCERTAIN` and publish job `POST_PENDING` atomically. Any duplicate attempt or stale owner rejects; no ADB operation or automatic retry in this increment.
+3. Add narrowly typed **private DB-worker** commands `effect.prepareClaimed` and `effect.beginClaimedAttempt` in `apps/desktop/src/host/internal.ts`; ensure they are absent from public HTTP/preload/StudioApi. Legacy methods remain for migration/tests, but production integration must use strict new commands.
+4. Real SQLite/integration tests: claim→RUNNING→intent→attempt, restart before/after attempt, expired lease/generation, no duplicate effect, snapshot immutability, device identity conflict and prior uncertain effect, isolation from other phones, comment eligibility. Verify no synthetic post IDs, no Android input, and review instead of blind retry. Record CI.
+5. If Ubuntu/Windows `pnpm check`, Chromium `pnpm test:ui` and `pnpm check:plan` pass on the exact source SHA, update progress/receipt and merge PR into `feat/studio-workspace` only.
+
+## Open gates
+Real provider side-effect dispatch, app-specific Facebook/TikTok selectors, post verification by ID/identity/target, comments, reviewer decision, 20→300 phone fleet, Windows10 physical, installer and cross-app release certification **NOT_RUN**. This primitive does **not** mark posting implemented or S097 ACCEPTED on its own. No main merge/release.

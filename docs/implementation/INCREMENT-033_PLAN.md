@@ -1,0 +1,15 @@
+# Increment033 — P06/S056 content page integration onto current SQLite schema
+
+Date 2026-10-28. **Plan committed before porting code.** Base `feat/studio-workspace@d25110f00e60e866258e593b79ab666fd8ac83be`. Keep P08 validated schema v13, operator recovery audit and source history intact. Existing P06 PR #7 (origin `c55ca582`) contains tested paging implementation but **conflicts** with P08 both on SQLite migration v13 and file names `INCREMENT-029_*`/`checkpoint-022.json`. Concurrent P09 PR #10 is independent and must not be overwritten.
+
+## Sequence and source provenance
+1. Preserve P06 PR #7's implementation of typed ContentQuery/Page, immutable Process-scoped keyset cursor/epoch fencing, bounded SQLite query (max250), batch asset reads, named host/preload API and unit/browser tests. Reapply patches **on top of current HEAD** without overwriting any P08 service/types/DB changes. Use file-by-file diff with exact contextual match and abort on any conflict.
+2. **Append-only migration14:** use the same SQL previously introduced by P06 as v13, but append as version14 after P08's existing v13 unchanged. Set SCHEMA_VERSION=14. Do not change historical migration checksums. Existing DB12 upgrades 13→14 and DB13 upgrades to14. Query epoch initialization and triggers must execute once; no replace/drop/rebuild of users' data.
+3. Rename P06 documentation `INCREMENT-029_PLAN.md`→`INCREMENT-033_PLAN.md` for final consolidated record; preserve the **original** P06 work's plan text in `INCREMENT-033_ORIGIN.md` as an attributable historic source, but this integration plan supersedes version/number details. Rename `INCREMENT-029_RESULTS.md` to `INCREMENT-033_RESULTS.md`, `checkpoint-022.json` to **checkpoint-026.json**, with explicit provenance of old CI and new CI; retain P08's existing Increment029 + checkpoint022.
+4. Amend P06 row in `COMPLETION_PLAN.md` *only*, keep all current P08/P09 text. Keep Process editor legacy all-item behavior until a query-scoped UI plan to avoid silently restricting Select All/schedule to loaded prefix.
+5. Add upgrade test for existing real schema13 DB retaining recovery audit data and migration14 read API, plus same Process/search/epoch invalidation coverage from P06 source. CI `pnpm check`, `pnpm test:ui`, `pnpm check:plan` Ubuntu/Windows and host/browser regression on **integration SHA**, not historical PR source SHA.
+
+## Invariants and boundaries
+- No data loss, no source-media deletion, no device APIs or publishing. Private Process identifiers and query filters are strictly scoped. Untrusted cursors cannot execute SQL or access other Processes.
+- If PR#10 changes integration base, recalculate merge and rerun combined CI. Original PR#7 kept as provenance until new integrated replacement passes; close as superseded with a link, never blindly merge conflicting schema.
+- Success is **TESTED_BACKEND_SLICE**, not full P06/S056, P09 or full 15-phase completion. Windows10 hardware, real USB, 20→300 phones, media corpus performance and Installer remain NOT_RUN. Never merge `main` or release.

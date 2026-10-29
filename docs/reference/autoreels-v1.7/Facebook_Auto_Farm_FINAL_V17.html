@@ -1,0 +1,2804 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trình quản lý Facebook Auto Farm V5</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- GitHub-backed OSS: interact.js (drag/resize), Selecto (marquee select), screenfull (fullscreen) -->
+<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/selecto/dist/selecto.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/5.2.0/screenfull.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
+<style>
+:root{
+  --bg:#080d17;--panel:#101827;--panel2:#172236;--panel3:#0c1320;--line:#29354a;
+  --text:#edf2f9;--muted:#98a6bb;--accent:#7183ff;--ok:#29c77b;--warn:#f0b64b;--bad:#ef666c;
+  --blue:#53a6ff;--phone:#02050a;--dots:rgba(255,255,255,.12);--shadow:0 6px 20px rgba(0,0,0,.22)
+}
+html[data-theme="light"]{
+  --bg:#eef2f6;--panel:#fff;--panel2:#f5f7fb;--panel3:#f9fafc;--line:#d7dee8;
+  --text:#172033;--muted:#68768a;--accent:#586ae8;--ok:#168f58;--warn:#c78616;--bad:#cd4f55;
+  --blue:#2478d1;--phone:#171b24;--dots:rgba(20,30,50,.11);--shadow:0 6px 18px rgba(38,52,78,.1)
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:13px/1.34 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;flex:0 0 220px;background:var(--panel3);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:100vh}
+.main{flex:1;min-width:720px}
+.phone-pane{width:290px;min-width:220px;max-width:560px;flex:0 0 auto;overflow:auto;background:var(--panel3);border-left:1px solid var(--line);padding:8px;height:100vh;position:sticky;top:0}
+.phone-resizer{position:absolute;left:-5px;top:0;bottom:0;width:10px;cursor:ew-resize;z-index:25}
+.phone-resizer:hover{background:color-mix(in srgb,var(--accent) 24%,transparent)}
+.brand{padding:13px;border-bottom:1px solid var(--line)}.brand b{font-size:15px}
+.small,label{color:var(--muted);font-size:11px}.muted{color:var(--muted)}
+.side-tools{padding:8px;border-bottom:1px solid var(--line);display:grid;gap:6px}.device-list{padding:6px;overflow:auto;flex:1}
+.device{padding:7px;border:1px solid transparent;border-radius:6px;margin-bottom:4px}.device:hover,.device.active{background:var(--panel2);border-color:var(--line)}
+.row{display:flex;align-items:center;gap:6px}.space{justify-content:space-between}.wrap{flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%}.dot-ok{background:var(--ok)}.dot-busy{background:var(--warn)}.dot-bad{background:var(--bad)}.dot-off{background:#707c91}
+.progress{height:5px;border-radius:99px;background:color-mix(in srgb,var(--line) 80%,transparent);overflow:hidden;margin-top:5px}.progress>i{display:block;height:100%;border-radius:99px}
+.progress.green>i{background:var(--ok)}.progress.yellow>i{background:var(--warn)}.progress.red>i{background:var(--bad)}
+.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 6px;color:var(--muted);font-size:10px;white-space:nowrap}
+.topbar{height:56px;background:var(--panel3);border-bottom:1px solid var(--line);padding:0 11px;display:flex;justify-content:space-between;align-items:center;gap:8px;position:sticky;top:0;z-index:12}
+.top-actions,.toolbar{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:6px 8px;border-radius:5px}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.good{background:#153b29;border-color:#285a40;color:#9ce1b9}.btn.danger{background:#3b1d23;border-color:#673139;color:#ffb1b5}.btn.icon{width:31px;height:29px;padding:0;display:grid;place-items:center;font-size:15px}.btn.active{outline:2px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.field,input,select,textarea{width:100%;background:var(--panel3);border:1px solid var(--line);color:var(--text);padding:6px 7px;border-radius:5px}
+.content{padding:9px;display:grid;gap:9px}.card{background:var(--panel);border:1px solid var(--line);border-radius:7px;box-shadow:var(--shadow);overflow:hidden}.card-h{padding:8px 9px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:7px}.card-b{padding:9px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.avatar-select{display:flex;gap:7px;align-items:center}.avatar{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#3158d6,#7c4de2);color:#fff;font-size:9px;font-weight:700;flex:0 0 auto;border:1px solid color-mix(in srgb,var(--line) 65%,white)}
+.identity-line{display:grid;grid-template-columns:1fr 1fr;gap:7px;align-items:end}
+.switch-pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--panel2);overflow:hidden;vertical-align:middle}
+.switch-pill button{border:0;background:transparent;color:var(--muted);padding:4px 8px;font-size:10px;min-width:36px}
+.switch-pill.on button[data-v="on"]{background:var(--ok);color:#fff}.switch-pill.off button[data-v="off"]{background:var(--bad);color:#fff}
+.workflow-card{background-color:var(--panel);background-image:radial-gradient(circle,var(--dots) 1px,transparent 1px);background-size:13px 13px}
+.flow-row{display:flex;align-items:center;gap:5px;overflow:auto;padding:5px 2px;scrollbar-width:thin}
+.flow-node{min-width:76px;padding:6px 5px;border:1px solid var(--line);border-radius:5px;background:color-mix(in srgb,var(--panel3) 88%,transparent);text-align:center;font-size:10px;position:relative}
+.flow-node::after{content:"";position:absolute;right:-7px;top:50%;width:7px;height:1px;background:var(--muted)}
+.flow-node:last-child::after{display:none}.flow-node.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,var(--panel));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent)}.flow-node.done{border-color:#2f674a;background:color-mix(in srgb,var(--ok) 12%,var(--panel));color:#a4e8c0}.flow-node.error{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--panel))}
+.flow-status{display:flex;gap:7px;align-items:center;justify-content:space-between;margin-top:5px}.flow-log{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:10px}
+.video-actions{display:grid;grid-template-columns:1fr .8fr 1.1fr auto auto;gap:5px;align-items:end}.video-scroll{max-height:760px;overflow:auto}
+.video-table{width:100%;border-collapse:collapse;min-width:1280px}.video-table th,.video-table td{padding:5px;border-bottom:1px solid var(--line);vertical-align:middle;text-align:left}.video-table th{position:sticky;top:0;background:var(--panel2);z-index:3;font-size:10px}.video-table td input{padding:4px 5px}
+.video-row.selected{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.select-btn{border:1px solid var(--line);background:var(--panel2);color:var(--muted);width:23px;height:23px;border-radius:5px;padding:0;display:grid;place-items:center}.select-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.thumb-box{width:60px;height:78px;display:grid;place-items:center;background:#05080e;border:1px solid var(--line);overflow:hidden}.thumb-box img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+.status{font-size:10px;padding:3px 6px;border-radius:999px;white-space:nowrap}.s-ready{background:#153a2a;color:#91e2b3}.s-plan{background:#3b3219;color:#ffd97a}.s-run{background:#282e5d;color:#c0c6ff}.s-done{background:#15334d;color:#8ec6ff}.s-missing{background:#482228;color:#ffafb3}.s-conflict{background:#5a1e24;color:#ffc0c3}.s-queue{background:#42361a;color:#ffdf85}
+.slot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:5px}.slot{border:1px solid var(--line);background:var(--panel3);padding:6px;border-radius:5px}
+.phone-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.phone-shell{width:100%;padding:2px;background:var(--phone);border:1px solid #3a4250;border-radius:6px}.phone-screen{width:100%;aspect-ratio:9/19.5;border-radius:4px;overflow:hidden;background:#0b1020}.phone-screen canvas{width:100%;height:100%;display:block}
+.phone-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:4px}.phone-nav .btn{padding:4px}
+.vpn-strip{margin-top:7px;border:1px solid var(--line);background:var(--panel);padding:6px;border-radius:5px}.vpn-icons{display:flex;gap:5px;align-items:center;overflow-x:auto;padding-bottom:2px}
+.vpn-icon{width:39px;height:39px;flex:0 0 39px;border:1px solid var(--line);border-radius:7px;background:var(--panel2);display:grid;place-items:center;font-size:9px;font-weight:700;position:relative}
+.vpn-icon.on{outline:2px solid var(--ok);background:color-mix(in srgb,var(--ok) 13%,var(--panel))}
+.vpn-icon small{position:absolute;bottom:1px;right:2px;font-size:7px;color:var(--muted)}
+.context-menu{position:fixed;z-index:1000;display:none;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);padding:4px;border-radius:6px;grid-template-columns:repeat(3,34px);gap:4px}.context-menu button{width:34px;height:34px;display:grid;place-items:center;text-align:center;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:0;border-radius:5px;font-size:15px}.context-menu button:hover{background:color-mix(in srgb,var(--accent) 16%,var(--panel2))}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;place-items:center;z-index:1200}.modal .box{width:min(940px,95vw);max-height:90vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px;box-shadow:var(--shadow)}.modal .box.smallbox{width:min(640px,92vw)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.listbox{border:1px solid var(--line);border-radius:6px;max-height:350px;overflow:auto;padding:5px;background:var(--panel3)}
+.listrow{display:flex;align-items:center;gap:7px;padding:6px;border-bottom:1px solid var(--line)}.listrow:last-child{border-bottom:0}.listrow.selected{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.progress-filters{display:grid;grid-template-columns:auto 1fr 1fr auto;gap:6px;align-items:end}.schedule-list{margin-top:8px;display:grid;gap:5px}
+.schedule-item{display:grid;grid-template-columns:28px 1.4fr 1fr 110px 82px 82px;gap:6px;align-items:center;border:1px solid var(--line);background:var(--panel3);padding:6px;border-radius:5px}.schedule-item.conflict{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 9%,var(--panel))}
+.drag-handle{cursor:grab;color:var(--muted);font-size:18px;text-align:center}.schedule-item.dragging{opacity:.45}
+.proxy-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.proxy-card{border:1px solid var(--line);border-radius:6px;background:var(--panel3);padding:7px}
+
+.reel-settings{display:grid;grid-template-columns:1.05fr 1fr 1fr 1fr;gap:7px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.setting-switch{display:flex;align-items:end;justify-content:space-between;gap:7px;min-height:47px}
+.setting-switch>div:first-child{min-width:0}
+.identity-meta{display:flex;gap:7px;align-items:center;margin-top:4px;font-size:10px;color:var(--muted)}
+.flow-wrap{overflow:auto;padding-bottom:4px}
+.flow-row{min-width:1810px;overflow:visible;padding-bottom:24px}
+.flow-node.decision{border-style:dashed}
+.branch-mini{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:122px;margin-top:3px;color:var(--muted);font-size:8px;line-height:1.15;white-space:normal}
+.vpn-icons{justify-content:center!important;gap:8px!important;padding:5px 2px!important}
+.vpn-icon{width:43px!important;height:43px!important;flex:0 0 43px!important;border-radius:9px!important;text-align:center}
+.proxy-table{width:100%;border-collapse:collapse}
+.proxy-table th,.proxy-table td{padding:6px;border-bottom:1px solid var(--line);text-align:left;font-size:11px;vertical-align:middle}
+.proxy-ok{color:var(--ok);font-weight:700}.proxy-die{color:var(--bad);font-weight:700}.proxy-check{color:var(--warn);font-weight:700}
+.proxy-device-status{font-size:10px;color:var(--muted)}
+.timeline-toolbar{display:grid;grid-template-columns:auto 1fr 1fr auto auto;gap:6px;align-items:end}
+.timeline-scroll{margin-top:8px;border:1px solid var(--line);border-radius:6px;overflow:auto;background:var(--panel3);max-height:560px}
+.timeline-stage{position:relative;min-height:180px}
+.timeline-header{height:34px;position:sticky;top:0;z-index:5;background:var(--panel2);border-bottom:1px solid var(--line)}
+.timeline-label-col{position:sticky;left:0;z-index:4;width:140px;min-width:140px;background:var(--panel2);border-right:1px solid var(--line);padding:7px}
+.timeline-row{display:flex;min-height:58px;border-bottom:1px solid var(--line)}
+.timeline-track{position:relative;height:58px;flex:0 0 auto;background-image:repeating-linear-gradient(to right,transparent 0,transparent 27px,color-mix(in srgb,var(--line) 55%,transparent) 28px)}
+.timeline-day{position:absolute;top:0;height:34px;border-left:1px solid var(--line);padding:4px 6px;font-size:10px;color:var(--muted)}
+.timeline-hour{position:absolute;top:17px;font-size:8px;color:var(--muted)}
+.timeline-job{position:absolute;top:9px;height:39px;min-width:82px;max-width:150px;padding:4px 6px;border-radius:5px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 17%,var(--panel));font-size:9px;cursor:ew-resize;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;user-select:none}
+.timeline-job.conflict{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 17%,var(--panel));color:#ffc5c8}
+.timeline-job.dragging{opacity:.6;z-index:20}
+.add-device-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+
+.icon-btn{width:32px;height:30px;padding:0!important;display:grid!important;place-items:center!important;font-size:15px!important;border-radius:6px!important;flex:0 0 auto}
+.icon-btn.wide{width:42px}
+.icon-btn.phone-key{height:34px;width:100%;background:color-mix(in srgb,var(--accent) 16%,var(--panel2));border-color:color-mix(in srgb,var(--accent) 35%,var(--line));color:#dfe5ff}
+.icon-btn.phone-key:hover{background:color-mix(in srgb,var(--accent) 24%,var(--panel2))}
+.icon-toolbar{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.icon-toolbar .separator{width:1px;height:22px;background:var(--line);margin:0 2px}
+.auto-scan-box{display:flex;align-items:end;gap:5px}
+.auto-scan-box input{width:72px}
+.reel-bulk-grid{display:grid;grid-template-columns:1fr .75fr 1.15fr 130px 102px 102px auto;gap:5px;align-items:end}
+.reel-cell-toggle{display:flex;align-items:center;justify-content:center}
+.mini-switch{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--panel2);overflow:hidden;white-space:nowrap}
+.mini-switch button{border:0;background:transparent;color:var(--muted);padding:3px 6px;font-size:9px;min-width:29px}
+.mini-switch.on button[data-v="on"]{background:var(--ok);color:#fff}
+.mini-switch.off button[data-v="off"]{background:var(--bad);color:#fff}
+
+.workflow-graph{overflow:auto;padding:8px 2px 12px}
+.workflow-canvas{display:grid;grid-template-columns:repeat(21,82px);grid-template-rows:46px 32px 46px;column-gap:15px;row-gap:4px;min-width:2050px;align-items:center}
+.wf-node{height:34px;border:1px solid var(--line);border-radius:6px;background:color-mix(in srgb,var(--panel3) 90%,transparent);display:grid;place-items:center;text-align:center;font-size:9.5px;position:relative;padding:3px}
+.wf-node.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 20%,var(--panel));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 14%,transparent)}
+.wf-node.done{border-color:#2f674a;background:color-mix(in srgb,var(--ok) 12%,var(--panel))}
+.wf-node.error{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--panel))}
+.wf-node.decision{border-style:dashed}
+.wf-arrow{height:1px;background:var(--muted);position:relative;align-self:center}
+.wf-arrow:after{content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid var(--muted);border-top:3px solid transparent;border-bottom:3px solid transparent}
+.wf-branch{height:28px;border:1px dashed var(--line);border-radius:6px;background:color-mix(in srgb,var(--panel3) 86%,transparent);display:grid;place-items:center;font-size:8.5px;color:var(--muted);position:relative;padding:2px}
+.wf-branch.active{border-color:var(--accent);color:var(--text);background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
+.wf-branch-arrow-v{width:1px;height:12px;background:var(--muted);justify-self:center}
+.wf-branch-arrow-v:after{content:"";display:block;transform:translate(-3px,9px);border-top:5px solid var(--muted);border-left:3px solid transparent;border-right:3px solid transparent}
+.wf-return{height:1px;background:var(--muted);position:relative}
+.wf-return:after{content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid var(--muted);border-top:3px solid transparent;border-bottom:3px solid transparent}
+
+.modal.full-timeline{align-items:stretch;justify-items:stretch;padding:10px}
+.modal.full-timeline .box{width:calc(100vw - 20px);height:calc(100vh - 20px);max-width:none;max-height:none;resize:both;overflow:auto;border-radius:8px}
+.timeline-scroll{height:calc(100vh - 155px);max-height:none!important}
+.timeline-stage{min-height:100%}
+
+.proxy-demo{font-size:10px}
+
+
+/* V8 compact / unified */
+.btn,.icon-btn{
+  background:var(--panel2)!important;
+  border-color:var(--line)!important;
+  color:var(--text)!important;
+  box-shadow:none!important
+}
+.btn:hover,.icon-btn:hover{background:color-mix(in srgb,var(--accent) 10%,var(--panel2))!important}
+.btn.primary,.icon-btn.primary{
+  background:color-mix(in srgb,var(--accent) 18%,var(--panel2))!important;
+  border-color:color-mix(in srgb,var(--accent) 45%,var(--line))!important;
+  color:var(--text)!important
+}
+.btn.danger,.icon-btn.danger{
+  background:var(--panel2)!important;
+  border-color:var(--line)!important;
+  color:var(--text)!important
+}
+.icon-btn{font-size:14px!important}
+.icon-toolbar{gap:4px!important}
+.folder-toolbar-inline{display:flex;align-items:end;gap:5px;flex-wrap:nowrap;white-space:nowrap}
+.folder-toolbar-inline .auto-scan-box{display:flex;align-items:end;gap:4px}
+.folder-toolbar-inline input{width:58px}
+.folder-toolbar-inline .switch-pill button{padding:3px 6px;min-width:32px}
+.video-actions-v8{display:grid;grid-template-columns:1fr .8fr 1.1fr 126px 92px 92px 98px auto auto auto auto;gap:5px;align-items:end}
+
+/* Compact workflow */
+.workflow-card .card-h{padding:6px 8px}
+.workflow-card .card-b{padding:6px 8px 5px}
+.workflow-graph{overflow:auto;padding:2px 0 4px}
+.workflow-canvas{
+  display:grid;
+  grid-template-columns:repeat(21,74px);
+  grid-template-rows:34px 18px 28px;
+  column-gap:12px;
+  row-gap:0;
+  min-width:1810px;
+  align-items:center;
+  position:relative
+}
+.wf-node{
+  height:28px;
+  border-radius:5px;
+  font-size:9px;
+  padding:2px 3px;
+  z-index:2
+}
+.wf-node.decision{border-style:dashed}
+.wf-arrow{
+  height:1px;
+  background:var(--muted);
+  position:relative;
+  opacity:.75
+}
+.wf-arrow:after{
+  content:"";
+  position:absolute;right:-1px;top:-3px;
+  border-left:5px solid var(--muted);
+  border-top:3px solid transparent;
+  border-bottom:3px solid transparent
+}
+.wf-branch-arrow-v,.wf-return{display:none!important}
+.wf-branch{
+  height:22px;
+  border:1px solid var(--line);
+  border-radius:5px;
+  background:var(--panel3);
+  font-size:8px;
+  color:var(--muted);
+  position:relative;
+  padding:1px 3px;
+  z-index:2
+}
+.wf-branch:before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:-14px;
+  width:34px;
+  height:14px;
+  transform:translateX(-50%);
+  border-left:1px solid var(--muted);
+  border-bottom:1px solid var(--muted);
+  border-bottom-left-radius:14px;
+  opacity:.72
+}
+.wf-branch:after{
+  content:"";
+  position:absolute;
+  right:-13px;
+  top:50%;
+  width:13px;
+  height:16px;
+  border-top:1px solid var(--muted);
+  border-right:1px solid var(--muted);
+  border-top-right-radius:14px;
+  transform:translateY(-8px);
+  opacity:.72
+}
+.flow-status{margin-top:2px}
+.flow-log{display:none!important}
+.workflow-card .badge{font-size:9px;padding:1px 5px}
+
+/* Smaller card heights */
+.card-h{min-height:34px}
+
+
+/* ========================= V9 ========================= */
+.side-tools{gap:7px}
+.device-actions-row{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:4px;
+  width:100%
+}
+.device-actions-row .icon-btn{width:100%;min-width:0;height:30px}
+
+.folder-toolbar-inline{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end;
+  gap:6px!important;
+  flex-wrap:nowrap!important;
+  min-height:34px;
+  white-space:nowrap
+}
+.folder-toolbar-inline .icon-btn{height:30px}
+.folder-toolbar-inline .small{font-size:12px;line-height:30px}
+.folder-toolbar-inline .switch-pill{
+  height:30px;
+  align-items:center
+}
+.folder-toolbar-inline .switch-pill button{
+  height:28px;
+  min-width:38px;
+  padding:0 8px!important
+}
+.folder-toolbar-inline #chuKyQuet{
+  width:58px!important;
+  height:30px;
+  padding:0 6px;
+  text-align:center;
+  font-weight:600
+}
+
+.schedule-grid-v9{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  align-items:end
+}
+.schedule-field-v9 label{display:block;margin-bottom:4px}
+.schedule-control-v9{
+  height:32px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
+.schedule-control-v9 input,
+.schedule-control-v9 select{height:32px}
+.schedule-control-v9 .switch-pill{
+  height:30px;
+  align-items:center
+}
+.schedule-control-v9 .switch-pill button{
+  height:28px;
+  min-width:40px;
+  padding:0 8px
+}
+
+/* Workflow SVG */
+.workflow-graph{
+  overflow:auto;
+  padding:3px 0 1px;
+  min-height:104px
+}
+.workflow-svg{
+  display:block;
+  min-width:1980px;
+  width:1980px;
+  height:100px;
+  overflow:visible
+}
+.workflow-svg .wf-main-node rect{
+  fill:var(--panel3);
+  stroke:var(--line);
+  stroke-width:1
+}
+.workflow-svg .wf-main-node text{
+  fill:var(--text);
+  font-size:9px;
+  text-anchor:middle;
+  dominant-baseline:middle;
+  pointer-events:none
+}
+.workflow-svg .wf-main-node.done rect{
+  fill:color-mix(in srgb,var(--ok) 12%,var(--panel));
+  stroke:#2f674a
+}
+.workflow-svg .wf-main-node.active rect{
+  fill:color-mix(in srgb,var(--accent) 21%,var(--panel));
+  stroke:var(--accent);
+  stroke-width:1.6
+}
+.workflow-svg .wf-main-node.error rect{
+  fill:color-mix(in srgb,var(--bad) 15%,var(--panel));
+  stroke:var(--bad);
+  stroke-width:1.6
+}
+.workflow-svg .wf-main-node.decision rect{stroke-dasharray:4 2}
+.workflow-svg .wf-branch-node rect{
+  fill:var(--panel3);
+  stroke:var(--line);
+  stroke-width:1
+}
+.workflow-svg .wf-branch-node text{
+  fill:var(--muted);
+  font-size:8px;
+  text-anchor:middle;
+  dominant-baseline:middle
+}
+.workflow-svg .wf-branch-node.selected rect{
+  stroke:var(--accent);
+  fill:color-mix(in srgb,var(--accent) 12%,var(--panel))
+}
+.workflow-svg .wf-branch-node.selected text{fill:var(--text)}
+.workflow-svg .wf-line{
+  fill:none;
+  stroke:var(--muted);
+  stroke-width:1.1;
+  opacity:.72
+}
+.workflow-svg .wf-line.selected{
+  stroke:var(--accent);
+  stroke-width:1.5;
+  opacity:1
+}
+
+/* Proxy V9 */
+.proxy-v9-toolbar{
+  display:grid;
+  grid-template-columns:1fr auto auto auto auto;
+  gap:5px;
+  align-items:end
+}
+.proxy-v9-table-wrap{
+  margin-top:8px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  overflow:auto
+}
+.proxy-v9-table{
+  width:100%;
+  min-width:960px;
+  border-collapse:collapse
+}
+.proxy-v9-table th,.proxy-v9-table td{
+  padding:6px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+  vertical-align:middle;
+  font-size:11px
+}
+.proxy-v9-table th{
+  background:var(--panel2);
+  position:sticky;
+  top:0;
+  z-index:2
+}
+.proxy-phone-picker{
+  position:relative;
+  min-width:170px
+}
+.proxy-phone-picker summary{
+  list-style:none;
+  cursor:pointer;
+  border:1px solid var(--line);
+  background:var(--panel3);
+  border-radius:5px;
+  padding:5px 7px;
+  white-space:nowrap
+}
+.proxy-phone-picker summary::-webkit-details-marker{display:none}
+.proxy-phone-menu{
+  position:absolute;
+  z-index:25;
+  top:calc(100% + 3px);
+  left:0;
+  width:240px;
+  max-height:250px;
+  overflow:auto;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:6px;
+  box-shadow:var(--shadow);
+  padding:5px
+}
+.proxy-phone-option{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  width:100%;
+  border:0;
+  background:transparent;
+  color:var(--text);
+  padding:5px;
+  text-align:left;
+  border-radius:4px
+}
+.proxy-phone-option:hover{background:var(--panel2)}
+.proxy-phone-option .select-btn{flex:0 0 23px}
+.proxy-used-chips{display:flex;gap:3px;flex-wrap:wrap}
+.proxy-used-chip{
+  padding:2px 5px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  font-size:9px;
+  color:var(--muted)
+}
+
+/* Timeline V9 */
+.timeline-toolbar-v9{
+  display:grid;
+  grid-template-columns:auto 1fr 1fr auto auto auto;
+  gap:6px;
+  align-items:end
+}
+.timeline-device-picker{position:relative}
+.timeline-device-picker>button{height:30px}
+.timeline-device-menu{
+  position:absolute;
+  top:calc(100% + 4px);
+  right:0;
+  z-index:40;
+  width:255px;
+  max-height:360px;
+  overflow:auto;
+  display:none;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:7px;
+  box-shadow:var(--shadow);
+  padding:6px
+}
+.timeline-device-picker.open .timeline-device-menu{display:block}
+.timeline-device-option{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  padding:5px;
+  border-radius:4px
+}
+.timeline-device-option:hover{background:var(--panel2)}
+.timeline-zoom-badge{
+  min-width:58px;
+  text-align:center
+}
+.timeline-job{
+  color:var(--text)!important
+}
+.timeline-job .job-dot{
+  display:inline-block;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  margin-right:4px
+}
+.timeline-job.conflict{
+  border-color:var(--bad)!important;
+  background:color-mix(in srgb,var(--bad) 18%,var(--panel))!important
+}
+
+
+/* ========================= V10 ========================= */
+.phone-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  margin-bottom:7px
+}
+.phone-tab{
+  height:30px;
+  border:1px solid var(--line);
+  border-radius:5px;
+  background:var(--panel2);
+  color:var(--muted)
+}
+.phone-tab.active{
+  color:var(--text);
+  border-color:color-mix(in srgb,var(--accent) 48%,var(--line));
+  background:color-mix(in srgb,var(--accent) 12%,var(--panel2))
+}
+.phone-view.hidden-view{display:none!important}
+.overview-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:5px;
+  margin-bottom:6px
+}
+.overview-grid{
+  --overview-phone-width:112px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,var(--overview-phone-width));
+  grid-auto-rows:auto;
+  align-items:start;
+  justify-content:center;
+  gap:5px;
+  min-width:100%;
+  padding:2px
+}
+.overview-phone-card{
+  width:var(--overview-phone-width);
+  border:1px solid color-mix(in srgb,var(--line) 80%,transparent);
+  border-radius:4px;
+  background:var(--panel);
+  overflow:hidden;
+  cursor:pointer;
+  user-select:none
+}
+.overview-phone-card.selected{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)
+}
+.overview-phone-screen{
+  width:100%;
+  aspect-ratio:9/19.5;
+  background:#080c14;
+  overflow:hidden
+}
+.overview-phone-screen canvas{
+  width:100%;
+  height:100%;
+  display:block
+}
+.overview-phone-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:3px;
+  padding:3px 4px;
+  border-top:1px solid var(--line);
+  font-size:8.5px;
+  white-space:nowrap;
+  overflow:hidden
+}
+.overview-phone-meta b{
+  overflow:hidden;
+  text-overflow:ellipsis
+}
+.overview-phone-meta span{
+  color:var(--muted);
+  flex:0 0 auto
+}
+.overview-help{
+  color:var(--muted);
+  font-size:9px;
+  margin-top:5px;
+  line-height:1.3
+}
+
+/* Focus phone */
+.modal.phone-focus{
+  padding:8px;
+  align-items:center;
+  justify-items:center
+}
+.modal.phone-focus .box{
+  width:min(980px,calc(100vw - 16px));
+  height:calc(100vh - 16px);
+  max-width:none;
+  max-height:none;
+  resize:both;
+  overflow:auto
+}
+.focus-layout{
+  height:calc(100% - 38px);
+  display:grid;
+  grid-template-columns:minmax(250px,1fr) 230px;
+  gap:10px
+}
+.focus-screen-wrap{
+  min-height:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:auto;
+  background:#05080e;
+  border:1px solid var(--line);
+  border-radius:5px
+}
+.focus-phone-screen{
+  height:min(100%,calc(100vh - 95px));
+  aspect-ratio:9/19.5;
+  max-width:100%;
+  background:#0b1020;
+  border:1px solid #3a4250;
+  border-radius:5px;
+  overflow:hidden;
+  touch-action:none;
+  cursor:crosshair
+}
+.focus-phone-screen canvas{
+  width:100%;
+  height:100%;
+  display:block
+}
+.focus-actions{
+  display:flex;
+  flex-direction:column;
+  gap:7px
+}
+.focus-actions .phone-nav{margin:0}
+.focus-event{
+  padding:7px;
+  border:1px solid var(--line);
+  border-radius:5px;
+  background:var(--panel3);
+  font-size:10px;
+  color:var(--muted)
+}
+
+/* Full / resizable tool modals */
+.modal.full-tool{
+  padding:10px;
+  align-items:stretch;
+  justify-items:stretch
+}
+.modal.full-tool .box{
+  width:calc(100vw - 20px);
+  height:calc(100vh - 20px);
+  max-width:none;
+  max-height:none;
+  resize:both;
+  overflow:auto
+}
+.modal.full-tool .listbox{
+  max-height:calc(100vh - 180px)
+}
+.modal.full-tool .proxy-v9-table-wrap{
+  max-height:calc(100vh - 150px)
+}
+
+/* Timeline exact-device selection */
+.timeline-device-option .selected-label{
+  margin-left:auto;
+  color:var(--accent);
+  font-size:9px
+}
+
+
+/* ========================= V11 ========================= */
+
+/* Workflow fills available tool width instead of fixed pixel width */
+.workflow-graph{overflow:hidden!important;width:100%}
+.workflow-svg{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  height:auto!important;
+  aspect-ratio:21/1.15;
+  overflow:visible
+}
+
+/* Overview full workspace */
+.overview-toolbar{
+  min-height:34px;
+  gap:6px
+}
+.overview-toolbar-left,.overview-toolbar-right{
+  display:flex;align-items:center;gap:5px
+}
+.overview-viewport{
+  position:relative;
+  width:100%;
+  height:calc(100vh - 160px);
+  min-height:440px;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:5px;
+  background:
+    radial-gradient(circle,var(--dots) 1px,transparent 1px) 0 0/16px 16px,
+    var(--bg);
+  touch-action:none
+}
+.overview-grid{
+  min-width:100%;
+  width:max-content;
+  min-height:100%;
+  align-content:start;
+  padding:7px!important;
+  justify-content:start!important
+}
+#viewTongQuan:fullscreen,
+#viewTongQuan:-webkit-full-screen{
+  width:100vw!important;
+  height:100vh!important;
+  padding:10px!important;
+  background:var(--bg)!important;
+  overflow:hidden!important
+}
+#viewTongQuan:fullscreen .overview-viewport,
+#viewTongQuan:-webkit-full-screen .overview-viewport{
+  height:calc(100vh - 62px)!important
+}
+.overview-phone-card{
+  position:relative;
+  touch-action:none
+}
+.overview-phone-card.group-selected{
+  border-color:var(--ok)!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--ok) 35%,transparent)!important
+}
+.overview-phone-card.master-selected:before{
+  content:"MASTER";
+  position:absolute;
+  left:3px;top:3px;
+  z-index:3;
+  background:var(--accent);
+  color:white;
+  font-size:7px;
+  padding:2px 4px;
+  border-radius:3px
+}
+.overview-selection-info{
+  min-width:84px;
+  text-align:center
+}
+
+/* Full-screen / marquee selection UX */
+.selecto-selection{
+  background:color-mix(in srgb,var(--accent) 18%,transparent)!important;
+  border:1px solid var(--accent)!important
+}
+
+/* Focus modal: master screen + selected follower strip */
+.modal.phone-focus .box{
+  width:min(1120px,calc(100vw - 16px))!important;
+  height:calc(100vh - 16px)!important;
+  resize:none!important
+}
+.focus-layout{
+  height:calc(100% - 38px)!important;
+  display:grid!important;
+  grid-template-columns:minmax(300px,1fr) 235px!important;
+  grid-template-rows:minmax(0,1fr) 155px!important;
+  gap:8px!important
+}
+.focus-screen-wrap{grid-column:1;grid-row:1}
+.focus-actions{grid-column:2;grid-row:1}
+.focus-followers{
+  grid-column:1 / 3;
+  grid-row:2;
+  border:1px solid var(--line);
+  border-radius:5px;
+  background:var(--panel3);
+  overflow:auto;
+  padding:5px
+}
+.focus-followers-head{
+  display:flex;align-items:center;justify-content:space-between;gap:7px;
+  margin-bottom:5px
+}
+.focus-follower-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,72px);
+  gap:5px;
+  align-items:start;
+  min-height:100px;
+  touch-action:none
+}
+.focus-follower-card{
+  width:72px;
+  border:1px solid var(--line);
+  border-radius:4px;
+  overflow:hidden;
+  background:var(--panel);
+  user-select:none
+}
+.focus-follower-card.selected{
+  border-color:var(--ok);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--ok) 40%,transparent)
+}
+.focus-follower-card.master{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent)
+}
+.focus-follower-screen{aspect-ratio:9/19.5;background:#080c14}
+.focus-follower-screen canvas{width:100%;height:100%;display:block}
+.focus-follower-name{
+  font-size:8px;padding:2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.broadcast-badge{
+  padding:3px 6px;border:1px solid var(--line);border-radius:999px;font-size:9px;color:var(--muted)
+}
+
+/* Free resize/pull phone pane using interact.js */
+.phone-pane{min-width:180px!important;max-width:78vw!important}
+.phone-resizer{display:none!important}
+
+/* Phone context menu */
+.phone-context-menu{
+  position:fixed;
+  z-index:1600;
+  display:none;
+  grid-template-columns:repeat(4,36px);
+  gap:4px;
+  padding:4px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:6px;
+  box-shadow:var(--shadow)
+}
+.phone-context-menu button{
+  width:36px;height:36px;padding:0;
+  display:grid;place-items:center;
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:5px;
+  font-size:15px
+}
+.phone-context-menu button:hover{
+  background:color-mix(in srgb,var(--accent) 12%,var(--panel2))
+}
+
+
+/* ========================= V12 ========================= */
+.overview-viewport{overflow-y:auto!important;overflow-x:hidden!important}
+.overview-grid{
+  width:100%!important;min-width:100%!important;max-width:100%!important;
+  grid-template-columns:repeat(auto-fit,minmax(var(--overview-phone-width),var(--overview-phone-width)))!important;
+  justify-content:center!important;align-content:start!important;gap:6px!important;padding:6px!important
+}
+.overview-phone-card{min-width:0!important}
+.overview-toolbar{position:sticky;top:0;z-index:6;background:var(--panel3);padding-bottom:5px}
+
+.quick-apps{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:5px}
+.quick-app{
+  height:31px;border:1px solid var(--line);border-radius:5px;background:var(--panel2);color:var(--text);
+  display:grid;place-items:center;font-size:13px;padding:0
+}
+.quick-app:hover{background:color-mix(in srgb,var(--accent) 12%,var(--panel2))}
+
+.modal.phone-focus{
+  background:rgba(0,0,0,.28)!important;display:none;align-items:flex-start!important;justify-items:start!important;padding:0!important
+}
+.modal.phone-focus .box{
+  position:absolute;left:calc(50vw - 175px);top:12px;width:350px!important;height:auto!important;
+  min-width:180px;max-width:min(82vw,720px);max-height:97vh;padding:1px!important;
+  border:1px solid #343c49!important;border-radius:4px!important;background:#02050a!important;
+  box-shadow:0 10px 32px rgba(0,0,0,.42)!important;overflow:hidden!important;resize:none!important
+}
+.focus-drag-head{
+  height:23px;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 2px 0 6px;
+  background:var(--panel3);border-bottom:1px solid var(--line);cursor:move;user-select:none
+}
+.focus-title{min-width:0;display:flex;align-items:center;gap:5px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.focus-title span{color:var(--muted)}
+.focus-close{width:22px!important;height:20px!important;min-width:22px!important}
+.focus-layout{display:block!important;height:auto!important}
+.focus-screen-wrap{width:100%;height:auto!important;display:block!important;overflow:hidden!important;border:0!important;border-radius:0!important;background:#05080e}
+.focus-phone-screen{
+  width:100%!important;height:auto!important;max-width:none!important;aspect-ratio:9/19.5;
+  border:0!important;border-radius:1px!important;cursor:crosshair;touch-action:none
+}
+.focus-phone-screen canvas{width:100%;height:100%;display:block}
+.focus-actions,.focus-followers{display:none!important}
+
+.modal.full-tool{padding:8px!important}
+.modal.full-tool .box{
+  width:calc(100vw - 16px)!important;height:calc(100vh - 16px)!important;max-width:none!important;max-height:none!important;
+  resize:both!important;overflow:auto!important
+}
+
+.proxy-v9-toolbar{grid-template-columns:minmax(460px,1fr) auto auto auto auto!important;align-items:end}
+#proxyInput{
+  min-height:245px!important;resize:vertical!important;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;line-height:1.5
+}
+.proxy-format-hint{margin-top:5px;color:var(--muted);font-size:10px}
+.proxy-type{
+  display:inline-block;min-width:60px;padding:2px 5px;border:1px solid var(--line);border-radius:999px;
+  color:var(--muted);text-align:center;font-size:9px
+}
+.timeline-label-col{min-width:150px!important;width:150px!important}
+
+
+/* ========================= V13 ========================= */
+.phone-pane{min-width:150px!important;max-width:calc(100vw - 70px)!important}
+.device{position:relative;touch-action:none}
+.device.group-selected{
+  border-color:var(--ok)!important;
+  background:color-mix(in srgb,var(--ok) 8%,var(--panel2))!important;
+  box-shadow:inset 3px 0 0 var(--ok)
+}
+
+.identity-line{grid-template-columns:1fr 1fr!important;gap:9px!important}
+.identity-block{min-width:0}
+.identity-main-line{
+  display:grid;
+  grid-template-columns:29px minmax(120px,1fr) auto;
+  align-items:center;
+  gap:6px;
+  min-width:0
+}
+.identity-counts-inline{
+  display:flex;align-items:center;gap:5px;
+  color:var(--muted);font-size:9px;white-space:nowrap
+}
+.identity-deltas{
+  display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  margin-top:4px;padding-left:35px;font-size:9px
+}
+.delta-chip{
+  border:1px solid var(--line);padding:1px 4px;border-radius:999px;
+  white-space:nowrap;font-variant-numeric:tabular-nums
+}
+.delta-up{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 42%,var(--line));background:color-mix(in srgb,var(--ok) 7%,transparent)}
+.delta-down{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 42%,var(--line));background:color-mix(in srgb,var(--bad) 7%,transparent)}
+.delta-flat{color:var(--muted)}
+
+.overview-selection-info.group-active{
+  color:var(--ok);
+  border-color:color-mix(in srgb,var(--ok) 45%,var(--line))
+}
+
+/* PC + stream strip */
+.system-strip{
+  min-height:48px;
+  display:grid;
+  grid-template-columns:minmax(145px,1fr) minmax(145px,1fr) minmax(170px,1.2fr) minmax(155px,1fr) 175px 190px;
+  gap:6px;
+  padding:6px 9px;
+  border-bottom:1px solid var(--line);
+  background:var(--panel3)
+}
+.sys-box{
+  height:36px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--panel);
+  padding:4px 7px;
+  overflow:hidden
+}
+.sys-box .sys-title{font-size:9px;color:var(--muted)}
+.sys-box .sys-value{font-size:11px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stream-box{
+  height:36px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:5px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--panel);
+  padding:4px 7px
+}
+.stream-box label{margin:0;white-space:nowrap}
+.stream-box input[type=range]{padding:0;height:18px}
+.stream-value{min-width:33px;text-align:right;font-size:10px;color:var(--text)}
+
+.phone-context-menu{grid-template-columns:repeat(5,38px)!important}
+.phone-context-menu button{width:38px!important;height:38px!important}
+
+.modal.phone-focus .box{
+  min-width:140px!important;
+  max-width:calc(100vw - 10px)!important;
+  max-height:99vh!important
+}
+.focus-drag-head{cursor:move!important}
+
+
+/* ======================= FINAL V14 ======================= */
+
+/* Rich Nick / Fanpage combobox: all metrics live inside the field */
+.identity-line{grid-template-columns:1fr 1fr!important;gap:9px!important}
+.identity-block{min-width:0}
+.identity-main-line{
+  display:grid!important;
+  grid-template-columns:29px minmax(0,1fr)!important;
+  align-items:center;
+  gap:6px!important
+}
+.identity-stats-inline,.identity-deltas,.identity-counts-inline{display:none!important}
+.rich-choice-wrap{min-width:0}
+.choices{margin:0!important;min-width:0}
+.choices__inner{
+  min-height:32px!important;
+  padding:4px 28px 3px 7px!important;
+  border:1px solid var(--line)!important;
+  border-radius:5px!important;
+  background:var(--panel3)!important;
+  color:var(--text)!important
+}
+.choices.is-focused .choices__inner,.choices.is-open .choices__inner{
+  border-color:color-mix(in srgb,var(--accent) 55%,var(--line))!important
+}
+.choices__list--single{padding:0!important}
+.choices__list--single .choices__item{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:10px
+}
+.choices__list--dropdown,.choices__list[aria-expanded]{
+  z-index:40!important;
+  border:1px solid var(--line)!important;
+  background:var(--panel)!important;
+  color:var(--text)!important
+}
+.choices__list--dropdown .choices__item--selectable,.choices__list[aria-expanded] .choices__item--selectable{
+  padding:7px 9px!important;
+  font-size:10px!important;
+  color:var(--text)!important
+}
+.choices__list--dropdown .choices__item--selectable.is-highlighted,.choices__list[aria-expanded] .choices__item--selectable.is-highlighted{
+  background:var(--panel2)!important
+}
+.rich-metric-name{font-weight:700;color:var(--text)}
+.rich-metric-count{color:var(--muted)}
+.rich-delta{font-weight:650}
+.rich-delta.up{color:var(--ok)}
+.rich-delta.down{color:var(--bad)}
+.rich-delta.flat{color:var(--muted)}
+
+/* Campaign / folder */
+.campaign-inline{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:250px
+}
+.campaign-inline select{width:145px;height:30px}
+.campaign-folder-badge{
+  max-width:190px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+/* Unlimited list intent: long lists scroll/virtualize in real app */
+.video-scroll{max-height:760px;contain:content}
+
+/* Stream state badge in overview */
+.stream-mode{
+  font-size:7px;
+  color:var(--muted);
+  margin-left:2px
+}
+
+
+/* ======================= FINAL V15 ======================= */
+.identity-header-actions{display:flex;align-items:center;gap:5px}
+.identity-scan-summary{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rich-choice-wrap{min-width:0;overflow:visible}
+.choices{width:100%!important;min-width:0!important}
+.choices__inner{overflow:hidden!important}
+.choices__list--single .choices__item{
+  display:block!important;
+  width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important
+}
+.choices__list--dropdown,.choices__list[aria-expanded]{
+  width:max(100%,540px)!important;
+  max-width:min(760px,80vw)!important;
+  max-height:360px!important;
+  overflow:auto!important
+}
+.choices__list--dropdown .choices__list,.choices__list[aria-expanded] .choices__list{
+  max-height:320px!important
+}
+.choices__list--dropdown .choices__item,.choices__list[aria-expanded] .choices__item{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important
+}
+.rich-page-count{
+  color:var(--blue);
+  font-weight:650
+}
+.focus-wheel-hint{
+  position:absolute;right:4px;bottom:4px;z-index:4;
+  font-size:8px;padding:2px 4px;border-radius:4px;
+  background:rgba(0,0,0,.55);color:#d7dfeb;pointer-events:none
+}
+
+
+/* ======================= FINAL V16 ======================= */
+.identity-line,.identity-block,.rich-choice-wrap,.choices{overflow:visible!important}
+.identity-main-line{align-items:stretch!important}
+.rich-choice-wrap{position:relative!important; z-index:25}
+.choices[data-type*=select-one]{position:relative!important}
+.choices__inner{
+  height:32px!important;
+  display:flex!important;
+  align-items:center!important;
+}
+.choices[data-type*=select-one] .choices__input{
+  background:var(--panel2)!important;
+  color:var(--text)!important;
+  border:1px solid var(--line)!important;
+  border-radius:5px!important;
+  margin:7px 8px 6px 8px!important;
+  padding:8px 10px!important;
+  width:calc(100% - 16px)!important;
+  box-sizing:border-box!important;
+}
+.choices[data-type*=select-one] .choices__list--dropdown,
+.choices[data-type*=select-one] .choices__list[aria-expanded]{
+  position:absolute!important;
+  top:calc(100% + 4px)!important;
+  left:0!important;
+  right:auto!important;
+  z-index:200!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.35)!important;
+  border-radius:8px!important;
+}
+.choices__list--dropdown .choices__list,
+.choices__list[aria-expanded] .choices__list{
+  padding-bottom:6px!important;
+}
+.choices__placeholder{color:var(--muted)!important;opacity:.9!important}
+.card:has(.rich-choice-wrap .is-open){overflow:visible!important}
+
+
+/* ======================= FINAL V17 ======================= */
+#viewChiTiet{overflow:auto!important;min-width:0}
+.detail-phone-zoom-wrap{
+  width:100%;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:2px
+}
+#viewChiTiet .phone-shell{
+  --detail-phone-width:100%;
+  width:var(--detail-phone-width)!important;
+  min-width:150px;
+  max-width:none!important;
+  flex:0 0 auto;
+  margin:0 auto
+}
+#viewChiTiet .phone-screen{
+  width:100%!important;
+  aspect-ratio:9/19.5!important;
+  height:auto!important
+}
+#viewChiTiet .phone-screen canvas{width:100%!important;height:100%!important;display:block}
+.detail-zoom-hint{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+  margin:4px 0 5px;font-size:9px;color:var(--muted)
+}
+#detailPhoneZoomValue{min-width:52px;text-align:center}
+
+.hidden{display:none!important}
+@media(max-width:1260px){.sidebar{width:200px;flex-basis:200px}.phone-pane{width:255px}.identity-line{grid-template-columns:1fr 1fr}.identity-line>.btn{grid-column:1/-1;width:max-content}.video-actions{grid-template-columns:1fr 1fr 1fr}}
+
+/* V11 workflow responsive across full available main width */
+.workflow-svg{
+  min-width:100%!important;
+  width:100%!important;
+  height:clamp(72px,6.2vw,105px)!important;
+  aspect-ratio:auto!important
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><b>Trình quản lý Facebook</b><div class="small">Tự nhận số lượng điện thoại</div></div>
+    <div class="side-tools">
+      <input id="timDienThoai" placeholder="Tìm điện thoại...">
+      <div class="device-actions-row">
+        <button class="btn icon-btn locThietBi" data-loc="ALL" title="Tất cả điện thoại">◉</button>
+        <button class="btn icon-btn locThietBi" data-loc="ONLINE" title="Điện thoại sẵn sàng">✓</button>
+        <button class="btn icon-btn locThietBi" data-loc="BUSY" title="Điện thoại đang chạy">▶</button>
+        <button class="btn icon-btn locThietBi" data-loc="ERROR" title="Điện thoại lỗi">!</button>
+        <button id="quetMay" class="btn icon-btn" title="Quét điện thoại">↻</button>
+        <button id="themMay" class="btn icon-btn" title="Thêm điện thoại">＋</button>
+      </div>
+    </div>
+    <div id="danhSachDienThoai" class="device-list"></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="row">
+        <b id="tenDienThoai">Điện thoại 01</b>
+        <span id="ketNoi" class="badge">Tự nhận · USB</span>
+        <span id="trangThaiKhoa" class="badge">Máy rảnh</span>
+      </div>
+      <div class="top-actions">
+        <button id="moQuanLyApk" class="btn icon-btn" title="Cài / Gỡ APK">▦</button>
+        <button id="moProxy" class="btn icon-btn" title="Quản lý Proxy">◌</button>
+        <button id="moNhanBan" class="btn icon-btn" title="Nhân bản cấu hình">⧉</button>
+        <button id="moTienTrinh" class="btn icon-btn" title="Tiến trình và lịch">▦</button>
+        <div class="row small"><span>Chạy nền</span><div id="toggleChayNen" class="switch-pill on"><button data-v="off">Tắt</button><button data-v="on">Bật</button></div></div>
+        <button id="doiGiaoDien" class="btn icon-btn" title="Sáng / Tối">◐</button>
+      </div>
+    </div>
+
+    <div class="system-strip">
+      <div class="sys-box" title="Thông tin CPU. Bản Electron thật lấy bằng systeminformation."><div class="sys-title">CPU</div><div id="cpuInfo" class="sys-value">Đang đọc...</div></div>
+      <div class="sys-box" title="Thông tin RAM"><div class="sys-title">RAM</div><div id="ramInfo" class="sys-value">Đang đọc...</div></div>
+      <div class="sys-box" title="GPU usage"><div class="sys-title">GPU</div><div id="gpuInfo" class="sys-value">Đang đọc...</div></div>
+      <div class="sys-box" title="Ổ đĩa / quota ứng dụng"><div class="sys-title">Ổ cứng</div><div id="diskInfo" class="sys-value">Đang đọc...</div></div>
+      <div class="stream-box" title="FPS áp dụng cho toàn bộ màn hình preview nhỏ. Phone mở lớn luôn ưu tiên cao.">
+        <label>FPS</label><input id="fpsSlider" type="range" min="5" max="60" step="1" value="30"><span id="fpsValue" class="stream-value">30</span>
+      </div>
+      <div class="stream-box" title="Chất lượng preview nhỏ. Phone mở lớn luôn dùng chất lượng cao.">
+        <label>Chất lượng</label><input id="qualitySlider" type="range" min="30" max="100" step="5" value="75"><span id="qualityValue" class="stream-value">75%</span>
+      </div>
+    </div>
+    <div class="content">
+      <section class="card">
+        <div class="card-h">
+          <b>Tài khoản và nơi đăng</b>
+          <div class="identity-header-actions">
+            <span id="accountScanSummary" class="badge identity-scan-summary" title="Nick/Fanpage phát hiện trên điện thoại">0 Nick · 0 Fanpage</span>
+            <button id="quetTaiKhoanTrang" class="btn icon-btn" title="Quét lại Nick và Fanpage từ Facebook App">↻</button>
+            <button id="dangNhapThuCong" class="btn icon-btn" title="Mở Facebook để đăng nhập thủ công">↪</button>
+            <span id="trangThaiDanhTinh" class="badge">Đã xác minh</span>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="identity-line">
+            <div class="identity-block">
+              <label>Tài khoản Facebook *</label>
+              <div class="identity-main-line">
+                <div id="avatarNick" class="avatar">N1</div>
+                <div class="rich-choice-wrap"><select id="taiKhoan"></select></div>
+              </div>
+            </div>
+            <div class="identity-block">
+              <label>Đăng lên *</label>
+              <div class="identity-main-line">
+                <div id="avatarTrang" class="avatar">P1</div>
+                <div class="rich-choice-wrap"><select id="dichDang"></select></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card workflow-card">
+        <div class="card-h">
+          <b>Quy trình đăng Reel</b>
+          <div class="icon-toolbar">
+            <input id="choMin" type="number" min="0" step=".5" value="1" title="Thời gian chờ tối thiểu sau khi hoàn tất bước" style="width:52px">
+            <span class="small">–</span>
+            <input id="choMax" type="number" min="0" step=".5" value="3" title="Thời gian chờ tối đa sau khi hoàn tất bước" style="width:52px">
+            <button id="buocKe" class="btn icon-btn" title="Chạy bước kế">▶</button>
+            <button id="giaLapLoi" class="btn icon-btn" title="Giả lập lỗi">!</button>
+            <button id="datLaiQuyTrinh" class="btn icon-btn" title="Đặt lại quy trình">↺</button>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="workflow-graph"><svg id="soDoWorkflowSvg" class="workflow-svg" viewBox="0 0 1980 100" preserveAspectRatio="xMinYMin meet"></svg></div>
+          
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h">
+          <div class="campaign-inline">
+            <b>Video Campaign</b>
+            <select id="campaignSelect" title="Mỗi Campaign có một thư mục video riêng"></select>
+            <button id="themCampaign" class="btn icon-btn" title="Tạo Campaign mới">＋</button>
+            <span id="campaignFolderName" class="badge campaign-folder-badge" title="Thư mục của Campaign">Chưa chọn folder</span>
+          </div>
+          <div class="folder-toolbar-inline">
+            <button id="chonThuMucSong" class="btn icon-btn" title="Chọn thư mục video">▤</button>
+            <button id="quetLai" class="btn icon-btn" title="Quét lại ngay">↻</button>
+            <span class="small">Tự quét</span>
+            <div id="toggleDongBo" class="switch-pill on" title="Bật / Tắt tự quét"><button data-v="off">Tắt</button><button data-v="on">Bật</button></div>
+            <span class="small">Chu kỳ</span>
+            <input id="chuKyQuet" type="number" min="3" max="300" value="10" title="Chu kỳ tự quét thư mục">
+            <span class="small">giây</span>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="video-actions-v8">
+
+            <div><label>Caption hàng loạt</label><input id="captionHangLoat" placeholder="Để trống nếu không đổi"></div>
+            <div><label>Hashtag hàng loạt</label><input id="hashtagHangLoat" placeholder="#review #deal"></div>
+            <div><label>Bình luận hàng loạt</label><input id="binhLuanHangLoat" placeholder="Có thể chứa link affiliate"></div>
+            <div><label>Đối tượng xem</label><select id="doiTuongHangLoat"><option value="">Không đổi</option><option>Công khai</option><option>Bạn bè</option><option>Bạn bè ngoại trừ...</option></select></div>
+            <div><label>Remix</label><select id="remixHangLoat"><option value="">Không đổi</option><option value="on">Bật</option><option value="off">Tắt</option></select></div>
+            <div><label>Chia sẻ Tin</label><select id="storyHangLoat"><option value="">Không đổi</option><option value="on">Bật</option><option value="off">Tắt</option></select></div>
+            <select id="kieuHangLoat" title="Cách áp dụng nội dung hàng loạt"><option value="append">Nối cuối</option><option value="prepend">Nối đầu</option><option value="replace">Thay toàn bộ</option></select>
+            <button id="apDungHangLoat" class="btn icon-btn" title="Áp dụng cho video đã chọn">✓</button>
+          
+<label class="btn icon-btn" title="Nhập Excel">⇧<input id="nhapExcel" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+<button id="xuatExcel" class="btn icon-btn" title="Xuất Excel">⇩</button>
+<button id="xoaDaChon" class="btn icon-btn" title="Xóa video đã chọn">⌫</button>
+<span class="badge" id="thongTinThuMuc" title="Tổng video / đã đăng / còn lại">20 · 6 · 14</span>
+</div>
+        </div>
+        <div class="video-scroll">
+          <table class="video-table">
+            <thead><tr>
+              <th><button id="chonTatCa" class="select-btn" title="Chọn tất cả">●</button></th>
+              <th>Ảnh</th><th>Tên video</th><th>Caption</th><th>Hashtag</th><th>Bình luận</th><th>Đối tượng</th><th>Remix</th><th>Tin</th><th>Ngày</th><th>Giờ</th><th>Đăng lên</th><th>Trạng thái</th><th></th>
+            </tr></thead>
+            <tbody id="bangVideo"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><b>Lịch đăng</b><span class="badge">Tự chia nhiều ngày</span></div>
+        <div class="card-b">
+          <div class="schedule-grid-v9">
+            <div class="schedule-field-v9"><label>Ngày bắt đầu *</label><div class="schedule-control-v9"><input id="ngayBatDau" type="date"></div></div>
+            <div class="schedule-field-v9"><label>Số video / ngày *</label><div class="schedule-control-v9"><input id="soVideoNgay" type="number" min="1" value="3"></div></div>
+            <div class="schedule-field-v9"><label>Video mới tự nối lịch</label><div class="schedule-control-v9"><div id="toggleTuNoiLich" class="switch-pill on"><button data-v="off">Tắt</button><button data-v="on">Bật</button></div></div></div>
+          </div>
+          <div style="height:7px"></div>
+          <div id="khungGio" class="slot-grid"></div>
+          <div class="icon-toolbar" style="margin-top:7px"><button id="apDungLich" class="btn icon-btn primary" title="Áp dụng lịch">✓</button><button id="xoaLich" class="btn icon-btn" title="Xóa lịch chưa đăng">⌫</button></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <aside id="khungDienThoai" class="phone-pane">
+    <div id="keoKhungDienThoai" class="phone-resizer" title="Kéo để đổi kích thước"></div>
+
+    <div class="phone-tabs">
+      <button id="tabTongQuan" class="phone-tab" title="Tổng quan tất cả điện thoại">Tổng quan</button>
+      <button id="tabChiTiet" class="phone-tab active" title="Điện thoại đang chọn">Điện thoại 01</button>
+    </div>
+
+    <div id="viewTongQuan" class="phone-view hidden-view">
+      <div class="overview-toolbar">
+        <div class="overview-toolbar-left">
+          <span class="small">Toàn bộ màn hình</span>
+          <span id="overviewZoomValue" class="badge" title="Ctrl + lăn chuột để phóng to / thu nhỏ">100%</span>
+          <span id="overviewSelectionInfo" class="badge overview-selection-info" title="Số điện thoại đang điều khiển đồng thời">0 máy chọn</span>
+        </div>
+        <div class="overview-toolbar-right">
+          <button id="chonTatCaPhone" class="btn icon-btn" title="Chọn tất cả điện thoại">●</button>
+          <button id="boChonPhone" class="btn icon-btn" title="Bỏ chọn nhóm điều khiển">○</button>
+          <button id="lamMoiTatCaManHinh" class="btn icon-btn" title="Làm mới tất cả màn hình">↻</button><button id="overviewFullscreen" class="btn icon-btn" title="Toàn màn hình">⛶</button>
+        </div>
+      </div>
+      <div id="overviewViewport" class="overview-viewport">
+        <div id="overviewGrid" class="overview-grid"></div>
+      </div>
+      <div class="overview-help">Kéo chuột để chọn nhiều máy · Ctrl+lăn: zoom · Double-click: mở máy chính · Panel phải có thể kéo rộng/thu nhỏ.</div>
+    </div>
+
+    <div id="viewChiTiet" class="phone-view">
+      <div class="phone-head"><div><b>Màn hình điện thoại</b><div id="phuDeDienThoai" class="small">Điện thoại 01 · IP —</div></div><span class="badge">Trực tiếp</span></div>
+      <div class="detail-zoom-hint"><span>Rê chuột vào màn hình · Ctrl + lăn để phóng to/thu nhỏ</span><span id="detailPhoneZoomValue" class="badge">100%</span></div>
+      <div id="detailPhoneZoomWrap" class="detail-phone-zoom-wrap">
+        <div id="detailPhoneShell" class="phone-shell"><div id="detailPhoneScreen" class="phone-screen"><canvas id="manHinhDienThoai" width="270" height="585"></canvas></div></div>
+      </div>
+      <div class="phone-nav">
+        <button class="btn icon-btn phone-key" title="Quay lại">←</button>
+        <button class="btn icon-btn phone-key" title="Màn hình chính">●</button>
+        <button class="btn icon-btn phone-key" title="Đa nhiệm">▢</button>
+        <button id="xoaNen" class="btn icon-btn phone-key" title="Xóa ứng dụng chạy nền">⌁</button>
+      </div>
+      <div class="quick-apps">
+        <button class="quick-app moNhanhApp" data-app="facebook" title="Mở Facebook">f</button>
+        <button class="quick-app moNhanhApp" data-app="gallery" title="Mở Thư viện">▧</button>
+        <button class="quick-app moNhanhApp" data-app="files" title="Mở Tệp">▤</button>
+        <button class="quick-app moNhanhApp" data-app="settings" title="Mở Cài đặt">⚙</button>
+        <button class="quick-app moNhanhApp" data-app="vpn" title="Mở VPN đang bật">V</button>
+        <button class="quick-app moNhanhApp" data-app="browser" title="Mở Trình duyệt">◎</button>
+      </div>
+      <div class="vpn-strip">
+        <div class="row space"><b>VPN phát hiện</b><button id="quetVpn" class="btn icon-btn" title="Quét lại VPN">↻</button></div>
+        <div id="vpnIcons" class="vpn-icons"></div>
+      </div>
+      <div style="margin-top:7px" class="small">Đang chạy</div>
+      <b id="jobHienTai">Chưa có</b>
+    </div>
+  </aside>
+</div>
+
+<div id="menuChuotPhai" class="context-menu">
+  <button data-act="post" title="Đăng ngay">▶</button>
+  <button data-act="select" title="Chọn / bỏ chọn">●</button>
+  <button data-act="clone" title="Nhân bản dòng">⧉</button>
+  <button data-act="target" title="Đổi nơi đăng">⇄</button>
+  <button data-act="clearSchedule" title="Xóa lịch">⌫</button>
+  <button data-act="delete" title="Xóa khỏi danh sách">⌫</button>
+</div>
+
+<!-- QUẢN LÝ APK -->
+<div id="modalApk" class="modal full-tool" title="Kéo góc popup để thay đổi kích thước">
+  <div class="box">
+    <div class="modal-head"><b>Quản lý APK</b><button class="btn icon-btn dongModal" data-modal="modalApk">✕</button></div>
+    <div class="modal-grid">
+      <div>
+        <label>APK / gói ứng dụng</label>
+        <div class="toolbar"><label class="btn icon-btn primary" title="Thêm APK">＋<input id="themApkFile" type="file" accept=".apk" hidden></label><input id="goiApkThuCong" placeholder="com.example.app"></div>
+        <div id="danhSachApk" class="listbox" style="margin-top:6px"></div>
+      </div>
+      <div>
+        <label>Điện thoại</label>
+        <div class="toolbar"><button id="chonHetMayApk" class="btn icon-btn" title="Chọn tất cả điện thoại">●</button><button id="boHetMayApk" class="btn icon-btn" title="Bỏ chọn tất cả">○</button></div>
+        <div id="danhSachMayApk" class="listbox" style="margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:9px;justify-content:flex-end"><button id="goApkDaChon" class="btn icon-btn danger" title="Gỡ APK">−</button><button id="caiApkDaChon" class="btn icon-btn primary" title="Cài APK">＋</button></div>
+  </div>
+</div>
+
+<!-- PROXY -->
+<div id="modalProxy" class="modal full-tool" title="Kéo góc popup để thay đổi kích thước">
+  <div class="box">
+    <div class="modal-head"><b>Quản lý Proxy</b><button class="btn icon-btn dongModal" data-modal="modalProxy" title="Đóng">✕</button></div>
+    <div class="proxy-v9-toolbar">
+      <div>
+        <label>Nhập danh sách Proxy</label>
+        <textarea id="proxyInput" rows="12" placeholder="Mỗi dòng một Proxy">http://103.152.112.21:3128
+https://45.77.56.114:8080
+socks5://128.199.202.122:1080
+socks5://user01:pass01@167.99.45.83:1080
+94.23.91.209:3128:user02:pass02
+socks4://185.199.229.156:7492
+http://user03:pass03@45.12.88.91:8080
+103.86.109.38:1080</textarea>
+        <div class="proxy-format-hint">HTTP · HTTPS · SOCKS4 · SOCKS5 · IP:PORT · IP:PORT:USER:PASS · protocol://USER:PASS@HOST:PORT</div>
+      </div>
+      <button id="napProxy" class="btn icon-btn" title="Nạp danh sách Proxy">＋</button>
+      <button id="checkProxyDaChon" class="btn icon-btn" title="Check Proxy đã chọn">✓</button>
+      <button id="checkTatCaProxy" class="btn icon-btn" title="Check tất cả Proxy">✓✓</button>
+      <button id="ganProxyDaChon" class="btn icon-btn" title="Gắn các Proxy đã chọn vào điện thoại đã chọn trong từng dòng">⇢</button>
+    </div>
+    <div class="proxy-v9-table-wrap">
+      <table class="proxy-v9-table">
+        <thead><tr>
+          <th></th><th>Proxy</th><th>Trạng thái</th><th>Điện thoại áp dụng</th><th>Điện thoại đang dùng</th><th>Xác minh trên máy</th><th></th>
+        </tr></thead>
+        <tbody id="bangProxy"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- NHÂN BẢN -->
+<div id="modalNhanBan" class="modal">
+  <div class="box smallbox">
+    <div class="modal-head"><b>Nhân bản cấu hình Nick / Fanpage</b><button class="btn icon-btn dongModal" data-modal="modalNhanBan">✕</button></div>
+    <div class="grid2">
+      <div><label>Nguồn</label><input id="nguonNhanBan" readonly></div>
+      <div><label>Điện thoại đích</label><select id="mayDichNhanBan"></select></div>
+      <div><label>Tài khoản đích</label><select id="taiKhoanDichNhanBan"></select></div>
+      <div><label>Tên nơi đăng mới</label><input id="tenBanSao"></div>
+    </div>
+    <div class="small" style="margin-top:7px">Nhân bản cấu hình hiển thị / lịch / tuỳ chọn; không sao chép mật khẩu hay phiên đăng nhập.</div>
+    <div class="toolbar" style="margin-top:9px;justify-content:flex-end"><button id="xacNhanNhanBan" class="btn icon-btn primary" title="Nhân bản">⧉</button></div>
+  </div>
+</div>
+
+<!-- TIẾN TRÌNH -->
+<div id="modalTienTrinh" class="modal full-timeline" title="Kéo góc popup để thay đổi kích thước">
+  <div class="box">
+    <div class="modal-head"><b>Tiến trình & lịch đăng</b><button class="btn icon-btn dongModal" data-modal="modalTienTrinh">✕</button></div>
+    <div class="timeline-toolbar-v9">
+      <div><label>Kiểu xem</label><select id="kieuXemTienTrinh"><option value="day">Ngày</option><option value="month">Tháng</option><option value="range">Khoảng ngày</option></select></div>
+      <div><label>Từ ngày</label><input id="tuNgayTienTrinh" type="date"></div>
+      <div><label>Đến ngày</label><input id="denNgayTienTrinh" type="date"></div>
+      <div class="timeline-device-picker" id="timelineDevicePicker">
+        <label>Điện thoại</label>
+        <button id="timelineDeviceButton" class="btn" title="Chọn một hoặc nhiều điện thoại">Máy: Tất cả ▾</button>
+        <div id="timelineDeviceMenu" class="timeline-device-menu"></div>
+      </div>
+      <button id="locTienTrinh" class="btn icon-btn" title="Cập nhật Timeline">↻</button>
+      <div class="toolbar">
+        <span id="timelineZoomValue" class="badge timeline-zoom-badge" title="Ctrl + lăn chuột để phóng to / thu nhỏ">100%</span>
+        <button id="chongTrung" class="btn icon-btn" title="Chống trùng lịch: giãn 1–2 giờ ngẫu nhiên">⤢</button>
+      </div>
+    </div>
+    <div class="small" style="margin-top:7px">Kéo job trái/phải để đổi giờ · Ctrl + lăn chuột để zoom · Đỏ = cùng điện thoại trùng thời điểm.</div>
+    <div id="timelineScroll" class="timeline-scroll">
+      <div id="timelineStage" class="timeline-stage"></div>
+    </div>
+  </div>
+</div>
+
+<!-- THÊM THIẾT BỊ -->
+<div id="modalThemMay" class="modal">
+  <div class="box smallbox">
+    <div class="modal-head"><b>Thêm điện thoại</b><button class="btn icon-btn dongModal" data-modal="modalThemMay">✕</button></div>
+    <div class="add-device-grid">
+      <div><label>Tên máy</label><input id="themMayTen" placeholder="Điện thoại mới"></div>
+      <div><label>Kiểu kết nối</label><select id="themMayKetNoi"><option>USB</option><option>LAN</option></select></div>
+      <div><label>ADB Serial / Address</label><input id="themMayAdb" placeholder="R58... hoặc 192.168.1.10:5555"></div>
+      <div><label>IP trên điện thoại</label><input id="themMayIp" placeholder="192.168.1.10"></div>
+    </div>
+    <div class="toolbar" style="margin-top:9px;justify-content:flex-end"><button id="xacNhanThemMay" class="btn icon-btn primary" title="Thêm điện thoại">＋</button></div>
+  </div>
+</div>
+
+
+<!-- ĐIỆN THOẠI PHÓNG TO -->
+<div id="modalPhoneFocus" class="modal phone-focus">
+  <div id="focusWindow" class="box">
+    <div id="focusDragHead" class="focus-drag-head">
+      <div class="focus-title"><b id="focusPhoneTitle">Điện thoại</b><span id="focusPhoneIp">IP —</span></div>
+      <button class="btn icon-btn focus-close dongModal" data-modal="modalPhoneFocus" title="Đóng">✕</button>
+    </div>
+    <div class="focus-layout">
+      <div class="focus-screen-wrap">
+        <div id="focusPhoneScreen" class="focus-phone-screen">
+          <canvas id="focusPhoneCanvas" width="540" height="1170"></canvas><div class="focus-wheel-hint">Ctrl + lăn: phóng to/thu nhỏ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="phoneContextMenu" class="phone-context-menu">
+  <button data-act="open" title="Mở lớn">⛶</button>
+  <button data-act="select" title="Chọn / bỏ chọn nhóm">●</button>
+  <button data-act="reconnect" title="Kết nối lại ADB">↻</button>
+  <button data-act="refresh" title="Làm mới màn hình">⟳</button>
+  <button data-act="facebook" title="Mở lại Facebook">f</button>
+  <button data-act="clear" title="Xóa ứng dụng chạy nền">⌁</button>
+  <button data-act="shot" title="Chụp màn hình">▣</button>
+  <button data-act="info" title="Thông tin thiết bị">i</button>
+  <button data-act="lock" title="Khóa / mở khóa Worker">🔒</button>
+</div>
+<script>
+const $=q=>document.querySelector(q), $$=q=>[...document.querySelectorAll(q)];
+const duoiVideo=/\.(mp4|mov|m4v|avi|mkv|webm)$/i;
+const TRANGTHAI={READY:'Sẵn sàng',SCHEDULED:'Đã lên lịch',QUEUED:'Chờ máy rảnh',POSTING:'Đang đăng',VERIFYING:'Đang kiểm tra',POSTED:'Đã đăng',SUCCESS:'Hoàn tất',FILE_MISSING:'Thiếu tệp',CONFLICT:'Trùng lịch'};
+const VPN_GOC=[
+ {ten:'Windscribe',goi:'com.windscribe.vpn',ky:'W'},
+ {ten:'1.1.1.1 / WARP',goi:'com.cloudflare.onedotonedotone',ky:'1.1'},
+ {ten:'TunnelBear',goi:'com.tunnelbear.android',ky:'TB'},
+ {ten:'PIA VPN',goi:'com.privateinternetaccess.android',ky:'PIA'},
+ {ten:'Proton VPN',goi:'ch.protonvpn.android',ky:'P'},
+ {ten:'WireGuard',goi:'com.wireguard.android',ky:'WG'}
+];
+const S={dienThoai:1,loc:'ALL',videos:[],thuMuc:null,lastFiles:null,ignored:new Set(),flow:0,flowError:false,contextIndex:null,dragSelect:false,dragMode:true,apkFiles:[],proxies:[],dongBo:true,tuNoiLich:true,chayNen:true,chuKyQuet:10,statsUpdatedRun:false,timelineZoom:28,timelineDevices:new Set(),timelineInitialized:false,phonePaneView:'detail',overviewPhoneWidth:112,focusDeviceId:null,controlDeviceIds:new Set(),overviewSelecto:null,focusSelecto:null,sidebarSelecto:null,pointerInOverview:false,phoneContextDeviceId:null,previewFps:30,previewQuality:75,detailPhoneZoom:1.0,
+  currentCampaignId:1,
+  campaigns:[
+    {id:1,name:'Campaign 01',folderName:'Video Campaign 01',folderHandle:null,deviceId:1,accountIndex:0,targetIndex:1,videos:null},
+    {id:2,name:'Campaign 02',folderName:'Chưa chọn folder',folderHandle:null,deviceId:2,accountIndex:0,targetIndex:1,videos:[]},
+    {id:3,name:'Campaign 03',folderName:'Chưa chọn folder',folderHandle:null,deviceId:3,accountIndex:0,targetIndex:1,videos:[]}
+  ]};
+
+let devices=Array.from({length:8},(_,i)=>{
+  const id=i+1,state=id%7===0?'BUSY':'ONLINE',transport=id%3===0?'USB':'LAN';
+  const remaining=(id*9)%34,total=38+(id*7)%45,posted=Math.max(0,total-remaining);
+  const makeGrowth=(seed)=>({
+    d1:+(((seed%9)-3)*0.37).toFixed(1),
+    d7:+((((seed*3)%17)-5)*0.42).toFixed(1),
+    d30:+((((seed*7)%29)-8)*0.48).toFixed(1)
+  });
+  const makeAccount=(suffix,pageCount)=>{
+    const offset=suffix==='A'?0:suffix==='B'?420:880;
+    const base=1200+id*137+offset;
+    const ids=[`Cá nhân ${id}${suffix}`,...Array.from({length:pageCount},(_,p)=>`Fanpage ${id}${suffix}-${p+1}`)];
+    const pageStats=ids.map((_,p)=>({
+      likes:p===0?base:2600+id*311+p*1250+offset,
+      follows:p===0?2400+id*211+offset:4100+id*397+p*1800+offset,
+      growth:makeGrowth(id+p*4+(suffix==='B'?11:suffix==='C'?23:0))
+    }));
+    return{
+      ten:`Nick ${id}${suffix}`,avatar:`N${id}${suffix}`,
+      likes:base,follows:2400+id*211+offset,growth:makeGrowth(id+(suffix==='B'?11:suffix==='C'?23:0)),
+      pageCount,ids,pageStats
+    };
+  };
+  return{
+    id,ten:`Điện thoại ${String(id).padStart(2,'0')}`,state,transport,
+    addr:transport==='USB'?`R58AUTO${String(id).padStart(3,'0')}`:`192.168.10.${100+id}:5555`,
+    ip:`192.168.${20+(id%3)}.${100+id}`,
+    total,remaining,posted,lock:false,currentJob:null,queue:[],flow:0,flowError:false,statsUpdatedRun:false,proxyId:null,proxyStatus:'Chưa gắn',
+    vpns:VPN_GOC.filter((_,j)=>(id+j)%2===0||(id+j)%5===0).slice(0,4),activeVpn:null,
+    accounts:[makeAccount('A',2),makeAccount('B',4),makeAccount('C',6)]
+  }
+});
+
+function setToggle(id,on){
+  const el=$(id);el.classList.toggle('on',on);el.classList.toggle('off',!on);
+  el.querySelectorAll('button').forEach(b=>b.classList.toggle('active',(b.dataset.v==='on')===on));
+}
+function bindToggle(id,getter,setter){
+  $(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;setter(b.dataset.v==='on');setToggle(id,getter())}
+}
+bindToggle('#toggleChayNen',()=>S.chayNen,v=>{S.chayNen=v;saveUiState()});
+bindToggle('#toggleDongBo',()=>S.dongBo,v=>{S.dongBo=v;saveUiState()});
+bindToggle('#toggleTuNoiLich',()=>S.tuNoiLich,v=>{S.tuNoiLich=v;saveUiState()});
+
+
+
+setToggle('#toggleChayNen',S.chayNen);setToggle('#toggleDongBo',S.dongBo);setToggle('#toggleTuNoiLich',S.tuNoiLich);
+
+function saveUiState(){
+  localStorage.setItem('fbfarm-v5-ui',JSON.stringify({chayNen:S.chayNen,dongBo:S.dongBo,tuNoiLich:S.tuNoiLich,theme:document.documentElement.dataset.theme,phoneWidth:$('#khungDienThoai')?.style.width||''}));
+}
+function loadUiState(){
+  try{
+    const x=JSON.parse(localStorage.getItem('fbfarm-v5-ui')||'{}');
+    if(typeof x.chayNen==='boolean')S.chayNen=x.chayNen;
+    if(typeof x.dongBo==='boolean')S.dongBo=x.dongBo;
+    if(typeof x.tuNoiLich==='boolean')S.tuNoiLich=x.tuNoiLich;
+    if(x.theme)document.documentElement.dataset.theme=x.theme;
+    if(x.phoneWidth)$('#khungDienThoai').style.width=x.phoneWidth;
+  }catch{}
+}
+
+function mauConLai(n){return n<5?'red':n<=20?'yellow':'green'}
+function syncSidebarSelectionClasses(){
+  $$('#danhSachDienThoai .device').forEach(el=>el.classList.toggle('group-selected',S.controlDeviceIds.has(+el.dataset.id)));
+}
+function hienDanhSachMay(){
+  const q=$('#timDienThoai').value.toLowerCase(),h=$('#danhSachDienThoai');h.innerHTML='';
+  devices.filter(d=>(S.loc==='ALL'||d.state===S.loc)&&d.ten.toLowerCase().includes(q)).forEach(d=>{
+    const el=document.createElement('div');el.dataset.id=d.id;
+    el.className='device'+(d.id===S.dienThoai?' active':'')+(S.controlDeviceIds.has(d.id)?' group-selected':'');
+    const dot=d.state==='ONLINE'?'dot-ok':d.state==='BUSY'?'dot-busy':d.state==='ERROR'?'dot-bad':'dot-off';
+    const pct=d.total?Math.round(d.posted/d.total*100):0;
+    el.innerHTML=`<div class="row space"><div class="row"><span class="dot ${dot}"></span><b>${d.ten}</b></div><span class="badge">${d.transport}</span></div>
+      <div class="row space small" style="margin-top:2px"><span>${d.lock?'🔒 Đang chạy':d.state==='ONLINE'?'Sẵn sàng':d.state==='BUSY'?'Đang chạy':d.state==='ERROR'?'Lỗi':'Ngoại tuyến'}</span><span>${pct}% · còn ${d.remaining}</span></div>
+      <div class="progress ${mauConLai(d.remaining)}"><i style="width:${pct}%"></i></div>`;
+    el.onclick=e=>{
+      if(e.detail>1)return;
+      S.dienThoai=d.id;hienMayDangChon();
+      if(e.ctrlKey||e.metaKey)toggleControlDevice(d.id);
+      hienDanhSachMay();syncOverviewSelectionClasses();capNhatThongTinChonPhone();
+    };
+    el.ondblclick=e=>{e.preventDefault();moDienThoaiLon(d.id)};
+    el.oncontextmenu=e=>{
+      e.preventDefault();
+      if(!S.controlDeviceIds.has(d.id))S.controlDeviceIds=new Set([d.id]);
+      S.phoneContextDeviceId=d.id;
+      syncSidebarSelectionClasses();syncOverviewSelectionClasses();capNhatThongTinChonPhone();
+      moPhoneContextMenu(e.clientX,e.clientY);
+    };
+    h.appendChild(el);
+  });
+  requestAnimationFrame(khoiTaoSelectoSidebar);
+}
+function khoiTaoSelectoSidebar(){
+  if(!window.Selecto)return;
+  if(S.sidebarSelecto){try{S.sidebarSelecto.destroy()}catch{}}
+  S.sidebarSelecto=new Selecto({
+    container:document.body,dragContainer:$('#danhSachDienThoai'),
+    selectableTargets:['#danhSachDienThoai .device'],selectByClick:false,selectFromInside:false,
+    continueSelect:true,toggleContinueSelect:'shift',hitRate:18
+  });
+  S.sidebarSelecto.on('select',e=>{
+    e.added.forEach(el=>S.controlDeviceIds.add(+el.dataset.id));
+    e.removed.forEach(el=>S.controlDeviceIds.delete(+el.dataset.id));
+    syncSidebarSelectionClasses();syncOverviewSelectionClasses();capNhatThongTinChonPhone();
+  });
+}
+$$('.locThietBi').forEach(b=>b.onclick=()=>{S.loc=b.dataset.loc;hienDanhSachMay()});
+$('#timDienThoai').oninput=hienDanhSachMay;
+$('#themMay').onclick=()=>moModal('modalThemMay');
+$('#quetMay').onclick=()=>{
+  const next=devices.length?Math.max(...devices.map(d=>d.id))+1:1;
+  const transport=Math.random()>.5?'LAN':'USB';
+  devices.push({
+    id:next,ten:`Điện thoại ${String(next).padStart(2,'0')}`,state:'ONLINE',transport,
+    addr:transport==='USB'?`R58SCAN${String(next).padStart(3,'0')}`:`192.168.10.${100+next}:5555`,
+    ip:`192.168.${20+(next%3)}.${100+next}`,total:0,remaining:0,posted:0,lock:false,currentJob:null,queue:[],flow:0,flowError:false,statsUpdatedRun:false,
+    proxyId:null,proxyStatus:'Chưa gắn',vpns:VPN_GOC.filter((_,j)=>(next+j)%2===0).slice(0,3),activeVpn:null,
+    accounts:[
+      {ten:`Nick ${next}A`,avatar:`N${next}A`,likes:1200,follows:2400,growth:{d1:1.2,d7:3.8,d30:8.6},pageCount:2,ids:[`Cá nhân ${next}A`,`Fanpage ${next}A-1`,`Fanpage ${next}A-2`],pageStats:[{likes:1200,follows:2400,growth:{d1:1.2,d7:3.8,d30:8.6}},{likes:3100,follows:5200,growth:{d1:.8,d7:4.1,d30:11.2}},{likes:4700,follows:7300,growth:{d1:-.4,d7:2.2,d30:7.5}}]},
+      {ten:`Nick ${next}B`,avatar:`N${next}B`,likes:1800,follows:3200,growth:{d1:.7,d7:2.9,d30:9.1},pageCount:4,ids:[`Cá nhân ${next}B`,...Array.from({length:4},(_,p)=>`Fanpage ${next}B-${p+1}`)],pageStats:Array.from({length:5},(_,p)=>({likes:1800+p*900,follows:3200+p*1300,growth:{d1:p%2?.6:-.2,d7:2+p*.3,d30:6+p*.8}}))},
+      {ten:`Nick ${next}C`,avatar:`N${next}C`,likes:2300,follows:4100,growth:{d1:-.3,d7:1.8,d30:5.7},pageCount:6,ids:[`Cá nhân ${next}C`,...Array.from({length:6},(_,p)=>`Fanpage ${next}C-${p+1}`)],pageStats:Array.from({length:7},(_,p)=>({likes:2300+p*1100,follows:4100+p*1500,growth:{d1:p%3?.9:-.5,d7:1.5+p*.4,d30:5+p*.9}}))}
+    ]
+  });
+  hienDanhSachMay();if(S.phonePaneView==='overview')hienTongQuanDienThoai();
+};
+$('#xacNhanThemMay').onclick=()=>{
+  const id=devices.length?Math.max(...devices.map(d=>d.id))+1:1,transport=$('#themMayKetNoi').value;
+  const ten=$('#themMayTen').value.trim()||`Điện thoại ${String(id).padStart(2,'0')}`,addr=$('#themMayAdb').value.trim()||(transport==='USB'?`R58MAN${id}`:`192.168.10.${100+id}:5555`),ip=$('#themMayIp').value.trim()||`192.168.20.${100+id}`;
+  devices.push({id,ten,state:'ONLINE',transport,addr,ip,total:0,remaining:0,posted:0,lock:false,currentJob:null,queue:[],flow:0,flowError:false,statsUpdatedRun:false,proxyId:null,proxyStatus:'Chưa gắn',vpns:[],activeVpn:null,accounts:[
+      {ten:`Nick ${id}A`,avatar:`N${id}A`,likes:1200,follows:2400,growth:{d1:1.2,d7:3.8,d30:8.6},pageCount:2,ids:[`Cá nhân ${id}A`,`Fanpage ${id}A-1`,`Fanpage ${id}A-2`],pageStats:[{likes:1200,follows:2400,growth:{d1:1.2,d7:3.8,d30:8.6}},{likes:3100,follows:5200,growth:{d1:.8,d7:4.1,d30:11.2}},{likes:4700,follows:7300,growth:{d1:-.4,d7:2.2,d30:7.5}}]},
+      {ten:`Nick ${id}B`,avatar:`N${id}B`,likes:1800,follows:3200,growth:{d1:.7,d7:2.9,d30:9.1},pageCount:4,ids:[`Cá nhân ${id}B`,...Array.from({length:4},(_,p)=>`Fanpage ${id}B-${p+1}`)],pageStats:Array.from({length:5},(_,p)=>({likes:1800+p*900,follows:3200+p*1300,growth:{d1:p%2?.6:-.2,d7:2+p*.3,d30:6+p*.8}}))},
+      {ten:`Nick ${id}C`,avatar:`N${id}C`,likes:2300,follows:4100,growth:{d1:-.3,d7:1.8,d30:5.7},pageCount:6,ids:[`Cá nhân ${id}C`,...Array.from({length:6},(_,p)=>`Fanpage ${id}C-${p+1}`)],pageStats:Array.from({length:7},(_,p)=>({likes:2300+p*1100,follows:4100+p*1500,growth:{d1:p%3?.9:-.5,d7:1.5+p*.4,d30:5+p*.9}}))}
+    ]});
+  $('#modalThemMay').style.display='none';hienDanhSachMay();if(S.phonePaneView==='overview')hienTongQuanDienThoai();
+};
+
+function hienMayDangChon(){
+  const d=devices.find(x=>x.id===S.dienThoai);
+  $('#tenDienThoai').textContent=d.ten;$('#phuDeDienThoai').textContent=`${d.ten} · IP ${d.ip||'—'}`;capNhatTabDienThoai();$('#ketNoi').textContent=`Tự nhận · ${d.transport}`;
+  $('#trangThaiKhoa').textContent=d.lock?'🔒 Đang chạy':'Máy rảnh';
+  const c=S.campaigns.find(x=>x.id===S.currentCampaignId);
+  setNickChoices(c?.accountIndex||0);
+  if(nickChoices)nickChoices.setChoiceByValue(String(c?.accountIndex||0));
+  hienDichDang();
+  if(pageChoices)pageChoices.setChoiceByValue(String(c?.targetIndex||0));
+  hienVpnIcons();capNhatTongTaiKhoanTrang();veManHinh();if($('#khoaMay'))$('#khoaMay').textContent=d.lock?'🔒 Máy đang bận':'Máy rảnh';$('#jobHienTai').textContent=d.currentJob||'Chưa có';hienQuyTrinh();if(S.phonePaneView==='overview')hienTongQuanDienThoai();
+}
+let nickChoices=null,pageChoices=null;
+function fmtSo(n){return new Intl.NumberFormat('vi-VN').format(Math.max(0,Math.round(n||0)))}
+function fmtDelta(v){const n=Number(v||0);return `${n>0?'+':''}${n.toFixed(1)}%`}
+function richDelta(v,label){
+  const n=Number(v||0),cls=n>0?'up':n<0?'down':'flat';
+  return `<span class="rich-delta ${cls}">${label} ${fmtDelta(n)}</span>`;
+}
+function richIdentityLabel(name,stats,isAccount=false){
+  const g=stats?.growth||{d1:0,d7:0,d30:0};
+  const pages=isAccount?` · <span class="rich-page-count">${stats?.pageCount||0} Fanpage</span>`:'';
+  return `<span class="rich-metric-name">${esc(name)}</span>${pages} · `+
+    `<span class="rich-metric-count">♥ ${fmtSo(stats?.likes||0)} · 👤 ${fmtSo(stats?.follows||0)}</span> · `+
+    `${richDelta(g.d1,'1N')} · ${richDelta(g.d7,'7N')} · ${richDelta(g.d30,'30N')}`;
+}
+function plainIdentityLabel(name,stats,isAccount=false){
+  const g=stats?.growth||{d1:0,d7:0,d30:0},pages=isAccount?` · ${stats?.pageCount||0} Fanpage`:'';
+  return `${name}${pages} · ♥ ${fmtSo(stats?.likes||0)} · 👤 ${fmtSo(stats?.follows||0)} · 1N ${fmtDelta(g.d1)} · 7N ${fmtDelta(g.d7)} · 30N ${fmtDelta(g.d30)}`;
+}
+function khoiTaoRichChoices(){
+  if(!window.Choices)return;
+  if(nickChoices||pageChoices)return;
+  const common={searchEnabled:true,itemSelectText:'',shouldSort:false,allowHTML:true,searchResultLimit:200,renderChoiceLimit:-1,position:'auto'};
+  nickChoices=new Choices('#taiKhoan',{...common,searchPlaceholderValue:'Tìm Nick...'});
+  pageChoices=new Choices('#dichDang',{...common,searchPlaceholderValue:'Tìm Profile/Fanpage...'});
+}
+function setNickChoices(selected=0){
+  const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;
+  const choices=d.accounts.map((a,i)=>({value:String(i),label:richIdentityLabel(a.ten,a,true),selected:i===selected}));
+  if(nickChoices){nickChoices.clearStore();nickChoices.setChoices(choices,'value','label',true)}
+  else $('#taiKhoan').innerHTML=choices.map(c=>`<option value="${c.value}" ${c.selected?'selected':''}>${plainIdentityLabel(d.accounts[+c.value].ten,d.accounts[+c.value],true)}</option>`).join('');
+}
+function setPageChoices(selected=0){
+  const d=devices.find(x=>x.id===S.dienThoai),a=d?.accounts?.[+$('#taiKhoan').value||0];if(!a)return;
+  const choices=a.ids.map((name,i)=>{
+    const st=a.pageStats[i]||{likes:a.likes,follows:a.follows,growth:a.growth};
+    return {value:String(i),label:richIdentityLabel(name,st),selected:i===selected};
+  });
+  if(pageChoices){pageChoices.clearStore();pageChoices.setChoices(choices,'value','label',true)}
+  else $('#dichDang').innerHTML=choices.map((c,i)=>`<option value="${c.value}" ${c.selected?'selected':''}>${plainIdentityLabel(a.ids[i],a.pageStats[i]||a)}</option>`).join('');
+}
+function capNhatTongTaiKhoanTrang(){
+  const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;
+  const nick=d.accounts.length,pages=d.accounts.reduce((n,a)=>n+(a.pageCount??Math.max(0,a.ids.length-1)),0);
+  const el=$('#accountScanSummary');if(el)el.textContent=`${nick} Nick · ${pages} Fanpage`;
+}
+async function quetTaiKhoanFanpage(){
+  const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;
+  $('#accountScanSummary').textContent='Đang quét...';
+  // Prototype mô phỏng. Backend: mở Facebook > See all profiles, đọc UIAutomator tree,
+  // scroll danh sách tới cuối, map Personal/Profile/Page, OCR fallback khi thiếu accessibility text.
+  await new Promise(r=>setTimeout(r,500));
+  d.accounts.forEach(a=>a.pageCount=Math.max(0,a.ids.length-1));
+  capNhatTongTaiKhoanTrang();
+  const ai=+$('#taiKhoan').value||0,ti=+$('#dichDang').value||0;
+  setNickChoices(ai);setPageChoices(ti);capNhatTongTaiKhoanTrang();
+}
+$('#quetTaiKhoanTrang').onclick=quetTaiKhoanFanpage;
+$('#dangNhapThuCong').onclick=()=>{
+  const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;
+  moDienThoaiLon(d.id);
+  vePreviewTrenCanvas($('#focusPhoneCanvas'),d,'Mở Facebook · đăng nhập thủ công');
+};
+
+function hienDichDang(){
+  const d=devices.find(x=>x.id===S.dienThoai),ai=+$('#taiKhoan').value||0,a=d.accounts[ai];
+  $('#avatarNick').textContent=a.avatar.slice(0,3);
+  const c=S.campaigns.find(x=>x.id===S.currentCampaignId);if(c){c.accountIndex=ai}
+  setPageChoices(c?.targetIndex||0);dongBoDich();capNhatTongTaiKhoanTrang();
+}
+function dongBoDich(){
+  const d=devices.find(x=>x.id===S.dienThoai),a=d.accounts[+$('#taiKhoan').value||0],idx=+$('#dichDang').value||0,name=a.ids[idx];
+  $('#avatarTrang').textContent=idx===0?'CN':`P${idx}`;
+  $('#trangThaiDanhTinh').textContent='✓ '+name;
+  const c=S.campaigns.find(x=>x.id===S.currentCampaignId);if(c){c.targetIndex=idx;c.deviceId=S.dienThoai}
+}
+function capNhatThongKeDanhTinh(){
+  const d=devices.find(x=>x.id===S.dienThoai),a=d.accounts[+$('#taiKhoan').value||0];
+  a.likes+=Math.floor(Math.random()*7);a.follows+=Math.floor(Math.random()*11);
+  a.growth=a.growth||{d1:0,d7:0,d30:0};
+  a.growth.d1=+(a.growth.d1+(Math.random()-.42)*.3).toFixed(1);
+  a.growth.d7=+(a.growth.d7+(Math.random()-.42)*.4).toFixed(1);
+  a.growth.d30=+(a.growth.d30+(Math.random()-.42)*.5).toFixed(1);
+  a.pageStats.forEach(x=>{
+    x.likes+=Math.floor(Math.random()*9);x.follows+=Math.floor(Math.random()*14);
+    x.growth=x.growth||{d1:0,d7:0,d30:0};
+    x.growth.d1=+(x.growth.d1+(Math.random()-.42)*.3).toFixed(1);
+    x.growth.d7=+(x.growth.d7+(Math.random()-.42)*.4).toFixed(1);
+    x.growth.d30=+(x.growth.d30+(Math.random()-.42)*.5).toFixed(1);
+  });
+  const ai=+$('#taiKhoan').value||0,ti=+$('#dichDang').value||0;
+  setNickChoices(ai);setPageChoices(ti);d.statsUpdatedRun=true;
+}
+$('#taiKhoan').onchange=()=>hienDichDang();
+$('#dichDang').onchange=()=>dongBoDich();
+
+function hienVpnIcons(){
+  const d=devices.find(x=>x.id===S.dienThoai),h=$('#vpnIcons');h.innerHTML='';
+  if(!d.vpns.length){h.innerHTML='<span class="small">Không phát hiện VPN</span>';return}
+  d.vpns.forEach(v=>{
+    const b=document.createElement('button');b.className='vpn-icon'+(d.activeVpn===v.goi?' on':'');b.title=`${v.ten}\n${v.goi}`;b.innerHTML=`<span>${v.ky}</span><small>${d.activeVpn===v.goi?'Bật':'Tắt'}</small>`;
+    b.onclick=()=>{
+      const turningOn=d.activeVpn!==v.goi;
+      d.activeVpn=turningOn?v.goi:null;
+      if(turningOn&&d.proxyId){d.proxyId=null;d.proxyStatus='Chưa gắn'}
+      hienVpnIcons();veManHinh(d.activeVpn?`${v.ten}: Bật · Proxy Tắt`:`${v.ten}: Tắt`);
+    };h.appendChild(b);
+  });
+}
+$('#quetVpn').onclick=hienVpnIcons;
+
+function tenDichDangSach(){
+  const d=devices.find(x=>x.id===S.dienThoai);
+  if(!d)return 'Facebook';
+  const ai=+($('#taiKhoan')?.value||0),ti=+($('#dichDang')?.value||0),a=d.accounts?.[ai];
+  return a?.ids?.[ti]||a?.ten||'Facebook';
+}
+function vePreviewTrenCanvas(canvas,d,msg='Facebook'){
+  if(!canvas||!d)return;
+  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,scale=w/270;
+  ctx.clearRect(0,0,w,h);ctx.fillStyle='#101827';ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#1d4ed8';ctx.fillRect(0,0,w,38*scale);
+  ctx.fillStyle='#fff';ctx.font=`bold ${15*scale}px system-ui`;ctx.fillText('facebook',12*scale,25*scale);
+  ctx.fillStyle='#cbd5e1';ctx.font=`${11*scale}px system-ui`;ctx.fillText(d.ten+' · '+d.transport,12*scale,55*scale);
+  ctx.fillStyle='#1f2937';ctx.fillRect(10*scale,70*scale,w-20*scale,92*scale);
+  ctx.fillStyle='#fff';ctx.font=`bold ${12*scale}px system-ui`;
+  const target=d.id===S.dienThoai?tenDichDangSach():((d.accounts?.[0]?.ids?.[0])||'Facebook');
+  ctx.fillText(target.slice(0,28),20*scale,94*scale);
+  ctx.fillStyle='#94a3b8';ctx.font=`${10*scale}px system-ui`;ctx.fillText(d.ip||'IP —',20*scale,114*scale);
+  ctx.fillStyle='#374151';ctx.fillRect(20*scale,129*scale,165*scale,7*scale);
+  ctx.fillStyle='#1f2937';ctx.fillRect(10*scale,175*scale,w-20*scale,300*scale);
+  ctx.fillStyle='#475569';ctx.fillRect(20*scale,190*scale,w-40*scale,162*scale);
+  ctx.fillStyle='#e2e8f0';ctx.font=`${11*scale}px system-ui`;ctx.fillText(String(msg).slice(0,34),20*scale,380*scale);
+  ctx.fillStyle='#475569';ctx.fillRect(20*scale,395*scale,Math.min(180*scale,w-40*scale),7*scale);ctx.fillRect(20*scale,411*scale,Math.min(210*scale,w-40*scale),7*scale);
+  ctx.fillStyle=d.activeVpn?'#27c77b':'#f0b64b';ctx.beginPath();ctx.arc(w-18*scale,19*scale,5*scale,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=d.lock?'#f0b64b':'#27c77b';ctx.fillRect(0,h-5*scale,w,5*scale);
+}
+function veManHinh(msg='Facebook'){
+  const d=devices.find(x=>x.id===S.dienThoai);
+  vePreviewTrenCanvas($('#manHinhDienThoai'),d,msg);
+}
+
+function apDungZoomPhoneChiTiet(){
+  const shell=$('#detailPhoneShell'),wrap=$('#detailPhoneZoomWrap'),badge=$('#detailPhoneZoomValue');
+  if(!shell||!wrap)return;
+  const base=Math.max(150,wrap.clientWidth-4);
+  const width=Math.max(150,Math.min(1600,base*S.detailPhoneZoom));
+  shell.style.setProperty('--detail-phone-width',width+'px');
+  if(badge)badge.textContent=Math.round(S.detailPhoneZoom*100)+'%';
+}
+$('#detailPhoneScreen').addEventListener('wheel',e=>{
+  if(!e.ctrlKey)return;
+  e.preventDefault();
+  const factor=e.deltaY<0?1.10:(1/1.10);
+  S.detailPhoneZoom=Math.max(.30,Math.min(5.0,S.detailPhoneZoom*factor));
+  apDungZoomPhoneChiTiet();
+},{passive:false});
+window.addEventListener('resize',()=>requestAnimationFrame(apDungZoomPhoneChiTiet));
+
+$('#xoaNen').onclick=()=>{veManHinh('Đã gửi lệnh xóa nền');ghiNhatKy('Đã gửi lệnh xóa ứng dụng chạy nền.')};
+
+
+function capNhatTabDienThoai(){
+  const d=devices.find(x=>x.id===S.dienThoai);
+  $('#tabChiTiet').textContent=d?.ten||'Điện thoại';
+}
+function chuyenPhoneView(view){
+  S.phonePaneView=view;
+  $('#tabTongQuan').classList.toggle('active',view==='overview');
+  $('#tabChiTiet').classList.toggle('active',view==='detail');
+  $('#viewTongQuan').classList.toggle('hidden-view',view!=='overview');
+  $('#viewChiTiet').classList.toggle('hidden-view',view!=='detail');
+  if(view==='overview'){
+    hienTongQuanDienThoai();
+    requestAnimationFrame(khoiTaoSelectoTongQuan);
+  }
+}
+$('#tabTongQuan').onclick=()=>chuyenPhoneView('overview');
+$('#tabChiTiet').onclick=()=>chuyenPhoneView('detail');
+
+function selectedControlIds(){
+  return S.controlDeviceIds.size?new Set(S.controlDeviceIds):new Set([S.focusDeviceId||S.dienThoai]);
+}
+function capNhatThongTinChonPhone(){
+  const n=S.controlDeviceIds.size;
+  const el=$('#overviewSelectionInfo');if(el){el.textContent=`${n} máy chọn`;el.classList.toggle('group-active',n>0)}
+}
+function toggleControlDevice(id,force){
+  const on=force!==undefined?force:!S.controlDeviceIds.has(id);
+  if(on)S.controlDeviceIds.add(id);else S.controlDeviceIds.delete(id);
+  capNhatThongTinChonPhone();
+}
+function syncOverviewSelectionClasses(){
+  $$('#overviewGrid .overview-phone-card').forEach(card=>{
+    const id=+card.dataset.id;
+    card.classList.toggle('group-selected',S.controlDeviceIds.has(id));
+    card.classList.toggle('master-selected',id===S.focusDeviceId);
+  });
+}
+let overviewObserver=null;
+function khoiTaoOverviewObserver(){
+  if(overviewObserver)overviewObserver.disconnect();
+  const root=$('#overviewViewport');if(!root||!window.IntersectionObserver)return;
+  overviewObserver=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      const card=entry.target,meta=card.querySelector('.stream-mode');
+      card.dataset.visible=entry.isIntersecting?'1':'0';
+      if(meta)meta.textContent=entry.isIntersecting?`${S.previewFps}fps/Q${S.previewQuality}`:'1fps/last';
+    });
+  },{root,threshold:.05});
+  $$('#overviewGrid .overview-phone-card').forEach(card=>overviewObserver.observe(card));
+}
+function hienTongQuanDienThoai(){
+  const h=$('#overviewGrid');if(!h)return;
+  h.style.setProperty('--overview-phone-width',S.overviewPhoneWidth+'px');
+  $('#overviewZoomValue').textContent=Math.round(S.overviewPhoneWidth/112*100)+'%';
+  h.innerHTML='';
+  devices.forEach(d=>{
+    const card=document.createElement('div');
+    card.className='overview-phone-card'+(d.id===S.dienThoai?' selected':'')+(S.controlDeviceIds.has(d.id)?' group-selected':'')+(d.id===S.focusDeviceId?' master-selected':'');
+    card.dataset.id=d.id;
+    card.innerHTML=`<div class="overview-phone-screen"><canvas width="180" height="390"></canvas></div>
+      <div class="overview-phone-meta"><b>${esc(d.ten)}</b><span class="stream-mode">${S.previewFps}fps/Q${S.previewQuality}</span></div>`;
+    vePreviewTrenCanvas(card.querySelector('canvas'),d,d.currentJob||'Facebook');
+    card.onclick=e=>{
+      if(e.detail>1)return;
+      S.dienThoai=d.id;hienDanhSachMay();hienMayDangChon();
+    };
+    card.ondblclick=e=>{e.preventDefault();moDienThoaiLon(d.id)};
+    card.oncontextmenu=e=>{e.preventDefault();S.phoneContextDeviceId=d.id;moPhoneContextMenu(e.clientX,e.clientY)};
+    h.appendChild(card);
+  });
+  syncOverviewSelectionClasses();capNhatThongTinChonPhone();requestAnimationFrame(khoiTaoOverviewObserver);
+}
+$('#overviewViewport').addEventListener('mouseenter',()=>S.pointerInOverview=true);
+$('#overviewViewport').addEventListener('mouseleave',()=>S.pointerInOverview=false);
+document.addEventListener('keydown',e=>{
+  if(S.pointerInOverview&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){
+    e.preventDefault();
+    S.controlDeviceIds=new Set(devices.map(d=>d.id));
+    hienTongQuanDienThoai();hienDanhSachMay();capNhatThongTinChonPhone();
+  }
+});
+$('#overviewViewport').addEventListener('wheel',e=>{
+  if(!e.ctrlKey)return;
+  e.preventDefault();
+  const viewport=$('#overviewViewport');
+  const maxFit=Math.max(70,(viewport?.clientWidth||260)-18);
+  const next=S.overviewPhoneWidth*(e.deltaY<0?1.12:1/1.12);
+  S.overviewPhoneWidth=Math.max(70,Math.min(260,maxFit,next));
+  hienTongQuanDienThoai();
+},{passive:false});
+
+$('#chonTatCaPhone').onclick=()=>{S.controlDeviceIds=new Set(devices.map(d=>d.id));hienTongQuanDienThoai()};
+$('#boChonPhone').onclick=()=>{S.controlDeviceIds.clear();hienTongQuanDienThoai()};
+$('#lamMoiTatCaManHinh').onclick=()=>hienTongQuanDienThoai();
+$('#overviewFullscreen').onclick=async()=>{
+  const target=$('#viewTongQuan');
+  try{
+    if(window.screenfull&&screenfull.isEnabled)await screenfull.toggle(target);
+    else if(!document.fullscreenElement)await target.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch(e){console.warn(e)}
+};
+
+function khoiTaoSelectoTongQuan(){
+  if(!window.Selecto)return;
+  if(S.overviewSelecto){try{S.overviewSelecto.destroy()}catch{}}
+  S.overviewSelecto=new Selecto({
+    container:document.body,
+    dragContainer:$('#overviewViewport'),
+    selectableTargets:['#overviewGrid .overview-phone-card'],
+    selectByClick:true,
+    selectFromInside:false,
+    continueSelect:true,
+    toggleContinueSelect:'shift',
+    hitRate:20
+  });
+  S.overviewSelecto.on('select',e=>{
+    e.added.forEach(el=>S.controlDeviceIds.add(+el.dataset.id));
+    e.removed.forEach(el=>S.controlDeviceIds.delete(+el.dataset.id));
+    syncOverviewSelectionClasses();capNhatThongTinChonPhone();
+  });
+}
+
+function moDienThoaiLon(id){
+  const d=devices.find(x=>x.id===id);if(!d)return;
+  S.focusDeviceId=id;S.dienThoai=id;S.controlDeviceIds.add(id);
+  $('#focusPhoneTitle').textContent=`${d.ten}${S.controlDeviceIds.size>1?` · nhóm ${S.controlDeviceIds.size} máy`:''}`;
+  $('#focusPhoneIp').textContent=`IP ${d.ip||'—'} · ${d.transport} · 60fps · Q100`;
+  vePreviewTrenCanvas($('#focusPhoneCanvas'),d,d.currentJob||'Facebook');
+  syncOverviewSelectionClasses();syncSidebarSelectionClasses();capNhatThongTinChonPhone();
+  const win=$('#focusWindow');win.style.transform='translate(0px,0px)';win.dataset.x='0';win.dataset.y='0';
+  moModal('modalPhoneFocus');
+}
+function toaDoFocus(e){
+  const el=$('#focusPhoneScreen'),r=el.getBoundingClientRect();
+  return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}
+}
+function phatLenhNhom(loai,payload={}){
+  const ids=selectedControlIds(),master=devices.find(x=>x.id===S.focusDeviceId);
+  const names=[...ids].map(id=>devices.find(d=>d.id===id)?.ten).filter(Boolean);
+  // Prototype: redraw selected previews. Backend thật sẽ fan-out cùng control packet của scrcpy/ADB tới các worker đã chọn.
+  
+  if(master)vePreviewTrenCanvas($('#focusPhoneCanvas'),master,loai);
+  return {ids,payload};
+}
+$('#focusPhoneScreen').addEventListener('wheel',e=>{
+  if(!e.ctrlKey)return;
+  e.preventDefault();
+  const win=$('#focusWindow');
+  const current=win.getBoundingClientRect().width||350;
+  const next=Math.max(140,Math.min(window.innerWidth-10,current*(e.deltaY<0?1.10:1/1.10)));
+  win.style.width=next+'px';
+},{passive:false});
+
+$('#focusWindow').addEventListener('wheel',e=>{
+  if(!e.ctrlKey)return;
+  e.preventDefault();
+  const win=$('#focusWindow');
+  const current=win.getBoundingClientRect().width||350;
+  const next=Math.max(140,Math.min(window.innerWidth-10,current*(e.deltaY<0?1.10:1/1.10)));
+  win.style.width=next+'px';
+},{passive:false});
+
+let focusPointer=null;
+$('#focusPhoneScreen').onpointerdown=e=>{
+  const p=toaDoFocus(e);focusPointer={...p,startX:e.clientX,startY:e.clientY};$('#focusPhoneScreen').setPointerCapture(e.pointerId);
+};
+$('#focusPhoneScreen').onpointerup=e=>{
+  if(!focusPointer)return;
+  const p=toaDoFocus(e),dx=e.clientX-focusPointer.startX,dy=e.clientY-focusPointer.startY,dist=Math.hypot(dx,dy);
+  const payload={x:p.x,y:p.y,sx:focusPointer.x,sy:focusPointer.y};
+  phatLenhNhom(dist<10?'Tap':'Swipe',payload);focusPointer=null;
+};
+
+
+function moPhoneContextMenu(x,y){
+  const m=$('#phoneContextMenu');m.style.display='grid';m.style.left=Math.min(x,innerWidth-205)+'px';m.style.top=Math.min(y,innerHeight-100)+'px';
+}
+function phoneContextTargets(clickedId){
+  if(S.controlDeviceIds.size&&S.controlDeviceIds.has(clickedId))return [...S.controlDeviceIds];
+  return [clickedId];
+}
+function veLaiPhoneNeuCo(id,msg){
+  const d=devices.find(x=>x.id===id);if(!d)return;
+  const c=document.querySelector(`.overview-phone-card[data-id="${id}"] canvas`);
+  if(c)vePreviewTrenCanvas(c,d,msg);
+}
+document.addEventListener('click',e=>{if(!e.target.closest('#phoneContextMenu'))$('#phoneContextMenu').style.display='none'});
+$('#phoneContextMenu').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const clicked=S.phoneContextDeviceId,ids=phoneContextTargets(clicked),targets=ids.map(id=>devices.find(x=>x.id===id)).filter(Boolean);
+  if(!targets.length)return;
+  const act=b.dataset.act;
+  if(act==='open'){const master=targets.find(d=>d.id===clicked)||targets[0];S.controlDeviceIds=new Set(ids);moDienThoaiLon(master.id)}
+  if(act==='select'){ids.forEach(id=>toggleControlDevice(id));hienDanhSachMay();hienTongQuanDienThoai()}
+  if(act==='reconnect'){targets.forEach(d=>{d.state='ONLINE';veLaiPhoneNeuCo(d.id,'ADB reconnect')});hienDanhSachMay()}
+  if(act==='refresh')hienTongQuanDienThoai();
+  if(act==='facebook')targets.forEach(d=>veLaiPhoneNeuCo(d.id,'Mở lại Facebook'));
+  if(act==='clear')targets.forEach(d=>veLaiPhoneNeuCo(d.id,'Xóa nền'));
+  if(act==='shot')alert(`Đã tạo tác vụ chụp màn hình ${targets.length} điện thoại (mô phỏng).`);
+  if(act==='lock'){targets.forEach(d=>d.lock=!d.lock);hienDanhSachMay()}
+  if(act==='info'){
+    const lines=targets.slice(0,12).map(d=>`${d.ten} · ${d.ip} · ${d.transport} · Proxy: ${d.proxyStatus||'Chưa gắn'}`);
+    alert(`${targets.length} điện thoại đã chọn\n\n${lines.join('\n')}${targets.length>12?'\n…':''}`);
+  }
+  $('#phoneContextMenu').style.display='none';
+  syncSidebarSelectionClasses();syncOverviewSelectionClasses();capNhatThongTinChonPhone();
+};
+
+$$('.moNhanhApp').forEach(b=>b.onclick=()=>{
+  const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;
+  const labels={facebook:'Facebook',gallery:'Thư viện',files:'Tệp',settings:'Cài đặt',vpn:'VPN',browser:'Trình duyệt'};
+  veManHinh(`Mở ${labels[b.dataset.app]||b.dataset.app}`);
+});
+
+const khungPhone=$('#khungDienThoai');
+function khoiTaoInteract(){
+  if(!window.interact)return;
+  try{
+    interact('#khungDienThoai').resizable({
+      edges:{left:true},inertia:true,
+      listeners:{move(event){
+        const w=Math.max(150,Math.min(window.innerWidth-70,event.rect.width));
+        event.target.style.width=w+'px';saveUiState();
+        if(S.phonePaneView==='overview')hienTongQuanDienThoai();
+        requestAnimationFrame(hienQuyTrinh);
+      }},
+      modifiers:[interact.modifiers.restrictSize({min:{width:150},max:{width:Math.max(420,window.innerWidth-70)}})]
+    });
+    interact('#focusWindow').draggable({
+      allowFrom:'#focusDragHead',inertia:true,
+      listeners:{move(event){
+        const target=event.target,x=(parseFloat(target.dataset.x)||0)+event.dx,y=(parseFloat(target.dataset.y)||0)+event.dy;
+        target.style.transform=`translate(${x}px,${y}px)`;target.dataset.x=x;target.dataset.y=y;
+      }}
+    }).resizable({
+      edges:{left:true,right:true,top:true,bottom:true},inertia:true,
+      listeners:{move(event){
+        const target=event.target;let x=parseFloat(target.dataset.x)||0,y=parseFloat(target.dataset.y)||0;
+        target.style.width=Math.max(140,Math.min(window.innerWidth-10,event.rect.width))+'px';target.style.height='auto';
+        x+=event.deltaRect.left;y+=event.deltaRect.top;target.style.transform=`translate(${x}px,${y}px)`;target.dataset.x=x;target.dataset.y=y;
+      }},
+      modifiers:[interact.modifiers.restrictSize({min:{width:140},max:{width:Math.max(300,window.innerWidth-10)}})]
+    });
+  }catch(e){console.warn('Interact.js:',e)}
+}
+requestAnimationFrame(khoiTaoInteract);
+
+function campaignHienTai(){return S.campaigns.find(c=>c.id===S.currentCampaignId)}
+function renderCampaigns(){
+  $('#campaignSelect').innerHTML=S.campaigns.map(c=>`<option value="${c.id}" ${c.id===S.currentCampaignId?'selected':''}>${esc(c.name)}</option>`).join('');
+  const c=campaignHienTai();$('#campaignFolderName').textContent=c?.folderName||'Chưa chọn folder';
+}
+function luuCampaignHienTai(){
+  const c=campaignHienTai();if(!c)return;
+  c.videos=S.videos;c.folderHandle=S.thuMuc;c.deviceId=S.dienThoai;c.accountIndex=+$('#taiKhoan').value||0;c.targetIndex=+$('#dichDang').value||0;
+}
+function doiCampaign(id){
+  luuCampaignHienTai();
+  const c=S.campaigns.find(x=>x.id===+id);if(!c)return;
+  S.currentCampaignId=c.id;S.videos=c.videos||[];S.thuMuc=c.folderHandle||null;S.dienThoai=c.deviceId||S.dienThoai;
+  renderCampaigns();hienDanhSachMay();hienMayDangChon();hienBangVideo();capNhatSoLieu();
+}
+$('#campaignSelect').onchange=e=>doiCampaign(+e.target.value);
+$('#themCampaign').onclick=()=>{
+  luuCampaignHienTai();
+  const id=(S.campaigns.length?Math.max(...S.campaigns.map(c=>c.id)):0)+1;
+  S.campaigns.push({id,name:`Campaign ${String(id).padStart(2,'0')}`,folderName:'Chưa chọn folder',folderHandle:null,deviceId:S.dienThoai,accountIndex:+$('#taiKhoan').value||0,targetIndex:+$('#dichDang').value||0,videos:[]});
+  S.currentCampaignId=id;S.videos=[];S.thuMuc=null;renderCampaigns();hienBangVideo();capNhatSoLieu();
+};
+
+function tenCaption(name){return name.replace(duoiVideo,'').trim()}
+function taoThumbSvg(i,w,h){
+  const vertical=h>w,vw=vertical?45:60,vh=vertical?76:43,txt=String(i).padStart(2,'0');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${vw}" height="${vh}" viewBox="0 0 ${vw} ${vh}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#334155"/><stop offset="1" stop-color="#111827"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><circle cx="${vw/2}" cy="${vh/2-5}" r="${Math.min(vw,vh)/6}" fill="#64748b"/><polygon points="${vw/2-4},${vh/2-10} ${vw/2-4},${vh/2} ${vw/2+6},${vh/2-5}" fill="white"/><text x="50%" y="${vh-6}" fill="#e2e8f0" font-size="7" text-anchor="middle" font-family="Arial">${txt}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+const tenMau=['Máy hút bụi mini cầm tay giá tốt','Đèn ngủ cảm biến phòng ngủ','Kệ bếp đa năng tiết kiệm diện tích','Máy xay mini tiện lợi','Bình giữ nhiệt dùng hàng ngày','Quạt mini để bàn siêu êm','Hộp đựng thực phẩm kín khí','Giá đỡ điện thoại xoay 360','Đèn led trang trí góc làm việc','Túi đựng đồ du lịch gọn nhẹ','Bàn chải điện dùng thử 7 ngày','Máy phun sương mini để bàn','Kệ nhà tắm không cần khoan','Cáp sạc nhanh bền đẹp','Đồng hồ báo thức để bàn','Gối tựa lưng văn phòng','Bộ vệ sinh bàn phím đa năng','Đèn đọc sách kẹp bàn','Hộp chia ngăn tủ lạnh','Máy massage mini cầm tay'];
+function khoiTaoVideoAo(){
+  const dims=[[1080,1920],[1080,1920],[1920,1080],[720,1280],[1080,1920]];
+  S.videos=tenMau.map((t,i)=>{
+    const deviceId=(i%4)+1,dvc=devices.find(d=>d.id===deviceId),account=dvc?.accounts?.[0];
+    const pageTargets=(account?.ids||[]).slice(1);
+    const target=pageTargets.length?pageTargets[i%pageTargets.length]:(account?.ids?.[0]||`Cá nhân ${deviceId}A`);
+    const [w,h]=dims[i%dims.length],name=`${String(i+1).padStart(2,'0')} - ${t}.mp4`;
+    const done=i<4,status=done?'POSTED':i<17?'SCHEDULED':'READY';
+    let day=24+Math.floor(i/4),times=['06:00','12:00','18:00','20:30'],time=times[i%4];
+    if(i===8||i===9){day=26;time='12:00'}
+    return{
+      key:'fake-'+i,name,caption:tenCaption(name),hashtags:i%3===0?'#review #deal':'',
+      comment:i%4===0?'Link sản phẩm: https://aff.example/'+(1000+i):'',
+      audience:'Công khai',remix:i%2===0,story:i%3===0,useVpn:i%4===0,
+      date:done||status==='SCHEDULED'?`2026-09-${String(day).padStart(2,'0')}`:'',
+      time:done||status==='SCHEDULED'?time:'',
+      target,deviceId,status,selected:false,thumb:taoThumbSvg(i+1,w,h),file:null,fake:true
+    };
+  });
+  capNhatSoLieu();hienBangVideo();
+}
+function lopTrangThai(s){return s==='SCHEDULED'?'s-plan':['POSTING','VERIFYING'].includes(s)?'s-run':s==='QUEUED'?'s-queue':['POSTED','SUCCESS'].includes(s)?'s-done':s==='FILE_MISSING'?'s-missing':s==='CONFLICT'?'s-conflict':'s-ready'}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function hienBangVideo(){
+  const h=$('#bangVideo');h.innerHTML='';
+  S.videos.forEach((v,i)=>{
+    const tr=document.createElement('tr');tr.dataset.i=i;tr.className='video-row'+(v.selected?' selected':'');
+    tr.innerHTML=`<td><button class="chonDong select-btn ${v.selected?'active':''}" data-i="${i}" title="Chọn / bỏ chọn">●</button></td>
+      <td><div class="thumb-box"><img src="${v.thumb||''}"></div></td>
+      <td><b>${esc(v.name)}</b></td>
+      <td><input data-i="${i}" data-k="caption" value="${esc(v.caption)}"></td>
+      <td><input data-i="${i}" data-k="hashtags" value="${esc(v.hashtags)}"></td>
+      <td><input data-i="${i}" data-k="comment" value="${esc(v.comment)}" placeholder="Có thể chứa link"></td>
+      <td><select data-i="${i}" data-k="audience"><option ${v.audience==='Công khai'?'selected':''}>Công khai</option><option ${v.audience==='Bạn bè'?'selected':''}>Bạn bè</option><option ${v.audience==='Bạn bè ngoại trừ...'?'selected':''}>Bạn bè ngoại trừ...</option></select></td>
+      <td><div class="reel-cell-toggle"><div class="mini-switch ${v.remix?'on':'off'}" data-toggle="remix" data-i="${i}"><button data-v="off">Tắt</button><button data-v="on">Bật</button></div></div></td>
+      <td><div class="reel-cell-toggle"><div class="mini-switch ${v.story?'on':'off'}" data-toggle="story" data-i="${i}"><button data-v="off">Tắt</button><button data-v="on">Bật</button></div></div></td>
+      <td><input data-i="${i}" data-k="date" type="date" value="${v.date||''}"></td>
+      <td><input data-i="${i}" data-k="time" type="time" value="${v.time||''}"></td>
+      <td><input data-i="${i}" data-k="target" value="${esc(v.target||'')}"></td>
+      <td><span class="status ${lopTrangThai(v.status)}">${TRANGTHAI[v.status]||v.status}</span></td>
+      <td><button class="btn icon-btn dangNgay" data-i="${i}" title="Đăng ngay">▶</button></td>`;
+    tr.oncontextmenu=e=>{e.preventDefault();S.contextIndex=i;moMenuChuotPhai(e.clientX,e.clientY)};
+    tr.onmousedown=e=>{
+      if(e.button!==0||e.target.closest('input,button,select,textarea'))return;
+      e.preventDefault();S.dragSelect=true;S.dragMode=!v.selected;v.selected=S.dragMode;tr.classList.toggle('selected',v.selected);tr.querySelector('.chonDong')?.classList.toggle('active',v.selected);
+    };
+    tr.onmouseenter=e=>{if(S.dragSelect&&e.buttons===1){v.selected=S.dragMode;tr.classList.toggle('selected',v.selected);tr.querySelector('.chonDong')?.classList.toggle('active',v.selected)}};
+    h.appendChild(tr);
+  });
+  h.querySelectorAll('input[data-k],select[data-k]').forEach(x=>x.onchange=()=>{S.videos[+x.dataset.i][x.dataset.k]=x.value});
+  h.querySelectorAll('.mini-switch[data-toggle]').forEach(box=>box.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const v=S.videos[+box.dataset.i],key=box.dataset.toggle;
+    v[key]=b.dataset.v==='on';hienBangVideo();
+  });
+  h.querySelectorAll('.chonDong').forEach(x=>x.onclick=e=>{e.stopPropagation();const v=S.videos[+x.dataset.i];v.selected=!v.selected;hienBangVideo()});
+  h.querySelectorAll('.dangNgay').forEach(x=>x.onclick=()=>dangNgay(+x.dataset.i));
+}
+document.addEventListener('mouseup',()=>S.dragSelect=false);
+$('#chonTatCa').onclick=()=>{const all=S.videos.length&&S.videos.every(v=>v.selected);S.videos.forEach(v=>v.selected=!all);hienBangVideo();$('#chonTatCa').classList.toggle('active',!all)};
+
+function capNhatSoLieu(){
+  const total=S.videos.filter(v=>v.status!=='FILE_MISSING').length,done=S.videos.filter(v=>['POSTED','SUCCESS'].includes(v.status)).length,remain=Math.max(0,total-done);
+  $('#thongTinThuMuc').textContent=`${total} video · đã đăng ${done} · còn ${remain}`;
+  const d=devices.find(x=>x.id===S.dienThoai);d.remaining=remain;d.total=Math.max(total,d.total);d.posted=Math.max(0,d.total-d.remaining);hienDanhSachMay();
+}
+function apDungHangLoat(){
+  const cap=$('#captionHangLoat').value,hash=$('#hashtagHangLoat').value,com=$('#binhLuanHangLoat').value,mode=$('#kieuHangLoat').value;
+  const audience=$('#doiTuongHangLoat').value,remix=$('#remixHangLoat').value,story=$('#storyHangLoat').value;
+  const selected=S.videos.filter(v=>v.selected);if(!selected.length)return alert('Chưa chọn video.');
+  const merge=(old,val)=>{if(!val)return old;if(mode==='replace')return val;if(mode==='prepend')return`${val}${old?' '+old:''}`.trim();return`${old}${old?' ':''}${val}`.trim()};
+  selected.forEach(v=>{
+    v.caption=merge(v.caption,cap);v.hashtags=merge(v.hashtags,hash);v.comment=merge(v.comment,com);
+    if(audience)v.audience=audience;if(remix)v.remix=remix==='on';if(story)v.story=story==='on';
+  });hienBangVideo();
+}
+$('#apDungHangLoat').onclick=apDungHangLoat;
+$('#xoaDaChon').onclick=()=>{S.videos.filter(v=>v.selected).forEach(v=>S.ignored.add(v.key));S.videos=S.videos.filter(v=>!v.selected);hienBangVideo();capNhatSoLieu()};
+
+function moMenuChuotPhai(x,y){const m=$('#menuChuotPhai');m.style.display='grid';m.style.left=Math.min(x,innerWidth-180)+'px';m.style.top=Math.min(y,innerHeight-210)+'px'}
+document.addEventListener('click',e=>{if(!e.target.closest('#menuChuotPhai'))$('#menuChuotPhai').style.display='none'});
+$('#menuChuotPhai').onclick=e=>{
+  const act=e.target.dataset.act;if(!act||S.contextIndex==null)return;const v=S.videos[S.contextIndex];
+  if(act==='post')dangNgay(S.contextIndex);
+  if(act==='select'){v.selected=!v.selected;hienBangVideo()}
+  if(act==='clone'){const c={...v,key:'copy-'+Date.now(),name:'Bản sao - '+v.name,status:'READY',selected:false};S.videos.splice(S.contextIndex+1,0,c);hienBangVideo();capNhatSoLieu()}
+  if(act==='target'){v.target=$('#dichDang option:checked')?.textContent||v.target;v.deviceId=S.dienThoai;hienBangVideo()}
+  if(act==='clearSchedule'){v.date='';v.time='';if(!['POSTED','SUCCESS'].includes(v.status))v.status='READY';hienBangVideo()}
+  if(act==='delete'){S.ignored.add(v.key);S.videos.splice(S.contextIndex,1);hienBangVideo();capNhatSoLieu()}
+  $('#menuChuotPhai').style.display='none';
+};
+
+function dangNgay(i){
+  const v=S.videos[i],d=devices.find(x=>x.id===(v.deviceId||S.dienThoai));if(!v)return;
+  if(d.lock){v.status='QUEUED';d.queue.push(v.key);ghiNhatKy(`${v.name}: ${d.ten} đang bận → đưa vào hàng đợi.`);hienBangVideo();return}
+  if(S.dienThoai!==d.id){S.dienThoai=d.id;hienDanhSachMay();hienMayDangChon()}
+  d.lock=true;d.currentJob=v.name;d.flow=0;d.flowError=false;d.statsUpdatedRun=false;v.status='POSTING';v.selected=true;capNhatThongKeDanhTinh();$('#jobHienTai').textContent=v.name;if($('#khoaMay'))$('#khoaMay').textContent='🔒 Máy đang bận';$('#trangThaiKhoa').textContent='🔒 Đang chạy';hienBangVideo();hienDanhSachMay();hienQuyTrinh();veManHinh('Đăng ngay · '+v.name);ghiNhatKy(`${v.name}: bắt đầu, khóa ${d.ten}.`);
+}
+
+function macDinhGio(n){if(n===1)return['12:00'];if(n===2)return['06:00','18:00'];if(n===3)return['06:00','12:00','18:00'];const a=8*60,b=21*60,step=(b-a)/Math.max(1,n-1);return Array.from({length:n},(_,i)=>{const m=Math.round(a+i*step);return`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`})}
+function hienKhungGio(){const n=Math.max(1,+$('#soVideoNgay').value||1),old=$$('.oGio').map(x=>x.value),times=macDinhGio(n);$('#khungGio').innerHTML=Array.from({length:n},(_,i)=>`<div class="slot"><b>Video ${i+1}</b><input class="oGio" type="time" value="${old[i]||times[i]}"></div>`).join('')}
+$('#soVideoNgay').oninput=hienKhungGio;
+function apDungLich(){
+  const start=$('#ngayBatDau').value;if(!start)return alert('Chưa chọn ngày bắt đầu');
+  const times=$$('.oGio').map(x=>x.value).filter(Boolean);let idx=0,base=new Date(start+'T00:00:00');
+  for(const v of S.videos){if(['POSTED','SUCCESS'].includes(v.status))continue;const slot=idx%times.length,day=Math.floor(idx/times.length),d=new Date(base);d.setDate(base.getDate()+day);v.date=d.toISOString().slice(0,10);v.time=times[slot];if(v.status!=='FILE_MISSING')v.status='SCHEDULED';idx++}
+  hienBangVideo();
+}
+$('#apDungLich').onclick=apDungLich;$('#xoaLich').onclick=()=>{S.videos.forEach(v=>{if(!['POSTED','SUCCESS'].includes(v.status)){v.date='';v.time='';if(v.status!=='FILE_MISSING')v.status='READY'}});hienBangVideo()};
+
+function xuatExcel(){
+  const rows=S.videos.map((v,i)=>({stt:i+1,ten_video:v.name,caption:v.caption,hashtag:v.hashtags,binh_luan:v.comment,doi_tuong_xem:v.audience,remix:v.remix?'Bật':'Tắt',chia_se_tin:v.story?'Bật':'Tắt',ngay:v.date,gio:v.time,dang_len:v.target,dien_thoai:devices.find(d=>d.id===(v.deviceId||1))?.ten||'',trang_thai:TRANGTHAI[v.status]||v.status}));
+  if(window.XLSX){const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Video');XLSX.writeFile(wb,'danh_sach_video_facebook.xlsx')}else alert('Không tải được thư viện Excel.');
+}
+$('#xuatExcel').onclick=xuatExcel;
+$('#nhapExcel').onchange=async e=>{
+  const f=e.target.files[0];if(!f||!window.XLSX)return;const buf=await f.arrayBuffer(),wb=XLSX.read(buf),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}),byName=new Map(S.videos.map(v=>[v.name,v]));
+  rows.forEach(r=>{const v=byName.get(String(r.ten_video||r.filename||''));if(!v)return;v.caption=String(r.caption??v.caption);v.hashtags=String(r.hashtag??r.hashtags??v.hashtags);v.comment=String(r.binh_luan??r.comment??v.comment);if(r.doi_tuong_xem)v.audience=String(r.doi_tuong_xem);if(r.remix)v.remix=String(r.remix).toLowerCase()==='bật';if(r.chia_se_tin)v.story=String(r.chia_se_tin).toLowerCase()==='bật';v.date=String(r.ngay??r.date??v.date);v.time=String(r.gio??r.time??v.time);v.target=String(r.dang_len??r.target??v.target);if(v.date&&v.time&&!['POSTED','SUCCESS'].includes(v.status))v.status='SCHEDULED'});hienBangVideo();
+};
+
+async function taoThumb(file){
+  return new Promise(resolve=>{
+    const v=document.createElement('video'),url=URL.createObjectURL(file);v.muted=true;v.preload='metadata';let done=false;
+    const finish=o=>{if(done)return;done=true;URL.revokeObjectURL(url);resolve(o)};
+    v.onloadedmetadata=()=>{try{v.currentTime=Math.min(.2,Math.max(.05,(v.duration||1)*.04))}catch{}};
+    v.onseeked=()=>{try{const ratio=v.videoWidth/v.videoHeight||9/16,maxW=82,maxH=82;let w=maxW,h=w/ratio;if(h>maxH){h=maxH;w=h*ratio}const c=document.createElement('canvas');c.width=Math.round(w);c.height=Math.round(h);c.getContext('2d').drawImage(v,0,0,c.width,c.height);finish({src:c.toDataURL('image/jpeg',.75)})}catch{finish({src:''})}};
+    v.onerror=()=>finish({src:''});v.src=url;v.load();setTimeout(()=>finish({src:''}),2800);
+  })
+}
+function fileKey(f){return`${f.name}|${f.size}|${f.lastModified}`}
+async function dongBoFiles(files){
+  const vids=files.filter(f=>duoiVideo.test(f.name)&&!S.ignored.has(fileKey(f))),incoming=new Map(vids.map(f=>[fileKey(f),f])),next=[],newItems=[];
+  for(const old of S.videos.filter(v=>!v.fake)){
+    if(incoming.has(old.key)){old.file=incoming.get(old.key);next.push(old);incoming.delete(old.key)}
+    else if(['SCHEDULED','POSTING','VERIFYING','QUEUED'].includes(old.status))next.push({...old,status:'FILE_MISSING',file:null});
+    else if(['POSTED','SUCCESS'].includes(old.status))next.push(old)
+  }
+  for(const f of incoming.values()){const item={key:fileKey(f),name:f.name,caption:tenCaption(f.name),hashtags:'',comment:'',audience:'Công khai',remix:true,story:false,useVpn:false,date:'',time:'',target:$('#dichDang option:checked')?.textContent||'',deviceId:S.dienThoai,status:'READY',selected:false,thumb:'',file:f,fake:false};next.push(item);newItems.push(item)}
+  S.videos=next;const cc=campaignHienTai();if(cc)cc.videos=S.videos;capNhatSoLieu();hienBangVideo();
+  for(const item of newItems){const t=await taoThumb(item.file);item.thumb=t.src;hienBangVideo()}
+  if(S.tuNoiLich&&S.videos.some(v=>v.date))apDungLich();
+}
+
+async function quetThuMucHandle(){if(!S.thuMuc)return;const arr=[];for await(const e of S.thuMuc.values())if(e.kind==='file'&&duoiVideo.test(e.name))arr.push(await e.getFile());dongBoFiles(arr)}
+$('#chonThuMucSong').onclick=async()=>{
+  if(!window.showDirectoryPicker){alert('Trình duyệt hiện tại không hỗ trợ chọn thư mục sống. Hãy mở bằng Chromium/Edge hoặc Electron.');return}
+  try{
+    S.thuMuc=await showDirectoryPicker();
+    const c=campaignHienTai();if(c){c.folderHandle=S.thuMuc;c.folderName=S.thuMuc.name||`Folder Campaign ${c.id}`;renderCampaigns()}
+    await quetThuMucHandle();luuCampaignHienTai();
+  }catch{}
+};
+$('#quetLai').onclick=()=>S.thuMuc?quetThuMucHandle():alert('Chưa chọn thư mục video.');
+async function vongQuetNhe(){
+  if(S.dongBo&&S.thuMuc)await quetThuMucHandle();
+  const sec=Math.max(3,Math.min(300,+$('#chuKyQuet').value||10));S.chuKyQuet=sec;
+  setTimeout(vongQuetNhe,sec*1000);
+}
+$('#chuKyQuet').onchange=()=>S.chuKyQuet=Math.max(3,Math.min(300,+$('#chuKyQuet').value||10));
+setTimeout(vongQuetNhe,10000);
+
+const FLOW=[
+ {ten:'Chuẩn bị'}, {ten:'Điện thoại',loi:'Kết nối lại ADB'}, {ten:'Mạng',loi:'Khôi phục mạng'},
+ {ten:'VPN?',decision:true,branches:['Tắt','Bật'],loi:'Khôi phục VPN'},
+ {ten:'Facebook',loi:'Mở lại Facebook'}, {ten:'Popup?',decision:true,branches:['Không','Có'],loi:'Đóng popup'},
+ {ten:'Tài khoản',loi:'Chuyển đúng Nick'}, {ten:'Trang/Profile',loi:'Chuyển đúng nơi đăng'},
+ {ten:'Tạo Reel'}, {ten:'Chọn video'}, {ten:'Next'}, {ten:'Mô tả'}, {ten:'Đối tượng'},
+ {ten:'Remix?',decision:true,branches:['Tắt','Bật']}, {ten:'Tin?',decision:true,branches:['Tắt','Bật']},
+ {ten:'Đăng'}, {ten:'Xác minh bài',loi:'Tìm bài trước'}, {ten:'Bình luận?',decision:true,branches:['Không','Có']},
+ {ten:'Bình luận'}, {ten:'Xác minh BL'}, {ten:'Hoàn tất'}
+];
+function nhanhQuyTrinhDaChon(node,currentJob,d){
+  if(node.ten==='VPN?')return currentJob?.useVpn?'Bật':'Tắt';
+  if(node.ten==='Popup?')return d?.flowError?'Có':'Không';
+  if(node.ten==='Remix?')return currentJob?.remix?'Bật':'Tắt';
+  if(node.ten==='Tin?')return currentJob?.story?'Bật':'Tắt';
+  if(node.ten==='Bình luận?')return currentJob?.comment?.trim()?'Có':'Không';
+  return null;
+}
+function svgEl(tag,attrs={}){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));
+  return el;
+}
+function pathCurve(x1,y1,x2,y2){
+  const dx=Math.max(18,Math.abs(x2-x1)*.42);
+  return `M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`;
+}
+function hienQuyTrinh(){
+  const d=devices.find(x=>x.id===S.dienThoai),flow=d?.flow||0,err=!!d?.flowError,svg=$('#soDoWorkflowSvg');
+  if(!svg)return;
+  svg.innerHTML='';
+
+  const graph=$('.workflow-graph');
+  const cssW=Math.max(900,graph?.clientWidth||1600);
+  const W=2100,H=112;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio','none');
+
+  const defs=svgEl('defs');
+  const marker=svgEl('marker',{id:'wfArrow',markerWidth:7,markerHeight:7,refX:6,refY:3.5,orient:'auto',markerUnits:'strokeWidth'});
+  marker.appendChild(svgEl('path',{d:'M0,0 L7,3.5 L0,7 z',fill:'var(--muted)'}));
+  defs.appendChild(marker);svg.appendChild(defs);
+
+  const count=FLOW.length,nodeW=68,nodeH=28,startX=8,endPad=8;
+  const gap=(W-startX-endPad-count*nodeW)/(count-1);
+  const mainY=8,branchY=72,branchW=31,branchH=18,currentJob=jobDangChay();
+
+  FLOW.forEach((node,i)=>{
+    const x=startX+i*(nodeW+gap),nextX=startX+(i+1)*(nodeW+gap);
+
+    if(i<count-1){
+      svg.appendChild(svgEl('path',{
+        d:pathCurve(x+nodeW,mainY+nodeH/2,nextX,mainY+nodeH/2),
+        class:'wf-line','marker-end':'url(#wfArrow)'
+      }));
+    }
+
+    if(node.decision&&i<count-1){
+      const selected=nhanhQuyTrinhDaChon(node,currentJob,d),centers=[x+nodeW/2-18,x+nodeW/2+18];
+      node.branches.forEach((label,bi)=>{
+        const bx=centers[bi]-branchW/2,by=branchY,selectedClass=selected===label?' selected':'';
+        svg.appendChild(svgEl('path',{
+          d:`M ${x+nodeW/2} ${mainY+nodeH} C ${x+nodeW/2} ${mainY+48}, ${centers[bi]} ${branchY-7}, ${centers[bi]} ${branchY}`,
+          class:'wf-line'+(selectedClass?' selected':''),'marker-end':'url(#wfArrow)'
+        }));
+        svg.appendChild(svgEl('path',{
+          d:`M ${bx+branchW} ${by+branchH/2} C ${bx+branchW+16} ${by+branchH/2}, ${nextX-16} ${mainY+nodeH+10}, ${nextX} ${mainY+nodeH/2+4}`,
+          class:'wf-line'+(selectedClass?' selected':''),'marker-end':'url(#wfArrow)'
+        }));
+        const bg=svgEl('g',{class:'wf-branch-node'+selectedClass});
+        bg.appendChild(svgEl('rect',{x:bx,y:by,width:branchW,height:branchH,rx:5}));
+        const tx=svgEl('text',{x:bx+branchW/2,y:by+branchH/2+.5});tx.textContent=label;bg.appendChild(tx);svg.appendChild(bg);
+      });
+    }
+
+    const cls=['wf-main-node'];
+    if(node.decision)cls.push('decision');if(i<flow)cls.push('done');if(i===flow)cls.push('active');if(err&&i===flow)cls.push('error');
+    const g=svgEl('g',{class:cls.join(' ')});
+    g.appendChild(svgEl('rect',{x,y:mainY,width:nodeW,height:nodeH,rx:6}));
+    const txt=svgEl('text',{x:x+nodeW/2,y:mainY+nodeH/2+.5});txt.textContent=node.ten;g.appendChild(txt);
+    const title=svgEl('title');title.textContent=node.loi||node.ten;g.appendChild(title);svg.appendChild(g);
+  });
+}function ghiNhatKy(s){const el=$('#nhatKyNgan');if(el)el.textContent=s}
+function treNgauNhien(){const a=Math.max(0,+$('#choMin').value||0),b=Math.max(a,+$('#choMax').value||a);return a+Math.random()*(b-a)}
+function jobDangChay(){const d=devices.find(x=>x.id===S.dienThoai);return S.videos.find(v=>v.name===d?.currentJob)||S.videos.find(v=>v.selected)||S.videos[0]}
+async function buocTiep(){
+  const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;
+  if(d.flow>=FLOW.length-1)return;
+  if(d.flow===0&&!d.statsUpdatedRun)capNhatThongKeDanhTinh();
+  const node=FLOW[d.flow],cur=node.ten;
+  ghiNhatKy(`${cur}: thực hiện thao tác và xác minh...`);
+  await new Promise(r=>setTimeout(r,260));
+
+  const currentJob=jobDangChay();
+  if(cur==='VPN?'&&!currentJob?.useVpn){
+    ghiNhatKy('VPN?: Tắt → bỏ qua VPN. Xác minh điều kiện bỏ qua ✓');
+  }else if(cur==='VPN?'&&currentJob?.useVpn){
+    ghiNhatKy(`VPN?: Bật → ${d.activeVpn?'đã có VPN đang bật':'cần bật VPN đã chọn'} → xác minh ✓`);
+  }else if(cur==='Tin?'&&!currentJob?.story){
+    ghiNhatKy('Tin?: Tắt → bỏ qua Chia sẻ lên Tin ✓');
+  }else if(cur==='Tin?'&&currentJob?.story){
+    ghiNhatKy('Tin?: Bật → chỉ bật nếu Facebook hiện tùy chọn Chia sẻ lên Tin; không có thì bỏ qua có kiểm soát ✓');
+  }else if(cur==='Remix?'){
+    ghiNhatKy(`Remix?: ${currentJob?.remix?'Bật':'Tắt'} → xác minh ✓`);
+  }else if(cur==='Bình luận?'){
+    const j=jobDangChay();
+    if(!j?.comment?.trim()){
+      ghiNhatKy('Bình luận?: Không có nội dung → bỏ qua Bình luận/Xác minh BL ✓');
+      const wait=treNgauNhien();ghiNhatKy(`Bước đã hoàn tất. Chờ ngẫu nhiên ${wait.toFixed(1)}s trước bước kế.`);
+      await new Promise(r=>setTimeout(r,Math.min(wait*1000,1800)));
+      d.flow=20;hienQuyTrinh();$('#jobHienTai').textContent='Bước: '+FLOW[d.flow].ten;veManHinh('Bước · '+FLOW[d.flow].ten);return;
+    }
+    ghiNhatKy('Bình luận?: Có nội dung → đi nhánh Bình luận ✓');
+  }else if(d.flowError&&node.loi){
+    ghiNhatKy(`${cur}: lỗi → ${node.loi}. Đã khôi phục và xác minh lại; chưa chuyển bước.`);
+    d.flowError=false;hienQuyTrinh();return;
+  }else{
+    ghiNhatKy(`${cur}: xác minh thành công ✓`);
+  }
+
+  const wait=treNgauNhien();
+  ghiNhatKy(`${cur}: hoàn tất ✓ · chờ ngẫu nhiên ${wait.toFixed(1)}s trước bước kế`);
+  await new Promise(r=>setTimeout(r,Math.min(wait*1000,1800)));
+  d.flow++;
+  hienQuyTrinh();$('#jobHienTai').textContent='Bước: '+FLOW[d.flow].ten;veManHinh('Bước · '+FLOW[d.flow].ten);
+
+  if(d.flow===FLOW.length-1){
+    d.lock=false;d.currentJob=null;d.statsUpdatedRun=false;
+    if($('#khoaMay'))$('#khoaMay').textContent='Máy rảnh';$('#trangThaiKhoa').textContent='Máy rảnh';hienDanhSachMay();
+    const nextKey=d.queue.shift();if(nextKey){const idx=S.videos.findIndex(v=>v.key===nextKey);if(idx>=0)setTimeout(()=>dangNgay(idx),300)}
+  }
+}
+$('#buocKe').onclick=buocTiep;
+$('#giaLapLoi').onclick=()=>{const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;d.flowError=true;ghiNhatKy('Đã đặt lỗi giả lập cho bước hiện tại.');hienQuyTrinh()};
+$('#datLaiQuyTrinh').onclick=()=>{const d=devices.find(x=>x.id===S.dienThoai);if(!d)return;d.flow=0;d.flowError=false;d.statsUpdatedRun=false;hienQuyTrinh();ghiNhatKy('Đã đặt lại quy trình.');veManHinh()};
+
+function moModal(id){$('#'+id).style.display='grid'}
+$$('.dongModal').forEach(b=>b.onclick=()=>$('#'+b.dataset.modal).style.display='none');
+$$('.modal').forEach(m=>m.onclick=e=>{if(e.target===m)m.style.display='none'});
+
+// APK
+function hienModalApk(){
+  const defaults=[{ten:'Facebook',goi:'com.facebook.katana'},{ten:'PIA VPN',goi:'com.privateinternetaccess.android'},{ten:'Windscribe',goi:'com.windscribe.vpn'},{ten:'WARP',goi:'com.cloudflare.onedotonedotone'},{ten:'TunnelBear',goi:'com.tunnelbear.android'}];
+  $('#danhSachApk').innerHTML=[...defaults,...S.apkFiles].map((a,i)=>`<div class="listrow apkRow" data-pkg="${esc(a.goi||a.ten)}"><button class="select-btn apkPick">●</button><span><b>${esc(a.ten)}</b><div class="small">${esc(a.goi||'Tệp cục bộ')}</div></span></div>`).join('');
+  $('#danhSachMayApk').innerHTML=devices.map(d=>`<div class="listrow"><button class="select-btn apkDevice" data-id="${d.id}">●</button><span>${d.ten}</span><span class="badge">${d.transport}</span></div>`).join('');
+  $$('.apkPick').forEach(b=>b.onclick=()=>{$$('.apkPick').forEach(x=>x.classList.remove('active'));b.classList.add('active')});
+  $$('.apkDevice').forEach(b=>b.onclick=()=>b.classList.toggle('active'));
+}
+$('#moQuanLyApk').onclick=()=>{hienModalApk();moModal('modalApk')};
+$('#themApkFile').onchange=e=>{const f=e.target.files[0];if(f){S.apkFiles.push({ten:f.name,goi:''});hienModalApk()}};
+$('#chonHetMayApk').onclick=()=>$$('.apkDevice').forEach(x=>x.classList.add('active'));$('#boHetMayApk').onclick=()=>$$('.apkDevice').forEach(x=>x.classList.remove('active'));
+function selectedApkDevices(){return $$('.apkDevice.active').map(x=>+x.dataset.id)}
+$('#caiApkDaChon').onclick=()=>{const a=$('.apkPick.active'),ds=selectedApkDevices();if(!a||!ds.length)return alert('Chọn APK và điện thoại.');alert(`Đã tạo hàng đợi cài APK cho ${ds.length} điện thoại (mô phỏng).`)};
+$('#goApkDaChon').onclick=()=>{const a=$('.apkPick.active')?.closest('.apkRow'),pkg=$('#goiApkThuCong').value.trim()||a?.dataset.pkg,ds=selectedApkDevices();if(!pkg||!ds.length)return alert('Chọn/nhập gói APK và điện thoại.');alert(`Đã tạo hàng đợi gỡ ${pkg} trên ${ds.length} điện thoại (mô phỏng).`)};
+
+// PROXY
+function proxyId(){return 'px-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)}
+function taoProxyAo(){
+  if(S.proxies.length)return;
+  const vals=[
+    ['http://103.152.112.21:3128','Sống'],
+    ['https://45.77.56.114:8080','Sống'],
+    ['socks5://128.199.202.122:1080','Die'],
+    ['socks5://user01:pass01@167.99.45.83:1080','Chưa kiểm tra'],
+    ['94.23.91.209:3128:user02:pass02','Sống'],
+    ['socks4://185.199.229.156:7492','Sống'],
+    ['http://user03:pass03@45.12.88.91:8080','Chưa kiểm tra'],
+    ['103.86.109.38:1080','Sống']
+  ];
+  S.proxies=vals.map(([value,status],i)=>({
+    id:'demo-px-'+i,value,status,
+    lastCheck:status==='Chưa kiểm tra'?'':new Date(Date.now()-i*560000).toLocaleTimeString('vi-VN'),
+    selected:false,selectedDeviceIds:new Set()
+  }));
+  S.proxies[0].selectedDeviceIds.add(devices[0].id);
+  devices[0].proxyId=S.proxies[0].id;devices[0].proxyStatus='Đã nhận';
+  S.proxies[1].selectedDeviceIds.add(devices[1].id);
+  devices[1].proxyId=S.proxies[1].id;devices[1].proxyStatus='Đã nhận';
+}
+function loaiProxy(value=''){
+  const v=value.trim().toLowerCase();
+  if(v.startsWith('socks5://'))return'SOCKS5';
+  if(v.startsWith('socks4://'))return'SOCKS4';
+  if(v.startsWith('https://'))return'HTTPS';
+  if(v.startsWith('http://'))return'HTTP';
+  const parts=v.split(':');
+  if(parts.length>=4)return'HTTP/Auth';
+  return'HTTP';
+}
+
+function proxyStatusClass(st){return st==='Sống'?'proxy-ok':st==='Die'?'proxy-die':'proxy-check'}
+function proxyDevicesText(p){
+  const ids=[...(p.selectedDeviceIds||new Set())];
+  return ids.length?`Đã chọn ${ids.length} máy`:'Chọn điện thoại ▾';
+}
+function proxyUsingDevices(p){
+  return devices.filter(d=>d.proxyId===p.id);
+}
+function hienProxyList(){
+  const h=$('#bangProxy');h.innerHTML='';
+  if(!S.proxies.length){h.innerHTML='<tr><td colspan="8" class="small">Chưa có Proxy.</td></tr>';return}
+  S.proxies.forEach((p,i)=>{
+    if(!(p.selectedDeviceIds instanceof Set))p.selectedDeviceIds=new Set(p.selectedDeviceIds||[]);
+    const using=proxyUsingDevices(p),tr=document.createElement('tr');
+    tr.innerHTML=`<td><button class="select-btn proxyPick ${p.selected?'active':''}" data-i="${i}" title="Chọn Proxy">●</button></td>
+      <td><b>${esc(p.value)}</b><div class="small">${p.lastCheck?`Check ${p.lastCheck}`:'Chưa kiểm tra'}</div></td>
+      <td><span class="proxy-type">${loaiProxy(p.value)}</span></td>
+      <td class="${proxyStatusClass(p.status)}">${p.status}</td>
+      <td>
+        <details class="proxy-phone-picker" data-i="${i}">
+          <summary>${proxyDevicesText(p)}</summary>
+          <div class="proxy-phone-menu">
+            ${devices.map(d=>`<button class="proxy-phone-option" data-proxy="${i}" data-device="${d.id}">
+              <span class="select-btn ${p.selectedDeviceIds.has(d.id)?'active':''}">●</span>
+              <span><b>${esc(d.ten)}</b><div class="small">${esc(d.ip||'')}</div></span>
+            </button>`).join('')}
+          </div>
+        </details>
+      </td>
+      <td><div class="proxy-used-chips">${using.length?using.map(d=>`<span class="proxy-used-chip">${esc(d.ten)}</span>`).join(''):'—'}</div></td>
+      <td>${using.length?using.map(d=>`${esc(d.ten)}: <span class="${d.proxyStatus==='Đã nhận'?'proxy-ok':d.proxyStatus.includes('Lỗi')?'proxy-die':'proxy-check'}">${esc(d.proxyStatus)}</span>`).join('<br>'):'—'}</td>
+      <td><button class="btn icon-btn proxyCheckOne" data-i="${i}" title="Check Proxy này">✓</button></td>`;
+    h.appendChild(tr);
+  });
+  $$('.proxyPick').forEach(b=>b.onclick=()=>{const p=S.proxies[+b.dataset.i];p.selected=!p.selected;hienProxyList()});
+  $$('.proxyCheckOne').forEach(b=>b.onclick=()=>kiemTraProxy(+b.dataset.i));
+  $$('.proxy-phone-option').forEach(b=>b.onclick=e=>{
+    e.preventDefault();
+    const p=S.proxies[+b.dataset.proxy],id=+b.dataset.device;
+    if(p.selectedDeviceIds.has(id))p.selectedDeviceIds.delete(id);else p.selectedDeviceIds.add(id);
+    hienProxyList();
+    const details=$(`.proxy-phone-picker[data-i="${b.dataset.proxy}"]`);if(details)details.open=true;
+  });
+}
+async function kiemTraProxy(i){
+  const p=S.proxies[i];if(!p)return false;p.status='Đang check';hienProxyList();
+  await new Promise(r=>setTimeout(r,380));
+  p.status=Math.random()>.17?'Sống':'Die';p.lastCheck=new Date().toLocaleTimeString('vi-VN');hienProxyList();
+  return p.status==='Sống';
+}
+async function kiemTraProxyNhieu(indexes){for(const i of indexes)await kiemTraProxy(i)}
+function selectedProxyIndexes(){return S.proxies.map((p,i)=>p.selected?i:-1).filter(i=>i>=0)}
+$('#moProxy').onclick=()=>{taoProxyAo();hienProxyList();moModal('modalProxy')};
+$('#napProxy').onclick=()=>{
+  const vals=$('#proxyInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),old=new Map(S.proxies.map(p=>[p.value,p]));
+  S.proxies=vals.map(v=>old.get(v)||{id:proxyId(),value:v,status:'Chưa kiểm tra',lastCheck:'',selected:false,selectedDeviceIds:new Set()});
+  hienProxyList();
+};
+$('#checkProxyDaChon').onclick=async()=>{const ids=selectedProxyIndexes();if(!ids.length)return alert('Chưa chọn Proxy.');await kiemTraProxyNhieu(ids)};
+$('#checkTatCaProxy').onclick=async()=>await kiemTraProxyNhieu(S.proxies.map((_,i)=>i));
+$('#ganProxyDaChon').onclick=async()=>{
+  const pxIdx=selectedProxyIndexes();if(!pxIdx.length)return alert('Chưa chọn Proxy.');
+  // Bảo đảm mỗi Proxy được chọn có ít nhất một điện thoại.
+  const invalid=pxIdx.filter(i=>!S.proxies[i].selectedDeviceIds?.size);
+  if(invalid.length)return alert('Có Proxy chưa chọn điện thoại áp dụng.');
+
+  // Không cho một điện thoại nhận hai Proxy trong cùng một lần áp dụng.
+  const seen=new Map(),dup=[];
+  pxIdx.forEach(i=>S.proxies[i].selectedDeviceIds.forEach(id=>{if(seen.has(id))dup.push(id);else seen.set(id,i)}));
+  if(dup.length)return alert('Một số điện thoại đang được chọn cho nhiều Proxy. Mỗi điện thoại chỉ được nhận một Proxy.');
+
+  // Tự check Proxy trước.
+  await kiemTraProxyNhieu(pxIdx);
+  const dead=pxIdx.filter(i=>S.proxies[i].status!=='Sống');
+  if(dead.length)return alert('Có Proxy Die. Hãy bỏ chọn hoặc thay Proxy trước khi gắn.');
+
+  // Gắn theo đúng mapping từng dòng.
+  pxIdx.forEach(i=>{
+    const p=S.proxies[i];
+    p.selectedDeviceIds.forEach(id=>{
+      const d=devices.find(x=>x.id===id);
+      if(d){d.activeVpn=null;d.proxyId=p.id;d.proxyStatus='Đang xác minh'}
+    });
+  });
+  hienProxyList();
+
+  // Sau khi gắn, check lại trên từng điện thoại.
+  await new Promise(r=>setTimeout(r,500));
+  pxIdx.forEach(i=>S.proxies[i].selectedDeviceIds.forEach(id=>{
+    const d=devices.find(x=>x.id===id);
+    if(d)d.proxyStatus=Math.random()>.08?'Đã nhận':'Lỗi nhận Proxy';
+  }));
+  hienProxyList();
+};
+
+// NHÂN BẢN
+function hienNhanBan(){
+  const d=devices.find(x=>x.id===S.dienThoai),a=d.accounts[+$('#taiKhoan').value||0],name=$('#dichDang option:checked')?.textContent||'';
+  $('#nguonNhanBan').value=`${d.ten} · ${a.ten} · ${name}`;$('#tenBanSao').value=name+' - Bản sao';
+  $('#mayDichNhanBan').innerHTML=devices.map(x=>`<option value="${x.id}">${x.ten}</option>`).join('');capNhatTaiKhoanDich();
+}
+function capNhatTaiKhoanDich(){const d=devices.find(x=>x.id===+$('#mayDichNhanBan').value);$('#taiKhoanDichNhanBan').innerHTML=d.accounts.map((a,i)=>`<option value="${i}">${a.ten}</option>`).join('')}
+$('#mayDichNhanBan').onchange=capNhatTaiKhoanDich;$('#moNhanBan').onclick=()=>{hienNhanBan();moModal('modalNhanBan')};
+$('#xacNhanNhanBan').onclick=()=>{const d=devices.find(x=>x.id===+$('#mayDichNhanBan').value),a=d.accounts[+$('#taiKhoanDichNhanBan').value||0],name=$('#tenBanSao').value.trim();if(!name)return;a.ids.push(name);alert(`Đã nhân bản cấu hình sang ${d.ten} · ${a.ten} (mô phỏng).`);$('#modalNhanBan').style.display='none'};
+
+// TIẾN TRÌNH / TIMELINE
+function toDateTime(v){return new Date(`${v.date}T${v.time||'00:00'}:00`)}
+function fromDateTime(v,d){v.date=d.toISOString().slice(0,10);v.time=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function keyConflict(v){return`${v.deviceId||S.dienThoai}|${v.date}|${v.time}`}
+function conflictSet(){
+  const map=new Map();
+  S.videos.filter(v=>v.date&&v.time&&!['POSTED','SUCCESS'].includes(v.status)).forEach(v=>{const k=keyConflict(v);if(!map.has(k))map.set(k,[]);map.get(k).push(v)});
+  return new Set([...map.entries()].filter(([k,a])=>a.length>1).map(([k])=>k));
+}
+function ngayDiff(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000)}
+function timelineRange(){
+  const start=$('#tuNgayTienTrinh').value||'2026-09-24',end=$('#denNgayTienTrinh').value||start;
+  return {start,end,days:Math.max(1,ngayDiff(start,end)+1)};
+}
+function targetHue(target=''){
+  let h=0;for(let i=0;i<target.length;i++)h=(h*31+target.charCodeAt(i))%360;
+  return h;
+}
+function capNhatNutMayTimeline(){
+  const total=devices.length,sel=S.timelineDevices.size;
+  $('#timelineDeviceButton').textContent=sel===total?'Máy: Tất cả ▾':sel===0?'Máy: 0 ▾':`Máy: ${sel} ▾`;
+}
+function hienMenuMayTimeline(){
+  const h=$('#timelineDeviceMenu');h.innerHTML=`
+    <div class="toolbar" style="padding:3px 3px 6px">
+      <button id="timelineAllDevices" class="btn icon-btn" title="Chọn tất cả">●</button>
+      <button id="timelineNoDevices" class="btn icon-btn" title="Bỏ chọn tất cả">○</button>
+    </div>
+    ${devices.map(d=>`<div class="timeline-device-option">
+      <button class="select-btn timelineDev ${S.timelineDevices.has(d.id)?'active':''}" data-id="${d.id}">●</button>
+      <span><b>${esc(d.ten)}</b><div class="small">${esc(d.ip||'')}</div></span>
+      ${S.timelineDevices.has(d.id)?'<span class="selected-label">Hiển thị</span>':''}
+    </div>`).join('')}`;
+  $('#timelineAllDevices').onclick=()=>{S.timelineDevices=new Set(devices.map(d=>d.id));hienMenuMayTimeline();capNhatNutMayTimeline();hienTimeline()};
+  $('#timelineNoDevices').onclick=()=>{S.timelineDevices=new Set();hienMenuMayTimeline();capNhatNutMayTimeline();hienTimeline()};
+  $$('.timelineDev').forEach(b=>b.onclick=()=>{
+    const id=+b.dataset.id;
+    if(S.timelineDevices.has(id))S.timelineDevices.delete(id);else S.timelineDevices.add(id);
+    hienMenuMayTimeline();capNhatNutMayTimeline();hienTimeline();
+  });
+}
+$('#timelineDeviceButton').onclick=e=>{e.stopPropagation();$('#timelineDevicePicker').classList.toggle('open');hienMenuMayTimeline()};
+document.addEventListener('click',e=>{if(!e.target.closest('#timelineDevicePicker'))$('#timelineDevicePicker')?.classList.remove('open')});
+
+function hienTimeline(){
+  const {start,end,days}=timelineRange(),stage=$('#timelineStage'),conf=conflictSet(),PX=S.timelineZoom,width=days*24*PX;
+  const allowed=S.timelineDevices;
+  const items=S.videos.filter(v=>v.date&&v.time&&v.date>=start&&v.date<=end&&allowed.has(v.deviceId||1));
+  const devIds=[...new Set(items.map(v=>v.deviceId||1))];
+  stage.innerHTML='';stage.style.minWidth=(140+width)+'px';
+  $('#timelineZoomValue').textContent=Math.round(PX/28*100)+'%';
+
+  const header=document.createElement('div');header.className='timeline-row timeline-header';
+  const lab=document.createElement('div');lab.className='timeline-label-col';lab.innerHTML='<b>Điện thoại</b>';header.appendChild(lab);
+  const ht=document.createElement('div');ht.className='timeline-track';ht.style.width=width+'px';ht.style.backgroundSize=PX+'px 100%';
+  for(let d=0;d<days;d++){
+    const date=new Date(start+'T00:00:00');date.setDate(date.getDate()+d);
+    const day=document.createElement('div');day.className='timeline-day';day.style.left=(d*24*PX)+'px';day.style.width=(24*PX)+'px';day.textContent=date.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'});ht.appendChild(day);
+    const step=PX<20?6:PX<42?4:2;
+    for(let h=0;h<24;h+=step){const tick=document.createElement('div');tick.className='timeline-hour';tick.style.left=((d*24+h)*PX+3)+'px';tick.textContent=String(h).padStart(2,'0')+'h';ht.appendChild(tick)}
+  }
+  header.appendChild(ht);stage.appendChild(header);
+
+  devIds.forEach(id=>{
+    const d=devices.find(x=>x.id===id),row=document.createElement('div');row.className='timeline-row';
+    const lbl=document.createElement('div');lbl.className='timeline-label-col';lbl.innerHTML=`<b>${esc(d?.ten||'Điện thoại')}</b><div class="small">${esc(d?.ip||'')}</div>`;row.appendChild(lbl);
+    const track=document.createElement('div');track.className='timeline-track';track.style.width=width+'px';track.style.backgroundSize=PX+'px 100%';track.dataset.device=id;
+    items.filter(v=>(v.deviceId||1)===id).forEach(v=>{
+      const index=S.videos.indexOf(v),day=ngayDiff(start,v.date),[hh,mm]=v.time.split(':').map(Number),left=(day*24+hh+mm/60)*PX,hue=targetHue(v.target);
+      const job=document.createElement('div');job.className='timeline-job'+(conf.has(keyConflict(v))?' conflict':'');job.style.left=left+'px';job.style.width=Math.max(82,Math.min(150,86+v.name.length*.8))+'px';job.dataset.i=index;
+      if(!conf.has(keyConflict(v))){
+        job.style.borderColor=`hsl(${hue} 72% 50%)`;
+        job.style.background=`hsl(${hue} 68% 44% / .22)`;
+      }
+      job.innerHTML=`<span class="job-dot" style="background:hsl(${hue} 72% 50%)"></span><b>${esc(v.time)}</b> · ${esc(v.target)}<br>${esc(v.name.slice(0,23))}`;
+      track.appendChild(job);
+      job.onpointerdown=e=>{
+        e.preventDefault();job.classList.add('dragging');job.setPointerCapture(e.pointerId);const startX=e.clientX,startLeft=parseFloat(job.style.left)||0;
+        const move=ev=>{job.style.left=Math.max(0,Math.min(width-82,startLeft+(ev.clientX-startX)))+'px'};
+        const up=ev=>{
+          try{job.releasePointerCapture(ev.pointerId)}catch{};job.removeEventListener('pointermove',move);job.removeEventListener('pointerup',up);job.classList.remove('dragging');
+          const hours=(parseFloat(job.style.left)||0)/PX,dayIndex=Math.floor(hours/24),hourFloat=hours-dayIndex*24,mins=Math.round((hourFloat*60)/5)*5;
+          const dt=new Date(start+'T00:00:00');dt.setDate(dt.getDate()+dayIndex);dt.setMinutes(mins);fromDateTime(v,dt);hienTimeline();hienBangVideo();
+        };
+        job.addEventListener('pointermove',move);job.addEventListener('pointerup',up);
+      };
+    });
+    row.appendChild(track);stage.appendChild(row);
+  });
+}
+function chongTrungLich(){
+  const groups=new Map();
+  S.videos.filter(v=>v.date&&v.time&&!['POSTED','SUCCESS'].includes(v.status)).forEach(v=>{const id=v.deviceId||1;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(v)});
+  groups.forEach(arr=>{
+    arr.sort((a,b)=>toDateTime(a)-toDateTime(b));
+    for(let i=1;i<arr.length;i++){
+      const prev=toDateTime(arr[i-1]),cur=toDateTime(arr[i]),gap=60+Math.floor(Math.random()*61),minNext=new Date(prev.getTime()+gap*60000);
+      if(cur<minNext)fromDateTime(arr[i],minNext);
+    }
+  });
+  hienTimeline();hienBangVideo();
+}
+$('#moTienTrinh').onclick=()=>{
+  const dates=S.videos.filter(v=>v.date).map(v=>v.date).sort();$('#tuNgayTienTrinh').value=dates[0]||'2026-09-24';$('#denNgayTienTrinh').value=dates.at(-1)||'2026-09-30';
+  if(!S.timelineInitialized){S.timelineDevices=new Set(devices.map(d=>d.id));S.timelineInitialized=true;}
+  hienMenuMayTimeline();capNhatNutMayTimeline();hienTimeline();moModal('modalTienTrinh')
+};
+$('#locTienTrinh').onclick=hienTimeline;$('#chongTrung').onclick=chongTrungLich;
+$('#kieuXemTienTrinh').onchange=()=>{
+  const t=$('#kieuXemTienTrinh').value,from=$('#tuNgayTienTrinh').value||'2026-09-24';$('#denNgayTienTrinh').disabled=(t==='day');
+  if(t==='day')$('#denNgayTienTrinh').value=from;
+  if(t==='month'){const d=new Date(from+'T00:00:00'),last=new Date(d.getFullYear(),d.getMonth()+1,0);$('#tuNgayTienTrinh').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;$('#denNgayTienTrinh').value=last.toISOString().slice(0,10);$('#denNgayTienTrinh').disabled=false}
+  if(t==='range')$('#denNgayTienTrinh').disabled=false;hienTimeline();
+};
+$('#timelineScroll').addEventListener('wheel',e=>{
+  if(!e.ctrlKey)return;
+  e.preventDefault();
+  const el=$('#timelineScroll'),old=S.timelineZoom,rect=el.getBoundingClientRect(),cursorX=e.clientX-rect.left,logical=(el.scrollLeft+cursorX)/old;
+  const factor=e.deltaY<0?1.14:1/1.14;
+  S.timelineZoom=Math.max(12,Math.min(90,S.timelineZoom*factor));
+  hienTimeline();
+  el.scrollLeft=Math.max(0,logical*S.timelineZoom-cursorX);
+},{passive:false});
+
+async function docThongTinHeThong(){
+  const cores=navigator.hardwareConcurrency||0,mem=navigator.deviceMemory||0;
+  let disk='Không đọc được';
+  try{
+    if(navigator.storage?.estimate){
+      const e=await navigator.storage.estimate(),used=e.usage||0,quota=e.quota||0,gb=x=>(x/1073741824).toFixed(1);
+      disk=quota?`${gb(used)} / ${gb(quota)} GB`:`${gb(used)} GB`;
+    }
+  }catch{}
+  const cpuLoad=18+Math.round(Math.random()*24),
+        ramLoad=35+Math.round(Math.random()*28),
+        gpuLoad=12+Math.round(Math.random()*54);
+  $('#cpuInfo').textContent=`${cores||'—'} luồng · ${cpuLoad}%`;
+  $('#ramInfo').textContent=`${mem?mem+' GB':'—'} · ${ramLoad}%`;
+  $('#gpuInfo').textContent=`${gpuLoad}%`;
+  $('#diskInfo').textContent=disk;
+}
+function capNhatTaiHeThongNhanh(){
+  const cpu=$('#cpuInfo'),ram=$('#ramInfo'),gpu=$('#gpuInfo');if(!cpu||!ram||!gpu)return;
+  const c=cpu.textContent.split('·')[0].trim(),r=ram.textContent.split('·')[0].trim();
+  cpu.textContent=`${c} · ${15+Math.round(Math.random()*38)}%`;
+  ram.textContent=`${r} · ${32+Math.round(Math.random()*34)}%`;
+  gpu.textContent=`${10+Math.round(Math.random()*58)}%`;
+}
+$('#fpsSlider').oninput=e=>{S.previewFps=+e.target.value;$('#fpsValue').textContent=S.previewFps;hienTongQuanDienThoai()};
+$('#qualitySlider').oninput=e=>{S.previewQuality=+e.target.value;$('#qualityValue').textContent=S.previewQuality+'%';hienTongQuanDienThoai()};
+docThongTinHeThong();setInterval(capNhatTaiHeThongNhanh,2500);
+
+function datTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem('themeV6',t);$('#doiGiaoDien').textContent=t==='dark'?'◐':'☾';veManHinh();saveUiState()}
+$('#doiGiaoDien').onclick=()=>datTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+
+khoiTaoRichChoices();renderCampaigns();
+loadUiState();setToggle('#toggleChayNen',S.chayNen);setToggle('#toggleDongBo',S.dongBo);setToggle('#toggleTuNoiLich',S.tuNoiLich);$('#chuKyQuet').value=S.chuKyQuet;datTheme(localStorage.getItem('themeV6')||document.documentElement.dataset.theme||'dark');
+hienKhungGio();$('#ngayBatDau').value='2026-09-24';chuyenPhoneView('detail');S.controlDeviceIds=new Set([S.dienThoai]);capNhatThongTinChonPhone();khoiTaoVideoAo();const c0=campaignHienTai();if(c0)c0.videos=S.videos;hienDanhSachMay();hienMayDangChon();capNhatTongTaiKhoanTrang();hienQuyTrinh();requestAnimationFrame(apDungZoomPhoneChiTiet);ghiNhatKy('');
+</script>
+</body>
+</html>

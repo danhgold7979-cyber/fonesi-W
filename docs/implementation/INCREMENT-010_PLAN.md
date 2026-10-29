@@ -1,0 +1,8 @@
+# Increment 010 — clipboard + visual groups
+
+Trước code: đọc lại P04/master và pure EditorHistory, Canvas adapter, current shortcuts/context menus. P08/P09 checks155 tests +9 browser cũ và2 device browser mới đã qua; raw physical/Windows acceptance vẫn NOT_RUN. Scope này tiếp tục hoàn thiện editor authoring, không thay runtime effects.
+
+1. Pure copySelection snapshot nodes + internal edges + fully selected visual groups. Paste remap node/edge/group IDs, preserve configs/subflow refs in same bundle; external crossing edges không copy, positions/reroute/group geometry offset; không alias mutable objects. Duplicate dùng cùng primitive. Internal clipboard scoped Editor, không import arbitrary OS JSON/không claim cross-workflow dependency closure.
+2. Keyboard Ctrl+C/X/V/D và context Copy/Cut/Paste giữ wires. Repeat paste offsets; text input/dialog không chạy graph commands. One history mutation cho cut/paste/group/remove group, undo/redo giữ bundle hoàn chỉnh.
+3. Visual grouping create với selected>=2, default name/rename từ Properties, select members/remove outline. Không coi group là subflow. Canvas vẽ outline theo world bounds của member nodes, không thêm runtime edges. Outline không bắt drag/touch; group actions ở Properties để không mất selection. Groups có thể overlap sau import, UI vẫn chỉ metadata, không ngầm đổi semantic. Collapsing/drag group/convert-to-subflow để increment riêng với mapping contracts.
+4. Context right-click selected node giữ multi-selection; click node ngoài selection chuyển scope. Toolbar compact menu nhóm, không tăng 4 header controls đã chốt. Pure tests clipboard edge/group remaps/offset/noalias/undo; browser Ctrl+C/V/group→save/reload→ungroup/undo và focus guard. Whole checks sau code, archive rõ phạm vi chưa100%.

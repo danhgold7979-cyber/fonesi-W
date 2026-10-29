@@ -1,0 +1,582 @@
+{
+  "scope": "Reference HTML authoring behavior only; no Android certification",
+  "scenarios": [
+    {
+      "name": "screen-devices",
+      "visibleControls": 31,
+      "dialog": null
+    },
+    {
+      "name": "screen-inspector",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "screen-process",
+      "visibleControls": 88,
+      "dialog": null
+    },
+    {
+      "name": "screen-workflows",
+      "visibleControls": 24,
+      "dialog": null
+    },
+    {
+      "name": "screen-schedule",
+      "visibleControls": 14,
+      "dialog": null
+    },
+    {
+      "name": "screen-history",
+      "visibleControls": 12,
+      "dialog": null
+    },
+    {
+      "name": "node-properties",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-advanced",
+      "visibleControls": 186,
+      "dialog": "Cấu hình node · Bấm Đăng một lần"
+    },
+    {
+      "name": "node-condition",
+      "visibleControls": 187,
+      "dialog": "Cấu hình node · Có bình luận?"
+    },
+    {
+      "name": "inputs",
+      "visibleControls": 210,
+      "dialog": "Khai báo đầu vào của workflow"
+    },
+    {
+      "name": "run-data",
+      "visibleControls": 176,
+      "dialog": "Dữ liệu chạy thử"
+    },
+    {
+      "name": "pick-element",
+      "visibleControls": 178,
+      "dialog": "Phần tử được chọn · snapshot minh họa"
+    },
+    {
+      "name": "phone-layout",
+      "visibleControls": 177,
+      "dialog": "Bố trí điện thoại kiểm thử"
+    },
+    {
+      "name": "phone-info",
+      "visibleControls": 173,
+      "dialog": "Thông tin điện thoại kiểm thử"
+    },
+    {
+      "name": "subflow-new",
+      "visibleControls": 175,
+      "dialog": "Tạo quy trình con"
+    },
+    {
+      "name": "subflow-convert",
+      "visibleControls": 175,
+      "dialog": "Chuyển vùng chọn thành quy trình con"
+    },
+    {
+      "name": "node-rename",
+      "visibleControls": 175,
+      "dialog": "Đổi tên node"
+    },
+    {
+      "name": "canvas-menu",
+      "visibleControls": 180,
+      "dialog": null
+    },
+    {
+      "name": "node-menu",
+      "visibleControls": 181,
+      "dialog": null
+    },
+    {
+      "name": "edge-menu",
+      "visibleControls": 174,
+      "dialog": null
+    },
+    {
+      "name": "workflow-new",
+      "visibleControls": 30,
+      "dialog": "Tạo workflow"
+    },
+    {
+      "name": "workflow-manage",
+      "visibleControls": 34,
+      "dialog": "Quản lý · Đăng video fanpage"
+    },
+    {
+      "name": "workflow-archive",
+      "visibleControls": 27,
+      "dialog": "Lưu trữ workflow"
+    },
+    {
+      "name": "device-manager",
+      "visibleControls": 39,
+      "dialog": "Quản lý thiết bị"
+    },
+    {
+      "name": "device-bulk",
+      "visibleControls": 35,
+      "dialog": "Thao tác nhóm · 1 máy"
+    },
+    {
+      "name": "bulk-edit",
+      "visibleControls": 94,
+      "dialog": "Sửa hàng loạt · 1 dòng"
+    },
+    {
+      "name": "remove-content",
+      "visibleControls": 91,
+      "dialog": "Xóa 1 dòng khỏi danh sách"
+    },
+    {
+      "name": "data-import",
+      "visibleControls": 91,
+      "dialog": "Nhập caption, hashtag, bình luận & dữ liệu"
+    },
+    {
+      "name": "input-mapping",
+      "visibleControls": 91,
+      "dialog": "Ánh xạ dữ liệu vào workflow"
+    },
+    {
+      "name": "process-clone",
+      "visibleControls": 94,
+      "dialog": "Sao chép cấu hình tiến trình"
+    },
+    {
+      "name": "process-options",
+      "visibleControls": 94,
+      "dialog": "Chính sách tiến trình"
+    },
+    {
+      "name": "source-options",
+      "visibleControls": 95,
+      "dialog": "Tùy chọn nguồn nội dung"
+    },
+    {
+      "name": "schedule-preview",
+      "visibleControls": 91,
+      "dialog": "Xem trước lịch · 6 nội dung"
+    },
+    {
+      "name": "queue",
+      "visibleControls": 90,
+      "dialog": "Hàng đợi của cấu hình hiện tại"
+    },
+    {
+      "name": "scan-identities",
+      "visibleControls": 90,
+      "dialog": "Quét account & đối tượng"
+    },
+    {
+      "name": "review-result",
+      "visibleControls": 17,
+      "dialog": "Đối soát kết quả chưa rõ"
+    },
+    {
+      "name": "settings",
+      "visibleControls": 181,
+      "dialog": "Cài đặt workspace"
+    },
+    {
+      "name": "reset-confirm",
+      "visibleControls": 174,
+      "dialog": "Đặt lại bản xem trước"
+    },
+    {
+      "name": "help",
+      "visibleControls": 174,
+      "dialog": "Hướng dẫn & phím tắt"
+    },
+    {
+      "name": "coverage",
+      "visibleControls": 173,
+      "dialog": "Phạm vi bản HTML · rõ phần có thể thử"
+    },
+    {
+      "name": "notifications",
+      "visibleControls": 173,
+      "dialog": "Thông báo"
+    },
+    {
+      "name": "library-subs",
+      "visibleControls": 172,
+      "dialog": null
+    },
+    {
+      "name": "slots-paged",
+      "visibleControls": 111,
+      "dialog": null
+    },
+    {
+      "name": "custom-fields",
+      "visibleControls": 143,
+      "dialog": null
+    },
+    {
+      "name": "inspector-tab-properties",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "inspector-tab-tree",
+      "visibleControls": 168,
+      "dialog": null
+    },
+    {
+      "name": "inspector-tab-variables",
+      "visibleControls": 163,
+      "dialog": null
+    },
+    {
+      "name": "inspector-tab-logs",
+      "visibleControls": 162,
+      "dialog": null
+    },
+    {
+      "name": "inspector-tab-debug",
+      "visibleControls": 168,
+      "dialog": null
+    },
+    {
+      "name": "node-type-start",
+      "visibleControls": 170,
+      "dialog": null
+    },
+    {
+      "name": "node-type-end",
+      "visibleControls": 170,
+      "dialog": null
+    },
+    {
+      "name": "node-type-condition",
+      "visibleControls": 173,
+      "dialog": null
+    },
+    {
+      "name": "node-type-loop",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-break",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-continue",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-subflow",
+      "visibleControls": 172,
+      "dialog": null
+    },
+    {
+      "name": "node-type-launch",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-installed",
+      "visibleControls": 173,
+      "dialog": null
+    },
+    {
+      "name": "node-type-current",
+      "visibleControls": 173,
+      "dialog": null
+    },
+    {
+      "name": "node-type-closeapp",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-back",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-tap",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-doubletap",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-hold",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-drag",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-swipe",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-scroll",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-pinch",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-type",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-clear",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-keyboard",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-find",
+      "visibleControls": 173,
+      "dialog": null
+    },
+    {
+      "name": "node-type-image",
+      "visibleControls": 173,
+      "dialog": null
+    },
+    {
+      "name": "node-type-ocr",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-read",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-wait",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-waitfor",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-screenshot",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-setvar",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-row",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-stage",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-index",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-selectmedia",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-cleanup",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-transaction",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-verify",
+      "visibleControls": 173,
+      "dialog": null
+    },
+    {
+      "name": "node-type-output",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "node-type-review",
+      "visibleControls": 170,
+      "dialog": null
+    },
+    {
+      "name": "node-type-log",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "subgraph-account",
+      "visibleControls": 125,
+      "dialog": null
+    },
+    {
+      "name": "subgraph-page",
+      "visibleControls": 125,
+      "dialog": null
+    },
+    {
+      "name": "subgraph-compose",
+      "visibleControls": 131,
+      "dialog": null
+    },
+    {
+      "name": "subgraph-comment",
+      "visibleControls": 123,
+      "dialog": null
+    },
+    {
+      "name": "library-fb",
+      "visibleControls": 24,
+      "dialog": null
+    },
+    {
+      "name": "library-lite",
+      "visibleControls": 20,
+      "dialog": null
+    },
+    {
+      "name": "library-ig",
+      "visibleControls": 20,
+      "dialog": null
+    },
+    {
+      "name": "library-tt",
+      "visibleControls": 20,
+      "dialog": null
+    },
+    {
+      "name": "library-th",
+      "visibleControls": 20,
+      "dialog": null
+    },
+    {
+      "name": "phone-top",
+      "visibleControls": 170,
+      "dialog": null
+    },
+    {
+      "name": "phone-floating",
+      "visibleControls": 171,
+      "dialog": null
+    },
+    {
+      "name": "data-import-preview",
+      "visibleControls": 91,
+      "dialog": "Xem trước nhập dữ liệu"
+    }
+  ],
+  "regressions": {
+    "invalid-port": [],
+    "duplicate-outgoing": [],
+    "duplicate-node-id": [],
+    "child-graph-invalid": [],
+    "publish-without-intent": [],
+    "context-leak": {
+      "weekdays": [
+        1
+      ],
+      "startDate": "2026-10-26",
+      "autoAppend": true,
+      "storedKeys": [
+        "rows",
+        "slots",
+        "daily",
+        "startDate"
+      ]
+    },
+    "device-navigation-bypass": {
+      "device": "d2",
+      "caption": "ONLY_D1",
+      "contextKeys": [
+        "d1:fb:w1:a1:p1"
+      ]
+    },
+    "library-app-leak": {
+      "activeApp": "tt",
+      "workflowApp": "fb",
+      "launchDescription": "com.facebook.katana"
+    },
+    "duplicate-workflow-inputs": {
+      "workflow": "w160",
+      "customInputPreserved": false
+    },
+    "published-version-identity": {
+      "before": 3,
+      "displayed": 4,
+      "snapshot": 3
+    },
+    "breakpoint-continue": {
+      "paused": true,
+      "steps": 2,
+      "current": "n8"
+    },
+    "phone-fit-label": {
+      "slider": "100",
+      "label": "130%"
+    },
+    "group-pointer-events": {
+      "button": "auto",
+      "parent": "none"
+    },
+    "past-schedule-next-policy": {
+      "policy": "next",
+      "scheduled": "2020-01-01T08:00:00+07:00"
+    },
+    "unsupported-input-key": {
+      "accepted": true,
+      "key": "__proto__"
+    },
+    "import-invalid-id-fallback": {
+      "matched": 1,
+      "targetId": "content-1"
+    },
+    "import-input-roundtrip": {
+      "workflow": "w203",
+      "preserved": false
+    },
+    "device-enable-persistence": true
+  },
+  "exceptions": []
+}

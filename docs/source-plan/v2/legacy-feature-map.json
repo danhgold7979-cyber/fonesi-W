@@ -1,0 +1,970 @@
+[
+  {
+    "legacyId": "APP-001",
+    "legacyControl": "Chạy nền Tắt/Bật",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APP-002",
+    "legacyControl": "Dark/Light",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APP-003",
+    "legacyControl": "CPU",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APP-004",
+    "legacyControl": "RAM",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APP-005",
+    "legacyControl": "GPU %",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APP-006",
+    "legacyControl": "Disk",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APP-007",
+    "legacyControl": "Preview FPS slider",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APP-008",
+    "legacyControl": "Preview quality slider",
+    "ownerPhaseV2": "P03",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-001",
+    "legacyControl": "Search devices",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-002",
+    "legacyControl": "Filter All/Ready/Running/Error",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-003",
+    "legacyControl": "Quét máy",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-004",
+    "legacyControl": "Thêm máy",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-005",
+    "legacyControl": "Click device",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-006",
+    "legacyControl": "Ctrl/click multi-select",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-007",
+    "legacyControl": "Drag-select devices",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-008",
+    "legacyControl": "Double-click device",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-009",
+    "legacyControl": "Right-click device/group",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-001",
+    "legacyControl": "Open/focus",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-002",
+    "legacyControl": "Select/deselect",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-003",
+    "legacyControl": "Reconnect ADB",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-004",
+    "legacyControl": "Refresh screen",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-005",
+    "legacyControl": "Open/restart Facebook",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-006",
+    "legacyControl": "Clear background",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-007",
+    "legacyControl": "Screenshot",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-008",
+    "legacyControl": "Device info",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "DEV-CTX-009",
+    "legacyControl": "Lock/unlock worker",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-001",
+    "legacyControl": "Tổng quan tab",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-002",
+    "legacyControl": "Detail tab",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-003",
+    "legacyControl": "Select all",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-004",
+    "legacyControl": "Clear selection",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-005",
+    "legacyControl": "Refresh all",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-006",
+    "legacyControl": "Fullscreen",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-007",
+    "legacyControl": "Overview Ctrl+wheel",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-008",
+    "legacyControl": "Detail Ctrl+wheel",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-009",
+    "legacyControl": "Floating MASTER drag/resize/Ctrl+wheel",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-010",
+    "legacyControl": "MASTER tap",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-011",
+    "legacyControl": "MASTER swipe",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-012",
+    "legacyControl": "Back",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-013",
+    "legacyControl": "Home",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-014",
+    "legacyControl": "Recent",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-015",
+    "legacyControl": "Clear background",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCR-016",
+    "legacyControl": "Offscreen throttling",
+    "ownerPhaseV2": "P09",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "QAPP-001",
+    "legacyControl": "Facebook",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "QAPP-002",
+    "legacyControl": "Gallery",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "QAPP-003",
+    "legacyControl": "Files",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "QAPP-004",
+    "legacyControl": "Settings",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "QAPP-005",
+    "legacyControl": "VPN",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "QAPP-006",
+    "legacyControl": "Browser",
+    "ownerPhaseV2": "P08",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "ACC-001",
+    "legacyControl": "Manual login button",
+    "ownerPhaseV2": "P12",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "ACC-002",
+    "legacyControl": "Scan Nick/Page",
+    "ownerPhaseV2": "P12",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "ACC-003",
+    "legacyControl": "Nick combobox",
+    "ownerPhaseV2": "P12",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "ACC-004",
+    "legacyControl": "Page/Profile combobox",
+    "ownerPhaseV2": "P12",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "ACC-005",
+    "legacyControl": "Like/Follow 1D/7D/30D",
+    "ownerPhaseV2": "P12",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "ACC-006",
+    "legacyControl": "Switch Nick",
+    "ownerPhaseV2": "P12",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "ACC-007",
+    "legacyControl": "Switch Page/Profile",
+    "ownerPhaseV2": "P12",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "WF-001",
+    "legacyControl": "delay min",
+    "ownerPhaseV2": "P04",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "WF-002",
+    "legacyControl": "delay max",
+    "ownerPhaseV2": "P04",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "WF-003",
+    "legacyControl": "state graph",
+    "ownerPhaseV2": "P04",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "WF-DEV-001",
+    "legacyControl": "step next",
+    "ownerPhaseV2": "P05",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "WF-DEV-002",
+    "legacyControl": "simulate error",
+    "ownerPhaseV2": "P05",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "WF-DEV-003",
+    "legacyControl": "reset workflow",
+    "ownerPhaseV2": "P05",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CAM-001",
+    "legacyControl": "Campaign selector",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CAM-002",
+    "legacyControl": "New Campaign",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CAM-003",
+    "legacyControl": "Choose folder",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CAM-004",
+    "legacyControl": "Rescan",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CAM-005",
+    "legacyControl": "Auto scan on/off",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CAM-006",
+    "legacyControl": "Reconcile interval",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-001",
+    "legacyControl": "row select / select all",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-002",
+    "legacyControl": "caption edit",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-003",
+    "legacyControl": "hashtag edit",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-004",
+    "legacyControl": "comment edit",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-005",
+    "legacyControl": "audience",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-006",
+    "legacyControl": "remix",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-007",
+    "legacyControl": "story",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-008",
+    "legacyControl": "date/time",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-009",
+    "legacyControl": "target",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-010",
+    "legacyControl": "post now",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-011",
+    "legacyControl": "bulk edit",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-012",
+    "legacyControl": "import Excel",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-013",
+    "legacyControl": "export Excel",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-014",
+    "legacyControl": "delete selected",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-015",
+    "legacyControl": "right-click clone row",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-016",
+    "legacyControl": "right-click change target",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-017",
+    "legacyControl": "right-click clear schedule",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "MED-018",
+    "legacyControl": "right-click remove",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-001",
+    "legacyControl": "start date",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-002",
+    "legacyControl": "videos/day",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-003",
+    "legacyControl": "dynamic time slots",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-004",
+    "legacyControl": "auto append new media",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-005",
+    "legacyControl": "Apply schedule",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-006",
+    "legacyControl": "Clear unsent schedule",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-007",
+    "legacyControl": "Timeline view mode",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-008",
+    "legacyControl": "Timeline date range",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-009",
+    "legacyControl": "phone multi-select",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-010",
+    "legacyControl": "Refresh timeline",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-011",
+    "legacyControl": "Drag job time",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-012",
+    "legacyControl": "Ctrl+wheel zoom",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "SCH-013",
+    "legacyControl": "Anti-conflict",
+    "ownerPhaseV2": "P07",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "VPN-001",
+    "legacyControl": "Scan VPN",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "VPN-002",
+    "legacyControl": "VPN icon toggle",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "VPN-003",
+    "legacyControl": "Unknown VPN package",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-001",
+    "legacyControl": "Import proxy text",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-002",
+    "legacyControl": "Select proxies",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-003",
+    "legacyControl": "Select device(s) per proxy",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-004",
+    "legacyControl": "Check selected",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-005",
+    "legacyControl": "Check all",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-006",
+    "legacyControl": "Check one row",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-007",
+    "legacyControl": "Apply selected",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-008",
+    "legacyControl": "Verify device received routing",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "PXY-009",
+    "legacyControl": "Remove proxy",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APK-001",
+    "legacyControl": "choose APK",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APK-002",
+    "legacyControl": "package name",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APK-003",
+    "legacyControl": "select all devices",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APK-004",
+    "legacyControl": "deselect all",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APK-005",
+    "legacyControl": "install",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "APK-006",
+    "legacyControl": "uninstall",
+    "ownerPhaseV2": "P13",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CLONE-001",
+    "legacyControl": "source",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CLONE-002",
+    "legacyControl": "destination device",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CLONE-003",
+    "legacyControl": "destination account",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CLONE-004",
+    "legacyControl": "copy name",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  },
+  {
+    "legacyId": "CLONE-005",
+    "legacyControl": "confirm clone",
+    "ownerPhaseV2": "P06",
+    "disposition": "RETAIN_CAPABILITY_ADAPT_TO_STUDIO_UI",
+    "status": "PLANNED",
+    "notes": "Không gán cùng trạng thái completed/accepted; tham chiếu 13_MIGRATION_MAP.md cho xung đột UI/defaults."
+  }
+]

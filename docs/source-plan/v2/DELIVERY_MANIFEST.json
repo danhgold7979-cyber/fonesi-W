@@ -1,0 +1,959 @@
+{
+  "project": "AutoReels Studio",
+  "sourcePlanVersion": "2.1",
+  "date": "2026-10-26",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "phaseCount": 15,
+  "stepCount": 125,
+  "status": "DETAILED_EXECUTION_PLAN_AND_COMPACT_REVIEW_AVAILABLE",
+  "preview": "docs/previews/AutoReels-Studio-Compact.html",
+  "entrypoint": "docs/source-plan/v2/00_START_HERE.md",
+  "previewChecksPassed": 20,
+  "productionApplication": "IMPLEMENTATION_IN_PROGRESS",
+  "hardwareAcceptance": "NOT_RUN",
+  "unreadSource": "FULL-TRANSFER ZIP exceeds executor transfer limit of 32 MiB",
+  "executionPlanVersion": "1.0",
+  "executionPlan": "docs/source-plan/v2/16_MASTER_EXECUTION_PLAN.md",
+  "stepRunbook": "docs/source-plan/v2/17_STEP_RUNBOOK.md",
+  "plannedTaskCount": 375,
+  "plannedScenarioCount": 250,
+  "packageScope": "REVIEW_DOCUMENTS_AND_PREVIEW_HELPERS_ONLY",
+  "implementationProgress": "docs/implementation/PROGRESS.md",
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 190,
+      "sha256": "c7a37b9e0ae25c2f3f1fbcfb45e34a46f2f95f4c0c235016ad335ac42f54ff8e"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 3447,
+      "sha256": "a156c5ccdc8eee23855581fe65d35956bedb3bee950f6957fb33032f2b4173bf"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3067,
+      "sha256": "0b2f4db5b085fef24b78cd7b5fbdbe29a9a0ec05c79a3daa9ceee2287e6a5065"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/ANALYSIS.md",
+      "bytes": 25346,
+      "sha256": "bfdc3e28fd91f226fd25f924783355044df3a711a4dbf15258690ae25bcf2a10"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/IMPLEMENTATION_BACKLOG.md",
+      "bytes": 8691,
+      "sha256": "5ccd87bb6c4fc1090a078a35a85250ac26625511677cd03ca2929dc8d812bf7c"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/PHASES_AND_STEPS.md",
+      "bytes": 11862,
+      "sha256": "cdad70e1b1412c2e69ef1a99cbcc7279f768b279f1c93de8a999887f65fefacd"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/README.md",
+      "bytes": 2670,
+      "sha256": "883055e2124fa0350fcbbf128c6e7bff62aec76bc5ad1d44a2251a67e2e0f282"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/UI_REVIEW.md",
+      "bytes": 13336,
+      "sha256": "9cddc405876e37eee973033c5fe0aaf66562e833b98333b40c908ea66168ed80"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/evidence/package-audit.json",
+      "bytes": 1065,
+      "sha256": "73670e4b52c4dd577ad4c46ada4839229c61616fa4c1cfb990438a34892e349a"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/evidence/source-inventory.json",
+      "bytes": 6253,
+      "sha256": "013e7c66cbece52413365df0984452ac13c599b1e2c8a49ab744fe0940c0af35"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/evidence/traceability-inventory.json",
+      "bytes": 27772,
+      "sha256": "646801a0e86508adbb89a631c9bb0f763616a8ba7f77cfe1f1e734fb9ee746af"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/evidence/ui-inspection-original-cdn.json",
+      "bytes": 3794,
+      "sha256": "b9239c53be137e4d570097a2f4e0a49e3f53e5f56bfca90c7a12d0fec54baa40"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/evidence/ui-inspection.json",
+      "bytes": 2338,
+      "sha256": "75ef31220e39f2a629189617906d8648645a236fa964c3633e032fe83b0bf2e7"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/evidence/verified-packages.json",
+      "bytes": 1293,
+      "sha256": "61caf640ca8ce6228170e79bfc22b4c654cf2605f0d9dfdd431e91dc08821987"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/implementation-tracker.json",
+      "bytes": 16184,
+      "sha256": "3aaf1123ddd213d6163c0744198eeaa7e63c76415a096b719845cdc694462ac3"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/01-main-dark-1920.png",
+      "bytes": 366485,
+      "sha256": "cc8c30d16ba075b1b92fd32aa0890f5245b409b00b15ba0d8800865b444aa587"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/02-main-1366.png",
+      "bytes": 299529,
+      "sha256": "331c1e857b292da8d09c3b1757befc7671c95f876788f682ef5b5123754296e3"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/02-main-390.png",
+      "bytes": 280873,
+      "sha256": "ee70f9416153717fe490c8d423a33064a4af2cd85454b925c007a44409a2d68e"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/03-main-light.png",
+      "bytes": 371276,
+      "sha256": "2163f626b78d34ec774271be4e5e8480f71e7c82c2a507e778d59b584dfda4d1"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/04-timeline.png",
+      "bytes": 77484,
+      "sha256": "96830b17b87ddd0d50badfb7d158a1793ae3e536dada937676f10b4b2d9d1e59"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/05-proxy.png",
+      "bytes": 124843,
+      "sha256": "8cbd4920d22c7a5cd51922c49d3df3f6ec319560dd2bff4d1973f3a88177b1ae"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/06-apk.png",
+      "bytes": 60935,
+      "sha256": "628be2acbcf64ce1a409cd124f03ab3c2d88b350ac11b0e607041da060ba0901"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/07-clone.png",
+      "bytes": 277252,
+      "sha256": "2aafcca1db07be4d16de84d5e7310f9e8eda02d12120fba1c0d984e7f3927177"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/08-add-device.png",
+      "bytes": 269430,
+      "sha256": "c838b78cf854b0e38a6e1abaf69563d7360cc26ccd50bb9b25b1b50e2bb36210"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/09-overview.png",
+      "bytes": 370268,
+      "sha256": "9d90247f2c4e2ec4e0bb4bc3df45c8ff756b4289f4008bc2e3e322f1eae0c06a"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/10-master.png",
+      "bytes": 295590,
+      "sha256": "8348dd473d292c1c98b6f8a285821e39216c118f3be63ae9baa7efc3d0ab2128"
+    },
+    {
+      "path": "docs/analysis/autoreels-v1.7/screenshots/contact-sheet.jpg",
+      "bytes": 185108,
+      "sha256": "38ad80b2c20a850975e4d839b513cccdaff38853c0eade2564b01c8557c5ce8f"
+    },
+    {
+      "path": "docs/evidence/implementation/checkpoint-001.json",
+      "bytes": 1231,
+      "sha256": "d1eb3f7cfc4706ca4d2a35fa21037d51b681188812d23a61321dd4209748b8d2"
+    },
+    {
+      "path": "docs/evidence/implementation/checkpoint-002.json",
+      "bytes": 1446,
+      "sha256": "147b4a46700767742a91e0afb7abbf2b33cdabde6473af166c22daafaebf2d64"
+    },
+    {
+      "path": "docs/evidence/implementation/checkpoint-003.json",
+      "bytes": 2974,
+      "sha256": "891f574d90ad41bcca88996ad84333caad41c1b30aaeb54d3a8b34d460a4bf30"
+    },
+    {
+      "path": "docs/evidence/implementation/checkpoint-004.json",
+      "bytes": 4195,
+      "sha256": "57629572d6162f9963cf5d838941e793bfecdedba7d385928495ca67071c9201"
+    },
+    {
+      "path": "docs/evidence/implementation/checkpoint-005.json",
+      "bytes": 4647,
+      "sha256": "9bd3a85933075517a0ecd98f8eb00f7dbeee28cf06466899d855e5cc6b86b54e"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/content-form-1600.png",
+      "bytes": 128396,
+      "sha256": "8fceabd92b67f296cd9386022e4c853e80c61ca9778162044832bec7182aa59a"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/content-preview-1600.png",
+      "bytes": 119708,
+      "sha256": "979c204b8de1d41e0010a18568b2a1cb6bdc3208e5d7f8c6d50194b7e15e988a"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/device-controls-1600.png",
+      "bytes": 113125,
+      "sha256": "9b5f792b0fe504181bddfdd3dce727fe692d5347a127d6d611bea949bc948362"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/inspector-1600.png",
+      "bytes": 119334,
+      "sha256": "1bff537d36b0371a68b36d66fd47cabe50e45acedbf3876b2306f6d48e2d5eab"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/schedule-1600.png",
+      "bytes": 61597,
+      "sha256": "747e513f557ad4f1fee9bc6b9bea8b7b77d12bcb8e7f33cb062d9ab9e0748ece"
+    },
+    {
+      "path": "docs/evidence/implementation/ui/xml-inspector-1600.png",
+      "bytes": 118382,
+      "sha256": "07e0dccc96c43b4e5c72bd141790f3cad0956f5dd3cead5894176d2ca4e8c4db"
+    },
+    {
+      "path": "docs/handoff/RESUME_PROMPT.md",
+      "bytes": 2478,
+      "sha256": "c00b65b7d64fd89fd0b7d17079e8420a88454a197f8af941c2c50ae153e6a496"
+    },
+    {
+      "path": "docs/handoff/START_HERE.md",
+      "bytes": 6872,
+      "sha256": "cf2379ff45bdaa54425fab7201b25d20b5e8091c71bd32bcc6398275b40a9a55"
+    },
+    {
+      "path": "docs/implementation/ADR-001-SQLITE-AND-CSP.md",
+      "bytes": 1363,
+      "sha256": "79b60b215e0f91ccab65888184d1bdad05a85f3c004b401f5b019ecf76d02cef"
+    },
+    {
+      "path": "docs/implementation/ADR-002-CONTENT-FORMATS.md",
+      "bytes": 3206,
+      "sha256": "be323ce1afc917c3ce1ccd2cfa76f4a16df70751d539c0c2646b329f14803dcf"
+    },
+    {
+      "path": "docs/implementation/DEVICE_HOST_GUIDE.md",
+      "bytes": 3241,
+      "sha256": "9b0a9a3f682d1d55b9d038d72283c732f328090837eee351b47c48e16c9d7774"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-005_PLAN.md",
+      "bytes": 8191,
+      "sha256": "43e91b6682264201d5822bc45a5b6925bb06716377e6781b879cfedc1b5b4847"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-006_PLAN.md",
+      "bytes": 3951,
+      "sha256": "6fa583502e11924dcef532d2b2e651f442aabc927b79336127500d9bf659cd61"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-007_PLAN.md",
+      "bytes": 6045,
+      "sha256": "c797971e660db19257532cca3005c27611dc5f740b9d840a3b6dc1c5b7a116f1"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-008_PLAN.md",
+      "bytes": 2695,
+      "sha256": "af23cfec49fb83b80f207b6879203b2ce5a3cdba5e0d930e6a3463a20bd992a9"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-009_PLAN.md",
+      "bytes": 2993,
+      "sha256": "4ec7f8a94480562493b87531d72ce49eb74e49f97c97e33bd5c3fb1b47848995"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-010_PLAN.md",
+      "bytes": 1879,
+      "sha256": "ac7d8c63c2e3fefb4c8556af6c49701a539e73e90c47c30554fd0a15b097bc83"
+    },
+    {
+      "path": "docs/implementation/INCREMENT-011_PLAN.md",
+      "bytes": 1996,
+      "sha256": "7d87b52fa5a7ed83764d260b2d070646836cb2cb490688f6737f7ce208be033e"
+    },
+    {
+      "path": "docs/implementation/P00_PLAN.md",
+      "bytes": 2328,
+      "sha256": "429de103e0de7781e1e4be46b851af7444f0ead6b7f03bd92f72103b18357b27"
+    },
+    {
+      "path": "docs/implementation/P01_PLAN.md",
+      "bytes": 1865,
+      "sha256": "730f53a038b734b130933fb7598ba6e11b955541e855537dab669ef49c2da5df"
+    },
+    {
+      "path": "docs/implementation/P02_PLAN.md",
+      "bytes": 2171,
+      "sha256": "8cc67d05012386dc93179fe435585e4ad3630c6aa2593a3a7154c1de7b1d2c45"
+    },
+    {
+      "path": "docs/implementation/P03_PLAN.md",
+      "bytes": 1990,
+      "sha256": "b6db9088f1672a6dab8739e64ec1a6c29d1a1ffdc34751e49b56785e5efb7ab8"
+    },
+    {
+      "path": "docs/implementation/P04_PLAN.md",
+      "bytes": 1620,
+      "sha256": "b1a948aecff206b98db1ac04bfc3a8dbf6295cbf4fc12af940ed3e1b6c3e9b6e"
+    },
+    {
+      "path": "docs/implementation/P05_PLAN.md",
+      "bytes": 1513,
+      "sha256": "702dc40132ad28b6f599f5e44e698083642064f27b009b8628c2334ff80d4abb"
+    },
+    {
+      "path": "docs/implementation/P06_PLAN.md",
+      "bytes": 5194,
+      "sha256": "2c197b4b4ab3d564af6461dd638d9fc5b755c65acea2adea08b4647aa6b6b629"
+    },
+    {
+      "path": "docs/implementation/P07_PLAN.md",
+      "bytes": 5127,
+      "sha256": "ef166ff8536c11bd236109f6cf612e15e1c2e7fee76ae00a98f9cca96b860dd6"
+    },
+    {
+      "path": "docs/implementation/P08_PLAN.md",
+      "bytes": 3219,
+      "sha256": "fe4ee39c99798073214ee519aa394c1ed7147cbacfa3c6e848be2d662a9dfc13"
+    },
+    {
+      "path": "docs/implementation/P09_PLAN.md",
+      "bytes": 2063,
+      "sha256": "7e4caa7246a9566d6c6e91b5ef67c18f56a117bfbaa257126bcff54599d229aa"
+    },
+    {
+      "path": "docs/implementation/PROGRESS.md",
+      "bytes": 8318,
+      "sha256": "c381d410c9a2a42a7ec2f36b32e8900aa894d73d97dbfedf11831c2f1408f661"
+    },
+    {
+      "path": "docs/implementation/platform-tools-manifest.json",
+      "bytes": 1009,
+      "sha256": "b3ec707d05015188e464d6eef3bd8943d7a9a772f1c5d0434afdcf2b47a8165f"
+    },
+    {
+      "path": "docs/previews/AutoReels-Studio-Compact.html",
+      "bytes": 197180,
+      "sha256": "4ba39f7eb0c3125c6396c0a0f915ff3236ce325a68224d3457799720ba84f1f0"
+    },
+    {
+      "path": "docs/previews/README.md",
+      "bytes": 1327,
+      "sha256": "46a755d727d8ef9adf678d4214b8eb9e6ea199738fb1c266086d714c19947a9b"
+    },
+    {
+      "path": "docs/previews/evidence/compact-devices.png",
+      "bytes": 119912,
+      "sha256": "808e8c4a786c79b9945fd3b225d3880b78df3062adb0fd9339d0dcc226873140"
+    },
+    {
+      "path": "docs/previews/evidence/compact-history.png",
+      "bytes": 58911,
+      "sha256": "43d4c072044aa0fc7a638623009fc969704fbc85ec4cafdf5a49b6eb2f9315b4"
+    },
+    {
+      "path": "docs/previews/evidence/compact-inspector-1366.png",
+      "bytes": 191401,
+      "sha256": "7ca0fb6ff9f8b398950f8347b4970fb1127c1734f0fc663f0c41954d45cc2d50"
+    },
+    {
+      "path": "docs/previews/evidence/compact-inspector-1600.png",
+      "bytes": 267122,
+      "sha256": "49d5d446e09610211316ec02e5c89e3a775ce072ca8cba47824f8e164d9e114d"
+    },
+    {
+      "path": "docs/previews/evidence/compact-inspector-1920.png",
+      "bytes": 297213,
+      "sha256": "83ec107d6e89764ba1be21bb0d98ba3fc152b91a7af4c462106a19dbe8f83a4f"
+    },
+    {
+      "path": "docs/previews/evidence/compact-preview-check.json",
+      "bytes": 2103,
+      "sha256": "f529b928627a8eb3c0d95725fe41aa56bd599ad641dd8b5f7738db4d065ac2f3"
+    },
+    {
+      "path": "docs/previews/evidence/compact-process.png",
+      "bytes": 122536,
+      "sha256": "4559cbd75f9713e1720306f0223d333a32d5babea671a6cf36d1d04270e02be0"
+    },
+    {
+      "path": "docs/previews/evidence/compact-schedule.png",
+      "bytes": 77050,
+      "sha256": "443b7919dcaa61edf6105a47d7637e17fa07519b8dd74b2ec8c76f55cd346ba5"
+    },
+    {
+      "path": "docs/previews/evidence/compact-workflows.png",
+      "bytes": 89085,
+      "sha256": "b3d365ced9064ad6a64f888bab6bf1f027467d1a0dd6043c158252342080d134"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/00_START_HERE.md",
+      "bytes": 1516,
+      "sha256": "e9e607919eaca2378ce3717b1a449f8175d9a997771479126734f633e6ad8941"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/01_MASTER_SPEC.md",
+      "bytes": 10389,
+      "sha256": "4e71b9a9203e39952f75ea49ab47929a18a821d47c14a671a0a8553e455b4b2a"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/02_IMPLEMENTATION_PLAN.md",
+      "bytes": 7415,
+      "sha256": "cc0ba91c859edaf95db39c2a7112745f58d33005f8cb2f8e05d077dd4857fe43"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/03_ARCHITECTURE.md",
+      "bytes": 2984,
+      "sha256": "2e47f3aa67e957edab01fba109138362d2338b35c8b7a0156052fa8fe272b472"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/04_DATABASE_SCHEMA.md",
+      "bytes": 2736,
+      "sha256": "02e6ca24e08dd9047894330ae53d0af52011c3f9ad9c329e4916e3c513071eaf"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/05_STATE_MACHINES.md",
+      "bytes": 1617,
+      "sha256": "06bc70bcda0ccea3836b210fc92efe76f1fbe06cb299ecffb6331c99e5510659"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/06_ACCEPTANCE_TESTS.md",
+      "bytes": 3671,
+      "sha256": "61de761e5f50071d26352ff4b0ecfaf7917dff70a02112620f2bb0f1c12c2903"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/07_OPEN_SOURCE_DEPENDENCIES.md",
+      "bytes": 2985,
+      "sha256": "01cc8bad2ea50e7ea7b52ca27bede61ef66d391e150b7077b2eeb72905e03f1d"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/08_PROJECT_INSTRUCTIONS.md",
+      "bytes": 3986,
+      "sha256": "17f8082fa2714db187e3ef1289c375e1e6bef1c332cb0c5571c49fc91cf324b9"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/09_HANDOFF_PROMPT.md",
+      "bytes": 1951,
+      "sha256": "de68251e8220b1b5408815a4bf6334b07d49ba8116356922cb7c2a4feb3d73cc"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/10_DECISION_LOG.md",
+      "bytes": 4918,
+      "sha256": "3bf3e076533eb16c100420cd88c3f958430ee9bf36294c9740d94a6d5e3aa4ec"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/11_SECURITY_BOUNDARIES.md",
+      "bytes": 1322,
+      "sha256": "c7ba06e53e5272a6d4cbc962e60f63a69361aab872022b850a223a1912212f75"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/12_ENVIRONMENT_REQUIREMENTS.md",
+      "bytes": 3432,
+      "sha256": "0c8a99d37f21706643944dfc7ac28ca56ddbabb684a69dda66e3b4880ac68277"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/13_PRE_CODE_CHECKLIST.md",
+      "bytes": 2107,
+      "sha256": "9d281d82c70dd5b11270bb017c674eedce657c99c122736c107a919d91c6c17f"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/14_DEVELOPMENT_WORKFLOW.md",
+      "bytes": 1623,
+      "sha256": "3eb23720057a24b6e2dcb829ec87b1a3e3e17b2346726a6b4bfd068b0442902d"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/15_TOOLCHAIN_BOOTSTRAP.md",
+      "bytes": 523,
+      "sha256": "cc695f85943caa3851135c305f2786e2e98f04cd81a1be86541e103751695b90"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/16_TOOLCHAIN_ACTIVATION.md",
+      "bytes": 782,
+      "sha256": "17cc42166798bbdfa2c43ff52b534ce7878eae0448c68a747d55682504f76f1a"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/17_PYTHON_ACTIVATION_FIX.md",
+      "bytes": 738,
+      "sha256": "aa0b1493785b0643c180e90b9e2c5d26d082a2eb313376738c1024d9dc0f8709"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/18_UI_BACKEND_TRACEABILITY.md",
+      "bytes": 15100,
+      "sha256": "cec71e4d850509a2483440477519f0547b5177300ea461fe9049ca0b4262eac3"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/19_DEFINITION_OF_DONE.md",
+      "bytes": 2515,
+      "sha256": "551479f6c0f0cbee9aeb55954798b914ba5ff5a6bd4b31980930b1ceb0a9933f"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/20_BACKEND_IPC_CONTRACT.md",
+      "bytes": 3748,
+      "sha256": "4193027261d8e41cf29ef3ebb8328652af391cd6c6fcdf63c5fc9c5b0a117dd7"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/21_COMPLETENESS_AUDIT.md",
+      "bytes": 1904,
+      "sha256": "857ddea3996c57d64a3b1623f225109db0e1d454817ef6e7c494c82b70a626b6"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/22_FINAL_DEEP_AUDIT.md",
+      "bytes": 8288,
+      "sha256": "e34b29695adb2cb6d7a5f6d97cd7aa9d6257db89e519baf1f8dba928d25b0039"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/23_MEDIA_STAGING_AND_TEXT_INPUT.md",
+      "bytes": 3659,
+      "sha256": "8c9adbf0afcca485592a32815675a3742e8c2363b9fd2ffa58bf022ce2a30d9f"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/24_STREAM_ADB_ARCHITECTURE_AND_COMPATIBILITY.md",
+      "bytes": 3094,
+      "sha256": "33571bf4436f9541c6a7147f79b0cc4760c6d0e3516b00e03934ba397cbe214c"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/25_ERROR_TIMEOUT_RETRY_AND_RECOVERY_POLICY.md",
+      "bytes": 2798,
+      "sha256": "588535b9a61c25b5956798331011966c4275c3ff077bc5147fc49ec8b85c13e8"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/26_RUNTIME_DATA_RETENTION_BACKUP_AND_OBSERVABILITY.md",
+      "bytes": 2112,
+      "sha256": "01584433f49812841e2338ddef59661f4eb08d8ad0132336be49c3d99455ff4e"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/27_TECHNICAL_RISK_GATE.md",
+      "bytes": 2629,
+      "sha256": "d767ce25c07440ddc4965f162df3bf5e94dcfb28d633043921205864b3fa96ea"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/28_RELEASE_AND_OPERATIONAL_GATES.md",
+      "bytes": 1547,
+      "sha256": "b73dad193e134cba7c72c4c773479bb33e3a172ec4e0a19fbe16e061cd18aa84"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/Activate-AutoReels.ps1",
+      "bytes": 4130,
+      "sha256": "448136c8fa1a099abc5fc4eac67fdf1d6b29cd940d05cb13b47c097fbde46d0d"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/AutoReels_Check_Then_Install_V1_2.md",
+      "bytes": 3941,
+      "sha256": "812c25f1e90d0234838f22877ce9c9c4748ea37312ac0d3d7d3d9049ecd39a97"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/AutoReels_Environment_Bootstrap_V1_2.ps1",
+      "bytes": 22106,
+      "sha256": "cdae9c9a057f6f15acc532e86be74d1e6d3ac090a118ed63ace2cb8ad1d11325"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/AutoReels_Install_Before_Coding_V1_1.md",
+      "bytes": 1217,
+      "sha256": "3833738a548eb55bf5dcaf5e286ac3fbcb429151ce26d5f40267b04e1e2fb813"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/AutoReels_PreCode_GateA_V1_1.ps1",
+      "bytes": 7485,
+      "sha256": "1872a1926b1e6ac7f9c0b06efc6ee3903a2a79fde016c0666128a5d97bbe5814"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/CHANGE_REQUEST_TEMPLATE.md",
+      "bytes": 327,
+      "sha256": "0bacd138c9055c9bb81274d63ddf775080b7c995351e085cb3b9d9a37758d59e"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/Facebook_Auto_Farm_FINAL_V17.html",
+      "bytes": 149933,
+      "sha256": "fe9e23625d1a50f384ea34eb4003c4049820f68524d0e450c2e70d85b5434b49"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/PROJECT_INTRODUCTION.md",
+      "bytes": 1849,
+      "sha256": "619583817c237a6cbd1d25d38fd41f32926dfb1187252760c440ae5163ae062a"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/PROJECT_KNOWLEDGE_MASTER.md",
+      "bytes": 5053,
+      "sha256": "fb161efe0cecf3ed9cb286f3ea09a923e9aea79aa59edd1f3c2fe8654fbb94b3"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/PROJECT_MANIFEST.json",
+      "bytes": 2843,
+      "sha256": "fb1dcb21ca88a3c77bd63e9e92154d9728fe0ba0159a2163b74781f151f20bf0"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/README.md",
+      "bytes": 2363,
+      "sha256": "b01e9504fb5004f6c026427b20b93976c894c1620de64210e60ebd0aececa92a"
+    },
+    {
+      "path": "docs/reference/autoreels-v1.7/Tiếp tục kiểm tra migration.txt",
+      "bytes": 1216,
+      "sha256": "1c24872f29a0c83b51e798e13993e8bc707a22cabe2a68660a38fa941dfc7430"
+    },
+    {
+      "path": "docs/reference/studio-workspace/AutoReels-Workspace.html",
+      "bytes": 163787,
+      "sha256": "3afb29c567a58b654de2b555b19ed60e8e074c604b2d1d4621e77d21d44cdf54"
+    },
+    {
+      "path": "docs/source-plan/v2/00_START_HERE.md",
+      "bytes": 5959,
+      "sha256": "226cb95382abc125d4b73a825293a12947d81b6d140e05d2d9a71d2ac2c5226c"
+    },
+    {
+      "path": "docs/source-plan/v2/01_REVIEW_REPORT.md",
+      "bytes": 6926,
+      "sha256": "1d5bcc7c28285ff247a480259c0ff9181d45eab826eb2bf5f622458b8e81ee21"
+    },
+    {
+      "path": "docs/source-plan/v2/02_SCOPE_AND_DECISIONS.md",
+      "bytes": 5653,
+      "sha256": "c0cac062987ad81c2c9f231a1fe59c63c132477c47c72b0d83759b30f6fba2eb"
+    },
+    {
+      "path": "docs/source-plan/v2/03_UI_SPEC.md",
+      "bytes": 12057,
+      "sha256": "7563c6f526dcbd5b9ec68d4d8dee362acc9c5529cf0b37a769aac8982aeee78e"
+    },
+    {
+      "path": "docs/source-plan/v2/04_ARCHITECTURE.md",
+      "bytes": 5827,
+      "sha256": "753dd2d765f571e6a0e677b16c494c2277e53a065970a364d0a1c2747340cbd7"
+    },
+    {
+      "path": "docs/source-plan/v2/05_DATA_MODEL.md",
+      "bytes": 7273,
+      "sha256": "481e2b72868dcc357361724fcd56edb2686b07afef14da1a21fd302af68aedef"
+    },
+    {
+      "path": "docs/source-plan/v2/06_WORKFLOW_RUNTIME.md",
+      "bytes": 6197,
+      "sha256": "9c3fecdb81f6c045b4afb20df2392d02f06c0eca8bc08bc93384eaa8a1ff16c1"
+    },
+    {
+      "path": "docs/source-plan/v2/07_IPC_AND_CAPABILITIES.md",
+      "bytes": 4801,
+      "sha256": "9da015a0889498cf7aa830dd072d6290bdf435ca564538340dc076ad4b253b5d"
+    },
+    {
+      "path": "docs/source-plan/v2/08_OPERATION_POLICIES.md",
+      "bytes": 7907,
+      "sha256": "1bcc2ba1eeecd37ec5661301b2a165e4cac6b94c90262e8aae5ae7a935783a0e"
+    },
+    {
+      "path": "docs/source-plan/v2/09_PHASE_PLAN.md",
+      "bytes": 23391,
+      "sha256": "a3b92fbbff4c2495ae8729bf95e68dc26113e7b18846464b358571cfcf7044cf"
+    },
+    {
+      "path": "docs/source-plan/v2/10_ACCEPTANCE_GATES.md",
+      "bytes": 5780,
+      "sha256": "d82cb50534528f7b3b1a78d46a150d32067256f20e1ac9c1aeb9e916db02793c"
+    },
+    {
+      "path": "docs/source-plan/v2/11_ENVIRONMENTS.md",
+      "bytes": 4710,
+      "sha256": "1d3a126f2189d67e767d823efe1be46f3c1c95d4e48eaac4f0656ecfad232419"
+    },
+    {
+      "path": "docs/source-plan/v2/12_IMPLEMENTATION_START.md",
+      "bytes": 4167,
+      "sha256": "289ef0aa8bb1ceddaf47a077063833448aa6c4cc6c950e01fb264f6e431eac8f"
+    },
+    {
+      "path": "docs/source-plan/v2/13_MIGRATION_MAP.md",
+      "bytes": 3424,
+      "sha256": "df310be641048107a0b4879f725c089630c9f5be55a21ab871de8e3272ea3ac6"
+    },
+    {
+      "path": "docs/source-plan/v2/14_DECISIONS_TO_CONFIRM.md",
+      "bytes": 11819,
+      "sha256": "375840513fd415b0f07aa019147b78577f592560817a999c70a5db734dfc8537"
+    },
+    {
+      "path": "docs/source-plan/v2/15_COMPACT_UX_ADDITIONS.md",
+      "bytes": 6108,
+      "sha256": "dbd4c139275076d467dc3dfe9b364b62364493a565edccf050e83441e29ae663"
+    },
+    {
+      "path": "docs/source-plan/v2/16_MASTER_EXECUTION_PLAN.md",
+      "bytes": 16777,
+      "sha256": "df1d262bbf566e6882ddf164a2087d584f453411f7f7364a51fb2caf264817bd"
+    },
+    {
+      "path": "docs/source-plan/v2/17_STEP_RUNBOOK.md",
+      "bytes": 135446,
+      "sha256": "ffd759972cbc5aebc8f6709ec38e6d244db6ab17412037bc539a09348288180f"
+    },
+    {
+      "path": "docs/source-plan/v2/18_READINESS_AND_RISKS.md",
+      "bytes": 6355,
+      "sha256": "00aee4c30d0af8495d934b2ae0edd4d1850c6e9a8cc74f11806cebd400cf63f1"
+    },
+    {
+      "path": "docs/source-plan/v2/NODE_CATALOG.md",
+      "bytes": 4981,
+      "sha256": "51c680b84c1039cff02c8b4dedd0aa1e9329f7e00fa94905fe830c14e777e7d1"
+    },
+    {
+      "path": "docs/source-plan/v2/REVIEW_EXPLORER.html",
+      "bytes": 453933,
+      "sha256": "7fd01bbc7f7057e90e980600e5704c1a036ad65a77d33cfa067e0a6f9d76dc19"
+    },
+    {
+      "path": "docs/source-plan/v2/UI_ACTION_MATRIX.md",
+      "bytes": 11468,
+      "sha256": "7c50e1712b6888ece6d24360075b8ca707ecf76b2537a604bb95615bb7fb7b5e"
+    },
+    {
+      "path": "docs/source-plan/v2/UI_EVENT_MATRIX.md",
+      "bytes": 3487,
+      "sha256": "2b5fafaf39b8e424f8b1d28d5511f9dc5da9b4fab3d2cad5ed34b085d78a1680"
+    },
+    {
+      "path": "docs/source-plan/v2/UI_FIELD_MATRIX.md",
+      "bytes": 7382,
+      "sha256": "99b908f198855bcf0cbd2bee7909297894ecd670e18471ccc74ba955648aa2fd"
+    },
+    {
+      "path": "docs/source-plan/v2/app-capabilities.json",
+      "bytes": 2928,
+      "sha256": "d3cf9309c22c8a45b20f7eee83448e3f96364bdf77dd4dd6a03b30957401f912"
+    },
+    {
+      "path": "docs/source-plan/v2/compact-ux.json",
+      "bytes": 8180,
+      "sha256": "ea8191cb9760baee82560d7725c0cef9b5a99eec33dde6bafcf677108def88d5"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/browser-audit.json",
+      "bytes": 12318,
+      "sha256": "75ee7e8d91f3daab9f09bf25e1dd26918a74134d23b3a2868334a8737b5b513c"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/controls-observed.json",
+      "bytes": 4571345,
+      "sha256": "9a8377a974702afb8e5dce699693374dd80692a0a432252793864aa8faf700d1"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/execution-plan-validation.json",
+      "bytes": 529,
+      "sha256": "d33cbf590d669c98f6f0c589101bf6fcd182bbe548c6500ab8898293422e3824"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/explorer-check.json",
+      "bytes": 630,
+      "sha256": "96aac62f3f774b42a2e76707b421bfb2b80bc53f86c2705b68bb7bf2873fb89b"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/plan-validation.json",
+      "bytes": 3369,
+      "sha256": "f359b35fe56af82fb2f9bbddaa26f420057888b103c9c516989bc5c103119e13"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/prototype-audit.json",
+      "bytes": 7787,
+      "sha256": "7190c75957e9f2abd8aff20a31407793e53bf4696761becd00a1a4445de9a5fb"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/reference.formatted.css",
+      "bytes": 30520,
+      "sha256": "2a22fd68032432b94355f72d8ead5de5756e8889511037a0149e0d5c5bd850e2"
+    },
+    {
+      "path": "docs/source-plan/v2/evidence/reference.formatted.js",
+      "bytes": 168051,
+      "sha256": "e68672b221c4776b3cc406e1e5133d9ab3cf8acf8b41a847922c6c0c7d2198ed"
+    },
+    {
+      "path": "docs/source-plan/v2/execution-runbook.json",
+      "bytes": 208623,
+      "sha256": "15d02e1558ce5dc10b027efd4f549209b418118f63f8a3a81c640fcafe5418f6"
+    },
+    {
+      "path": "docs/source-plan/v2/feature-test-map.json",
+      "bytes": 96029,
+      "sha256": "6adfa85569d24cc7d152facebcedb9bb9c08eb496fb06e30759a531e58c94218"
+    },
+    {
+      "path": "docs/source-plan/v2/findings.json",
+      "bytes": 10100,
+      "sha256": "33a9b7a1a9427089f0ebc8c8a9c6e533507a619549cf4af531c82db75387077d"
+    },
+    {
+      "path": "docs/source-plan/v2/implementation-plan.json",
+      "bytes": 62631,
+      "sha256": "982030a6496a57f1534baaad648c4678b9bda96b07421920935d7d54c6f933f6"
+    },
+    {
+      "path": "docs/source-plan/v2/legacy-feature-map.json",
+      "bytes": 38149,
+      "sha256": "ca3008a2af2a0742ef6520107d3ed54455bb5937c24ba54ded01c6cb3b014b12"
+    },
+    {
+      "path": "docs/source-plan/v2/node-catalog.json",
+      "bytes": 31327,
+      "sha256": "eb6f23516b2f09346e8e99e9ebd1557cb5463ca175faefe1125b8a0925205582"
+    },
+    {
+      "path": "docs/source-plan/v2/schemas/minimal-workflow.example.json",
+      "bytes": 893,
+      "sha256": "a9dc5aeed3119c2122622e944d8d951446816507ecface2197ef1b6655d2fc7e"
+    },
+    {
+      "path": "docs/source-plan/v2/schemas/workflow.schema.json",
+      "bytes": 41245,
+      "sha256": "6f2b0b8e33313252878d85e8cb508f704772993411d0fa40eb08cfef55340031"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/inputs.png",
+      "bytes": 263282,
+      "sha256": "d383a4d39990e7e99ef76f9fb359885ea0c7c678c800b11dc95f86972bc85029"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/node-advanced.png",
+      "bytes": 274573,
+      "sha256": "f0bbe1ee6ed7bc3f21decac68407ac5c50c75f754d61e4f45a62837b17905fcf"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/phone-floating.png",
+      "bytes": 264940,
+      "sha256": "4f71da436594678df9201cdfb6b7f863e1d83c632040a229723daec52e8dcf29"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/phone-top.png",
+      "bytes": 175813,
+      "sha256": "f08cd9fb87838d6f518e294d30f748a1d09e5c2a2add64cccce5273ec89509cc"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/pick-element.png",
+      "bytes": 328462,
+      "sha256": "489d0241b689cdc668cd7bd1daca5316706f796978a8d34d94c0721fba017a5b"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/process-clone.png",
+      "bytes": 256686,
+      "sha256": "f2bab58649f0d599dfd581b43b02412dbe4195c70a26584d824731d6c66ec9d0"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/review-explorer.png",
+      "bytes": 92611,
+      "sha256": "98cfd84a3ad9078dc94c4badde89cf9316e61dd2d0bbf18bdc8b32fe9ccbb5fc"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/schedule-preview.png",
+      "bytes": 236310,
+      "sha256": "2385161fc0534079bb662255d3edce1c77d6c506662ef7b5c5e8d440cfc67e53"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/screen-devices.png",
+      "bytes": 127957,
+      "sha256": "cc3b403d0876ecbea8cb8f39b6004b7e83366a758ee3b1da526bbb553563023b"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/screen-history.png",
+      "bytes": 61038,
+      "sha256": "dfcb0d9014bf53d081af3f7e9527902127eadbc385e509d6442492b7bc9e26e0"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/screen-inspector.png",
+      "bytes": 255193,
+      "sha256": "44256215edafa5cfb6ef26f748b62431b6a0419cf0d98eb45e5969fd85cd5225"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/screen-process.png",
+      "bytes": 169631,
+      "sha256": "2ad659d61a9e6d26ce59188dc69f98dc8060fd632fff16c73400b3a6d7e4f7c1"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/screen-schedule.png",
+      "bytes": 80098,
+      "sha256": "5a07b702f73d72f4ac32b264b71982e5c00ea22ad4874d06412b4fa4b4eacf56"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/screen-workflows.png",
+      "bytes": 86146,
+      "sha256": "2dea1b5ad3b9e3fb2fb5416e74758333aaa1e250855c25efd38be85c0edb4b57"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/settings.png",
+      "bytes": 332609,
+      "sha256": "1aba80d2811c92f06c29a6edf9a9120a3c86af97957a035737eb0bf71025efab"
+    },
+    {
+      "path": "docs/source-plan/v2/screenshots/workflow-manage.png",
+      "bytes": 152354,
+      "sha256": "a1a1ecb2dd959487f3675ba959828f1038d6a0d978bb4a93d764c9dbf92d4d85"
+    },
+    {
+      "path": "docs/source-plan/v2/source-inventory.json",
+      "bytes": 9221,
+      "sha256": "399a08c39fcfdbff50f5eb85f76b8a1183cebc614b961c61dea6129a2c053be0"
+    },
+    {
+      "path": "docs/source-plan/v2/tools/build_execution_docs.py",
+      "bytes": 4969,
+      "sha256": "7111b810e66dd793b1d6522ddab453064107de72b6d4ac3b563b2e3a962ac494"
+    },
+    {
+      "path": "docs/source-plan/v2/tools/validate_execution_plan.py",
+      "bytes": 4245,
+      "sha256": "3095a4886b7ddf1ea03bbb9d6a59d765b6ef440efcadee2ed612ae48047a8471"
+    },
+    {
+      "path": "docs/source-plan/v2/tools/validate_plan.py",
+      "bytes": 8115,
+      "sha256": "ad8a3df49f8a9692e18914c4de27d3a9b898e544fd62ab530cc76e7de5ea2354"
+    },
+    {
+      "path": "docs/source-plan/v2/ui-actions.csv",
+      "bytes": 68038,
+      "sha256": "fb2833b35fff558bce2b1f1c2a9dac8ea21312a2bf50fed37eee4cde868a21f0"
+    },
+    {
+      "path": "docs/source-plan/v2/ui-actions.json",
+      "bytes": 119091,
+      "sha256": "2a72ff0b0250b4c73237da5ada03544da4b20888f5f8c1fcf48695bc8e2fa397"
+    },
+    {
+      "path": "docs/source-plan/v2/ui-delegates.json",
+      "bytes": 7697,
+      "sha256": "1975ec9342a4909093d7f9b13d9f9f1b635174229d11e5b58722f9ce00c5c63e"
+    },
+    {
+      "path": "docs/source-plan/v2/ui-fields.json",
+      "bytes": 95385,
+      "sha256": "15e4bf7040b2d3780b190f61ee17437556840f6a1cbabc55c92eb3b38d5796d0"
+    },
+    {
+      "path": "tools/preview/build_compact.py",
+      "bytes": 975,
+      "sha256": "8906cecb437369d9969e39482d5082d2f0e87594ab8298eec5fb5520b6738284"
+    },
+    {
+      "path": "tools/preview/build_explorer.py",
+      "bytes": 10710,
+      "sha256": "8adc110398ed0853ce3bd1d4a5738f109653b098bc9bda9e50a2f2c9cb974ef3"
+    },
+    {
+      "path": "tools/preview/compact.css",
+      "bytes": 3859,
+      "sha256": "ff1a46c8631dec15b6018ed416f955a52a566bf4555fcfb4471d832c636ae246"
+    },
+    {
+      "path": "tools/preview/compact.js",
+      "bytes": 29462,
+      "sha256": "9d248a8279fdbcf6b4695b848bbc34c5cd50889f22e8aa4a969d81786fc8d145"
+    },
+    {
+      "path": "tools/preview/package_review.py",
+      "bytes": 3596,
+      "sha256": "a4555f5e1d698d6d2f7f9d2b9aeae4b6c181dbdd635c1e76163dae2fd75d2bf4"
+    },
+    {
+      "path": "tools/preview/test_compact.py",
+      "bytes": 8950,
+      "sha256": "88cde9245f568de765edabaa4a27d3ed0e71e1988e31c97b3e86bec19f17cf00"
+    }
+  ]
+}

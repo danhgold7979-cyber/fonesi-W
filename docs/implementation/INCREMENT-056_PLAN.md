@@ -1,0 +1,26 @@
+# Increment056 — native-only live Android stage re-observation (read-only)
+
+Date: 2026-10-29; repository `danhgold7979-cyber/fonesi-W`, branch `feat/studio-workspace`.
+Planning baseline: `c40132ef16c31b0973bdcc26512373457be6e39f` (Increment055 TESTED and checkpoint-048).
+Owner step: P11/S095.2–S095.3; AT-095 physical Windows+Android gate stays NOT_RUN.
+
+## Why this slice
+The private host coordinator in Increment051 supports MANUAL-lease re-observation through ADB Sync RECV + bounded MediaStore query. Increment055's Schedule dialog displays only persisted observations; there is no usable native desktop flow to initiate a fresh read after a JOB claim expires. Add one explicit user-triggered **read-only** re-observation that actually invokes the existing ADB code path. Keep public loopback API, renderer-controlled stage IDs and lease credentials excluded.
+
+## Implementation and trust boundaries
+1. `packages/contracts/src/schedule.ts`: `NativeStageReviewResult` redacted DTO: jobId, stage ordinal, fixed scope `LIVE_ANDROID_OBSERVATION_NOT_PICKER_VERIFIED`, reconciliation classification, MediaStore status, observedAt, `canDispatch:false`/`canDelete:false`; no stage ID, raw ADB serial, snapshot hash, nonce, path, request ID or lease owner.
+2. `apps/desktop/src/host/native-stage-review.ts` (new): trusted native orchestrator accepts only jobId + ordinal (0–31). Read persisted `jobStageReview` and private `stage.list`, require exact single stage with same ordinal, `NEEDS_REVIEW` and same host, then use trusted per-device runner to acquire current MANUAL lease and select **one** fresh verified transport. Invoke `HostStageTransferService.reconcileStage` exactly once with internally generated request ID and private stage ID/snapshot/revision. Fail closed on absent/duplicate/wrong host/stale stage; return redacted result; no retries, no private details to renderer.
+3. `apps/desktop/src/host/device-service.ts`: new private `withManualStageReviewLease` using existing per-device actor queue. Initiate a *fresh actual ADB scan* before obtaining actor lease; require READY ADB, one connected identity-verified transport and verified/enabled device, bounded freshness <=10s. Reuse existing 60s MANUAL lease and release in finally. An expired lease or mid-operation disconnection fails/records only a classified uncertain observation as already allowed by reconciliation; no UI control input.
+4. `apps/desktop/src/main/index.ts` + `apps/desktop/src/preload.cts`: **separate native-only IPC channel** `studio:stage-reobserve`, bound to exact BrowserWindow mainFrame/file URL (same authorization checks as existing studio:request). Strict input `{jobId:idSchema,ordinal:int 0..31}` only. No new `ApiCommand`, no HTTP dispatcher or loopback host API. Preload exposes only a narrow `studioStageReview.reobserve(jobId,ordinal)` method, not `stage.list`, raw serial, arbitrary shell, or lease controls.
+5. `apps/desktop/src/renderer/api.ts` + `JobStageReviewDialog.tsx`: native-only button "Kiểm tra lại Android (chỉ đọc)" on each uncertain stage while job NEEDS_REVIEW. Never rendered in loopback browser without native bridge. Single-flight/busy, error and status handling, refresh persisted evidence on success, no automatic calls/false success. Clearly distinguish exact bytes/MediaStore observation from Android picker/posting proof.
+6. Tests: `tests/native-stage-review.test.ts` with actual SQLite job/stage/claim/recovery + fake scoped readback/probe under MANUAL lease, verify persisted audit/job unchanged and redacted output; reject wrong ordinal/host/revision/transport, absent stage, duplicate ownership, current JOB not expired, unavailable/manual lease and unsupported probe; no upload/delete/effect. Extend `tests/ui/schedule.spec.ts` to verify public browser has no native button/API and cannot invoke native command through `/api`. Extend host device-service fixture where feasible to assert scan/fence/actor safety. Check exact-source Ubuntu and Windows CI.
+7. Commit RESULTS/checkpoint-049/PROGRESS after source tests, with exact SHA/CI/OS; no claims of live hardware success.
+
+## State transitions and safety gates
+- Trigger: explicit native desktop operator click for one stage. Reject unavailable/ambiguous/foreign device before any ADB stage work.
+- Active MANUAL lease + verified current transport => 1 bounded ADB remote-byte readback and optional exact MediaStore query; append-only reconciliation audit + queue event from existing code. `NEEDS_REVIEW` job and `SYNC_ACK_UNVERIFIED`/uncertain stage **do not change state**. Always `canDelete:false` and `canDispatch:false`.
+- Unsupported/ambiguous/not-indexed/byte-mismatch are distinct observations; neither an indexed row nor a byte match proves media picker selection or publishing.
+- No claim renewal, no upload, no delete, no remote directory cleanup, no automatic retries, no public HTTP access, no operator cleanup-request creation in this slice.
+
+## Acceptance
+Strongest possible with fixture+CI: TESTED_NATIVE_READONLY_REOBSERVATION_NOT_S095_ACCEPTED. Physical Win10+Android USB/LAN, actual MediaStore/picker/selector, 20–300 device loads, publish adapter and installer/release remain OPEN/NOT_RUN. Current source plan retains 15 phases, 125 steps and 375 tasks.
