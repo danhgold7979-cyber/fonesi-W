@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 21;
+export const SCHEMA_VERSION = 22;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -235,5 +235,33 @@ CREATE TRIGGER effect_manual_reviews_immutable_update BEFORE UPDATE ON effect_ma
  BEGIN SELECT RAISE(ABORT,'effect manual review immutable'); END;
 CREATE TRIGGER effect_manual_reviews_immutable_delete BEFORE DELETE ON effect_manual_reviews
  BEGIN SELECT RAISE(ABORT,'effect manual review immutable'); END;
+` },
+  { version: 22, sql: `
+CREATE TABLE device_stage_cleanup_rechecks(
+ request_id TEXT PRIMARY KEY,
+ stage_id TEXT NOT NULL REFERENCES device_stage_transfers(id),
+ job_id TEXT NOT NULL REFERENCES jobs(id),
+ device_id TEXT NOT NULL REFERENCES devices(id),
+ host_id TEXT NOT NULL,
+ snapshot_hash TEXT NOT NULL CHECK(length(snapshot_hash)=64),
+ job_revision INTEGER NOT NULL CHECK(job_revision>=0),
+ claim_generation INTEGER NOT NULL CHECK(claim_generation>0),
+ lease_generation INTEGER NOT NULL CHECK(lease_generation>0),
+ actor_id TEXT NOT NULL,
+ attempt_ordinal INTEGER NOT NULL CHECK(attempt_ordinal BETWEEN 1 AND 3),
+ result_status TEXT NOT NULL CHECK(result_status IN('BLOCKED','REMOTE_PRESENT_REVIEW','MEDIASTORE_PRESENT_REVIEW','UNSUPPORTED_REVIEW','ABSENCE_CANDIDATE_UNCERTIFIED')),
+ remote_status TEXT NOT NULL CHECK(remote_status IN('PRESENT','ABSENT','UNKNOWN')),
+ mediastore_status TEXT NOT NULL CHECK(mediastore_status IN('INDEXED_EXACT','NOT_INDEXED','AMBIGUOUS','UNSUPPORTED','UNKNOWN')),
+ blockers_json TEXT NOT NULL CHECK(json_valid(blockers_json)),
+ request_hash TEXT NOT NULL CHECK(length(request_hash)=64),
+ created_at TEXT NOT NULL,
+ UNIQUE(stage_id,attempt_ordinal)
+) STRICT;
+CREATE INDEX stage_cleanup_rechecks_job ON device_stage_cleanup_rechecks(job_id,created_at,request_id);
+CREATE INDEX stage_cleanup_rechecks_stage ON device_stage_cleanup_rechecks(stage_id,attempt_ordinal);
+CREATE TRIGGER stage_cleanup_rechecks_immutable_update BEFORE UPDATE ON device_stage_cleanup_rechecks
+ BEGIN SELECT RAISE(ABORT,'cleanup recheck immutable'); END;
+CREATE TRIGGER stage_cleanup_rechecks_immutable_delete BEFORE DELETE ON device_stage_cleanup_rechecks
+ BEGIN SELECT RAISE(ABORT,'cleanup recheck immutable'); END;
 ` },
 ] as const;
