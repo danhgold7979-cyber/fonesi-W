@@ -433,6 +433,9 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
   expect(page.frozenUnicode.canDispatch).toBe(false);
   expect(page.compose.mediaSlots).toBe(1);
   expect(page.compose.textFields).toBe(0);
+  expect(page.compose.canVerify).toBe(false);
+  expect(page.compose.canPublish).toBe(false);
+  expect(page.compose.canDispatch).toBe(false);
   expect(JSON.stringify(page.compose)).not.toContain(f.snapshotHash);
   const publicPage = await dispatch(db, {
     operationId: 'op_review_read_only', command: 'jobStageReview', input: { id: f.jobId },

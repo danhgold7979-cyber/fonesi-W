@@ -139,6 +139,7 @@ export interface FrozenUnicodePreflight {
 /** S096.3 frozen compose *source expectations*, never a live Android target/picker grant. */
 export type FrozenComposeBlocker =
   | 'JOB_NOT_PREFLIGHT' | 'WORKFLOW_BINDING_INVALID'
+  | 'WORKFLOW_FINGERPRINT_MISMATCH' | 'FROZEN_MEDIA_BINDING_INVALID'
   | 'ACCOUNT_NOT_PINNED' | 'TARGET_NOT_PINNED'
   | 'CONTENT_BINDING_MISMATCH' | 'MEDIA_ORDER_NOT_VERIFIED'
   | 'UNICODE_SOURCE_INVALID' | 'EMPTY_FROZEN_CONTENT'

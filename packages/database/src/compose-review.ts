@@ -1,4 +1,5 @@
 import { hashSchema, idSchema } from '@autoreels/contracts';
+import { bundleHash } from '@autoreels/domain';
 import type {
   FrozenComposeBlocker, FrozenComposePreflight, JobDefinition, JobSnapshot,
   PersistedOrderedMediaReport,
@@ -17,6 +18,14 @@ export interface FrozenComposeManifest {
   targetId: string;
   contentId: string;
   orderedAssetIds: string[];
+  /** Private exact pinned media identities; never return to renderer or HTTP. */
+  orderedAssets: {
+    ordinal: number;
+    assetId: string;
+    kind: 'IMAGE' | 'VIDEO';
+    pinnedHash: string;
+    pinnedBytes: number;
+  }[];
   fields: {
     ordinal: number;
     scope: 'row' | 'process';
@@ -51,6 +60,16 @@ export function deriveFrozenComposeExpectation(input: {
     idSchema.safeParse(job.contentId).success && snapshot.contentId === job.contentId;
   if (job.state !== 'PREFLIGHT') block('JOB_NOT_PREFLIGHT');
   if (!appPinned) block('WORKFLOW_BINDING_INVALID');
+  // A well-formed hash is not proof that these are the pinned workflow bytes.
+  let workflowBytesMatch = false;
+  if (appPinned) {
+    try {
+      workflowBytesMatch = bundleHash(snapshot.bundle) === snapshot.workflowHash;
+    } catch {
+      // Malformed or unsafe JSON must fail closed, never escape raw input details.
+    }
+    if (!workflowBytesMatch) block('WORKFLOW_FINGERPRINT_MISMATCH');
+  }
   if (!accountPinned) block('ACCOUNT_NOT_PINNED');
   if (!targetPinned) block('TARGET_NOT_PINNED');
   if (!contentPinned) block('CONTENT_BINDING_MISMATCH');
@@ -73,6 +92,38 @@ export function deriveFrozenComposeExpectation(input: {
           slot.evidence === 'INDEXED_ROW_RECORDED_NOT_LIVE' &&
           slot.blockers.length === 0));
   if (!mediaSourceConsistent) block('MEDIA_ORDER_NOT_VERIFIED');
+
+  // Bind every selected ordinal to exactly one immutable asset fingerprint.
+  // A MediaStore-row summary alone must never create a complete media manifest.
+  const frozenAssets = snapshot.assets;
+  const orderedAssets: FrozenComposeManifest['orderedAssets'] = [];
+  let frozenMediaValid = validIds &&
+    (mediaSlots === 0
+      ? frozenAssets === undefined || (Array.isArray(frozenAssets) && frozenAssets.length === 0)
+      : Array.isArray(frozenAssets) && frozenAssets.length === mediaSlots);
+  if (validIds && Array.isArray(frozenAssets)) {
+    for (const [ordinal, assetId] of ids.entries()) {
+      const matches = frozenAssets.filter((asset) => asset && asset.id === assetId);
+      const asset = matches[0];
+      const kind = asset?.kind === 'video' ? 'VIDEO'
+        : asset?.kind === 'image' ? 'IMAGE' : null;
+      if (matches.length !== 1 || !asset ||
+          frozenAssets[ordinal]?.id !== assetId ||
+          !idSchema.safeParse(asset.contentId).success ||
+          asset.state !== 'READY' || kind === null ||
+          !hashSchema.safeParse(asset.hash).success ||
+          !Number.isSafeInteger(asset.bytes) || asset.bytes <= 0 ||
+          mediaOrder.slots[ordinal]?.kind !== kind) {
+        frozenMediaValid = false;
+        continue;
+      }
+      orderedAssets.push({
+        ordinal, assetId, kind, pinnedHash: asset.hash, pinnedBytes: asset.bytes,
+      });
+    }
+  }
+  if (!frozenMediaValid || orderedAssets.length !== mediaSlots)
+    block('FROZEN_MEDIA_BINDING_INVALID');
 
   const redacted = unicode.summary;
   const unicodeSourceConsistent =
@@ -117,6 +168,7 @@ export function deriveFrozenComposeExpectation(input: {
     targetId: snapshot.targetId as string,
     contentId: snapshot.contentId,
     orderedAssetIds: [...ids],
+    orderedAssets,
     fields: unicode.entries.map(({ ordinal, scope, kind, utf8Hash, utf8Bytes }) =>
       ({ ordinal, scope, kind, utf8Hash, utf8Bytes })),
   };

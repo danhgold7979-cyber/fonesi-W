@@ -613,6 +613,8 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).toContainText('Đích đăng và nội dung đã ghim (chưa kiểm chứng Android)');
   await expect(dialog.getByTestId('frozen-compose-status'))
     .toContainText('Compose bị chặn');
+  await expect(dialog.getByRole('button', { name: /Xác minh|Đăng bài|Publish/ }))
+    .toHaveCount(0);
   await expect(dialog).toContainText('Chưa ghim tài khoản cho job');
   await expect(dialog.getByRole('button', { name: /Xác minh đích đăng|Publish|Bắt đầu đăng/ }))
     .toHaveCount(0);
