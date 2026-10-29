@@ -4827,6 +4827,157 @@ export class StudioDatabase {
     });
   }
 
+  /**
+   * S101.3 append-only operator review note: evidence references are asserted
+   * by an operator and NEVER certify a provider effect or grant retry rights.
+   */
+  recordEffectManualReview(args: {
+    requestId: string;
+    jobId: string;
+    effectId: string;
+    expectedJobRevision: number;
+    expectedEffectState: 'INTENT' | 'ATTEMPT_UNCERTAIN' | 'NEEDS_REVIEW';
+    actorId: string;
+    reasonCode: 'UNKNOWN_EFFECT' | 'CANCEL_REQUESTED' |
+      'PROVIDER_EVIDENCE_MISSING' | 'COMMENT_UNCERTAIN';
+    disposition: 'AWAITING_EVIDENCE' | 'ESCALATED' | 'INSPECTED_UNCERTIFIED';
+    evidenceRefs: readonly string[];
+    at: number;
+  }): {
+    requestId: string;
+    jobId: string;
+    effectId: string;
+    jobRevision: number;
+    reasonCode: string;
+    disposition: string;
+    evidenceCount: number;
+    createdAt: string;
+    alreadyRecorded: boolean;
+    canConfirm: false;
+    canRetry: false;
+    canDispatch: false;
+  } {
+    for (const id of [args.requestId, args.jobId, args.effectId, args.actorId])
+      idSchema.parse(id);
+    if (!Number.isSafeInteger(args.expectedJobRevision) ||
+        args.expectedJobRevision < 0 ||
+        !Number.isSafeInteger(args.at) ||
+        !Number.isFinite(new Date(args.at).getTime()) ||
+        !['INTENT', 'ATTEMPT_UNCERTAIN', 'NEEDS_REVIEW'].includes(args.expectedEffectState) ||
+        !['UNKNOWN_EFFECT', 'CANCEL_REQUESTED',
+          'PROVIDER_EVIDENCE_MISSING', 'COMMENT_UNCERTAIN'].includes(args.reasonCode) ||
+        !['AWAITING_EVIDENCE', 'ESCALATED', 'INSPECTED_UNCERTIFIED']
+          .includes(args.disposition) ||
+        !Array.isArray(args.evidenceRefs) ||
+        args.evidenceRefs.length < 1 || args.evidenceRefs.length > 8 ||
+        args.evidenceRefs.some((id) => !idSchema.safeParse(id).success) ||
+        new Set(args.evidenceRefs).size !== args.evidenceRefs.length)
+      throw new DomainError('EFFECT_REVIEW_INPUT_INVALID',
+        'Manual review requires one bounded set of evidence references.');
+    const createdAt = new Date(args.at).toISOString();
+    const requestHash = contentHash({
+      domain: 'MANUAL_EFFECT_REVIEW_V1',
+      requestId: args.requestId, jobId: args.jobId, effectId: args.effectId,
+      expectedJobRevision: args.expectedJobRevision,
+      expectedEffectState: args.expectedEffectState,
+      actorId: args.actorId, reasonCode: args.reasonCode,
+      disposition: args.disposition, evidenceRefs: args.evidenceRefs, at: args.at,
+    });
+    return this.transaction(() => {
+      const receipt = (alreadyRecorded: boolean) => ({
+        requestId: args.requestId,
+        jobId: args.jobId,
+        effectId: args.effectId,
+        jobRevision: args.expectedJobRevision,
+        reasonCode: args.reasonCode,
+        disposition: args.disposition,
+        evidenceCount: args.evidenceRefs.length,
+        createdAt,
+        alreadyRecorded,
+        canConfirm: false as const,
+        canRetry: false as const,
+        canDispatch: false as const,
+      });
+      const existing = this.db.prepare(
+        'SELECT request_hash FROM effect_manual_reviews WHERE request_id=?',
+      ).get(args.requestId);
+      if (existing) {
+        if (existing.request_hash !== requestHash)
+          throw new DomainError('EFFECT_REVIEW_ID_CONFLICT',
+            'The review request ID is already bound to different evidence.');
+        return receipt(true);
+      }
+      const job = this.getJob(args.jobId).job;
+      if (job.state !== 'NEEDS_REVIEW' ||
+          job.revision !== args.expectedJobRevision)
+        throw new DomainError('EFFECT_REVIEW_JOB_STALE',
+          'Manual review requires the same persisted NEEDS_REVIEW job revision.');
+      const effect = this.db.prepare(
+        'SELECT state FROM effects WHERE id=? AND job_id=?',
+      ).get(args.effectId, args.jobId);
+      if (!effect || effect.state !== args.expectedEffectState)
+        throw new DomainError('EFFECT_REVIEW_EFFECT_STALE',
+          'The pending external effect no longer matches review input.');
+      this.db.prepare(
+        'INSERT INTO effect_manual_reviews ' +
+        '(request_id,job_id,effect_id,job_revision,expected_effect_state,' +
+        'actor_id,reason_code,disposition,evidence_refs,request_hash,created_at) ' +
+        'VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+      ).run(
+        args.requestId, args.jobId, args.effectId,
+        args.expectedJobRevision, args.expectedEffectState,
+        args.actorId, args.reasonCode, args.disposition,
+        canonicalJson(args.evidenceRefs), requestHash, createdAt,
+      );
+      return receipt(false);
+    });
+  }
+
+  /** Bounded private history, never a provider verification or public UI grant. */
+  effectManualReviewHistory(args: {
+    jobId: string; effectId: string; limit: number;
+  }): {
+    scope: 'PRIVATE_EFFECT_MANUAL_REVIEW_NOT_CERTIFIED';
+    items: Array<{
+      requestId: string; actorId: string; reasonCode: string;
+      disposition: string; evidenceCount: number; createdAt: string;
+    }>;
+    canConfirm: false;
+    canRetry: false;
+    canDispatch: false;
+  } {
+    idSchema.parse(args.jobId);
+    idSchema.parse(args.effectId);
+    if (!Number.isSafeInteger(args.limit) || args.limit < 1 || args.limit > 32)
+      throw new DomainError('EFFECT_REVIEW_PAGE_INVALID', 'Review page limit must be 1–32.');
+    if (!this.db.prepare(
+      'SELECT 1 FROM effects WHERE id=? AND job_id=?',
+    ).get(args.effectId, args.jobId))
+      throw new DomainError('EFFECT_REVIEW_EFFECT_STALE', 'Effect does not belong to job.');
+    const records = this.db.prepare(
+      'SELECT request_id,actor_id,reason_code,disposition,evidence_refs,created_at ' +
+      'FROM effect_manual_reviews WHERE job_id=? AND effect_id=? ' +
+      'ORDER BY created_at DESC,request_id DESC LIMIT ?',
+    ).all(args.jobId, args.effectId, args.limit);
+    return {
+      scope: 'PRIVATE_EFFECT_MANUAL_REVIEW_NOT_CERTIFIED',
+      items: records.map((r) => {
+        const refs: unknown = parse<unknown>(r.evidence_refs);
+        if (!Array.isArray(refs) || refs.length < 1 || refs.length > 8)
+          throw new DomainError('EFFECT_REVIEW_CORRUPT', 'Invalid stored review evidence.');
+        return {
+          requestId: String(r.request_id),
+          actorId: String(r.actor_id),
+          reasonCode: String(r.reason_code),
+          disposition: String(r.disposition),
+          evidenceCount: refs.length,
+          createdAt: String(r.created_at),
+        };
+      }),
+      canConfirm: false, canRetry: false, canDispatch: false,
+    };
+  }
+
   cancelScheduledJob(id: string, expectedRevision: number): void {
     this.transaction(() => {
       this.editableScheduledJob(id, expectedRevision);
