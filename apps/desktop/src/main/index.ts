@@ -4,12 +4,14 @@ import { resolve } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { idSchema } from '@autoreels/contracts';
 import { DbClient } from '../host/db-client.js';
 import { envelopeSchema } from '../host/service.js';
 import { HostMediaService, loadHostId } from '../host/media-service.js';
 import { HostDeviceService } from '../host/device-service.js';
 import { HostServices } from '../host/services.js';
 import { HostStageTransferService } from '../host/stage-transfer-service.js';
+import { NativeStageReviewService } from '../host/native-stage-review.js';
 import { HostWorkspaceService } from '../host/workspace-service.js';
 
 app.setName('AutoReels Studio');
@@ -133,6 +135,7 @@ else {
         ),
       );
       await services.ready();
+      const nativeStageReview = new NativeStageReviewService(db, devices, services.stage!, hostId);
       // Only a paired, observed native suspend/resume can classify missed slots.
       // A startup, clock jump, busy queue or device reconnect is NOT a sleep gap.
       powerMonitor.on('suspend', () => { suspendedAt = Date.now(); });
@@ -169,6 +172,18 @@ else {
             operationId: 'op_' + randomUUID().replaceAll('-', ''),
           });
         return services!.request(envelope.command, envelope.input);
+      });
+      ipcMain.handle('studio:stage-reobserve', async (event, raw: unknown) => {
+        if (
+          event.sender !== window?.webContents ||
+          event.senderFrame !== window.webContents.mainFrame ||
+          event.senderFrame.url !== allowedUrl
+        ) throw new Error('Unauthorized sender');
+        const selection = z.strictObject({
+          jobId: idSchema,
+          ordinal: z.number().int().min(0).max(31),
+        }).parse(raw);
+        return nativeStageReview.reobserve(selection.jobId, selection.ordinal);
       });
       window.webContents.setWindowOpenHandler(({ url }) => {
         if (url.startsWith('https://')) void shell.openExternal(url);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { JobStageReviewPage } from '@autoreels/contracts';
-import { api } from './api.js';
+import type { JobStageReviewPage, NativeStageReviewResult } from '@autoreels/contracts';
+import { api, nativeStageReview } from './api.js';
 import { Dialog } from './components.js';
 
 interface Props { jobId: string; close: () => void }
@@ -30,6 +30,9 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [reload, setReload] = useState(0);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [lastLive, setLastLive] = useState<NativeStageReviewResult | null>(null);
   const generation = useRef(0);
 
   useEffect(() => {
@@ -52,6 +55,29 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
       .finally(() => { if (token === generation.current) setLoading(false); });
     return () => { generation.current++; };
   }, [jobId, reload]);
+
+  async function reobserve(ordinal: number): Promise<void> {
+    if (!nativeStageReview || reviewBusy || loading || loadingMore) return;
+    const token = generation.current;
+    setReviewError('');
+    setLastLive(null);
+    setReviewBusy(true);
+    try {
+      const result = await nativeStageReview.reobserve(jobId, ordinal);
+      if (token !== generation.current) return;
+      if (result.jobId !== jobId || result.ordinal !== ordinal ||
+          result.canDelete !== false || result.canDispatch !== false ||
+          result.scope !== 'LIVE_ANDROID_OBSERVATION_NOT_PICKER_VERIFIED')
+        throw new Error('Bằng chứng kiểm tra Android không hợp lệ.');
+      setLastLive(result);
+      setReload((value) => value + 1);
+    } catch (cause) {
+      if (token === generation.current)
+        setReviewError(cause instanceof Error ? cause.message : 'Không thể đối soát Android.');
+    } finally {
+      if (token === generation.current) setReviewBusy(false);
+    }
+  }
 
   async function loadMore(): Promise<void> {
     if (!report?.nextCursor || loadingMore) return;
@@ -77,16 +103,30 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
     <Dialog title="Hồ sơ đối soát staging (chỉ đọc)" close={close}>
       <p>Job: <code>{jobId}</code></p>
       <p className="muted">
-        Chỉ hiển thị dữ liệu đã lưu trong SQLite, không kiểm tra điện thoại trực tiếp.
-        Không xác nhận tệp đã được chọn trong picker, bài đã đăng hay quyền thực thi.
+        Dữ liệu bên dưới là lịch sử SQLite; việc mở hồ sơ không kiểm tra điện thoại trực tiếp.
+        {nativeStageReview
+          ? ' Nút kiểm tra Android chỉ thực hiện một lần đọc byte từ xa và truy vấn MediaStore.'
+          : ' Chỉ ứng dụng Electron mới có thể yêu cầu quan sát Android trực tiếp.'}
+        {' '}Không xác nhận tệp đã được chọn trong picker, bài đã đăng hay quyền thực thi.
         Không xóa tệp hoặc tự chạy lại công việc.
       </p>
       <div className="actions">
-        <button onClick={() => setReload((value) => value + 1)} disabled={loading || loadingMore}>
+        <button onClick={() => setReload((value) => value + 1)}
+                disabled={loading || loadingMore || reviewBusy}>
           Làm mới hồ sơ
         </button>
       </div>
       {error && <p className="error" role="alert">{error}</p>}
+      {reviewError && <p className="error" role="alert">{reviewError}</p>}
+      {reviewBusy && <p role="status">Đang kiểm tra lại byte Android và MediaStore (chỉ đọc)…</p>}
+      {lastLive && (
+        <p role="status" data-testid="stage-live-review-result">
+          Media {lastLive.ordinal + 1}: {observationLabels[lastLive.classification]} ·
+          MediaStore: {lastLive.mediaStoreStatus ?? 'không ghi nhận'} ·
+          {new Date(lastLive.completedAt).toLocaleString('vi-VN')}.
+          Chưa xác minh picker, không xóa file, không cho phép đăng bài.
+        </p>
+      )}
       {loading && <p role="status">Đang đọc hồ sơ đã lưu…</p>}
       {report && (
         <section aria-label="Bằng chứng staging đã lưu">
@@ -107,6 +147,16 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                   {' '}MediaStore: {stage.mediaStore === 'ROW_RECORDED_NOT_PICKER_VERIFIED'
                     ? 'Có bản ghi hàng MediaStore, chưa xác minh picker'
                     : 'Chưa có bằng chứng hàng MediaStore'}.
+                  {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
+                    ['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state) && (
+                      <button
+                        aria-label={'Kiểm tra lại Android media ' + (stage.ordinal + 1)}
+                        disabled={reviewBusy || loading || loadingMore}
+                        onClick={() => void reobserve(stage.ordinal)}
+                      >
+                        Kiểm tra lại Android (chỉ đọc)
+                      </button>
+                    )}
                 </li>
               ))}
             </ol>

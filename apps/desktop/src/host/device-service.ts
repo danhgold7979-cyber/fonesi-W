@@ -431,6 +431,38 @@ export class HostDeviceService {
     await this.db.internal({ command: 'lease.assert', lease, at: Date.now() });
   }
 
+  /**
+   * Trusted native-only live stage reader: fresh scan, a single identity-verified
+   * transport, shared per-device MANUAL actor and guaranteed lease release.
+   * The callback is host-only; renderer never supplies a lease or ADB serial.
+   */
+  async withManualStageReviewLease<T>(
+    deviceId: string,
+    task: (lease: DeviceLease, transport: { serial: string; generation: number }) => Promise<T>,
+  ): Promise<T> {
+    const snapshot = await this.scan();
+    const observedAt = snapshot.observedAt ? Date.parse(snapshot.observedAt) : NaN;
+    if (snapshot.diagnostic.status !== 'READY' || snapshot.scanning ||
+        !Number.isFinite(observedAt) || observedAt > Date.now() ||
+        Date.now() - observedAt > 10000)
+      throw new DomainError('STAGE_LIVE_SCAN_UNAVAILABLE',
+        'Fresh verified ADB scan is required for operator re-observation.');
+    return this.actor(deviceId, 'MANUAL', async (device, transport, lease) => {
+      const candidates = device.transports.filter((t) =>
+        t.state === 'CONNECTED' && t.identityVerified);
+      const lastSeen = Date.parse(transport.lastSeen);
+      if (!device.enabled || device.identity !== 'VERIFIED_PROPERTIES' ||
+          candidates.length !== 1 || candidates[0]?.serial !== transport.serial ||
+          candidates[0]?.generation !== transport.generation ||
+          !Number.isFinite(lastSeen) || lastSeen > Date.now() ||
+          Date.now() - lastSeen > 10000)
+        throw new DomainError('STAGE_LIVE_TRANSPORT_AMBIGUOUS',
+          'A single fresh, identity-verified Android transport is required.');
+      await this.fence(deviceId, transport, lease);
+      return task(lease, { serial: transport.serial, generation: transport.generation });
+    });
+  }
+
   /** Host-side live selector test. No auto-tap, no private XML/text in the DTO. */
   private async testDeviceSelector(
     id: string,

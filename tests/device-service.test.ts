@@ -48,6 +48,45 @@ async function device() {
   return (await snapshot()).devices[0]!;
 }
 describe('host device integration', () => {
+
+  it('native stage reader acquires and releases a fresh MANUAL lease without device input', async () => {
+    const d = await device();
+    const priorShells = [...f.state.shells];
+    const output = await service.withManualStageReviewLease(
+      d.id, async (lease, transport) => {
+        expect(lease.ownerKind).toBe('MANUAL');
+        expect(lease.deviceId).toBe(d.id);
+        expect(lease.expiresAt).toBeGreaterThan(Date.now());
+        db.assertLease(lease, Date.now());
+        expect(transport.serial).toBe('USB_FIXTURE');
+        expect(transport.generation).toBeGreaterThan(0);
+        return { seen: true };
+      });
+    expect(output).toEqual({ seen: true });
+    expect((await device()).owner).toBeNull();
+    expect(f.state.shells).toEqual(priorShells);
+    expect(f.state.requests.filter((r) => r.startsWith('shell,v2,raw:') &&
+      /input|rm|reboot/.test(r))).toHaveLength(0);
+  });
+  it('native stage reader rejects a busy or offline device without running its callback', async () => {
+    const d = await device();
+    let called = false;
+    const held = db.acquireLease(d.id, 'held_job', 'JOB', Date.now(), 30000);
+    try {
+      await expect(service.withManualStageReviewLease(d.id, async () => {
+        called = true;
+      })).rejects.toThrow();
+    } finally {
+      db.releaseLease(held);
+    }
+    expect(called).toBe(false);
+    f.state.list = 'USB_FIXTURE\toffline\n';
+    await expect(service.withManualStageReviewLease(d.id, async () => {
+      called = true;
+    })).rejects.toThrow();
+    expect(called).toBe(false);
+  });
+
   it('discovers actual TCP fixture properties, exposes actual connection separately from automation and rejects raw path/shell requests', async () => {
     const data = await snapshot();
     expect(data.diagnostic.status).toBe('READY');

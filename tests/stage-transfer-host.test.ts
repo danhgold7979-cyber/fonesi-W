@@ -12,6 +12,7 @@ import { contentHash } from '@autoreels/domain';
 import { fingerprint } from '@autoreels/media';
 import { HostMediaService } from '../apps/desktop/src/host/media-service.js';
 import { HostStageTransferService } from '../apps/desktop/src/host/stage-transfer-service.js';
+import { NativeStageReviewService } from '../apps/desktop/src/host/native-stage-review.js';
 import { dispatchInternal, type InternalRequest } from '../apps/desktop/src/host/internal.js';
 import { dispatch } from '../apps/desktop/src/host/service.js';
 
@@ -625,6 +626,166 @@ it('an abort during the native prompt cannot append a cleanup request', async ()
   expect(db.listOwnedStageCleanupReviewRequests(jobId)).toHaveLength(0);
   expect(db.getJob(jobId).job).toEqual(ready.jobBefore);
   expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(ready.stageBefore);
+});
+
+
+/** Real SQLite + private host service. The Android adapter/lease source is a fixture. */
+function nativeStageService(
+  outcome: Parameters<typeof coordinator>[0] = 'NOT_INDEXED',
+  ownerHost = hostId,
+  beforeLeaseTask?: () => void,
+) {
+  const adapter = coordinator(outcome);
+  return new NativeStageReviewService({
+    request: async (command, input) =>
+      dispatch(db, { operationId: 'op_native_review_fixture', command, input }),
+    internal: async <T>(request: InternalRequest) => {
+      events.push(request.command);
+      return dispatchInternal(db, request) as T;
+    },
+  }, {
+    withManualStageReviewLease: async <T>(
+      selectedDevice: string,
+      task: (lease: DeviceLease, transport: { serial: string; generation: number }) => Promise<T>,
+    ): Promise<T> => {
+      events.push('native.manual.actor');
+      expect(selectedDevice).toBe(deviceId);
+      const lease = db.acquireLease(deviceId, 'native_review_fixture', 'MANUAL',
+        Date.now(), 60000);
+      try {
+        beforeLeaseTask?.();
+        return await task(lease, { serial: 'USB_STAGE_FIXTURE', generation: 1 });
+      } finally {
+        db.releaseLease(lease);
+      }
+    },
+  }, adapter, ownerHost);
+}
+
+it('re-observes one expired JOB stage with new MANUAL lease, records evidence, never uploads or dispatches', async () => {
+  const f = await fixture();
+  const staged = await coordinator().transfer(f);
+  sql((conn) => {
+    conn.prepare('UPDATE leases SET expires_at=? WHERE device_id=?')
+      .run(f.at - 1, deviceId);
+    conn.prepare('UPDATE job_claims SET expires_at=? WHERE job_id=?')
+      .run(f.at - 1, jobId);
+  });
+  expect(db.recoverExpiredClaims(deviceId, Date.now()))
+    .toEqual({ requeued: [], review: [jobId] });
+  const before = db.getJob(jobId).job;
+  const stageBefore = db.listDeviceStageTransfers(jobId)[0]!;
+  events.length = 0;
+  const observed = await nativeStageService('NOT_INDEXED').reobserve(jobId, 0);
+  expect(observed).toMatchObject({
+    jobId, ordinal: 0,
+    scope: 'LIVE_ANDROID_OBSERVATION_NOT_PICKER_VERIFIED',
+    classification: 'REMOTE_BYTES_MATCHED', mediaStoreStatus: 'NOT_INDEXED',
+    canDelete: false, canDispatch: false,
+  });
+  expect(Date.parse(observed.completedAt)).not.toBeNaN();
+  for (const secret of [
+    staged.stageId, f.expectedSnapshotHash, 'USB_STAGE_FIXTURE',
+    f.lease.ownerId, stageBefore.remotePath, stageBefore.nonce, stageBefore.expectedHash,
+  ]) expect(JSON.stringify(observed)).not.toContain(secret);
+  expect(events).toContain('native.manual.actor');
+  expect(events).toContain('fake.adb.readback');
+  expect(events).toContain('fake.adb.mediastore');
+  expect(events).toContain('stage.recordReconciliation');
+  expect(events).not.toContain('fake.adb.send');
+  expect(db.getJob(jobId).job).toEqual(before);
+  expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(stageBefore);
+  const projected = db.jobStageReview(jobId);
+  expect(projected.observations[0]).toMatchObject({
+    classification: 'REMOTE_BYTES_MATCHED', mediaStoreStatus: 'NOT_INDEXED',
+    leaseOwnerKind: 'MANUAL',
+  });
+  sql((conn) => expect(conn.prepare(
+    'SELECT owner_id FROM leases WHERE device_id=?',
+  ).get(deviceId)?.owner_id).toBeNull());
+  await expect(dispatch(db, {
+    operationId: 'op_forged_native_reobserve',
+    command: 'stage.reobserve' as never, input: { jobId, ordinal: 0 },
+  })).rejects.toThrow();
+});
+
+it('does not acquire a lease or touch ADB for wrong job state, ordinal or foreign stage host', async () => {
+  const f = await fixture();
+  await coordinator().transfer(f);
+  events.length = 0;
+  await expect(nativeStageService().reobserve(jobId, 0)).rejects.toMatchObject({
+    code: 'STAGE_REOBSERVE_NOT_REVIEW',
+  });
+  expect(events).not.toContain('native.manual.actor');
+  sql((conn) => {
+    conn.prepare('UPDATE leases SET expires_at=? WHERE device_id=?')
+      .run(f.at - 1, deviceId);
+    conn.prepare('UPDATE job_claims SET expires_at=? WHERE job_id=?')
+      .run(f.at - 1, jobId);
+  });
+  db.recoverExpiredClaims(deviceId, Date.now());
+  events.length = 0;
+  await expect(nativeStageService().reobserve(jobId, 1)).rejects.toMatchObject({
+    code: 'STAGE_REOBSERVE_UNAVAILABLE',
+  });
+  await expect(nativeStageService().reobserve(jobId, -1)).rejects.toMatchObject({
+    code: 'STAGE_REOBSERVE_INVALID',
+  });
+  await expect(nativeStageService('NOT_INDEXED', 'foreign_host').reobserve(jobId, 0))
+    .rejects.toMatchObject({ code: 'STAGE_REOBSERVE_OWNER_MISMATCH' });
+  expect(events).not.toContain('native.manual.actor');
+  expect(events).not.toContain('fake.adb.readback');
+});
+
+it('fails closed on job revision changes or rejected MANUAL ownership before Android readback', async () => {
+  const f = await fixture();
+  await coordinator().transfer(f);
+  sql((conn) => {
+    conn.prepare('UPDATE leases SET expires_at=? WHERE device_id=?')
+      .run(f.at - 1, deviceId);
+    conn.prepare('UPDATE job_claims SET expires_at=? WHERE job_id=?')
+      .run(f.at - 1, jobId);
+  });
+  db.recoverExpiredClaims(deviceId, Date.now());
+  events.length = 0;
+  const badRevision = nativeStageService('NOT_INDEXED', hostId, () => {
+    sql((conn) => conn.prepare('UPDATE jobs SET revision=revision+1 WHERE id=?').run(jobId));
+  });
+  await expect(badRevision.reobserve(jobId, 0)).rejects.toThrow();
+  expect(events).not.toContain('fake.adb.readback');
+  sql((conn) => conn.prepare('UPDATE jobs SET revision=revision-1 WHERE id=?').run(jobId));
+  const held = db.acquireLease(deviceId, 'other_operator', 'MANUAL', Date.now(), 60000);
+  try {
+    events.length = 0;
+    await expect(nativeStageService().reobserve(jobId, 0)).rejects.toMatchObject({
+      code: 'DEVICE_BUSY',
+    });
+    expect(events).not.toContain('fake.adb.readback');
+  } finally {
+    db.releaseLease(held);
+  }
+});
+
+it('records ambiguous or unsupported MediaStore as review evidence, not as picker or deletion proof', async () => {
+  const f = await fixture();
+  await coordinator().transfer(f);
+  sql((conn) => {
+    conn.prepare('UPDATE leases SET expires_at=? WHERE device_id=?').run(f.at - 1, deviceId);
+    conn.prepare('UPDATE job_claims SET expires_at=? WHERE job_id=?').run(f.at - 1, jobId);
+  });
+  db.recoverExpiredClaims(deviceId, Date.now());
+  const ambiguous = await nativeStageService('AMBIGUOUS').reobserve(jobId, 0);
+  expect(ambiguous).toMatchObject({
+    classification: 'REVIEW_REQUIRED', mediaStoreStatus: 'AMBIGUOUS',
+    canDelete: false, canDispatch: false,
+  });
+  const unsupported = await nativeStageService('UNSUPPORTED').reobserve(jobId, 0);
+  expect(unsupported).toMatchObject({
+    classification: 'PROBE_UNSUPPORTED', mediaStoreStatus: 'UNSUPPORTED',
+    canDelete: false, canDispatch: false,
+  });
+  expect(db.getJob(jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.jobStageReview(jobId).observations).toHaveLength(2);
 });
 
 it('retains uncertainty after a simulated mid-send failure and restart', async () => {

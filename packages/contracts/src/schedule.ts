@@ -125,6 +125,22 @@ export interface JobStageReviewPage {
   nextCursor: string | null;
 }
 
+/** One native Electron-only readback observation. Not picker or posting proof. */
+export interface NativeStageReviewResult {
+  jobId: string;
+  ordinal: number;
+  scope: 'LIVE_ANDROID_OBSERVATION_NOT_PICKER_VERIFIED';
+  classification: import('./media.js').StageReconciliationClassification;
+  mediaStoreStatus: import('./media.js').DeviceStageReconciliation['mediaStoreStatus'];
+  completedAt: string;
+  canDelete: false;
+  canDispatch: false;
+}
+/** Separate Electron-only bridge: never add this to public StudioApi/ApiCommand. */
+export interface NativeStageReviewApi {
+  reobserve(jobId: string, ordinal: number): Promise<NativeStageReviewResult>;
+}
+
 export type QueueClaimResult =
   | {
       status: 'CLAIMED';

@@ -606,6 +606,21 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).toContainText('Có bản ghi byte khớp');
   await expect(dialog).toContainText('chưa xác minh picker');
   await expect(dialog.getByTestId('stage-review-summary')).toHaveCount(1);
+  await expect(dialog.getByRole('button', { name: /Kiểm tra lại Android/ })).toHaveCount(0);
+  expect(await page.evaluate(() => typeof (window as Window & {
+    studioStageReview?: unknown;
+  }).studioStageReview)).toBe('undefined');
+  const origin = new URL(page.url()).origin;
+  const token = await page.locator('meta[name="studio-token"]').getAttribute('content');
+  const forbidden = await page.request.post(origin + '/api', {
+    headers: { Origin: origin, 'X-Studio-Token': token! },
+    data: {
+      operationId: 'op_untrusted_live_stage',
+      command: 'stage.reobserve',
+      input: { jobId, ordinal: 0 },
+    },
+  });
+  expect(((await forbidden.json()) as { ok: boolean }).ok).toBe(false);
   await expect(dialog.getByTestId('stage-cleanup-review-request')).toHaveCount(1);
   await expect(dialog).toContainText('Đã ghi yêu cầu rà soát, đang chờ kiểm tra phần cứng');
   await expect(dialog).toContainText('không có file nào');

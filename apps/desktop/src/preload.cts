@@ -1,4 +1,4 @@
-import type { StudioApi, ApiCommand } from '@autoreels/contracts';
+import type { StudioApi, ApiCommand, NativeStageReviewApi } from '@autoreels/contracts';
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron');
 const send = <T,>(command: ApiCommand, input: unknown = {}): Promise<T> =>
   ipcRenderer.invoke('studio:request', { command, input }) as Promise<T>;
@@ -87,3 +87,9 @@ const api: StudioApi = {
   saveContent: (item, expectedRevision) => send('saveContent', { item, expectedRevision }),
 };
 contextBridge.exposeInMainWorld('studioApi', api);
+// Strict native-only IPC. No raw stage ID, lease, serial or ADB command exposed.
+const stageReview: NativeStageReviewApi = {
+  reobserve: (jobId, ordinal) =>
+    ipcRenderer.invoke('studio:stage-reobserve', { jobId, ordinal }),
+};
+contextBridge.exposeInMainWorld('studioStageReview', stageReview);
