@@ -3,7 +3,7 @@ import { idSchema } from '@autoreels/contracts';
 import type {
   DeviceLease, DeviceStageTransfer, JobStageReviewPage, NativeStageReviewResult,
   NativeStageCleanupReviewResult, OwnedStageCleanupReviewReceipt,
-  DeviceStageReconciliation,
+  DeviceStageReconciliation, NativeStageCleanupRecheckResult,
 } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
 import type { OwnedCleanupReadbackSummary } from '@autoreels/devices';
@@ -20,6 +20,16 @@ interface StageReviewDevicePort {
   ): Promise<T>;
 }
 interface StageReviewCoordinatorPort {
+  recordCleanupRecheck(request: {
+    requestId: string; jobId: string; stageId: string;
+    expectedJobRevision: number; expectedSnapshotHash: string;
+    lease: DeviceLease; transportSerial: string; transportGeneration: number;
+  }): Promise<{
+    requestId: string; ordinal: number; attemptOrdinal: number;
+    status: NativeStageCleanupRecheckResult['status'];
+    recordedAt: string; alreadyRecorded: boolean;
+    canDelete: false; canMarkClean: false; canRetry: false; canDispatch: false;
+  }>;
   reviewOwnedCleanupAbsence(request: {
     jobId: string; stageId: string; expectedJobRevision: number;
     expectedSnapshotHash: string; lease: DeviceLease;
@@ -134,6 +144,62 @@ export class NativeStageReviewService {
       throw new DomainError('OWNED_CLEANUP_READBACK_RECEIPT_INVALID',
         'A read-only recovery result cannot authorize cleanup actions.');
     return result;
+  }
+
+  /**
+   * One explicit read-only, bounded cleanup recheck audit per operator action.
+   * Stage identity and ADB serial are never sourced from renderer. Reject
+   * fourth attempt BEFORE acquiring a device lease or contacting Android;
+   * SQLite repeat-validates the limit atomically after live readback.
+   */
+  async recordCleanupRecheck(
+    jobId: string, ordinal: number,
+  ): Promise<NativeStageCleanupRecheckResult> {
+    const { summary, owned } = await this.selectOwnedStage(jobId, ordinal);
+    const history = await this.db.internal<{
+      scope: 'PRIVATE_CLEANUP_RECHECK_HISTORY_NOT_DELETE_CERTIFIED';
+      items: Array<{ ordinal: number; attemptOrdinal: number }>;
+      canDelete: false; canMarkClean: false; canRetry: false; canDispatch: false;
+    }>({ command: 'stage.cleanupRecheckHistory', jobId });
+    if (history.scope !== 'PRIVATE_CLEANUP_RECHECK_HISTORY_NOT_DELETE_CERTIFIED' ||
+        !Array.isArray(history.items) || history.items.length > 96 ||
+        history.canDelete !== false || history.canMarkClean !== false ||
+        history.canRetry !== false || history.canDispatch !== false ||
+        history.items.some((item) =>
+          !Number.isSafeInteger(item?.ordinal) ||
+          item.ordinal < 0 || item.ordinal >= 32 ||
+          !Number.isSafeInteger(item.attemptOrdinal) ||
+          item.attemptOrdinal < 1 || item.attemptOrdinal > 3))
+      throw new DomainError('CLEANUP_RECHECK_HISTORY_INVALID',
+        'Private cleanup recheck history is not trustworthy.');
+    if (history.items.filter((item) => item.ordinal === ordinal).length >= 3)
+      throw new DomainError('CLEANUP_RECHECK_LIMIT',
+        'Three cleanup-only readback attempts have already been recorded.');
+    const receipt = await this.devices.withManualStageReviewLease(owned.deviceId,
+      async (lease, transport) => this.stageCoordinator.recordCleanupRecheck({
+        requestId: 'native_recheck_' + randomUUID().replaceAll('-', ''),
+        jobId, stageId: owned.id,
+        expectedJobRevision: summary.jobRevision,
+        expectedSnapshotHash: owned.snapshotHash,
+        lease, transportSerial: transport.serial,
+        transportGeneration: transport.generation,
+      }));
+    if (receipt.ordinal !== ordinal ||
+        !Number.isSafeInteger(receipt.attemptOrdinal) ||
+        receipt.attemptOrdinal < 1 || receipt.attemptOrdinal > 3 ||
+        !Number.isFinite(Date.parse(receipt.recordedAt)) ||
+        receipt.canDelete !== false || receipt.canMarkClean !== false ||
+        receipt.canRetry !== false || receipt.canDispatch !== false)
+      throw new DomainError('CLEANUP_RECHECK_RECEIPT_INVALID',
+        'Bounded cleanup readback did not produce a safe immutable receipt.');
+    return {
+      jobId, ordinal, attemptOrdinal: receipt.attemptOrdinal,
+      status: receipt.status,
+      recordedAt: receipt.recordedAt,
+      scope: 'LIVE_ANDROID_CLEANUP_RECHECK_NOT_DELETE_CERTIFIED',
+      canDelete: false, canMarkClean: false,
+      canRetry: false, canDispatch: false,
+    };
   }
 
   /**
