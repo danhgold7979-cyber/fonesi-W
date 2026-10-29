@@ -1,0 +1,21 @@
+# Increment083 RESULTS — P11/S102.3 bounded immutable cleanup-only recheck audit
+
+Date: 2026-10-30. Repository `danhgold7979-cyber/fonesi-W`, branch `feat/studio-workspace`. Plan-first [`8dc68c41`](https://github.com/danhgold7979-cyber/fonesi-W/commit/8dc68c4171f56959f83a9e83c2f45aa809250d4b), baseline HEAD `9514313fff3aafa919d2eeb4fff9218dd90742fa`. `main` untouched.
+
+## Actual source implementation
+- `packages/database/src/schema.ts`: additive **SQLite v22** migration creates append-only `device_stage_cleanup_rechecks` keyed by request ID, foreign-key bound to exact stage/job/device, snapshot revision, historical claim generation, current MANUAL lease generation and actor, attempt ordinal 1–3, bounded readback statuses, provider-uncertified blocker JSON, SHA-256 request hash and timestamp. Unique per stage+attempt; UPDATE/DELETE triggers abort. Migrations v1–v21 unchanged.
+- `packages/database/src/index.ts`: `recordOwnedStageCleanupRecheck` transaction validates the current MANUAL lease, frozen job/asset owner, NEEDS_REVIEW state, historical expired JOB claim, remote owned-path/snapshot via the existing `reviewedDeviceStageMediaSnapshot`, and a redacted non-certifying result with all `canDelete/canMarkClean/canRetry/canDispatch=false`. Status/remote/MediaStore/blocker combinations must agree, request ID replay must match exact hash. At most **three** records are admitted per stage, with no job/effect/queue/stage or lease mutation. `listOwnedStageCleanupRechecks` is bounded to 96 audit rows, projects only ordinal/status/time without exposing raw path/nonce/hash/actor. This is a readback *journal*, not an executable retry queue.
+- `apps/desktop/src/host/internal.ts`: `stage.cleanupRecheckRecord` and `stage.cleanupRecheckHistory` trusted DB-worker-only; no public StudioApi, HTTP, renderer/preload IPC or direct Android deletion.
+- `packages/database/src/device-stage.test.ts`: actual SQLite synthetic stages with frozen bytes, expired JOB claim, current MANUAL actor, 3 bounded rechecks, idempotent replay across 3-item limit, request-ID conflicting reuse, stale lease/job revision/snapshot, tampered DCIM path, malformed/forged rights, public dispatch rejection, DB restart, immutable SQL triggers and unchanged job/queue/effects. Device remains NEEDS_REVIEW; no repost.
+- `packages/database/src/content-page-upgrade.test.ts`: v13 historical schema upgrades to v22 without changing previous migration checksums or data, asserts new cleanup recheck table+immutability trigger; existing `database.test.ts` already uses `SCHEMA_VERSION` dynamically.
+
+## Exact commits and CI evidence
+- Schema migration `30f42b63b6bdd251be9813c6e0de2b2ebf0a0f58`.
+- Atomic DB service `a5cff0c70301109ca650d94b8b9d5c14f59f466b`.
+- Private worker `ad9185e3fc3674418dda07ea710998d94c02f285`.
+- Upgrade regression `f58ee04c8ca1d247854c01e667450aa709c79752`.
+- SQLite integration regression and **exact tested source SHA** [`b9d5262c`](https://github.com/danhgold7979-cyber/fonesi-W/commit/b9d5262c01aa2ccdf9aa0f9bfd0734e5eb9d86a9).
+- [**Push CI #40920287561**](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40920287561) **SUCCESS Ubuntu+Windows** on exact source SHA, verified from GitHub Actions job steps and logs: Ubuntu **609/609 unit/integration (49 files) and 31/31 Chromium UI**; Windows **608 PASS + 1 platform-only SKIP (49 files)**. `pnpm check` includes generated contracts, typecheck, ESLint, unit/integration, build; Windows VerifyOnly and `pnpm check:plan` successful. No local or physical Android test is claimed.
+
+## Safety and open acceptance
+**TESTED_S102_BOUNDED_CLEANUP_RECHECK_JOURNAL_NOT_ACCEPTED.** These records only describe read-only trusted-host observations; they do not provide independent provider posting confirmation, prove remote file deletion, authorize Android `rm`/MediaStore delete, schedule an executable cleanup attempt, free a device for replay, clear review or change a job outcome. Connecting the real native host to persist exactly one attempted readback is the next increment. S100.3/S101, S102.2–S102.3 physical Windows10+Android USB/LAN evidence, S103/P12–P14 provider/scale/release gates OPEN/NOT_RUN. No defensible overall completion percentage exists.
