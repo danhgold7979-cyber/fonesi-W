@@ -700,6 +700,8 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
     'external_private_evidence', '9'.repeat(64), '8'.repeat(64)])
     await expect(dialog).not.toContainText(secret);
   await expect(dialog.getByRole('button', { name: /Đăng|Xóa|Chạy lại|Chọn media/ })).toHaveCount(0);
+  await expect(dialog.getByTestId('effect-manual-review-form')).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: /Ghi chú rà soát effect/ })).toHaveCount(0);
   const report = await request<unknown>(page, 'jobStageReview', { id: jobId });
   const response = JSON.stringify(report);
   for (const secret of [remotePath, nonce, mediaHash, secretCaption, stageId,
@@ -740,6 +742,24 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
           status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
           attemptOrdinal: 1, recordedAt: '2026-10-29T17:00:00.000Z',
           canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+        }),
+      },
+    });
+    Object.defineProperty(window, 'studioEffectReview', {
+      configurable: true,
+      value: {
+        recordManualReview: async (input: {
+          jobId: string; ordinal: number; actorId: string;
+          reasonCode: string; disposition: string; evidenceRefs: string[];
+        }) => ({
+          jobId: input.jobId, ordinal: input.ordinal,
+          kind: 'PUBLISH', state: 'ATTEMPT_UNCERTAIN',
+          reasonCode: input.reasonCode, disposition: input.disposition,
+          evidenceCount: input.evidenceRefs.length,
+          createdAt: '2026-10-29T17:00:00.000Z',
+          alreadyRecorded: false,
+          scope: 'PRIVATE_EFFECT_MANUAL_REVIEW_NOTE_NOT_CERTIFIED',
+          canConfirm: false, canRetry: false, canDispatch: false,
         }),
       },
     });
