@@ -505,69 +505,6 @@ test('read-only job preflight shows persisted blockers without claiming a phone 
     });
   } finally { dbCheck.close(); }
 
-  // Simulate ONLY the Electron-native bridge after proving the public browser
-  // has no such capability. The fake is a safe status receipt, never real ADB.
-  await page.addInitScript(() => {
-    Object.defineProperty(window, 'studioStageReview', {
-      configurable: true,
-      value: {
-        reobserve: async () => { throw new Error('Not an Android fixture'); },
-        requestCleanupReview: async () => { throw new Error('No cleanup permission'); },
-        reviewCleanupAbsence: async () => ({
-          scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
-          status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
-          remote: 'ABSENT', mediaStore: 'NOT_INDEXED',
-          blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
-          canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
-        }),
-      },
-    });
-  });
-  await page.goto('http://127.0.0.1:4176/');
-  await page.locator('[data-route="schedule"]').click();
-  await page.getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
-    .selectOption(processId);
-  await page.getByRole('button', { name: 'Hồ sơ đối soát ' + jobId }).click();
-  const nativeDialog = page.getByRole('dialog', { name: 'Hồ sơ đối soát staging' });
-  const readOnlyButton = nativeDialog.getByRole('button', {
-    name: 'Kiểm tra file staging còn hay mất media 1',
-  });
-  await expect(readOnlyButton).toBeVisible();
-  await readOnlyButton.click();
-  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result'))
-    .toContainText('Không thấy file ở đường dẫn staging sở hữu');
-  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result'))
-    .toContainText('Không xác nhận đã xóa');
-  const body = await nativeDialog.innerText();
-  for (const secret of [
-    remotePath, stageId, nonce, mediaHash, 'host_stage_secret',
-    'effect_private_review_ui', 'cleanup_ui_private_request',
-  ]) expect(body).not.toContain(secret);
-  await expect(nativeDialog.getByRole('button', {
-    name: /Xóa file|Thực hiện cleanup|Đăng lại|Retry bài/,
-  })).toHaveCount(0);
-
-  // A forged native receipt containing an execution capability or raw
-  // private path is rejected before rendering a follow-up status.
-  await page.evaluate(() => {
-    const w = window as unknown as {
-      studioStageReview?: { reviewCleanupAbsence: () => Promise<unknown> };
-    };
-    if (!w.studioStageReview) throw new Error('Missing fake native review bridge');
-    w.studioStageReview.reviewCleanupAbsence = async () => ({
-      scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
-      status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
-      remote: 'ABSENT', mediaStore: 'NOT_INDEXED',
-      blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
-      canDelete: true, canMarkClean: false, canRetry: false, canDispatch: false,
-      remotePath: '/sdcard/DCIM/Camera/private.mp4',
-    });
-  });
-  await readOnlyButton.click();
-  await expect(nativeDialog.getByRole('alert'))
-    .toContainText('Bằng chứng kiểm tra file staging không hợp lệ');
-  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result')).toHaveCount(0);
-  await expect(nativeDialog).not.toContainText('/sdcard/DCIM/Camera/private.mp4');
 });
 
 
@@ -771,5 +708,68 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
       id: stageId, state: 'SYNC_ACK_UNVERIFIED',
     });
   } finally { dbCheck.close(); }
+  // Simulate ONLY the Electron-native bridge after proving the public browser
+  // has no such capability. The fake is a safe status receipt, never real ADB.
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'studioStageReview', {
+      configurable: true,
+      value: {
+        reobserve: async () => { throw new Error('Not an Android fixture'); },
+        requestCleanupReview: async () => { throw new Error('No cleanup permission'); },
+        reviewCleanupAbsence: async () => ({
+          scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
+          status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+          remote: 'ABSENT', mediaStore: 'NOT_INDEXED',
+          blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+          canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+        }),
+      },
+    });
+  });
+  await page.goto('http://127.0.0.1:4176/');
+  await page.locator('[data-route="schedule"]').click();
+  await page.getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
+    .selectOption(processId);
+  await page.getByRole('button', { name: 'Hồ sơ đối soát ' + jobId }).click();
+  const nativeDialog = page.getByRole('dialog', { name: 'Hồ sơ đối soát staging' });
+  const readOnlyButton = nativeDialog.getByRole('button', {
+    name: 'Kiểm tra file staging còn hay mất media 1',
+  });
+  await expect(readOnlyButton).toBeVisible();
+  await readOnlyButton.click();
+  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result'))
+    .toContainText('Không thấy file ở đường dẫn staging sở hữu');
+  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result'))
+    .toContainText('Không xác nhận đã xóa');
+  const body = await nativeDialog.innerText();
+  for (const secret of [
+    remotePath, stageId, nonce, mediaHash, 'host_stage_secret',
+    'effect_private_review_ui', 'cleanup_ui_private_request',
+  ]) expect(body).not.toContain(secret);
+  await expect(nativeDialog.getByRole('button', {
+    name: /Xóa file|Thực hiện cleanup|Đăng lại|Retry bài/,
+  })).toHaveCount(0);
+
+  // A forged native receipt containing an execution capability or raw
+  // private path is rejected before rendering a follow-up status.
+  await page.evaluate(() => {
+    const w = window as unknown as {
+      studioStageReview?: { reviewCleanupAbsence: () => Promise<unknown> };
+    };
+    if (!w.studioStageReview) throw new Error('Missing fake native review bridge');
+    w.studioStageReview.reviewCleanupAbsence = async () => ({
+      scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
+      status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+      remote: 'ABSENT', mediaStore: 'NOT_INDEXED',
+      blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+      canDelete: true, canMarkClean: false, canRetry: false, canDispatch: false,
+      remotePath: '/sdcard/DCIM/Camera/private.mp4',
+    });
+  });
+  await readOnlyButton.click();
+  await expect(nativeDialog.getByRole('alert'))
+    .toContainText('Bằng chứng kiểm tra file staging không hợp lệ');
+  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result')).toHaveCount(0);
+  await expect(nativeDialog).not.toContainText('/sdcard/DCIM/Camera/private.mp4');
 });
 
