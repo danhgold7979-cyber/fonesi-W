@@ -5132,6 +5132,44 @@ export class StudioDatabase {
   }
 
   /**
+   * Private target resolver using the exact newest-first ordinal shown by the
+   * persisted review inventory. Effect IDs never need to cross the renderer.
+   */
+  effectManualReviewTarget(jobId: string, ordinal: number): {
+    jobId: string; jobRevision: number; ordinal: number;
+    effectId: string; kind: 'PUBLISH' | 'COMMENT';
+    state: 'INTENT' | 'ATTEMPT_UNCERTAIN' | 'NEEDS_REVIEW';
+    canConfirm: false; canRetry: false; canDispatch: false;
+  } {
+    idSchema.parse(jobId);
+    if (!Number.isSafeInteger(ordinal) || ordinal < 0 || ordinal >= 20)
+      throw new DomainError('EFFECT_REVIEW_ORDINAL_INVALID',
+        'Effect review ordinal must refer to one visible inventory row.');
+    const { job } = this.getJob(jobId);
+    if (job.state !== 'NEEDS_REVIEW')
+      throw new DomainError('EFFECT_REVIEW_JOB_STALE',
+        'Manual effect review requires a persisted NEEDS_REVIEW job.');
+    const rows = this.db.prepare(
+      'SELECT id,kind,state FROM effects WHERE job_id=? ' +
+      'ORDER BY created_at DESC,id DESC LIMIT 21',
+    ).all(jobId);
+    if (rows.length > 20)
+      throw new DomainError('EFFECT_REVIEW_PAGE_REQUIRED',
+        'Effect inventory requires a bounded page before selecting a review target.');
+    const row = rows[ordinal];
+    if (!row || !['PUBLISH','COMMENT'].includes(String(row.kind)) ||
+        !['INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW'].includes(String(row.state)))
+      throw new DomainError('EFFECT_REVIEW_TARGET_NOT_UNRESOLVED',
+        'Only an exact visible unresolved effect may receive a manual review note.');
+    return {
+      jobId, jobRevision: job.revision, ordinal, effectId: String(row.id),
+      kind: row.kind as 'PUBLISH' | 'COMMENT',
+      state: row.state as 'INTENT' | 'ATTEMPT_UNCERTAIN' | 'NEEDS_REVIEW',
+      canConfirm: false, canRetry: false, canDispatch: false,
+    };
+  }
+
+  /**
    * S101.3 append-only operator review note: evidence references are asserted
    * by an operator and NEVER certify a provider effect or grant retry rights.
    */
@@ -5173,11 +5211,18 @@ export class StudioDatabase {
         !['AWAITING_EVIDENCE', 'ESCALATED', 'INSPECTED_UNCERTIFIED']
           .includes(args.disposition) ||
         !Array.isArray(args.evidenceRefs) ||
-        args.evidenceRefs.length < 1 || args.evidenceRefs.length > 8 ||
+        args.evidenceRefs.length > 8 ||
         args.evidenceRefs.some((id) => !idSchema.safeParse(id).success) ||
-        new Set(args.evidenceRefs).size !== args.evidenceRefs.length)
+        new Set(args.evidenceRefs).size !== args.evidenceRefs.length ||
+        (args.evidenceRefs.length === 0 &&
+          !(args.reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
+            args.disposition === 'AWAITING_EVIDENCE')) ||
+        (args.evidenceRefs.length > 0 &&
+          args.reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
+          args.disposition === 'AWAITING_EVIDENCE' &&
+          args.evidenceRefs.length > 8))
       throw new DomainError('EFFECT_REVIEW_INPUT_INVALID',
-        'Manual review requires one bounded set of evidence references.');
+        'Empty evidence is permitted only while explicitly awaiting missing provider evidence.');
     const createdAt = new Date(args.at).toISOString();
     const requestHash = contentHash({
       domain: 'MANUAL_EFFECT_REVIEW_V1',
@@ -5267,13 +5312,20 @@ export class StudioDatabase {
       scope: 'PRIVATE_EFFECT_MANUAL_REVIEW_NOT_CERTIFIED',
       items: records.map((r) => {
         const refs: unknown = parse<unknown>(r.evidence_refs);
-        if (!Array.isArray(refs) || refs.length < 1 || refs.length > 8)
+        const reasonCode = String(r.reason_code);
+        const disposition = String(r.disposition);
+        if (!Array.isArray(refs) || refs.length > 8 ||
+            refs.some((id) => !idSchema.safeParse(id).success) ||
+            new Set(refs).size !== refs.length ||
+            (refs.length === 0 &&
+              !(reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
+                disposition === 'AWAITING_EVIDENCE')))
           throw new DomainError('EFFECT_REVIEW_CORRUPT', 'Invalid stored review evidence.');
         return {
           requestId: String(r.request_id),
           actorId: String(r.actor_id),
-          reasonCode: String(r.reason_code),
-          disposition: String(r.disposition),
+          reasonCode,
+          disposition,
           evidenceCount: refs.length,
           createdAt: String(r.created_at),
         };
