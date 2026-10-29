@@ -9,7 +9,11 @@ Date: 2026-10-29. Repo `danhgold7979-cyber/fonesi-W`, branch `feat/studio-worksp
 - Tests: pure no-journal/each journal state/ordered list/corrupt data; SQLite intent→uncertain→restart→NEEDS_REVIEW, corrupted journal block, synthetic DB-only CONFIRMED, no mutation and public forged command rejection.
 
 ## Validation
-Exact source/test SHA `9177ed2036f8f9ccfeee8fca04c89cd7caeae428`. [PR CI 40898372761](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40898372761) **IN PROGRESS / NOT YET FULLY VERIFIED** when recorded. Ubuntu `pnpm check` step success; Windows `pnpm check` and Ubuntu Chromium UI were in progress. Do not claim entire CI, full testing, physical hardware or release as PASS until independently verified.
+Exact tested source SHA `9177ed2036f8f9ccfeee8fca04c89cd7caeae428`. [PR CI 40898372761](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40898372761), both `foundation (ubuntu-latest)` and `foundation (windows-latest)` **SUCCESS** on that SHA:
+- Ubuntu: **561/561 unit/integration (46 files), 31/31 Chromium UI**.
+- Windows CI: **560 PASS, 1 platform-only SKIP (46 files)**.
+- Generated contracts, typecheck, lint, build, Windows launcher VerifyOnly and both plan validators passed. This is GitHub-hosted Windows, NOT physical user's Windows 10 + Android hardware.
+- No local test execution was available from this connector-backed implementation; counts were read from exact-source CI job logs.
 
 ## Acceptance
-**IMPLEMENTED / CI PENDING / NOT_ACCEPTED**. Actual trusted Facebook/TikTok provider verification and definite negative proof, comment-only retry, Windows10+Android USB/LAN, P11-S101–S103 and P12–P14 remain OPEN/NOT_RUN. `main` unchanged. Overall percentage not auditable from fixture-only tests.
+**TESTED_S100_READ_ONLY_COMMENT_JOURNAL_INVENTORY_NOT_ACCEPTED**. Actual trusted Facebook/TikTok provider verification and definite negative proof, comment-only retry, Windows10+Android USB/LAN, P11-S101–S103 and P12–P14 remain OPEN/NOT_RUN. `main` unchanged. Overall percentage not auditable from fixture-only tests.
