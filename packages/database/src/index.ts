@@ -53,6 +53,7 @@ import type {
   ReviewedStageMediaSnapshot,
   OwnedStageCleanupAssessment,
   OwnedStageCleanupReviewReceipt,
+  NativeStageCleanupAbsenceResult,
   SchedulePreviewDto,
   JobChangeRequest,
   JobChangePreview,
@@ -3245,6 +3246,216 @@ export class StudioDatabase {
       status: 'REVIEW_REQUESTED_HARDWARE_PENDING' as const,
       canDelete: false as const, canDispatch: false as const,
     }));
+  }
+
+  /**
+   * S102.3: durable, bounded audit of a fresh native-owned, read-only
+   * cleanup recheck. The host must perform MANUAL-fenced ADB STAT/MediaStore
+   * before calling this trusted DB-only method. A response is never a delete
+   * receipt or dispatch grant, even when both observations show absence.
+   */
+  recordOwnedStageCleanupRecheck(args: {
+    requestId: string; stageId: string; hostId: string;
+    expectedJobRevision: number; expectedSnapshotHash: string;
+    lease: DeviceLease; result: NativeStageCleanupAbsenceResult;
+    at: number;
+  }): {
+    requestId: string;
+    ordinal: number;
+    attemptOrdinal: number;
+    status: NativeStageCleanupAbsenceResult['status'];
+    recordedAt: string;
+    alreadyRecorded: boolean;
+    canDelete: false; canMarkClean: false; canRetry: false; canDispatch: false;
+  } {
+    idSchema.parse(args.requestId);
+    idSchema.parse(args.stageId);
+    idSchema.parse(args.hostId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    const result = args.result;
+    const statuses: string[] = [
+      'BLOCKED', 'REMOTE_PRESENT_REVIEW', 'MEDIASTORE_PRESENT_REVIEW',
+      'UNSUPPORTED_REVIEW', 'ABSENCE_CANDIDATE_UNCERTIFIED',
+    ];
+    const remoteStates: string[] = ['PRESENT', 'ABSENT', 'UNKNOWN'];
+    const mediaStates: string[] = [
+      'INDEXED_EXACT', 'NOT_INDEXED', 'AMBIGUOUS', 'UNSUPPORTED', 'UNKNOWN',
+    ];
+    const reasons: string[] = [
+      'OWNED_EXPECTATION_INVALID', 'REMOTE_STAT_INVALID',
+      'REMOTE_BYTES_MISMATCH', 'MEDIASTORE_READBACK_INVALID',
+      'REMOTE_STILL_PRESENT', 'MEDIASTORE_STILL_INDEXED',
+      'MEDIASTORE_UNSUPPORTED_OR_AMBIGUOUS', 'PROVIDER_AND_CLEANUP_UNCERTIFIED',
+    ];
+    const mandatory = 'PROVIDER_AND_CLEANUP_UNCERTIFIED';
+    if (!result || typeof result !== 'object' || Array.isArray(result) ||
+        Object.keys(result).sort().join(',') !==
+          'blockers,canDelete,canDispatch,canMarkClean,canRetry,mediaStore,remote,scope,status' ||
+        result.scope !== 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED' ||
+        !statuses.includes(result.status) ||
+        !remoteStates.includes(result.remote) ||
+        !mediaStates.includes(result.mediaStore) ||
+        result.canDelete !== false || result.canMarkClean !== false ||
+        result.canRetry !== false || result.canDispatch !== false ||
+        !Array.isArray(result.blockers) ||
+        result.blockers.length < 1 || result.blockers.length > 8 ||
+        new Set(result.blockers).size !== result.blockers.length ||
+        !result.blockers.every((code) => reasons.includes(code)) ||
+        !result.blockers.includes(mandatory) ||
+        result.blockers[result.blockers.length - 1] !== mandatory ||
+        !Number.isSafeInteger(args.at) ||
+        !Number.isFinite(new Date(args.at).getTime()))
+      throw new DomainError('CLEANUP_RECHECK_RESULT_INVALID',
+        'Only a bounded redacted, non-executable native cleanup observation can be stored.');
+    const expectedOther: string | null =
+      result.status === 'REMOTE_PRESENT_REVIEW' ? 'REMOTE_STILL_PRESENT' :
+      result.status === 'MEDIASTORE_PRESENT_REVIEW' ? 'MEDIASTORE_STILL_INDEXED' :
+      result.status === 'UNSUPPORTED_REVIEW' ? 'MEDIASTORE_UNSUPPORTED_OR_AMBIGUOUS' :
+      result.status === 'ABSENCE_CANDIDATE_UNCERTIFIED' ? null : '';
+    if ((result.status === 'ABSENCE_CANDIDATE_UNCERTIFIED' &&
+          (result.remote !== 'ABSENT' || result.mediaStore !== 'NOT_INDEXED' ||
+            result.blockers.length !== 1)) ||
+        (result.status === 'REMOTE_PRESENT_REVIEW' &&
+          (result.remote !== 'PRESENT' ||
+            result.blockers.length !== 2 ||
+            result.blockers[0] !== expectedOther)) ||
+        (result.status === 'MEDIASTORE_PRESENT_REVIEW' &&
+          (result.remote !== 'ABSENT' || result.mediaStore !== 'INDEXED_EXACT' ||
+            result.blockers.length !== 2 ||
+            result.blockers[0] !== expectedOther)) ||
+        (result.status === 'UNSUPPORTED_REVIEW' &&
+          (result.remote !== 'ABSENT' ||
+            !['AMBIGUOUS', 'UNSUPPORTED'].includes(result.mediaStore) ||
+            result.blockers.length !== 2 ||
+            result.blockers[0] !== expectedOther)) ||
+        (result.status === 'BLOCKED' &&
+          (!result.blockers.some((code) => [
+            'OWNED_EXPECTATION_INVALID', 'REMOTE_STAT_INVALID',
+            'REMOTE_BYTES_MISMATCH', 'MEDIASTORE_READBACK_INVALID',
+          ].includes(code)) ||
+            result.blockers.some((code) => [
+              'REMOTE_STILL_PRESENT', 'MEDIASTORE_STILL_INDEXED',
+              'MEDIASTORE_UNSUPPORTED_OR_AMBIGUOUS',
+            ].includes(code)))))
+      throw new DomainError('CLEANUP_RECHECK_RESULT_INVALID',
+        'Cleanup recheck status contradicts the bounded observation.');
+    const requestHash = contentHash({
+      domain: 'STAGE_CLEANUP_RECHECK_V1',
+      requestId: args.requestId, stageId: args.stageId,
+      hostId: args.hostId, revision: args.expectedJobRevision,
+      snapshotHash: args.expectedSnapshotHash,
+      leaseOwnerId: args.lease.ownerId,
+      leaseGeneration: args.lease.generation,
+      observed: result, at: args.at,
+    });
+    const timestamp = new Date(args.at).toISOString();
+    return this.transaction(() => {
+      const frozen = this.reviewedDeviceStageMediaSnapshot({
+        stageId: args.stageId, hostId: args.hostId,
+        expectedJobRevision: args.expectedJobRevision,
+        expectedSnapshotHash: args.expectedSnapshotHash,
+        lease: args.lease, at: args.at,
+      });
+      const stage = this.stageTransfer(args.stageId);
+      const prior = this.db.prepare(
+        'SELECT request_hash,attempt_ordinal,created_at ' +
+        'FROM device_stage_cleanup_rechecks WHERE request_id=?',
+      ).get(args.requestId);
+      const receipt = (
+        attemptOrdinal: number, recordedAt: string, alreadyRecorded: boolean,
+      ) => ({
+        requestId: args.requestId, ordinal: stage.ordinal, attemptOrdinal,
+        status: result.status, recordedAt, alreadyRecorded,
+        canDelete: false as const, canMarkClean: false as const,
+        canRetry: false as const, canDispatch: false as const,
+      });
+      if (prior) {
+        if (prior.request_hash !== requestHash)
+          throw new DomainError('CLEANUP_RECHECK_ID_CONFLICT',
+            'Recheck request ID is already bound to different evidence.');
+        return receipt(Number(prior.attempt_ordinal),
+          String(prior.created_at), true);
+      }
+      if (frozen.jobId !== stage.jobId ||
+          frozen.ordinal !== stage.ordinal ||
+          frozen.pinnedHash !== stage.expectedHash ||
+          frozen.pinnedBytes !== stage.expectedBytes)
+        throw new DomainError('CLEANUP_RECHECK_SNAPSHOT_STALE',
+          'Frozen owned media no longer matches the persisted stage.');
+      const attemptOrdinal = Number(this.db.prepare(
+        'SELECT COUNT(*) AS n FROM device_stage_cleanup_rechecks WHERE stage_id=?',
+      ).get(stage.id)?.n ?? 0) + 1;
+      if (attemptOrdinal > 3)
+        throw new DomainError('CLEANUP_RECHECK_LIMIT',
+          'Three read-only recheck records is the bounded limit for one stage.');
+      this.db.prepare(
+        'INSERT INTO device_stage_cleanup_rechecks(' +
+        'request_id,stage_id,job_id,device_id,host_id,snapshot_hash,job_revision,' +
+        'claim_generation,lease_generation,actor_id,attempt_ordinal,result_status,' +
+        'remote_status,mediastore_status,blockers_json,request_hash,created_at) ' +
+        'VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      ).run(
+        args.requestId, stage.id, stage.jobId, stage.deviceId, stage.hostId,
+        args.expectedSnapshotHash, args.expectedJobRevision,
+        stage.claimGeneration, args.lease.generation, args.lease.ownerId,
+        attemptOrdinal, result.status, result.remote, result.mediaStore,
+        canonicalJson(result.blockers), requestHash, timestamp,
+      );
+      return receipt(attemptOrdinal, timestamp, false);
+    });
+  }
+
+  /**
+   * Redacted private, read-only recheck history. These are past operator
+   * observations, never an executable cleanup queue or proof of unlink.
+   */
+  listOwnedStageCleanupRechecks(jobId: string): {
+    scope: 'PRIVATE_CLEANUP_RECHECK_HISTORY_NOT_DELETE_CERTIFIED';
+    items: Array<{
+      ordinal: number; attemptOrdinal: number;
+      status: NativeStageCleanupAbsenceResult['status'];
+      remote: NativeStageCleanupAbsenceResult['remote'];
+      mediaStore: NativeStageCleanupAbsenceResult['mediaStore'];
+      recordedAt: string;
+    }>;
+    canDelete: false; canMarkClean: false; canRetry: false; canDispatch: false;
+  } {
+    idSchema.parse(jobId);
+    this.getJob(jobId);
+    const rows = this.db.prepare(
+      'SELECT s.ordinal,r.attempt_ordinal,r.result_status,r.remote_status,' +
+      'r.mediastore_status,r.blockers_json,r.created_at ' +
+      'FROM device_stage_cleanup_rechecks r ' +
+      'JOIN device_stage_transfers s ON s.id=r.stage_id ' +
+      'WHERE r.job_id=? ORDER BY r.created_at DESC,r.request_id DESC LIMIT 97',
+    ).all(jobId);
+    if (rows.length > 96)
+      throw new DomainError('CLEANUP_RECHECK_HISTORY_LIMIT',
+        'Read-only cleanup recheck history exceeds bounded window.');
+    const items = rows.map((row) => {
+      const codes: unknown = parse<unknown>(row.blockers_json);
+      if (!Array.isArray(codes) || codes.length < 1 || codes.length > 8 ||
+          !codes.includes('PROVIDER_AND_CLEANUP_UNCERTIFIED') ||
+          !Number.isSafeInteger(Number(row.ordinal)) ||
+          Number(row.ordinal) < 0 || Number(row.ordinal) >= 32 ||
+          !Number.isSafeInteger(Number(row.attempt_ordinal)) ||
+          Number(row.attempt_ordinal) < 1 || Number(row.attempt_ordinal) > 3)
+        throw new DomainError('CLEANUP_RECHECK_HISTORY_CORRUPT',
+          'Stored owned cleanup recheck audit is corrupt.');
+      return {
+        ordinal: Number(row.ordinal),
+        attemptOrdinal: Number(row.attempt_ordinal),
+        status: String(row.result_status) as NativeStageCleanupAbsenceResult['status'],
+        remote: String(row.remote_status) as NativeStageCleanupAbsenceResult['remote'],
+        mediaStore: String(row.mediastore_status) as NativeStageCleanupAbsenceResult['mediaStore'],
+        recordedAt: String(row.created_at),
+      };
+    });
+    return {
+      scope: 'PRIVATE_CLEANUP_RECHECK_HISTORY_NOT_DELETE_CERTIFIED',
+      items,
+      canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+    };
   }
 
   /** Append fenced reconciliation evidence; never mutates stage/job state. */
