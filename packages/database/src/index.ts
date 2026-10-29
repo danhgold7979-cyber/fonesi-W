@@ -2695,7 +2695,7 @@ export class StudioDatabase {
     // S099/S101: this is a bounded persisted inventory, NOT provider confirmation.
     // The global unresolved check must include older rows beyond the visible page.
     const effectRows = this.db.prepare(
-      'SELECT kind,state FROM effects WHERE job_id=? ' +
+      'SELECT id,kind,state FROM effects WHERE job_id=? ' +
       'ORDER BY created_at DESC,id DESC LIMIT 21',
     ).all(jobId);
     const effectTotal = Number(this.db.prepare(
@@ -2721,13 +2721,38 @@ export class StudioDatabase {
       total: effectTotal,
       hasMore: effectRows.length > 20,
       hasUnresolved,
-      entries: effectRows.slice(0, 20).map((row, ordinal) => ({
-        ordinal,
-        kind: row.kind === 'PUBLISH' || row.kind === 'COMMENT' ? row.kind : 'UNKNOWN',
-        state: allowedEffectStates.has(String(row.state))
-          ? row.state as JobStageReviewPage['effectReview']['entries'][number]['state']
-          : 'UNKNOWN',
-      })),
+      entries: effectRows.slice(0, 20).map((row, ordinal) => {
+        const effectId = String(row.id);
+        const manualCount = Number(this.db.prepare(
+          'SELECT COUNT(*) AS total FROM effect_manual_reviews WHERE effect_id=?',
+        ).get(effectId)?.total ?? 0);
+        if (!Number.isSafeInteger(manualCount) || manualCount < 0 || manualCount > 32)
+          throw new DomainError('EFFECT_REVIEW_HISTORY_LIMIT',
+            'Manual review notes exceed the per-effect audit limit.');
+        const history = this.effectManualReviewHistory({
+          jobId, effectId, limit: 1,
+        });
+        const latest = history.items[0];
+        return {
+          ordinal,
+          kind: row.kind === 'PUBLISH' || row.kind === 'COMMENT' ? row.kind : 'UNKNOWN',
+          state: allowedEffectStates.has(String(row.state))
+            ? row.state as JobStageReviewPage['effectReview']['entries'][number]['state']
+            : 'UNKNOWN',
+          manualReviewCount: manualCount,
+          latestManualReview: latest ? {
+            actorId: latest.actorId,
+            reasonCode: latest.reasonCode as NonNullable<
+              JobStageReviewPage['effectReview']['entries'][number]['latestManualReview']
+            >['reasonCode'],
+            disposition: latest.disposition as NonNullable<
+              JobStageReviewPage['effectReview']['entries'][number]['latestManualReview']
+            >['disposition'],
+            evidenceCount: latest.evidenceCount,
+            createdAt: latest.createdAt,
+          } : null,
+        };
+      }),
       canConfirm: false, canRetry: false, canDispatch: false,
     };
 
@@ -5217,10 +5242,7 @@ export class StudioDatabase {
         (args.evidenceRefs.length === 0 &&
           !(args.reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
             args.disposition === 'AWAITING_EVIDENCE')) ||
-        (args.evidenceRefs.length > 0 &&
-          args.reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
-          args.disposition === 'AWAITING_EVIDENCE' &&
-          args.evidenceRefs.length > 8))
+)
       throw new DomainError('EFFECT_REVIEW_INPUT_INVALID',
         'Empty evidence is permitted only while explicitly awaiting missing provider evidence.');
     const createdAt = new Date(args.at).toISOString();
@@ -5267,6 +5289,12 @@ export class StudioDatabase {
       if (!effect || effect.state !== args.expectedEffectState)
         throw new DomainError('EFFECT_REVIEW_EFFECT_STALE',
           'The pending external effect no longer matches review input.');
+      const reviewCount = Number(this.db.prepare(
+        'SELECT COUNT(*) AS total FROM effect_manual_reviews WHERE effect_id=?',
+      ).get(args.effectId)?.total ?? 0);
+      if (reviewCount >= 32)
+        throw new DomainError('EFFECT_REVIEW_HISTORY_LIMIT',
+          'At most 32 immutable manual review notes may be recorded per effect.');
       this.db.prepare(
         'INSERT INTO effect_manual_reviews ' +
         '(request_id,job_id,effect_id,job_revision,expected_effect_state,' +
