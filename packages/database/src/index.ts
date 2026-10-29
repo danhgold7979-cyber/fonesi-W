@@ -3433,6 +3433,44 @@ export class StudioDatabase {
     });
   }
 
+  /**
+   * Private read-only fence between a durably uncertain attempt and its
+   * adapter callback. Provider-side device input must recheck ownership again.
+   * A failed fence never clears the journal or makes the effect retryable.
+   */
+  assertClaimedEffectDispatch(args: {
+    effectId: string;
+    expectedJobRevision: number;
+    expectedSnapshotHash: string;
+    lease: DeviceLease;
+    at: number;
+  }): true {
+    idSchema.parse(args.effectId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    if (!Number.isSafeInteger(args.expectedJobRevision) ||
+        args.expectedJobRevision < 0)
+      throw new DomainError('EFFECT_DISPATCH_FENCE_INVALID',
+        'Expected job revision is invalid.');
+    const record = this.db.prepare(
+      'SELECT job_id,kind,state FROM effects WHERE id=?',
+    ).get(args.effectId);
+    if (!record || record.state !== 'ATTEMPT_UNCERTAIN' ||
+        !['PUBLISH', 'COMMENT'].includes(String(record.kind)))
+      throw new DomainError('EFFECT_ATTEMPT_NOT_ACTIVE',
+        'A durable uncertain effect is required before dispatch.');
+    const jobId = String(record.job_id);
+    this.assertEffectClaim(jobId, args.lease, args.at);
+    const { job, snapshotHash } = this.getJob(jobId);
+    const expectedPhase = record.kind === 'PUBLISH' ? 'POST_PENDING' : 'COMMENT_PENDING';
+    if (job.deviceId !== args.lease.deviceId ||
+        job.revision !== args.expectedJobRevision ||
+        job.state !== expectedPhase ||
+        snapshotHash !== args.expectedSnapshotHash)
+      throw new DomainError('EFFECT_DISPATCH_CLAIM_STALE',
+        'The claimed effect no longer matches the frozen job.');
+    return true;
+  }
+
   recordIntent(
     jobId: string,
     nodeId: string,

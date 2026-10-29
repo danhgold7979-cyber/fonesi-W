@@ -398,7 +398,9 @@ it('writes both journal transitions before calling one trusted adapter; ACK is n
     },
   });
   const result = await host.attempt(claimedInput(f));
-  expect(events).toEqual(['effect.prepareClaimed', 'effect.beginClaimedAttempt', 'adapter']);
+  expect(events).toEqual([
+    'effect.prepareClaimed', 'effect.beginClaimedAttempt', 'effect.assertClaim', 'adapter',
+  ]);
   expect(result).toMatchObject({
     jobId: f.jobId, state: 'ATTEMPT_UNCERTAIN', observation: 'ACK_UNVERIFIED',
     canConfirm: false, canRetry: false, canDispatchAgain: false,
@@ -445,6 +447,11 @@ it('fails before any external adapter on an invalid snapshot/lease or forged pub
     operationId: 'op_forge_host_effect',
     command: 'effect.submitClaimed' as never,
     input: claimedInput(f),
+  })).rejects.toThrow();
+  await expect(dispatch(db, {
+    operationId: 'op_forge_effect_dispatch_fence',
+    command: 'effect.assertClaim' as never,
+    input: { effectId: 'effect_fake', lease: f.lease, at: at + 100 },
   })).rejects.toThrow();
   expect(sends).toBe(0);
   expect(db.getJob(f.jobId).job.state).toBe('RUNNING');
@@ -595,4 +602,156 @@ it('fences a forged ATTEMPT revision receipt after SQLite commit without dispatc
   expect(db.effectState(journalId)).toBe('ATTEMPT_UNCERTAIN');
   await expect(hostEffect(adapter).attempt(claimedInput(f))).rejects.toThrow();
   expect(sends).toBe(0);
+});
+
+it('private effect fence checks current lease and never mutates an active uncertain journal', () => {
+  const f = fixture(), intent = prepare(f);
+  const attempt = db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 90,
+  });
+  const before = db.getJob(f.jobId);
+  const countRows = () => {
+    const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return [
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n),
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events').get()?.n),
+      ];
+    } finally { sql.close(); }
+  };
+  const counts = countRows();
+  const args = {
+    effectId: intent.effectId, expectedJobRevision: attempt.jobRevision,
+    expectedSnapshotHash: f.snapshotHash, lease: f.lease, at: at + 100,
+  };
+  expect(db.assertClaimedEffectDispatch(args)).toBe(true);
+  expect(db.assertClaimedEffectDispatch(args)).toBe(true);
+  expect(() => db.assertClaimedEffectDispatch({
+    ...args, expectedSnapshotHash: contentHash('wrong'),
+  })).toThrow('frozen job');
+  expect(() => db.assertClaimedEffectDispatch({
+    ...args, expectedJobRevision: attempt.jobRevision + 1,
+  })).toThrow('frozen job');
+  expect(() => db.assertClaimedEffectDispatch({
+    ...args, at: at + 3000,
+  })).toThrow();
+  expect(db.getJob(f.jobId)).toEqual(before);
+  expect(db.effectState(intent.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(countRows()).toEqual(counts);
+});
+
+it('fences a released and superseded JOB lease after durable attempt, no adapter call', async () => {
+  const f = fixture(), events: string[] = [];
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { events.push('adapter'); return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      events.push(request.command);
+      const receipt = dispatchInternal(db, request) as T;
+      if (request.command === 'effect.beginClaimedAttempt') {
+        db.releaseLease(f.lease);
+        const replacement = db.acquireLease(
+          f.lease.deviceId, 'operator_replacement', 'MANUAL', at + 80, 5000,
+        );
+        expect(replacement.generation).toBe(f.lease.generation + 1);
+      }
+      return receipt;
+    },
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toThrow();
+  expect(events).toEqual([
+    'effect.prepareClaimed', 'effect.beginClaimedAttempt', 'effect.assertClaim',
+  ]);
+  expect(db.getJob(f.jobId).job.state).toBe('POST_PENDING');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const effectId = String(sql.prepare('SELECT id FROM effects WHERE job_id=?').get(f.jobId)!.id);
+  sql.close();
+  expect(db.effectState(effectId)).toBe('ATTEMPT_UNCERTAIN');
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000)).toEqual({
+    requeued: [], review: [f.jobId],
+  });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  await expect(hostEffect(adapter).attempt(claimedInput(f))).rejects.toThrow();
+  expect(events).not.toContain('adapter');
+});
+
+it('fences a changed job revision or device identity after SQLite uncertainty', async () => {
+  for (const scenario of ['revision', 'identity'] as const) {
+    const suffix = scenario === 'revision' ? 'revision' : 'identity';
+    const f = fixture('device_fence_' + suffix, suffix);
+    let sends = 0;
+    const adapter: ClaimedEffectAdapter = {
+      sendOnce: async () => { sends++; return 'ACK'; },
+    };
+    const host = hostEffect(adapter, {
+      internal: async <T>(request: InternalRequest): Promise<T> => {
+        const receipt = dispatchInternal(db, request) as T;
+        if (request.command === 'effect.beginClaimedAttempt') {
+          const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+          try {
+            if (scenario === 'revision')
+              sql.prepare('UPDATE jobs SET revision=revision+1 WHERE id=?').run(f.jobId);
+            else sql.prepare("UPDATE device_profiles SET identity='CONFLICT' WHERE device_id=?")
+              .run(f.lease.deviceId);
+          } finally { sql.close(); }
+        }
+        return receipt;
+      },
+    });
+    await expect(host.attempt(claimedInput(f))).rejects.toThrow();
+    expect(sends).toBe(0);
+    const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+    const effectId = String(sql.prepare('SELECT id FROM effects WHERE job_id=?').get(f.jobId)!.id);
+    sql.close();
+    expect(db.effectState(effectId)).toBe('ATTEMPT_UNCERTAIN');
+    expect(db.getJob(f.jobId).job.state).toBe('POST_PENDING');
+    expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+      .toEqual({ requeued: [], review: [f.jobId] });
+  }
+});
+
+it('rejects malformed private fence receipt after durable uncertainty without adapter call', async () => {
+  const f = fixture();
+  let sends = 0;
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { sends++; return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const receipt = dispatchInternal(db, request);
+      if (request.command === 'effect.assertClaim') return false as T;
+      return receipt as T;
+    },
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toMatchObject({
+    code: 'EFFECT_DISPATCH_FENCE_INVALID',
+  });
+  expect(sends).toBe(0);
+  expect(db.getJob(f.jobId).job.state).toBe('POST_PENDING');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const effectId = String(sql.prepare('SELECT id FROM effects WHERE job_id=?').get(f.jobId)!.id);
+  sql.close();
+  expect(db.effectState(effectId)).toBe('ATTEMPT_UNCERTAIN');
+});
+
+it('refuses an expired lease at dispatch fence even if the earlier attempt was journaled', async () => {
+  const f = fixture();
+  let sends = 0, reads = 0;
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { sends++; return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    clock: () => reads++ < 2 ? at + 50 : at + 3000,
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toThrow();
+  expect(sends).toBe(0);
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const effectId = String(sql.prepare('SELECT id FROM effects WHERE job_id=?').get(f.jobId)!.id);
+  sql.close();
+  expect(db.effectState(effectId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.getJob(f.jobId).job.state).toBe('POST_PENDING');
 });

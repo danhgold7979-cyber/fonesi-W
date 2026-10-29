@@ -134,6 +134,23 @@ export class HostClaimedEffectService {
     };
     // Cancellation after durable uncertainty cannot turn into a safe retry.
     if (signal?.aborted) return { ...base, observation: 'NOT_DISPATCHED' };
+
+    // Recheck the current JOB lease, generation, snapshot, job revision and
+    // effect state after the async journal boundary, immediately before the
+    // adapter callback. A rejected/invalid fence NEVER invokes an adapter.
+    // The eventual real provider must also fence immediately at Android I/O.
+    const fenced = await this.db.internal<true>({
+      command: 'effect.assertClaim',
+      effectId: attempt.effectId,
+      expectedJobRevision: attempt.jobRevision,
+      expectedSnapshotHash: request.expectedSnapshotHash,
+      lease: request.lease,
+      at: this.now(),
+    });
+    if (fenced !== true)
+      throw new DomainError('EFFECT_DISPATCH_FENCE_INVALID',
+        'The effect dispatch fence was not confirmed.');
+    if (signal?.aborted) return { ...base, observation: 'NOT_DISPATCHED' };
     try {
       const ack = await this.adapter.sendOnce({
         effectId: attempt.effectId, jobId: request.jobId,

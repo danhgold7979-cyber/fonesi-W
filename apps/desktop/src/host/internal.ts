@@ -154,6 +154,14 @@ export type InternalRequest =
       at: number;
     }
   | {
+      command: 'effect.assertClaim';
+      effectId: string;
+      expectedJobRevision: number;
+      expectedSnapshotHash: string;
+      lease: DeviceLease;
+      at: number;
+    }
+  | {
       command: 'source.register';
       processId: string;
       expectedRevision: number;
@@ -313,6 +321,14 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.beginClaimedEffectAttempt({
         effectId: request.effectId,
         expectedJobRevision: request.expectedJobRevision,
+        lease: request.lease,
+        at: request.at,
+      });
+    case 'effect.assertClaim':
+      return db.assertClaimedEffectDispatch({
+        effectId: request.effectId,
+        expectedJobRevision: request.expectedJobRevision,
+        expectedSnapshotHash: request.expectedSnapshotHash,
         lease: request.lease,
         at: request.at,
       });
