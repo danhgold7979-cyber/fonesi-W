@@ -2175,7 +2175,7 @@ it('bounds effect manual review notes at 32 and blocks the 33rd native target be
 });
 
 
-it('records provider-evidence-missing with zero refs, projects a redacted latest note, and preserves uncertainty', () => {
+it('records provider-evidence-missing with zero refs, projects a redacted latest note, and preserves uncertainty', async () => {
   const f = fixture('device_missing_provider_evidence', 'missing_provider_evidence');
   const intent = prepare(f);
   const cancel = db.requestJobCancellation({
