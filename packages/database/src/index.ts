@@ -2673,7 +2673,7 @@ export class StudioDatabase {
     const unicode = deriveFrozenUnicodeTextPlan(snapshot);
     const frozenUnicode = unicode.summary;
     const compose = deriveFrozenComposeExpectation({
-      job, snapshot, mediaOrder, unicode, hasExternalEffect,
+      job, snapshot, snapshotHash, mediaOrder, unicode, hasExternalEffect,
     }).summary;
     const last = page.at(-1);
     const nextCursor = hasMore && last

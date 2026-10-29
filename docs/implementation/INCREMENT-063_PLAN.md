@@ -18,3 +18,7 @@ Increment062's private `deriveFrozenComposeExpectation` checks that `snapshot.wo
 ## State, risks and acceptance
 
 Pure private calculation, read-only SQLite/UI projection, no schema migration; no state transition, app selector, Android input, posting, deletion or cleanup. `FROZEN_EXPECTATIONS_LIVE_UNVERIFIED` still does not certify physical profile, exact picker, Unicode, account/target or an external post. Keep S087, S095, S096/AT-096, P11, P12–P14 and fleet/release gates OPEN/NOT_RUN. Best attainable status: `TESTED_S096_FROZEN_WORKFLOW_MEDIA_FINGERPRINT_NOT_ACCEPTED`. Never calculate tool completion from fixture counts.
+
+## CI-driven correction (after plan-first commit)
+
+A valid-format replacement asset SHA in a private caller cannot be recognized from syntax alone. The frozen job's own immutable SQLite snapshot hash must also match the exact canonical snapshot bytes. Add a required private `snapshotHash` input to `deriveFrozenComposeExpectation`, compare `contentHash(snapshot)` with it, include it in the private manifest, and fail closed with a redacted `SNAPSHOT_FINGERPRINT_MISMATCH` blocker. Update the positive fixture hash when intentionally constructing a *new* valid synthetic snapshot; negative cases retain the original expected digest. This corrects the failing regression without weakening its assertion. No public permission or schema changes.

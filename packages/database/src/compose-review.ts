@@ -1,5 +1,5 @@
 import { hashSchema, idSchema } from '@autoreels/contracts';
-import { bundleHash } from '@autoreels/domain';
+import { bundleHash, contentHash } from '@autoreels/domain';
 import type {
   FrozenComposeBlocker, FrozenComposePreflight, JobDefinition, JobSnapshot,
   PersistedOrderedMediaReport,
@@ -12,6 +12,7 @@ import type { FrozenUnicodeTextPlan } from './unicode-compose.js';
  */
 export interface FrozenComposeManifest {
   workflowAppId: string;
+  snapshotHash: string;
   workflowVersionId: string;
   workflowHash: string;
   accountId: string;
@@ -38,11 +39,12 @@ export interface FrozenComposeManifest {
 export function deriveFrozenComposeExpectation(input: {
   job: JobDefinition;
   snapshot: JobSnapshot;
+  snapshotHash: string;
   mediaOrder: PersistedOrderedMediaReport;
   unicode: FrozenUnicodeTextPlan;
   hasExternalEffect: boolean;
 }): { manifest: FrozenComposeManifest | null; summary: FrozenComposePreflight } {
-  const { job, snapshot, mediaOrder, unicode, hasExternalEffect } = input;
+  const { job, snapshot, snapshotHash, mediaOrder, unicode, hasExternalEffect } = input;
   const blockers: FrozenComposeBlocker[] = [];
   const block = (reason: FrozenComposeBlocker): void => {
     if (!blockers.includes(reason)) blockers.push(reason);
@@ -59,6 +61,16 @@ export function deriveFrozenComposeExpectation(input: {
   const contentPinned = idSchema.safeParse(snapshot.contentId).success &&
     idSchema.safeParse(job.contentId).success && snapshot.contentId === job.contentId;
   if (job.state !== 'PREFLIGHT') block('JOB_NOT_PREFLIGHT');
+  // Match the immutable SQLite job snapshot fingerprint before deriving
+  // private asset or Unicode expectations. This remains read-only.
+  let snapshotBytesMatch = false;
+  try {
+    snapshotBytesMatch = hashSchema.safeParse(snapshotHash).success &&
+      contentHash(snapshot) === snapshotHash;
+  } catch {
+    // Unsafe or malformed frozen JSON cannot become a compose expectation.
+  }
+  if (!snapshotBytesMatch) block('SNAPSHOT_FINGERPRINT_MISMATCH');
   if (!appPinned) block('WORKFLOW_BINDING_INVALID');
   // A well-formed hash is not proof that these are the pinned workflow bytes.
   let workflowBytesMatch = false;
@@ -161,6 +173,7 @@ export function deriveFrozenComposeExpectation(input: {
   // The public jobStageReview DTO receives summary alone.
   const manifest: FrozenComposeManifest = {
     workflowAppId: appId as string,
+    snapshotHash,
     workflowVersionId: snapshot.workflowVersionId,
     workflowHash: snapshot.workflowHash,
     accountId: snapshot.accountId as string,

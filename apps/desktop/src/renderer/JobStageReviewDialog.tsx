@@ -53,6 +53,7 @@ const composeBlockerLabels: Record<FrozenComposeBlocker, string> = {
   WORKFLOW_BINDING_INVALID: 'Workflow hoặc ứng dụng đóng băng thiếu định danh hợp lệ',
   WORKFLOW_FINGERPRINT_MISMATCH: 'Mã băm workflow không khớp nội dung workflow đã ghim',
   FROZEN_MEDIA_BINDING_INVALID: 'Media đã ghim thiếu, trùng hoặc sai hash/byte/loại tại vị trí',
+  SNAPSHOT_FINGERPRINT_MISMATCH: 'Hash snapshot công việc không khớp dữ liệu đóng băng',
   ACCOUNT_NOT_PINNED: 'Chưa ghim tài khoản cho job',
   TARGET_NOT_PINNED: 'Chưa ghim đích đăng cho job',
   CONTENT_BINDING_MISMATCH: 'Nội dung không khớp job đã lên lịch',

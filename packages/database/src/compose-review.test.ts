@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { bundleHash } from '@autoreels/domain';
+import { bundleHash, contentHash } from '@autoreels/domain';
 import { describe, expect, it } from 'vitest';
 import type {
   ContentAssetInfo, FieldDefinition, JobDefinition, JobSnapshot,
@@ -44,7 +44,7 @@ function setup() {
       { ordinal: 1, kind: 'VIDEO', evidence: 'INDEXED_ROW_RECORDED_NOT_LIVE', blockers: [] },
     ],
   };
-  return { job, snapshot, mediaOrder, hasExternalEffect: false };
+  return { job, snapshot, snapshotHash: contentHash(snapshot), mediaOrder, hasExternalEffect: false };
 }
 function assess(value = setup()) {
   return deriveFrozenComposeExpectation({
@@ -65,7 +65,8 @@ describe('S096.3 frozen compose source expectation without Android/PUBLISH capab
       canVerify: false, canPublish: false, canDispatch: false,
     });
     expect(result.manifest).toMatchObject({
-      workflowAppId: 'fb', workflowVersionId: 'version_compose',
+      workflowAppId: 'fb', snapshotHash: v.snapshotHash,
+      workflowVersionId: 'version_compose',
       workflowHash: bundleHash(v.snapshot.bundle), accountId: 'account_compose',
       targetId: 'target_compose', contentId: 'content_compose',
       orderedAssetIds: ['asset_a', 'asset_b'],
@@ -90,6 +91,7 @@ describe('S096.3 frozen compose source expectation without Android/PUBLISH capab
   it('derives canonical selected order from assetIds, not descriptor insertion order or basename', () => {
     const v = setup();
     v.snapshot.assets!.reverse();
+    v.snapshotHash = contentHash(v.snapshot);
     const result = assess(v);
     expect(result.summary.status).toBe('FROZEN_EXPECTATIONS_LIVE_UNVERIFIED');
     expect(result.manifest?.orderedAssetIds).toEqual(['asset_a', 'asset_b']);
@@ -105,6 +107,7 @@ describe('S096.3 frozen compose source expectation without Android/PUBLISH capab
     v.snapshot.assetIds = [];
     v.snapshot.assets = [];
     v.mediaOrder = { ...v.mediaOrder, status: 'NO_MEDIA', slots: [] };
+    v.snapshotHash = contentHash(v.snapshot);
     const result = assess(v);
     expect(result.summary.status).toBe('FROZEN_EXPECTATIONS_LIVE_UNVERIFIED');
     expect(result.summary.mediaSlots).toBe(0);
@@ -127,7 +130,8 @@ describe('S096.3 frozen compose source expectation without Android/PUBLISH capab
     { name: 'selected media descriptor missing', mutate: v => { v.snapshot.assets!.pop(); }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
     { name: 'extra frozen media descriptor', mutate: v => { v.snapshot.assets!.push({ ...v.snapshot.assets![0]!, id: 'asset_extra' }); }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
     { name: 'duplicated selected descriptor', mutate: v => { v.snapshot.assets![1] = { ...v.snapshot.assets![0]! }; }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
-    { name: 'modified pinned hash', mutate: v => { v.snapshot.assets![0]!.hash = 'e'.repeat(64); }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
+    { name: 'modified pinned hash with valid format but stale immutable job fingerprint', mutate: v => { v.snapshot.assets![0]!.hash = 'e'.repeat(64); }, code: 'SNAPSHOT_FINGERPRINT_MISMATCH' },
+    { name: 'explicit stale snapshot digest', mutate: v => { v.snapshotHash = 'c'.repeat(64); }, code: 'SNAPSHOT_FINGERPRINT_MISMATCH' },
     { name: 'missing pinned hash', mutate: v => { v.snapshot.assets![0]!.hash = ''; }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
     { name: 'zero pinned media bytes', mutate: v => { v.snapshot.assets![0]!.bytes = 0; }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
     { name: 'changed pinned media state', mutate: v => { v.snapshot.assets![0]!.state = 'CHANGED'; }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
@@ -147,6 +151,7 @@ describe('S096.3 frozen compose source expectation without Android/PUBLISH capab
       v.snapshot.bundle.inputs = [];
       v.snapshot.workflowHash = bundleHash(v.snapshot.bundle);
       v.snapshot.fields = {};
+      v.snapshotHash = contentHash(v.snapshot);
     }, code: 'EMPTY_FROZEN_CONTENT' },
   ];
   for (const { name, mutate, code } of bad) {
