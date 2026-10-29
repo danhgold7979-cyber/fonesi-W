@@ -903,5 +903,43 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   ]) expect(persistedDto).not.toContain(secret);
   await expect(persisted.getByRole('button', { name: /Xóa file|Đăng lại bài/ }))
     .toHaveCount(0);
+
+  const effectNote = persisted.getByRole('button', { name: 'Ghi chú rà soát effect 1' });
+  await expect(effectNote).toBeVisible();
+  await persisted.getByRole('textbox', { name: 'Actor ID tự khai báo cho effect 1' })
+    .fill('operator_self_reported_ui');
+  // The default reason/disposition explicitly records missing provider evidence;
+  // zero evidence refs is allowed only for this "awaiting evidence" combination.
+  await effectNote.click();
+  await expect(persisted.getByTestId('effect-manual-review-result'))
+    .toContainText('Actor là tự khai báo, chưa xác thực');
+  await expect(persisted.getByTestId('effect-manual-review-result'))
+    .toContainText('không cho phép retry');
+  await expect(persisted).not.toContainText('effect_private_review_ui');
+
+  // Native bridge receipt with confirmation/retry rights or private effect ID
+  // is rejected and not rendered.
+  await page.evaluate(() => {
+    const w = window as unknown as {
+      studioEffectReview?: { recordManualReview: (input: unknown) => Promise<unknown> };
+    };
+    if (!w.studioEffectReview) throw new Error('Missing native effect review fixture');
+    w.studioEffectReview.recordManualReview = async (input: unknown) => ({
+      ...(input as object),
+      jobId: 'job_stage_review_ui', ordinal: 0, kind: 'PUBLISH',
+      state: 'ATTEMPT_UNCERTAIN',
+      reasonCode: 'PROVIDER_EVIDENCE_MISSING', disposition: 'AWAITING_EVIDENCE',
+      evidenceCount: 0, createdAt: '2026-10-29T17:00:00.000Z',
+      alreadyRecorded: false,
+      scope: 'PRIVATE_EFFECT_MANUAL_REVIEW_NOTE_NOT_CERTIFIED',
+      canConfirm: false, canRetry: true, canDispatch: false,
+      effectId: 'effect_private_review_ui',
+    });
+  });
+  await effectNote.click();
+  await expect(persisted.getByRole('alert'))
+    .toContainText('Biên nhận rà soát effect không hợp lệ');
+  await expect(persisted.getByTestId('effect-manual-review-result')).toHaveCount(0);
+  await expect(persisted).not.toContainText('effect_private_review_ui');
 });
 
