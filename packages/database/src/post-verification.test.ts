@@ -70,6 +70,25 @@ describe('P11/S098 private provider post candidate comparison, never confirmatio
       'content_pinned','asset_first','c'.repeat(64),'e'.repeat(64),
     ]) expect(redacted).not.toContain(sensitive);
   });
+  it('preserves frozen ordinal gaps when an optional text field is not populated', () => {
+    const v = fixture();
+    v.manifest.fields[1]!.ordinal = 3;
+    v.observations[0]!.orderedFields[1]!.ordinal = 3;
+    const before = JSON.stringify(v);
+    const result = check(v);
+    expect(result.summary.status).toBe('EXACT_CANDIDATE_UNCERTIFIED');
+    expect(result.summary.canConfirm).toBe(false);
+    expect(JSON.stringify(v)).toBe(before);
+  });
+  it('blocks duplicate frozen Unicode ordinals rather than collapsing a field', () => {
+    const v = fixture();
+    v.manifest.fields[1]!.ordinal = 0;
+    const result = check(v);
+    expect(result).toMatchObject({
+      candidate: null, summary: { status: 'BLOCKED',
+        blockers: ['EXPECTATION_INVALID'], canConfirm: false },
+    });
+  });
   it('never treats empty observation as definitive negative proof', () => {
     const v = fixture(); v.observations = [];
     expect(check(v)).toMatchObject({

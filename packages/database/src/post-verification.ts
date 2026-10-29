@@ -123,8 +123,10 @@ export function assessProviderPostCandidates(input: {
         !hashSchema.safeParse(item.pinnedHash).success ||
         !validBytes(item.pinnedBytes) ||
         !['IMAGE', 'VIDEO'].includes(item.kind)) ||
-      fields.some((item, ordinal) =>
-        !item || item.ordinal !== ordinal ||
+      fields.some((item, index) =>
+        !item || !Number.isSafeInteger(item.ordinal) ||
+        item.ordinal < 0 || item.ordinal >= MAX_FIELDS ||
+        (index > 0 && item.ordinal <= fields[index - 1]!.ordinal) ||
         !['row', 'process'].includes(item.scope) ||
         !['TEXT', 'URL'].includes(item.kind) ||
         !hashSchema.safeParse(item.utf8Hash).success ||
@@ -171,7 +173,9 @@ export function assessProviderPostCandidates(input: {
         !Array.isArray(record.orderedFields) ||
         record.orderedFields.length > MAX_FIELDS ||
         record.orderedFields.some((item: ProviderPostObservation['orderedFields'][number], index: number) =>
-          !item || item.ordinal !== index ||
+          !item || !Number.isSafeInteger(item.ordinal) ||
+          item.ordinal < 0 || item.ordinal >= MAX_FIELDS ||
+          (index > 0 && item.ordinal <= record.orderedFields[index - 1]!.ordinal) ||
           !['row','process'].includes(item.scope) ||
           !['TEXT','URL'].includes(item.kind) ||
           !hashSchema.safeParse(item.utf8Hash).success ||
