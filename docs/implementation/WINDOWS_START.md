@@ -4,7 +4,7 @@
 
 1. Cài **Node.js24.19+ thuộc dòng24.x, x64** từ <https://nodejs.org/download/release/>. Mở lại cửa sổ terminal sau khi cài để PATH cập nhật. Node kèm npm; không cần tự cài pnpm toàn máy.
 2. Tải [ZIP đúng nhánh phần mềm](https://github.com/danhgold7979-cyber/fonesi-W/archive/refs/heads/feat/studio-workspace.zip), giải nén vào một thư mục bạn có quyền ghi, ví dụ `D:\AutoReels Studio`. Repo riêng tư yêu cầu đăng nhập tài khoản GitHub có quyền. Nhánh `main` hiện chỉ là README; tải main sẽ thiếu mã chạy.
-3. Nhấp đúp **Start-AutoReels.cmd** trong thư mục đã giải nén. Lần đầu script tải dependencies và Electron đã pin, build rồi mở desktop; cần Internet trong lần setup. Terminal giữ lỗi nếu setup/build thất bại. Script chạy theo quyền người dùng hiện tại.
+3. Nhấp đúp **Start-FonesiW.bat** (hoặc `Start-AutoReels.cmd`) trong thư mục đã giải nén. File BAT chỉ gọi launcher hiện có để tránh hai luồng setup khác nhau. Lần đầu script tải dependencies và Electron đã pin, build rồi mở desktop; cần Internet trong lần setup. Terminal giữ lỗi nếu setup/build thất bại. Script chạy theo quyền người dùng hiện tại.
 4. Trong ứng dụng, mở **Chẩn đoán / Sao lưu** để xem SQLite/đĩa/RAM và tạo backup đã kiểm tra. Bản sao chỉ chứa DB; giữ media nguồn riêng. Desktop mặc định dùng thư mục userData của ứng dụng trong AppData; `AUTOREELS_DATA_DIR` chỉ thay root khi bạn chủ động đặt biến đó.
 5. Kết nối điện thoại theo [DEVICE_HOST_GUIDE.md](DEVICE_HOST_GUIDE.md): chọn Platform-Tools/adb.exe thật, bật USB debugging và tự xác nhận RSA trên điện thoại. Cloud không thấy các điện thoại USB cắm vào PC của bạn. Catalog đa app không phải chứng nhận đăng Facebook/TikTok tự động.
 
