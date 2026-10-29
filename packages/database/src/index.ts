@@ -5241,8 +5241,7 @@ export class StudioDatabase {
         new Set(args.evidenceRefs).size !== args.evidenceRefs.length ||
         (args.evidenceRefs.length === 0 &&
           !(args.reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
-            args.disposition === 'AWAITING_EVIDENCE')) ||
-)
+            args.disposition === 'AWAITING_EVIDENCE')))
       throw new DomainError('EFFECT_REVIEW_INPUT_INVALID',
         'Empty evidence is permitted only while explicitly awaiting missing provider evidence.');
     const createdAt = new Date(args.at).toISOString();
