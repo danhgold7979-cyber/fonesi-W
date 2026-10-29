@@ -6,6 +6,7 @@ import type {
   DeviceStageReconciliation,
 } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
+import type { OwnedCleanupReadbackSummary } from '@autoreels/devices';
 import type { InternalRequest } from './internal.js';
 
 interface StageReviewDbPort {
@@ -19,6 +20,11 @@ interface StageReviewDevicePort {
   ): Promise<T>;
 }
 interface StageReviewCoordinatorPort {
+  reviewOwnedCleanupAbsence(request: {
+    jobId: string; stageId: string; expectedJobRevision: number;
+    expectedSnapshotHash: string; lease: DeviceLease;
+    transportSerial: string; transportGeneration: number;
+  }): Promise<OwnedCleanupReadbackSummary>;
   reconcileStage(request: {
     requestId: string; jobId: string; stageId: string; expectedJobRevision: number;
     expectedSnapshotHash: string; lease: DeviceLease; transportSerial: string;
@@ -104,6 +110,30 @@ export class NativeStageReviewService {
       completedAt: new Date().toISOString(),
       canDelete: false, canDispatch: false,
     };
+  }
+
+  /**
+   * Native-only, read-only owned remote existence + MediaStore review.
+   * Renderer can never provide a stage ID, ADB serial, nonce or MANUAL lease.
+   * Neither source reports independently certified deletion.
+   */
+  async reviewCleanupAbsence(
+    jobId: string, ordinal: number,
+  ): Promise<OwnedCleanupReadbackSummary> {
+    const { summary, owned } = await this.selectOwnedStage(jobId, ordinal);
+    const result = await this.devices.withManualStageReviewLease(owned.deviceId,
+      async (lease, transport) => this.stageCoordinator.reviewOwnedCleanupAbsence({
+        jobId, stageId: owned.id, expectedJobRevision: summary.jobRevision,
+        expectedSnapshotHash: owned.snapshotHash, lease,
+        transportSerial: transport.serial,
+        transportGeneration: transport.generation,
+      }));
+    if (result.scope !== 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED' ||
+        result.canDelete !== false || result.canMarkClean !== false ||
+        result.canRetry !== false || result.canDispatch !== false)
+      throw new DomainError('OWNED_CLEANUP_READBACK_RECEIPT_INVALID',
+        'A read-only recovery result cannot authorize cleanup actions.');
+    return result;
   }
 
   /**
