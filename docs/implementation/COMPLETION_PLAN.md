@@ -1,5 +1,10 @@
 # Kế hoạch hoàn thiện sau checkpoint 005
 
+## Current verified checkpoint — 29/10/2026
+
+The baseline and older checkpoint figures below are historical, **not the latest source status**. Current working repository `danhgold7979-cyber/fonesi-W`, branch `feat/studio-workspace`. Last source test SHA: `ac0fdf8499764253a2ae485fd3a01d69364f1a57`; Increment055 / checkpoint-048. Ubuntu 359/359 unit/integration and 31/31 Chromium UI; Windows 358 pass + 1 platform-only skip; [push CI 40844128512](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40844128512) and [PR CI 40844136247](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40844136247) both SUCCESS on the exact SHA. SQLite schema v20 now has a native-confirmed private cleanup-review journal, its operator-facing **historical-only** redacted display and ownership/lease fences. **No Android file delete, real picker, real post, Windows 10 physical device test, 20→300 scale or released installer acceptance.** All 15 phases / 125 steps / 375 tasks remain in full scope; there is insufficient verified acceptance data for a correct overall completion percentage. Review per-increment [PROGRESS.md](PROGRESS.md), [Increment055 results](INCREMENT-055_RESULTS.md), and [checkpoint-048](../evidence/implementation/checkpoint-048.json). The main branch is separate and not modified by these increments.
+
+
 Ngày 27/10/2026. Yêu cầu hiện hành: lập kế hoạch trước từng phase, tiếp tục code, ghi rõ phase hiện tại/số phase còn lại, nghiệm thu tổng thể sau. Đây là tracker implementation, không thay reference V2.1 và không tự chuyển các gate chưa chạy thành PASS.
 
 ## Kiểm kê trước khi làm
