@@ -412,6 +412,7 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
     jobId: f.jobId, jobRevision: f.jobRevision, jobState: 'PREFLIGHT',
     scope: 'PERSISTED_ONLY', canDispatch: false,
     stages: [], observations: [], cleanupRequests: [], cleanupHasMore: false,
+    cleanupRechecks: [],
     mediaOrder: {
       scope: 'PERSISTED_STAGE_ORDER_NOT_PICKER_VERIFIED', status: 'BLOCKED',
       canSelect: false, canDispatch: false,
@@ -1214,6 +1215,19 @@ it('journals exactly three non-executable MANUAL cleanup rechecks and survives r
     ]),
     canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
   });
+  const publicPage = db.jobStageReview(f.jobId);
+  expect(publicPage.cleanupRechecks).toEqual(history.items.map((item) => ({
+    stageOrdinal: item.ordinal, attemptOrdinal: item.attemptOrdinal,
+    status: item.status, remote: item.remote,
+    mediaStore: item.mediaStore, recordedAt: item.recordedAt,
+  })));
+  expect(publicPage.canDispatch).toBe(false);
+  const publicText = JSON.stringify(publicPage.cleanupRechecks);
+  for (const secret of [
+    stage.id, stage.remotePath, stage.nonce, manual.ownerId,
+    f.snapshotHash, stage.expectedHash,
+    'cleanup_recheck_first', 'cleanup_recheck_second', 'cleanup_recheck_third',
+  ]) expect(publicText).not.toContain(secret);
   const text = JSON.stringify(history);
   for (const secret of [stage.id, stage.remotePath, stage.nonce,
     f.snapshotHash, manual.ownerId, stage.expectedHash])
@@ -1230,6 +1244,7 @@ it('journals exactly three non-executable MANUAL cleanup rechecks and survives r
 
   db.close(); db = new StudioDatabase(dbPath());
   expect(db.listOwnedStageCleanupRechecks(f.jobId)).toEqual(history);
+  expect(db.jobStageReview(f.jobId).cleanupRechecks).toEqual(publicPage.cleanupRechecks);
   expect(db.getJob(f.jobId).job).toEqual(jobBefore);
   expect(counts()).toEqual([before[0], before[1], 3]);
   sql((conn) => {
