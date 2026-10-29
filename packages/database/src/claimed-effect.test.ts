@@ -1817,3 +1817,160 @@ it('stores a pending COMMENT-only manual review without changing the synthetic p
   expect(db.effectState(intent.effectId)).toBe('ATTEMPT_UNCERTAIN');
   expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
 });
+
+
+it('reviews DB-only post plus partial comment rejection across restart without ever marking success', async () => {
+  const { f, publish, input } = confirmedCommentHostFixture(0);
+  const req = {
+    command: 'comment.reviewPartialOutcome' as const,
+    jobId: f.jobId,
+    expectedSnapshotHash: f.snapshotHash,
+    postEffectId: publish.effectId,
+    fieldKey: 'comments',
+    scope: 'row' as const,
+  };
+  const review = () => dispatchInternal(db, req) as
+    ReturnType<StudioDatabase['reviewPersistedCommentPartialOutcome']>;
+  const counts = () => {
+    const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return [
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?')
+          .get(f.jobId)?.n),
+        Number(sql.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?')
+          .get(f.jobId)?.n),
+      ];
+    } finally { sql.close(); }
+  };
+  let before = counts();
+  expect(review()).toMatchObject({
+    scope: 'PRIVATE_COMMENT_PARTIAL_OUTCOME_NOT_PROVIDER_CERTIFIED',
+    status: 'COMMENT_UNCERTAIN_REVIEW',
+    totalOrdinals: 2, dbConfirmed: 0, dbRejected: 0, unresolvedOrUnsent: 2,
+    canMarkSuccessWithWarnings: false, canRetry: false, canCleanup: false,
+  });
+  expect(counts()).toEqual(before);
+
+  const intent = db.prepareClaimedEffect({ ...input, at: at + 125 });
+  db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 140,
+  });
+  const pending = db.getJob(f.jobId).job;
+  db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: pending.revision,
+    actorId: 'operator_partial_review', at: at + 170,
+  });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(review()).toMatchObject({
+    status: 'COMMENT_UNCERTAIN_REVIEW',
+    totalOrdinals: 2, dbConfirmed: 0, dbRejected: 0,
+    unresolvedOrUnsent: 2, canMarkSuccessWithWarnings: false,
+  });
+
+  // Only synthetic SQL fixture rows: never actual provider positive or negative proof.
+  const frozen = db.frozenCommentListPlan({
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    postEffectId: publish.effectId, fieldKey: 'comments', scope: 'row',
+  });
+  const second = frozen.items[1]!;
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  try {
+    sql.prepare("UPDATE effects SET state='DEFINITIVELY_REJECTED' WHERE id=?")
+      .run(intent.effectId);
+    sql.prepare(
+      'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,state,evidence_ref,created_at) ' +
+      'VALUES(?,?,?,?,?,?,?,?,?)',
+    ).run(
+      'effect_synthetic_second_comment', f.jobId, 'comment', 'COMMENT',
+      second.effectKey, second.payloadHash, 'CONFIRMED', null,
+      new Date(at + 200).toISOString(),
+    );
+  } finally { sql.close(); }
+  before = counts();
+  const partial = review();
+  expect(partial).toMatchObject({
+    status: 'PARTIAL_DB_ONLY_REVIEW',
+    totalOrdinals: 2, dbConfirmed: 1, dbRejected: 1, unresolvedOrUnsent: 0,
+    providerCertification: 'NOT_AVAILABLE',
+    canMarkSuccessWithWarnings: false, canConfirm: false,
+    canRetry: false, canDispatch: false, canCleanup: false,
+  });
+  expect(JSON.stringify(partial)).not.toContain(second.effectKey);
+  expect(counts()).toEqual(before);
+  expect(db.effectState(publish.effectId)).toBe('CONFIRMED');
+  expect(db.effectState(intent.effectId)).toBe('DEFINITIVELY_REJECTED');
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+
+  await expect(dispatch(db, {
+    operationId: 'op_forged_partial_result',
+    command: 'comment.reviewPartialOutcome' as never,
+    input: req,
+  })).rejects.toThrow();
+  expect(() => db.reviewPersistedCommentPartialOutcome({
+    ...req, expectedSnapshotHash: contentHash('stale_snapshot'),
+  })).toThrow('exact persisted snapshot');
+  expect(() => db.reviewPersistedCommentPartialOutcome({
+    ...req, postEffectId: 'effect_unrelated_parent',
+  })).toThrow();
+  expect(counts()).toEqual(before);
+
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(review()).toEqual(partial);
+  expect(counts()).toEqual(before);
+  expect(db.claimDueJob(f.lease.deviceId, 'no_replay_for_partial', at + 3200).status)
+    .toBe('NEEDS_REVIEW');
+
+  // Another device can independently claim and run. This one is not posted/retried.
+  const another = fixture('device_independent_partial', 'independent_partial');
+  expect(another.running.state).toBe('RUNNING');
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(review()).toEqual(partial);
+});
+
+it('blocks forged extra PUBLISH and foreign COMMENT journal rows in partial-result readback', () => {
+  const { f, publish, input } = confirmedCommentHostFixture(0);
+  const req = {
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    postEffectId: publish.effectId,
+    fieldKey: 'comments', scope: 'row' as const,
+  };
+  const intent = db.prepareClaimedEffect({ ...input, at: at + 125 });
+  db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 140,
+  });
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  try {
+    sql.prepare(
+      'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,state,evidence_ref,created_at) ' +
+      'VALUES(?,?,?,?,?,?,?,?,?)',
+    ).run(
+      'effect_foreign_comment', f.jobId, 'comment', 'COMMENT',
+      contentHash('not_in_frozen_snapshot'), contentHash('foreign_comment'),
+      'INTENT', null, new Date(at + 180).toISOString(),
+    );
+  } finally { sql.close(); }
+  const blocked = db.reviewPersistedCommentPartialOutcome(req);
+  expect(blocked).toMatchObject({
+    status: 'BLOCKED', blockers: ['COMMENT_JOURNAL_INVALID'],
+    totalOrdinals: 0, canMarkSuccessWithWarnings: false, canRetry: false,
+  });
+  const second = new DatabaseSync(join(dir, 'studio.sqlite'));
+  try {
+    second.prepare('DELETE FROM effects WHERE id=?').run('effect_foreign_comment');
+    second.prepare(
+      'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,state,evidence_ref,created_at) ' +
+      'VALUES(?,?,?,?,?,?,?,?,?)',
+    ).run(
+      'effect_second_publish', f.jobId, 'publish', 'PUBLISH',
+      contentHash('duplicate_publish_effect_key'), contentHash('duplicate_publish_payload'),
+      'CONFIRMED', null, new Date(at + 190).toISOString(),
+    );
+  } finally { second.close(); }
+  expect(db.reviewPersistedCommentPartialOutcome(req)).toMatchObject({
+    status: 'BLOCKED', blockers: ['PUBLISH_JOURNAL_INVALID'],
+    canMarkSuccessWithWarnings: false, canDispatch: false,
+  });
+  expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+});
