@@ -73,6 +73,15 @@ const effectStateLabels: Record<
   NEEDS_REVIEW: 'Cần người vận hành đối soát',
   UNKNOWN: 'Trạng thái không xác định; phải dừng để kiểm tra',
 };
+const cleanupRecheckStatusLabels: Record<
+  NativeStageCleanupAbsenceResult['status'], string
+> = {
+  BLOCKED: 'Bằng chứng không khớp, chưa được phép dọn',
+  REMOTE_PRESENT_REVIEW: 'File staging vẫn hiện diện trong lần quan sát',
+  MEDIASTORE_PRESENT_REVIEW: 'MediaStore vẫn có hàng tương ứng',
+  UNSUPPORTED_REVIEW: 'MediaStore không hỗ trợ hoặc mơ hồ',
+  ABSENCE_CANDIDATE_UNCERTIFIED: 'Không thấy file và hàng MediaStore; chưa chứng nhận đã xóa',
+};
 /** Operator-facing persisted history only. No lease, ADB, deletion or dispatch. */
 export function JobStageReviewDialog({ jobId, close }: Props) {
   const [report, setReport] = useState<JobStageReviewPage | null>(null);
@@ -359,6 +368,11 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                   {' '}MediaStore: {stage.mediaStore === 'ROW_RECORDED_NOT_PICKER_VERIFIED'
                     ? 'Có bản ghi hàng MediaStore, chưa xác minh picker'
                     : 'Chưa có bằng chứng hàng MediaStore'}.
+                  {' '}Đã ghi {Math.max(
+                    report.cleanupRechecks.filter((r) => r.stageOrdinal === stage.ordinal).length,
+                    recheckResult?.ordinal === stage.ordinal
+                      ? recheckResult.attemptOrdinal : 0,
+                  )}/3 lượt đối soát cleanup (không xóa).
                   {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
                     ['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state) && (
                       <button
@@ -383,7 +397,11 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                     ['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state) && (
                       <button
                         aria-label={'Ghi lần đối soát cleanup media ' + (stage.ordinal + 1)}
-                        disabled={reviewBusy || loading || loadingMore}
+                        disabled={reviewBusy || loading || loadingMore ||
+                          report.cleanupRechecks.filter((r) =>
+                            r.stageOrdinal === stage.ordinal).length >= 3 ||
+                          (recheckResult?.ordinal === stage.ordinal &&
+                            recheckResult.attemptOrdinal >= 3)}
                         onClick={() => void recordCleanupRecheck(stage.ordinal)}
                       >
                         Ghi lần đối soát cleanup (tối đa 3, không xóa)
@@ -402,6 +420,27 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                         Ghi yêu cầu rà soát cleanup (không xóa)
                       </button>
                     )}
+                </li>
+              ))}
+            </ol>
+          )}
+          <h3>Nhật ký đối soát cleanup (chỉ đọc, không xóa)</h3>
+          <p className="muted">
+            Các lượt kiểm tra file staging đã lưu trong SQLite, tối đa 3 lượt cho mỗi media.
+            Đây là quan sát cũ, không xác nhận đã xóa Android, không thay kết quả đăng bài,
+            không cho phép chạy lại job hoặc xóa file nguồn trên PC.
+          </p>
+          {report.cleanupRechecks.length === 0 ? (
+            <p>Chưa có lượt đối soát cleanup được lưu.</p>
+          ) : (
+            <ol aria-label="Lịch sử đối soát cleanup đã lưu">
+              {report.cleanupRechecks.map((entry) => (
+                <li key={entry.stageOrdinal + '-' + entry.attemptOrdinal}
+                    data-testid="stage-cleanup-recheck-history">
+                  Media {entry.stageOrdinal + 1} · lần {entry.attemptOrdinal}/3 ·
+                  {' '}{cleanupRecheckStatusLabels[entry.status]} ·
+                  {' '}{new Date(entry.recordedAt).toLocaleString('vi-VN')}.
+                  {' '}Không có quyền xóa hoặc retry.
                 </li>
               ))}
             </ol>
