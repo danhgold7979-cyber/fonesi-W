@@ -996,3 +996,119 @@ it('atomically rolls back a database insert failure with no phantom stage or eve
   ).toBe(0));
   expect(db.getJob(f.jobId).job.state).toBe('PREFLIGHT');
 });
+
+
+it('reviews full post-success cleanup readiness from SQLite without deleting or trusting synthetic provider state', async () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  const req = {
+    command: 'stage.postCleanupReview' as const,
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+  };
+  const counts = () => {
+    const conn = new DatabaseSync(dbPath());
+    try {
+      return [
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?').get(f.jobId)?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?').get(f.jobId)?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM device_stage_transfers WHERE job_id=?')
+          .get(f.jobId)?.n),
+      ];
+    } finally { conn.close(); }
+  };
+  const review = () => dispatchInternal(db, req) as
+    ReturnType<StudioDatabase['reviewPostCleanupReadiness']>;
+  let before = counts();
+  const initial = review();
+  expect(initial).toMatchObject({
+    scope: 'PRIVATE_JOB_OWNED_CLEANUP_NOT_PROVIDER_CERTIFIED',
+    status: 'BLOCKED', ledger: 'INCOMPLETE',
+    frozenMediaCount: 1, stageCount: 1,
+    blockers: expect.arrayContaining([
+      'JOB_NOT_SUCCESSFUL', 'MEDIASTORE_PICKER_UNVERIFIED',
+      'PUBLISH_JOURNAL_MISSING_OR_UNCONFIRMED',
+      'JOB_CLAIM_PENDING', 'PROVIDER_CERTIFICATION_UNAVAILABLE',
+    ]),
+    canDelete: false, canDispatch: false, canRetry: false, canMarkClean: false,
+  });
+  expect(counts()).toEqual(before);
+  await expect(dispatch(db, {
+    operationId: 'op_forged_post_cleanup_review',
+    command: 'stage.postCleanupReview' as never,
+    input: req,
+  })).rejects.toThrow();
+  expect(() => db.reviewPostCleanupReadiness({
+    ...req, expectedSnapshotHash: contentHash('other_job_snapshot'),
+  })).toThrow('exact frozen job snapshot');
+
+  // Synthetic DB-only provider and MediaStore rows used to exercise ledger
+  // shape; they are NEVER a certified Facebook/Android result or delete grant.
+  sql((conn) => {
+    conn.prepare(
+      'UPDATE device_stage_transfers SET ' +
+      'mediastore_row_id=?,mediastore_display_name=?,mediastore_relative_path=?,' +
+      'mediastore_mime_type=?,mediastore_bytes=?,mediastore_at=? WHERE id=?',
+    ).run(
+      'synthetic_mediastore_row', 'asset-000-' + stage.nonce + '.mp4',
+      'Download/AutoReelsStudio/job-' + f.jobId + '/',
+      'video/mp4', stage.expectedBytes, new Date(at + 400).toISOString(), stage.id,
+    );
+    conn.prepare(
+      "UPDATE jobs SET state='SUCCESS',revision=revision+1 WHERE id=?",
+    ).run(f.jobId);
+    conn.prepare('DELETE FROM job_claims WHERE job_id=?').run(f.jobId);
+    conn.prepare(
+      'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,state,evidence_ref,created_at) ' +
+      'VALUES(?,?,?,?,?,?,?,?,?)',
+    ).run(
+      'effect_synthetic_cleanup_parent', f.jobId, 'publish', 'PUBLISH',
+      contentHash('synthetic_cleanup_publish_key'), contentHash('synthetic_cleanup_payload'),
+      'CONFIRMED', null, new Date(at + 450).toISOString(),
+    );
+  });
+  db.releaseLease(f.lease);
+  before = counts();
+  const complete = review();
+  expect(complete).toEqual({
+    scope: 'PRIVATE_JOB_OWNED_CLEANUP_NOT_PROVIDER_CERTIFIED',
+    status: 'BLOCKED', ledger: 'MATCHED_DB_ONLY',
+    frozenMediaCount: 1, stageCount: 1,
+    blockers: ['PROVIDER_CERTIFICATION_UNAVAILABLE'],
+    canDelete: false, canDispatch: false, canRetry: false, canMarkClean: false,
+  });
+  const redacted = JSON.stringify(complete);
+  for (const sensitive of [
+    f.jobId, stage.id, stage.remotePath, stage.nonce,
+    stage.expectedHash, stage.expectedBytes.toString(), f.snapshotHash,
+  ]) expect(redacted).not.toContain(sensitive);
+  expect(counts()).toEqual(before);
+  const frozen = db.getJob(f.jobId).job;
+  db.close(); db = new StudioDatabase(dbPath());
+  expect(review()).toEqual(complete);
+  expect(db.getJob(f.jobId).job).toEqual(frozen);
+  expect(counts()).toEqual(before);
+  expect(db.listDeviceStageTransfers(f.jobId)).toHaveLength(1);
+
+  sql(conn => conn.prepare('UPDATE device_stage_transfers SET remote_path=? WHERE id=?')
+    .run('/sdcard/DCIM/Camera/someone-elses-file.mp4', stage.id));
+  const malformed = review();
+  expect(malformed).toMatchObject({
+    status: 'BLOCKED', ledger: 'INVALID',
+    blockers: ['LEDGER_BINDING_MISMATCH', 'PROVIDER_CERTIFICATION_UNAVAILABLE'],
+    canDelete: false,
+  });
+  expect(JSON.stringify(malformed)).not.toContain('/sdcard/DCIM/');
+  sql(conn => conn.prepare('UPDATE device_stage_transfers SET remote_path=? WHERE id=?')
+    .run(stage.remotePath, stage.id));
+  sql(conn => conn.prepare(
+    'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,state,evidence_ref,created_at)' +
+    ' VALUES(?,?,?,?,?,?,?,?,?)',
+  ).run('effect_pending_comment_cleanup', f.jobId, 'comment', 'COMMENT',
+    contentHash('cleanup_pending_comment_key'), contentHash('cleanup_pending_comment_payload'),
+    'ATTEMPT_UNCERTAIN', null, new Date(at + 460).toISOString()));
+  expect(review()).toMatchObject({
+    ledger: 'MATCHED_DB_ONLY',
+    blockers: ['EXTERNAL_EFFECT_UNRESOLVED', 'PROVIDER_CERTIFICATION_UNAVAILABLE'],
+    canDelete: false, canRetry: false,
+  });
+  expect(db.listDeviceStageTransfers(f.jobId)[0]!.remotePath).toBe(stage.remotePath);
+});
