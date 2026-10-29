@@ -2107,7 +2107,7 @@ export class StudioDatabase {
       const pending = Boolean(
         this.db
           .prepare(
-            "SELECT 1 FROM effects WHERE job_id=? AND state IN('ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
+            "SELECT 1 FROM effects WHERE job_id=? AND state IN('INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW')",
           )
           .get(id),
       );
