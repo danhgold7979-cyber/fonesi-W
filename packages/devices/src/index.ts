@@ -133,7 +133,7 @@ async function sendPacket(socket: Socket, bytes: Buffer, signal?: AbortSignal): 
     if (socket.destroyed || signal?.aborted) aborted();
   });
 }
-function syncHeader(op: 'SEND' | 'DATA' | 'DONE' | 'RECV', size: number): Buffer {
+function syncHeader(op: 'SEND' | 'DATA' | 'DONE' | 'RECV' | 'STAT', size: number): Buffer {
   const result = Buffer.alloc(8);
   result.write(op, 0, 'ascii');
   result.writeUInt32LE(size, 4);
@@ -469,6 +469,90 @@ export class AdbClient {
         throw new DomainError('ADB_SYNC_READ_HASH', 'Remote bytes do not match the pinned asset hash.');
       await this.beforeDispatch();
       return { remotePath, hash, bytes: received };
+    } finally {
+      connection.close();
+    }
+  }
+
+  /**
+   * S102.2: non-destructive ADB Sync v1 STAT of the exact app-owned remote
+   * stage. A missing remote file is only an observation, never proof that a
+   * cleanup command ran or that MediaStore/provider state is reconciled.
+   * Requires a trusted, freshly fenced client; no shell/rm/unlink is invoked.
+   */
+  async statOwnedStage(input: {
+    serial: string;
+    jobId: string;
+    ordinal: number;
+    nonce: string;
+    extension: string;
+    expectedBytes: number;
+  }, signal?: AbortSignal): Promise<{
+    status: 'REMOTE_PRESENT_OBSERVED' | 'REMOTE_ABSENT_OBSERVED';
+    remotePath: string;
+    observedBytes: number | null;
+    matchesExpectedBytes: boolean;
+    canDelete: false;
+    canMarkClean: false;
+  }> {
+    if (!this.beforeDispatch)
+      throw new DomainError('ADB_STAGE_LEASE_REQUIRED',
+        'Trusted current device fence required before remote existence check.');
+    assertSerial(input.serial);
+    idSchema.parse(input.jobId);
+    if (!Number.isSafeInteger(input.ordinal) ||
+        input.ordinal < 0 || input.ordinal >= 32 ||
+        typeof input.extension !== 'string' ||
+        input.extension !== input.extension.toLowerCase() ||
+        !syncExtensions.has(input.extension) ||
+        typeof input.nonce !== 'string' || !/^[a-f0-9]{32}$/.test(input.nonce) ||
+        !Number.isSafeInteger(input.expectedBytes) || input.expectedBytes <= 0 ||
+        input.expectedBytes > MAX_SYNC_BYTES)
+      throw new DomainError('ADB_OWNED_STAT_INVALID', 'Invalid owned-stage identity or byte budget.');
+    const { remotePath } = ownedStageLocation({
+      jobId: input.jobId, ordinal: input.ordinal,
+      nonce: input.nonce, extension: input.extension,
+    });
+    const encodedPath = Buffer.from(remotePath, 'utf8');
+    if (encodedPath.byteLength > 1024)
+      throw new DomainError('ADB_OWNED_STAT_INVALID', 'Owned path exceeds Sync protocol budget.');
+    if (signal?.aborted)
+      throw new DomainError('CANCELLED', 'Remote existence inspection cancelled.');
+    await this.beforeDispatch();
+    const connection = await this.device(input.serial, 'sync:', 2048, signal);
+    try {
+      await sendPacket(connection.socket, syncHeader('STAT', encodedPath.length), signal);
+      await sendPacket(connection.socket, encodedPath, signal);
+      const frame = await connection.read(16);
+      if (frame.toString('ascii', 0, 4) !== 'STAT')
+        throw new DomainError('ADB_OWNED_STAT_PROTOCOL', 'Unexpected Android Sync STAT response.');
+      const mode = frame.readUInt32LE(4),
+        size = frame.readUInt32LE(8),
+        mtime = frame.readUInt32LE(12);
+      if (mode === 0) {
+        // Sync v1 signals a missing path with three zero fields. Do not infer
+        // absence from FAIL, permission denied, malformed response or timeout.
+        if (size !== 0 || mtime !== 0)
+          throw new DomainError('ADB_OWNED_STAT_PROTOCOL',
+            'Contradictory missing-file response.');
+        await this.beforeDispatch();
+        return {
+          status: 'REMOTE_ABSENT_OBSERVED', remotePath,
+          observedBytes: null, matchesExpectedBytes: false,
+          canDelete: false, canMarkClean: false,
+        };
+      }
+      // Never treat a directory, symlink, device or unknown type as a staged
+      // regular file, even when its reported size matches the frozen bytes.
+      if ((mode & 0o170000) !== 0o100000)
+        throw new DomainError('ADB_OWNED_STAT_TYPE',
+          'Remote owned path is not a regular file.');
+      await this.beforeDispatch();
+      return {
+        status: 'REMOTE_PRESENT_OBSERVED', remotePath,
+        observedBytes: size, matchesExpectedBytes: size === input.expectedBytes,
+        canDelete: false, canMarkClean: false,
+      };
     } finally {
       connection.close();
     }
