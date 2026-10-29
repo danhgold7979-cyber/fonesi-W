@@ -657,14 +657,109 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
           </p>
           {report.effectReview.entries.length > 0 && (
             <ol aria-label="Các external effect đã ghi">
-              {report.effectReview.entries.map((entry) => (
-                <li key={entry.ordinal} data-testid="effect-journal-entry">
-                  <strong>Effect {entry.ordinal + 1}</strong> ·
-                  {' '}{entry.kind === 'PUBLISH' ? 'Đăng bài' :
-                    entry.kind === 'COMMENT' ? 'Bình luận' : 'Loại không xác định'} ·
-                  {' '}{effectStateLabels[entry.state]}.
-                </li>
-              ))}
+              {report.effectReview.entries.map((entry) => {
+                const draft = effectReviewDrafts[entry.ordinal] ?? defaultEffectReviewDraft;
+                const unresolved = ['INTENT', 'ATTEMPT_UNCERTAIN', 'NEEDS_REVIEW'].includes(entry.state);
+                const evidenceRefs = draft.evidenceRefsText.split(',').map((item) => item.trim()).filter(Boolean);
+                const missingEvidenceOnly =
+                  draft.reasonCode === 'PROVIDER_EVIDENCE_MISSING' &&
+                  draft.disposition === 'AWAITING_EVIDENCE';
+                const canSubmit =
+                  /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(draft.actorId.trim()) &&
+                  evidenceRefs.length <= 8 &&
+                  evidenceRefs.every((item) => /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(item)) &&
+                  new Set(evidenceRefs).size === evidenceRefs.length &&
+                  (missingEvidenceOnly || evidenceRefs.length > 0);
+                return (
+                  <li key={entry.ordinal} data-testid="effect-journal-entry">
+                    <strong>Effect {entry.ordinal + 1}</strong> ·
+                    {' '}{entry.kind === 'PUBLISH' ? 'Đăng bài' :
+                      entry.kind === 'COMMENT' ? 'Bình luận' : 'Loại không xác định'} ·
+                    {' '}{effectStateLabels[entry.state]}.
+                    <p>Ghi chú rà soát đã lưu: {entry.manualReviewCount}.</p>
+                    {entry.latestManualReview && (
+                      <p data-testid="effect-manual-review-history">
+                        Actor tự khai báo (chưa xác thực): <code>{entry.latestManualReview.actorId}</code> ·
+                        {' '}{effectReviewReasonLabels[entry.latestManualReview.reasonCode]} ·
+                        {' '}{effectReviewDispositionLabels[entry.latestManualReview.disposition]} ·
+                        {' '}{entry.latestManualReview.evidenceCount} ID chứng cứ ·
+                        {' '}{new Date(entry.latestManualReview.createdAt).toLocaleString('vi-VN')}.
+                      </p>
+                    )}
+                    {nativeEffectReview && report.jobState === 'NEEDS_REVIEW' &&
+                      unresolved && entry.kind !== 'UNKNOWN' && (
+                        <div className="effect-manual-review-form" data-testid="effect-manual-review-form">
+                          <p className="muted">
+                            Ghi chú này không xác thực bài đăng, không thay đổi trạng thái effect,
+                            không cấp quyền retry/dispatch và không xóa uncertainty.
+                            Actor ID do người vận hành tự khai báo, chưa được xác thực.
+                          </p>
+                          <label>
+                            Actor ID tự khai báo
+                            <input
+                              aria-label={'Actor ID tự khai báo cho effect ' + (entry.ordinal + 1)}
+                              value={draft.actorId}
+                              onChange={(event) => updateEffectReviewDraft(entry.ordinal, {
+                                actorId: event.currentTarget.value,
+                              })}
+                            />
+                          </label>
+                          <label>
+                            Lý do rà soát
+                            <select
+                              aria-label={'Lý do rà soát effect ' + (entry.ordinal + 1)}
+                              value={draft.reasonCode}
+                              onChange={(event) => updateEffectReviewDraft(entry.ordinal, {
+                                reasonCode: event.currentTarget.value as EffectReviewReason,
+                                ...(event.currentTarget.value === 'PROVIDER_EVIDENCE_MISSING'
+                                  ? { disposition: 'AWAITING_EVIDENCE' as const } : {}),
+                              })}
+                            >
+                              {Object.entries(effectReviewReasonLabels).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            Kết luận ghi chú (không phải kết quả provider)
+                            <select
+                              aria-label={'Kết luận ghi chú effect ' + (entry.ordinal + 1)}
+                              value={draft.disposition}
+                              onChange={(event) => updateEffectReviewDraft(entry.ordinal, {
+                                disposition: event.currentTarget.value as EffectReviewDisposition,
+                              })}
+                            >
+                              {Object.entries(effectReviewDispositionLabels).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            ID chứng cứ đã lưu (tối đa 8, phân tách bằng dấu phẩy)
+                            <input
+                              aria-label={'ID chứng cứ effect ' + (entry.ordinal + 1)}
+                              value={draft.evidenceRefsText}
+                              placeholder={missingEvidenceOnly ? 'Để trống nếu chưa có chứng cứ' : 'Nhập ID chứng cứ đã tồn tại'}
+                              onChange={(event) => updateEffectReviewDraft(entry.ordinal, {
+                                evidenceRefsText: event.currentTarget.value,
+                              })}
+                            />
+                          </label>
+                          <button
+                            aria-label={'Ghi chú rà soát effect ' + (entry.ordinal + 1)}
+                            disabled={reviewBusy || loading || loadingMore || !canSubmit}
+                            onClick={() => void recordManualEffectReview(
+                              entry.ordinal, entry.kind as 'PUBLISH' | 'COMMENT',
+                              entry.state as 'INTENT' | 'ATTEMPT_UNCERTAIN' | 'NEEDS_REVIEW',
+                            )}
+                          >
+                            Ghi chú rà soát (không xác nhận, không retry)
+                          </button>
+                        </div>
+                      )}
+                  </li>
+                );
+              })}
             </ol>
           )}
           <h3>Yêu cầu rà soát cleanup đã lưu</h3>
