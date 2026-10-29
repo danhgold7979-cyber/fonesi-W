@@ -185,6 +185,20 @@ else {
         }).parse(raw);
         return nativeStageReview.reobserve(selection.jobId, selection.ordinal);
       });
+      ipcMain.handle('studio:stage-cleanup-recheck', async (event, raw: unknown) => {
+        if (
+          event.sender !== window?.webContents ||
+          event.senderFrame !== window.webContents.mainFrame ||
+          event.senderFrame.url !== allowedUrl
+        ) throw new Error('Unauthorized sender');
+        // Untrusted renderer supplies only one persisted jobId+ordinal. Private
+        // MANUAL lease, ADB transport, operator ID and request ID are host-minted.
+        const selection = z.strictObject({
+          jobId: idSchema,
+          ordinal: z.number().int().min(0).max(31),
+        }).parse(raw);
+        return nativeStageReview.recordCleanupRecheck(selection.jobId, selection.ordinal);
+      });
       ipcMain.handle('studio:stage-cleanup-absence', async (event, raw: unknown) => {
         if (
           event.sender !== window?.webContents ||
