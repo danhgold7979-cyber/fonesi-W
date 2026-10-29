@@ -132,6 +132,13 @@ export type InternalRequest =
   | { command: 'lease.release'; lease: DeviceLease }
   | { command: 'queue.claim'; deviceId: string; ownerId: string; at: number; ttl: number }
   | { command: 'queue.renew'; jobId: string; lease: DeviceLease; at: number; ttl: number }
+  | {
+      command: 'job.requestCancellation';
+      jobId: string;
+      expectedRevision: number;
+      actorId: string;
+      at: number;
+    }
   | { command: 'queue.recover'; deviceId: string; at: number }
   | { command: 'queue.reconcileSleep'; suspendedAt: number; resumedAt: number }
   | {
@@ -346,6 +353,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.claimDueJob(request.deviceId, request.ownerId, request.at, request.ttl);
     case 'queue.renew':
       return db.renewJobClaim(request.jobId, request.lease, request.at, request.ttl);
+    case 'job.requestCancellation':
+      return db.requestJobCancellation(request);
     case 'queue.recover':
       return db.recoverExpiredClaims(request.deviceId, request.at);
     case 'queue.reconcileSleep':
