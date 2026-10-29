@@ -465,7 +465,10 @@ it('projects durable effect uncertainty without leaking effect IDs, keys or evid
   expect(first.effectReview).toEqual({
     scope: 'PERSISTED_EFFECT_JOURNAL_NOT_PROVIDER_VERIFIED',
     status: 'REVIEW_REQUIRED', total: 1, hasMore: false, hasUnresolved: true,
-    entries: [{ ordinal: 0, kind: 'PUBLISH', state: 'INTENT' }],
+    entries: [{
+      ordinal: 0, kind: 'PUBLISH', state: 'INTENT',
+      manualReviewCount: 0, latestManualReview: null,
+    }],
     canConfirm: false, canRetry: false, canDispatch: false,
   });
   const publicPage = await dispatch(db, {
