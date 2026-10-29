@@ -1168,8 +1168,13 @@ it('compares one exact provider comment privately without certifying its synthet
   expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
     .toEqual({ requeued: [], review: [f.jobId] });
   expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  const afterRecovery = read();
+  expect(afterRecovery[0]).toBe(before[0]);
+  // Recovery writes a legitimate NEEDS_REVIEW audit event; a read-only
+  // provider candidate review must not write another event.
+  expect(afterRecovery[1]).toBeGreaterThan(before[1]!);
   expect(dispatchInternal(db, req)).toEqual(review);
-  expect(read()).toEqual(before);
+  expect(read()).toEqual(afterRecovery);
 });
 
 it('hydrates only the exact immutable multiline Unicode COMMENT into the private adapter after durable journal', async () => {
