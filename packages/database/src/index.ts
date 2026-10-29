@@ -103,6 +103,7 @@ import { deriveFrozenCommentList, type FrozenCommentListPlan } from './comment-l
 import { assessProviderCommentCandidates, type ProviderCommentObservation, type CommentCandidateAssessment } from './comment-verification.js';
 import { assessPersistedCommentJournal, type PersistedCommentJournalRow, type CommentJournalListReview } from './comment-journal-review.js';
 import { assessPersistedCommentPartialOutcome, type PersistedPublishReviewRow, type CommentPartialOutcomeReview } from './comment-partial-outcome.js';
+import { assessPostCleanupReadiness, type PostCleanupEffectRow, type PostCleanupReadiness } from './post-cleanup-review.js';
 export type { ProviderCommentObservation } from './comment-verification.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
@@ -3034,6 +3035,38 @@ export class StudioDatabase {
       ordinal: stage.ordinal, assetId, pinnedHash: stage.expectedHash,
       pinnedBytes: stage.expectedBytes, extension,
     };
+  }
+
+  /**
+   * S102.1 job-wide post-success owned-media cleanup gate. This examines
+   * persisted evidence only; no provider certification, deletion or dispatch.
+   * It is distinct from the pre-effect MANUAL stage repair review below.
+   */
+  reviewPostCleanupReadiness(args: {
+    jobId: string;
+    expectedSnapshotHash: string;
+  }): PostCleanupReadiness {
+    idSchema.parse(args.jobId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    const { job, snapshot, snapshotHash } = this.getJob(args.jobId);
+    if (snapshotHash !== args.expectedSnapshotHash)
+      throw new DomainError('POST_CLEANUP_SNAPSHOT_STALE',
+        'Post cleanup readiness requires the exact frozen job snapshot.');
+    const stages = this.listDeviceStageTransfers(job.id);
+    const effects = this.db.prepare(
+      'SELECT kind,state FROM effects WHERE job_id=? ' +
+      'ORDER BY created_at,id LIMIT 34',
+    ).all(job.id) as unknown as PostCleanupEffectRow[];
+    const hasJobClaim = Boolean(this.db.prepare(
+      'SELECT 1 FROM job_claims WHERE job_id=? LIMIT 1',
+    ).get(job.id));
+    const pendingCleanupReviewCount = Number(this.db.prepare(
+      'SELECT COUNT(*) AS n FROM device_stage_cleanup_reviews WHERE job_id=?',
+    ).get(job.id)?.n ?? 0);
+    return assessPostCleanupReadiness({
+      job, snapshot, snapshotHash, stages, effects,
+      hasJobClaim, pendingCleanupReviewCount,
+    });
   }
 
   /**
