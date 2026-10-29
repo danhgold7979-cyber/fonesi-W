@@ -161,6 +161,24 @@ export interface FrozenComposePreflight {
   canDispatch: false;
 }
 
+/** SQLite-persisted effect inventory only; never certifies a provider post. */
+export interface PersistedEffectReview {
+  scope: 'PERSISTED_EFFECT_JOURNAL_NOT_PROVIDER_VERIFIED';
+  status: 'NO_EFFECTS' | 'REVIEW_REQUIRED' | 'RECORDED_NOT_LIVE_VERIFIED';
+  total: number;
+  hasMore: boolean;
+  /** From all persisted rows, not just newest 20 visible entries. */
+  hasUnresolved: boolean;
+  entries: {
+    ordinal: number;
+    kind: 'PUBLISH' | 'COMMENT' | 'UNKNOWN';
+    state: import('./models.js').EffectState | 'UNKNOWN';
+  }[];
+  canConfirm: false;
+  canRetry: false;
+  canDispatch: false;
+}
+
 /** Operator-visible persistence projection only. No paths, hashes, nonces, serials or owner IDs. */
 export interface JobStageReviewPage {
   jobId: string;
@@ -192,6 +210,7 @@ export interface JobStageReviewPage {
   mediaOrder: PersistedOrderedMediaReport;
   frozenUnicode: FrozenUnicodePreflight;
   compose: FrozenComposePreflight;
+  effectReview: PersistedEffectReview;
   hasMore: boolean;
   nextCursor: string | null;
 }

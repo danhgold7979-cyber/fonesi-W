@@ -2662,6 +2662,45 @@ export class StudioDatabase {
     const hasExternalEffect = Boolean(this.db.prepare(
       'SELECT 1 FROM effects WHERE job_id=? LIMIT 1',
     ).get(jobId));
+    // S099/S101: this is a bounded persisted inventory, NOT provider confirmation.
+    // The global unresolved check must include older rows beyond the visible page.
+    const effectRows = this.db.prepare(
+      'SELECT kind,state FROM effects WHERE job_id=? ' +
+      'ORDER BY created_at DESC,id DESC LIMIT 21',
+    ).all(jobId);
+    const effectTotal = Number(this.db.prepare(
+      'SELECT COUNT(*) AS total FROM effects WHERE job_id=?',
+    ).get(jobId)?.total ?? 0);
+    const anyUnresolvedEffect = Boolean(this.db.prepare(
+      "SELECT 1 FROM effects WHERE job_id=? AND state IN(" +
+      "'INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW') LIMIT 1",
+    ).get(jobId));
+    const anyUnknownEffectState = Boolean(this.db.prepare(
+      "SELECT 1 FROM effects WHERE job_id=? AND state NOT IN(" +
+      "'INTENT','ATTEMPT_UNCERTAIN','CONFIRMED','DEFINITIVELY_REJECTED','NEEDS_REVIEW') LIMIT 1",
+    ).get(jobId));
+    const hasUnresolved = anyUnresolvedEffect || anyUnknownEffectState;
+    const allowedEffectStates = new Set([
+      'INTENT', 'ATTEMPT_UNCERTAIN', 'CONFIRMED',
+      'DEFINITIVELY_REJECTED', 'NEEDS_REVIEW',
+    ]);
+    const effectReview: JobStageReviewPage['effectReview'] = {
+      scope: 'PERSISTED_EFFECT_JOURNAL_NOT_PROVIDER_VERIFIED',
+      status: effectTotal === 0 ? 'NO_EFFECTS' :
+        hasUnresolved ? 'REVIEW_REQUIRED' : 'RECORDED_NOT_LIVE_VERIFIED',
+      total: effectTotal,
+      hasMore: effectRows.length > 20,
+      hasUnresolved,
+      entries: effectRows.slice(0, 20).map((row, ordinal) => ({
+        ordinal,
+        kind: row.kind === 'PUBLISH' || row.kind === 'COMMENT' ? row.kind : 'UNKNOWN',
+        state: allowedEffectStates.has(String(row.state))
+          ? row.state as JobStageReviewPage['effectReview']['entries'][number]['state']
+          : 'UNKNOWN',
+      })),
+      canConfirm: false, canRetry: false, canDispatch: false,
+    };
+
     const mediaOrder = assessPersistedMediaOrder({
       job, snapshot, snapshotHash, stages: ownedStages,
       claimGeneration: claim ? Number(claim.generation) : null,
@@ -2685,7 +2724,7 @@ export class StudioDatabase {
     return {
       jobId, jobRevision: job.revision, jobState: job.state, scope: 'PERSISTED_ONLY',
       canDispatch: false, stages, observations, cleanupRequests, cleanupHasMore,
-      mediaOrder, frozenUnicode, compose, hasMore, nextCursor,
+      mediaOrder, frozenUnicode, compose, effectReview, hasMore, nextCursor,
     };
   }
 

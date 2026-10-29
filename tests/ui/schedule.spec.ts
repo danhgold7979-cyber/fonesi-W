@@ -588,6 +588,14 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
       'host_stage_secret', snapshotHash, 1, 1, 2, 'audit_review_ui_23',
       'REVIEW_REQUESTED_HARDWARE_PENDING', '2026-10-28T00:03:00.000Z',
     );
+    connection.prepare(
+      'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,' +
+      'state,evidence_ref,created_at) VALUES(?,?,?,?,?,?,?,?,?)',
+    ).run(
+      'effect_private_review_ui', jobId, 'publish_ui_private', 'PUBLISH',
+      '9'.repeat(64), '8'.repeat(64), 'ATTEMPT_UNCERTAIN',
+      'external_private_evidence', '2026-10-28T00:03:01.000Z',
+    );
   } finally { connection.close(); }
 
   await page.goto('http://127.0.0.1:4176/');
@@ -613,6 +621,11 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).toContainText('Đích đăng và nội dung đã ghim (chưa kiểm chứng Android)');
   await expect(dialog.getByTestId('frozen-compose-status'))
     .toContainText('Compose bị chặn');
+  await expect(dialog).toContainText('Nhật ký effect đã lưu (chưa xác minh bài đăng)');
+  await expect(dialog.getByTestId('effect-journal-status'))
+    .toContainText('Có effect chưa được đối soát');
+  await expect(dialog.getByTestId('effect-journal-entry')).toHaveCount(1);
+  await expect(dialog).toContainText('Đã ghi cửa sổ thao tác không chắc chắn');
   await expect(dialog.getByRole('button', { name: /Xác minh|Đăng bài|Publish/ }))
     .toHaveCount(0);
   await expect(dialog).toContainText('Chưa ghim tài khoản cho job');
@@ -660,11 +673,16 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).not.toContainText(nonce);
   await expect(dialog).not.toContainText('host_stage_secret');
   await expect(dialog).not.toContainText('cleanup_ui_private_request');
+  for (const secret of ['effect_private_review_ui', 'publish_ui_private',
+    'external_private_evidence', '9'.repeat(64), '8'.repeat(64)])
+    await expect(dialog).not.toContainText(secret);
   await expect(dialog.getByRole('button', { name: /Đăng|Xóa|Chạy lại|Chọn media/ })).toHaveCount(0);
   const report = await request<unknown>(page, 'jobStageReview', { id: jobId });
   const response = JSON.stringify(report);
   for (const secret of [remotePath, nonce, mediaHash, secretCaption, stageId,
-    'host_stage_secret', 'cleanup_ui_private_request'])
+    'host_stage_secret', 'cleanup_ui_private_request',
+    'effect_private_review_ui', 'publish_ui_private',
+    'external_private_evidence', '9'.repeat(64), '8'.repeat(64)])
     expect(response).not.toContain(secret);
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
   const after = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {

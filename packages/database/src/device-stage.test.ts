@@ -427,6 +427,11 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
         'ACCOUNT_NOT_PINNED', 'TARGET_NOT_PINNED', 'MEDIA_ORDER_NOT_VERIFIED',
       ]),
     }),
+    effectReview: {
+      scope: 'PERSISTED_EFFECT_JOURNAL_NOT_PROVIDER_VERIFIED',
+      status: 'NO_EFFECTS', total: 0, hasMore: false, hasUnresolved: false,
+      entries: [], canConfirm: false, canRetry: false, canDispatch: false,
+    },
     hasMore: false, nextCursor: null,
   });
   expect(page.frozenUnicode.canType).toBe(false);
@@ -449,6 +454,70 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
   expect(db.listDeviceStageTransfers(f.jobId)).toHaveLength(0);
 });
 
+
+it('projects durable effect uncertainty without leaking effect IDs, keys or evidence', async () => {
+  const f = fixture(), before = db.getJob(f.jobId).job;
+  const key = contentHash('private_effect_key'), payload = contentHash('private_payload');
+  const effectId = db.recordIntent(f.jobId, 'publish_node', 'PUBLISH', key, payload);
+  const first = db.jobStageReview(f.jobId);
+  expect(first.effectReview).toEqual({
+    scope: 'PERSISTED_EFFECT_JOURNAL_NOT_PROVIDER_VERIFIED',
+    status: 'REVIEW_REQUIRED', total: 1, hasMore: false, hasUnresolved: true,
+    entries: [{ ordinal: 0, kind: 'PUBLISH', state: 'INTENT' }],
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  const publicPage = await dispatch(db, {
+    operationId: 'op_effect_status_only', command: 'jobStageReview',
+    input: { id: f.jobId },
+  });
+  for (const secret of [effectId, key, payload, 'publish_node']) {
+    expect(JSON.stringify(first)).not.toContain(secret);
+    expect(JSON.stringify(publicPage)).not.toContain(secret);
+  }
+  expect(db.getJob(f.jobId).job).toEqual(before);
+  expect(db.effectState(effectId)).toBe('INTENT');
+  db.close();
+  db = new StudioDatabase(dbPath());
+  expect(db.jobStageReview(f.jobId).effectReview).toEqual(first.effectReview);
+  expect(db.effectState(effectId)).toBe('INTENT');
+});
+
+it('checks the full durable effect journal for hidden unresolved attempts beyond the newest page', () => {
+  const f = fixture(), before = db.getJob(f.jobId).job;
+  sql((connection) => {
+    const insert = connection.prepare(
+      'INSERT INTO effects(id,job_id,node_id,kind,effect_key,payload_hash,' +
+      'state,evidence_ref,created_at) VALUES(?,?,?,?,?,?,?,?,?)',
+    );
+    for (let i = 0; i < 24; i++) {
+      insert.run(
+        'effect_private_' + i, f.jobId, 'publish_fixture', 'PUBLISH',
+        contentHash('key_' + i), contentHash('payload_' + i),
+        i === 0 ? 'ATTEMPT_UNCERTAIN' : 'CONFIRMED',
+        i === 0 ? 'private_post_evidence' : null,
+        new Date(Date.parse('2026-10-28T00:00:00.000Z') + i * 1000).toISOString(),
+      );
+    }
+  });
+  const p = db.jobStageReview(f.jobId);
+  expect(p.effectReview).toMatchObject({
+    status: 'REVIEW_REQUIRED', total: 24, hasMore: true, hasUnresolved: true,
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  expect(p.effectReview.entries).toHaveLength(20);
+  expect(p.effectReview.entries.every((e) => e.state === 'CONFIRMED')).toBe(true);
+  expect(JSON.stringify(p)).not.toContain('private_post_evidence');
+  expect(JSON.stringify(p)).not.toContain('effect_private_0');
+  expect(db.getJob(f.jobId).job).toEqual(before);
+  sql((connection) => connection.prepare(
+    "UPDATE effects SET state='DEFINITIVELY_REJECTED' WHERE id='effect_private_0'",
+  ).run());
+  const resolved = db.jobStageReview(f.jobId).effectReview;
+  expect(resolved.status).toBe('RECORDED_NOT_LIVE_VERIFIED');
+  expect(resolved.hasUnresolved).toBe(false);
+  expect(resolved.canRetry).toBe(false);
+  expect(resolved.canConfirm).toBe(false);
+});
 it('derives persisted exact MediaStore candidate evidence from the frozen job, never picker readiness', () => {
   const f = fixture();
   const stage = readyForReconciliation(f);

@@ -62,6 +62,16 @@ const composeBlockerLabels: Record<FrozenComposeBlocker, string> = {
   EMPTY_FROZEN_CONTENT: 'Job không có media hoặc text được đóng băng',
   EXTERNAL_EFFECT_PRESENT: 'Có external effect cũ; không tự tiếp tục compose',
 };
+const effectStateLabels: Record<
+  JobStageReviewPage['effectReview']['entries'][number]['state'], string
+> = {
+  INTENT: 'Đã ghi ý định, chưa rõ đã gửi thao tác hay chưa',
+  ATTEMPT_UNCERTAIN: 'Đã ghi cửa sổ thao tác không chắc chắn, cần đối soát',
+  CONFIRMED: 'Đã ghi nhận xác nhận trong DB; cần kiểm tra chứng cứ provider riêng',
+  DEFINITIVELY_REJECTED: 'Đã ghi nhận từ chối; không tự chạy lại',
+  NEEDS_REVIEW: 'Cần người vận hành đối soát',
+  UNKNOWN: 'Trạng thái không xác định; phải dừng để kiểm tra',
+};
 /** Operator-facing persisted history only. No lease, ADB, deletion or dispatch. */
 export function JobStageReviewDialog({ jobId, close }: Props) {
   const [report, setReport] = useState<JobStageReviewPage | null>(null);
@@ -346,6 +356,38 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
               {report.compose.blockers.map((code) =>
                 <li key={code}>{composeBlockerLabels[code]}</li>)}
             </ul>
+          )}
+          <h3>Nhật ký effect đã lưu (chưa xác minh bài đăng)</h3>
+          <p className="muted">
+            Chỉ hiển thị trạng thái đã lưu trong SQLite. Không hiển thị ID effect,
+            khóa idempotency, mã băm, nội dung hay mã bài đăng. Dữ liệu lịch sử
+            không chứng nhận bài đã đăng và không cấp quyền đăng lại hoặc xác nhận.
+          </p>
+          <p role="status" data-testid="effect-journal-status">
+            {report.effectReview.status === 'NO_EFFECTS'
+              ? 'Chưa có external effect được ghi.'
+              : report.effectReview.status === 'REVIEW_REQUIRED'
+                ? 'Có effect chưa được đối soát; không tự đăng lại hoặc gửi bình luận.'
+                : 'Có kết quả effect đã ghi nhưng chưa có xác minh provider trực tiếp.'}
+          </p>
+          <p>
+            Tổng số bản ghi: {report.effectReview.total}.
+            {' '}{report.effectReview.hasMore ? 'Chỉ hiển thị 20 bản ghi mới nhất.' : 'Hiển thị toàn bộ bản ghi trong giới hạn.'}
+            {' '}{report.effectReview.hasUnresolved
+              ? 'Cần review cả các effect có thể nằm ngoài trang hiển thị.'
+              : 'Không ghi nhận trạng thái chưa giải quyết trong journal hiện tại.'}
+          </p>
+          {report.effectReview.entries.length > 0 && (
+            <ol aria-label="Các external effect đã ghi">
+              {report.effectReview.entries.map((entry) => (
+                <li key={entry.ordinal} data-testid="effect-journal-entry">
+                  <strong>Effect {entry.ordinal + 1}</strong> ·
+                  {' '}{entry.kind === 'PUBLISH' ? 'Đăng bài' :
+                    entry.kind === 'COMMENT' ? 'Bình luận' : 'Loại không xác định'} ·
+                  {' '}{effectStateLabels[entry.state]}.
+                </li>
+              ))}
+            </ol>
           )}
           <h3>Yêu cầu rà soát cleanup đã lưu</h3>
           <p className="muted">
