@@ -94,6 +94,30 @@ export interface JobPreflightReport {
   blockers: { code: string; message: string }[];
 }
 
+/** Operator-visible persistence projection only. No paths, hashes, nonces, serials or owner IDs. */
+export interface JobStageReviewPage {
+  jobId: string;
+  jobRevision: number;
+  jobState: JobDefinition['state'];
+  scope: 'PERSISTED_ONLY';
+  canDispatch: false;
+  stages: {
+    ordinal: number;
+    state: 'INTENT' | 'TRANSFER_UNCERTAIN' | 'SYNC_ACK_UNVERIFIED' | 'NEEDS_REVIEW';
+    remoteBytes: 'MATCH_RECORDED_NOT_LIVE' | 'NOT_RECORDED';
+    mediaStore: 'ROW_RECORDED_NOT_PICKER_VERIFIED' | 'NOT_RECORDED';
+  }[];
+  observations: {
+    stageOrdinal: number;
+    classification: import('./media.js').StageReconciliationClassification;
+    mediaStoreStatus: import('./media.js').DeviceStageReconciliation['mediaStoreStatus'];
+    leaseOwnerKind: 'JOB' | 'MANUAL';
+    createdAt: string;
+  }[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
 export type QueueClaimResult =
   | {
       status: 'CLAIMED';

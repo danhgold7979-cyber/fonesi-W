@@ -402,6 +402,103 @@ it('requeues stage-free expired preflight and deletes its historical claim', () 
   expect(db.getJob(f.jobId).job.state).toBe('QUEUED');
 });
 
+
+it('projects a stage-free job as a bounded redacted read-only operator inventory', async () => {
+  const f = fixture();
+  const before = db.getJob(f.jobId).job;
+  const page = db.jobStageReview(f.jobId);
+  expect(page).toEqual({
+    jobId: f.jobId, jobRevision: f.jobRevision, jobState: 'PREFLIGHT',
+    scope: 'PERSISTED_ONLY', canDispatch: false,
+    stages: [], observations: [], hasMore: false, nextCursor: null,
+  });
+  const publicPage = await dispatch(db, {
+    operationId: 'op_review_read_only', command: 'jobStageReview', input: { id: f.jobId },
+  });
+  expect(publicPage).toEqual(page);
+  await expect(dispatch(db, {
+    operationId: 'op_review_forged', command: 'jobStageReview',
+    input: { id: f.jobId, lease: f.lease, command: 'stage.recordReconciliation' },
+  })).rejects.toThrow();
+  expect(db.getJob(f.jobId).job).toEqual(before);
+  expect(db.listDeviceStageTransfers(f.jobId)).toHaveLength(0);
+});
+
+it('paginates redacted JOB and MANUAL audit history without changing review state or leaking ownership bytes', async () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  db.recordClaimedDeviceStageReconciliation({
+    requestId: 'stage_audit_initial_job', stageId: stage.id,
+    lease: f.lease, expectedJobRevision: f.jobRevision,
+    classification: 'REMOTE_BYTES_MATCHED',
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'NOT_INDEXED', at: at + 240,
+  });
+  expect(db.recoverExpiredClaims(f.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  const manual = db.acquireLease(f.deviceId, 'stage_review_operator', 'MANUAL', at + 3001, 5000);
+  const revision = db.getJob(f.jobId).job.revision;
+  for (let i = 0; i < 24; i++)
+    db.recordClaimedDeviceStageReconciliation({
+      requestId: 'stage_audit_manual_' + String(i).padStart(3, '0'),
+      stageId: stage.id, hostId, expectedSnapshotHash: f.snapshotHash,
+      lease: manual, expectedJobRevision: revision,
+      classification: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED',
+      observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+      mediaStoreStatus: 'INDEXED_EXACT', at: at + 3010 + i,
+    });
+  const stageBefore = db.listDeviceStageTransfers(f.jobId)[0]!;
+  const jobBefore = db.getJob(f.jobId).job;
+  const first = db.jobStageReview(f.jobId);
+  expect(first).toMatchObject({
+    jobId: f.jobId, jobState: 'NEEDS_REVIEW', jobRevision: revision,
+    scope: 'PERSISTED_ONLY', canDispatch: false, hasMore: true,
+    stages: [{
+      ordinal: 0, state: 'SYNC_ACK_UNVERIFIED',
+      remoteBytes: 'MATCH_RECORDED_NOT_LIVE', mediaStore: 'NOT_RECORDED',
+    }],
+  });
+  expect(first.observations).toHaveLength(20);
+  expect(first.observations[0]).toMatchObject({
+    stageOrdinal: 0, leaseOwnerKind: 'MANUAL',
+    classification: 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED',
+    mediaStoreStatus: 'INDEXED_EXACT',
+  });
+  expect(first.nextCursor).toEqual(expect.any(String));
+  const second = db.jobStageReview(f.jobId, first.nextCursor!);
+  expect(second).toMatchObject({ hasMore: false, nextCursor: null });
+  expect(second.observations).toHaveLength(5);
+  expect(second.observations.at(-1)?.leaseOwnerKind).toBe('JOB');
+  expect(second.observations.at(-1)?.classification).toBe('REMOTE_BYTES_MATCHED');
+  const merged = [...first.observations, ...second.observations];
+  expect(merged).toHaveLength(25);
+  expect(new Set(merged.map((r) => r.createdAt)).size).toBe(25);
+
+  for (const page of [first, second]) {
+    const serialized = JSON.stringify(page);
+    for (const secret of [
+      stage.remotePath, stage.nonce, stage.expectedHash, f.deviceId, hostId,
+      f.lease.ownerId, manual.ownerId, stage.id, f.snapshotHash,
+    ]) expect(serialized).not.toContain(secret);
+  }
+  const decoded = JSON.parse(Buffer.from(first.nextCursor!, 'base64url').toString('utf8')) as
+    { jobId: string; revision: number; createdAt: string; id: string };
+  const otherJobCursor = Buffer.from(JSON.stringify({
+    ...decoded, jobId: 'another_job',
+  })).toString('base64url');
+  expect(() => db.jobStageReview(f.jobId, otherJobCursor))
+    .toThrow('another job');
+  expect(() => db.jobStageReview(f.jobId, 'not/a/base64/cursor'))
+    .toThrow('Invalid stage review cursor');
+  expect(() => db.jobStageReview(f.jobId, Buffer.from('{}').toString('base64url')))
+    .toThrow('Invalid stage review cursor');
+  sql((conn) => conn.prepare('UPDATE jobs SET revision=revision+1 WHERE id=?').run(f.jobId));
+  expect(() => db.jobStageReview(f.jobId, first.nextCursor!)).toThrow('Job changed');
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stageBefore);
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(reconciliationAuditCount(stage.id)).toBe(25);
+  expect(jobBefore.state).toBe('NEEDS_REVIEW');
+});
+
 it('private DB worker tracks one stage; public HTTP dispatcher cannot forge stage intent', async () => {
   const f = fixture();
   await expect(dispatch(db, {

@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { once } from 'node:events';
 import { StudioDatabase } from '../../packages/database/dist/index.js';
+import { DatabaseSync } from 'node:sqlite';
 import { contentHash } from '../../packages/domain/dist/index.js';
 import type { JobChangePreview, ScheduledJobSummary } from '@autoreels/contracts';
 
@@ -504,3 +505,121 @@ test('read-only job preflight shows persisted blockers without claiming a phone 
     });
   } finally { dbCheck.close(); }
 });
+
+
+test('NEEDS_REVIEW operator sees real persisted staging history without secrets or actions', async ({ page }) => {
+  const jobId = 'job_stage_review_ui';
+  const processId = 'process_stage_review_ui';
+  const stageId = 'stage_review_ui_fixture';
+  const assetId = 'asset_stage_review_ui';
+  const remotePath = '/sdcard/Download/AutoReelsStudio/job-' + jobId + '/secret-video.mp4';
+  const nonce = 'f'.repeat(32);
+  const mediaHash = 'd'.repeat(64);
+  const secretCaption = 'PRIVATE REVIEW CAPTION DO NOT RENDER';
+  const db = new StudioDatabase(join(directory, 'studio.sqlite'));
+  let snapshotHash = '';
+  try {
+    const original = db.getProcess('process_schedule_ui');
+    db.saveProcess({
+      ...original, id: processId, name: 'Review evidence fixture', revision: 0,
+    }, null);
+    db.saveContent({
+      id: 'content_stage_review_ui', processId, revision: 0,
+      fields: { caption: secretCaption }, assetIds: [], ignored: false,
+    }, null);
+    const version = db.getVersion(original.workflowVersionId!);
+    db.createJob({
+      id: jobId, occurrenceKey: contentHash('stage_review_ui_occurrence'),
+      processId, deviceId: original.deviceId!, contentId: 'content_stage_review_ui',
+      scheduledUtc: '2037-01-01T00:00:00.000Z', state: 'SCHEDULED',
+      revision: 0, priority: 0,
+    }, {
+      workflowVersionId: version.id, workflowHash: version.hash, bundle: version.bundle,
+      contentId: 'content_stage_review_ui', fields: { caption: secretCaption },
+      assetIds: [], targetId: null, networkProfileId: null,
+    });
+    snapshotHash = db.getJob(jobId).snapshotHash;
+  } finally { db.close(); }
+
+  const connection = new DatabaseSync(join(directory, 'studio.sqlite'));
+  try {
+    connection.exec('PRAGMA foreign_keys=ON');
+    connection.prepare(
+      'INSERT INTO assets(id,source_ref,relative_path,hash,kind,bytes,mtime_ms) VALUES(?,?,?,?,?,?,?)',
+    ).run(assetId, 'test-only', 'review.mp4', mediaHash, 'video', 72, 1);
+    connection.prepare("UPDATE jobs SET state='NEEDS_REVIEW',revision=1 WHERE id=?")
+      .run(jobId);
+    connection.prepare(
+      'INSERT INTO device_stage_transfers(' +
+      'id,job_id,device_id,host_id,asset_id,ordinal,snapshot_hash,expected_hash,' +
+      'expected_bytes,claim_generation,remote_path,nonce,state,created_at,updated_at' +
+      ') VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    ).run(
+      stageId, jobId, 'device_ui_fixture', 'host_stage_secret', assetId, 0,
+      snapshotHash, mediaHash, 72, 1, remotePath, nonce, 'SYNC_ACK_UNVERIFIED',
+      '2026-10-28T00:00:00.000Z', '2026-10-28T00:00:00.000Z',
+    );
+    connection.prepare(
+      'UPDATE device_stage_transfers SET remote_readback_hash=?,remote_readback_bytes=?,' +
+      'remote_readback_at=?,mediastore_row_id=?,mediastore_at=? WHERE id=?',
+    ).run(mediaHash, 72, '2026-10-28T00:00:01.000Z', '42',
+      '2026-10-28T00:00:02.000Z', stageId);
+    const insert = connection.prepare(
+      'INSERT INTO device_stage_reconciliations(' +
+      'id,request_id,stage_id,job_id,device_id,host_id,claim_generation,' +
+      'lease_owner_kind,lease_generation,classification,observed_hash,observed_bytes,' +
+      'mediastore_status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    );
+    for (let i = 0; i < 24; i++)
+      insert.run(
+        'audit_review_ui_' + i, 'request_review_ui_' + i, stageId, jobId,
+        'device_ui_fixture', 'host_stage_secret', 1, i % 2 === 0 ? 'JOB' : 'MANUAL',
+        i % 2 === 0 ? 1 : 2, 'MEDIASTORE_ROW_MATCHED_NOT_PICKER_VERIFIED',
+        mediaHash, 72, 'INDEXED_EXACT',
+        new Date(Date.parse('2026-10-28T00:01:00.000Z') + i * 1000).toISOString(),
+      );
+  } finally { connection.close(); }
+
+  await page.goto('http://127.0.0.1:4176/');
+  await page.locator('[data-route="schedule"]').click();
+  await page.getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
+    .selectOption(processId);
+  await expect(page.getByRole('button', { name: 'Hồ sơ đối soát ' + jobId })).toBeVisible();
+  const before = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+    query: { processId },
+  });
+  expect(before.jobs).toHaveLength(1);
+  await page.getByRole('button', { name: 'Hồ sơ đối soát ' + jobId }).click();
+  const dialog = page.getByRole('dialog', { name: 'Hồ sơ đối soát staging (chỉ đọc)' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('không kiểm tra điện thoại trực tiếp');
+  await expect(dialog).toContainText('Có bản ghi byte khớp');
+  await expect(dialog).toContainText('chưa xác minh picker');
+  await expect(dialog.getByTestId('stage-review-summary')).toHaveCount(1);
+  await expect(dialog.getByTestId('stage-review-observation')).toHaveCount(20);
+  await dialog.getByRole('button', { name: 'Tải thêm lịch sử' }).click();
+  await expect(dialog.getByTestId('stage-review-observation')).toHaveCount(24);
+  await expect(dialog).not.toContainText(secretCaption);
+  await expect(dialog).not.toContainText(remotePath);
+  await expect(dialog).not.toContainText(mediaHash);
+  await expect(dialog).not.toContainText(nonce);
+  await expect(dialog).not.toContainText('host_stage_secret');
+  await expect(dialog.getByRole('button', { name: /Đăng|Xóa|Chạy lại/ })).toHaveCount(0);
+  const report = await request<unknown>(page, 'jobStageReview', { id: jobId });
+  const response = JSON.stringify(report);
+  for (const secret of [remotePath, nonce, mediaHash, secretCaption, stageId, 'host_stage_secret'])
+    expect(response).not.toContain(secret);
+  await page.getByRole('button', { name: 'Đóng hộp thoại' }).click();
+  const after = await request<{ jobs: ScheduledJobSummary[] }>(page, 'jobs', {
+    query: { processId },
+  });
+  expect(after.jobs).toEqual(before.jobs);
+  const dbCheck = new StudioDatabase(join(directory, 'studio.sqlite'));
+  try {
+    expect(dbCheck.getJob(jobId).job).toMatchObject({ state: 'NEEDS_REVIEW', revision: 1 });
+    expect(dbCheck.listDeviceStageTransfers(jobId)[0]).toMatchObject({
+      id: stageId, state: 'SYNC_ACK_UNVERIFIED',
+    });
+  } finally { dbCheck.close(); }
+});
+

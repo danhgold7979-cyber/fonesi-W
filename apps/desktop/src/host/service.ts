@@ -151,6 +151,7 @@ const schemas = {
   previewJobChanges: z.strictObject({ request: jobChangeRequestSchema }),
   applyJobChanges: z.strictObject({ token: idSchema }),
   jobPreflight: id,
+  jobStageReview: id.extend({ cursor: z.string().min(1).max(1024).optional() }),
   jobs: z.strictObject({
     query: z.strictObject({
       cursor: z.string().min(1).max(4096).optional(),
@@ -308,6 +309,10 @@ export async function dispatch(
       return db.listJobs(schemas.jobs.parse(input).query);
     case 'jobPreflight':
       return db.inspectJobPreflight(id.parse(input).id);
+    case 'jobStageReview': {
+      const p = schemas.jobStageReview.parse(input);
+      return db.jobStageReview(p.id, p.cursor);
+    }
     case 'previewJobChanges':
       return db.previewJobChanges(schemas.previewJobChanges.parse(input).request, hostId);
     case 'applyJobChanges':

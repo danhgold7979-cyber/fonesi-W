@@ -14,6 +14,7 @@ import { JobBatchActions } from './JobBatchActions.js';
 import { calendarRange, localToday, moveCalendar, type CalendarView } from './calendar.js';
 import { ScheduleCalendar } from './ScheduleCalendar.js';
 import { JobPreflightDialog } from './JobPreflightDialog.js';
+import { JobStageReviewDialog } from './JobStageReviewDialog.js';
 
 const stateLabels: Record<JobDefinition['state'], string> = {
   DRAFT: 'Nháp',
@@ -64,6 +65,7 @@ export function Schedule(props: Props) {
     [selection, setSelection] = useState<Set<string>>(new Set()),
     [selected, setSelected] = useState<ScheduledJobSummary | null>(null),
     [preflightJobId, setPreflightJobId] = useState<string | null>(null),
+    [stageReviewJobId, setStageReviewJobId] = useState<string | null>(null),
     [date, setDate] = useState(''),
     [time, setTime] = useState(''),
     [busy, setBusy] = useState(false);
@@ -118,6 +120,7 @@ export function Schedule(props: Props) {
     setLoadingMore(false);
     setSelected(null);
     setPreflightJobId(null);
+    setStageReviewJobId(null);
     setSelection(new Set());
     scroll.current?.scrollTo({ top: 0 });
     void Promise.resolve()
@@ -464,6 +467,14 @@ export function Schedule(props: Props) {
                       >
                         Kiểm tra
                       </button>
+                      {job.state === 'NEEDS_REVIEW' && (
+                        <button
+                          aria-label={'Hồ sơ đối soát ' + job.id}
+                          onClick={() => setStageReviewJobId(job.id)}
+                        >
+                          Hồ sơ đối soát
+                        </button>
+                      )}
                       <button
                         disabled={job.state !== 'SCHEDULED'}
                         aria-label={'Sửa lịch ' + job.id}
@@ -515,6 +526,12 @@ export function Schedule(props: Props) {
         <JobPreflightDialog
           jobId={preflightJobId}
           close={() => setPreflightJobId(null)}
+        />
+      )}
+      {stageReviewJobId && (
+        <JobStageReviewDialog
+          jobId={stageReviewJobId}
+          close={() => setStageReviewJobId(null)}
         />
       )}
       {selected && (

@@ -36,6 +36,7 @@ import type {
   ContentQuery,
   ContentPage,
   JobPreflightReport,
+  JobStageReviewPage,
   MediaAsset,
   JobDefinition,
   JobSnapshot,
@@ -2541,6 +2542,89 @@ export class StudioDatabase {
       mediaStoreAt: row.mediastore_at == null ? null : String(row.mediastore_at),
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at),
+    };
+  }
+
+  /**
+   * Redacted read-only operator inventory: stage and append-only observations
+   * are persisted facts, NOT a live Android/MediaStore/picker certification.
+   * Never serialize stage ids, paths, nonces, hashes or lease owner identifiers.
+   */
+  jobStageReview(jobId: string, cursor?: string): JobStageReviewPage {
+    idSchema.parse(jobId);
+    const { job } = this.getJob(jobId);
+    let before: { createdAt: string; id: string } | null = null;
+    if (cursor !== undefined) {
+      if (typeof cursor !== 'string' || !/^[A-Za-z0-9_-]{1,1024}$/.test(cursor))
+        throw new DomainError('STAGE_REVIEW_CURSOR_INVALID', 'Invalid stage review cursor.');
+      try {
+        const decoded = Buffer.from(cursor, 'base64url').toString('utf8');
+        if (Buffer.from(decoded).toString('base64url') !== cursor)
+          throw new Error('Noncanonical cursor');
+        const value: unknown = JSON.parse(decoded);
+        if (!value || typeof value !== 'object' || Array.isArray(value))
+          throw new Error('Invalid cursor object');
+        const entry = value as Record<string, unknown>;
+        if (entry.jobId !== jobId)
+          throw new DomainError('STAGE_REVIEW_CURSOR_SCOPE', 'Cursor belongs to another job.');
+        if (entry.revision !== job.revision)
+          throw new DomainError('STAGE_REVIEW_CURSOR_STALE', 'Job changed; reload stage evidence.');
+        if (typeof entry.createdAt !== 'string' ||
+            !Number.isFinite(Date.parse(entry.createdAt)) ||
+            new Date(entry.createdAt).toISOString() !== entry.createdAt ||
+            !idSchema.safeParse(entry.id).success)
+          throw new Error('Invalid cursor content');
+        before = { createdAt: entry.createdAt, id: String(entry.id) };
+      } catch (error) {
+        if (error instanceof DomainError) throw error;
+        throw new DomainError('STAGE_REVIEW_CURSOR_INVALID', 'Invalid stage review cursor.');
+      }
+    }
+
+    const stageRows = this.db.prepare(
+      'SELECT ordinal,state, ' +
+      '(remote_readback_hash=expected_hash AND remote_readback_bytes=expected_bytes AND remote_readback_at IS NOT NULL) AS remote_matched, ' +
+      '(mediastore_row_id IS NOT NULL AND mediastore_at IS NOT NULL) AS row_recorded ' +
+      'FROM device_stage_transfers WHERE job_id=? ORDER BY ordinal LIMIT 33',
+    ).all(jobId);
+    if (stageRows.length > 32)
+      throw new DomainError('STAGE_REVIEW_LIMIT', 'Stage journal exceeds the job media limit.');
+    const stages: JobStageReviewPage['stages'] = stageRows.map((row) => ({
+      ordinal: Number(row.ordinal),
+      state: row.state as JobStageReviewPage['stages'][number]['state'],
+      remoteBytes: Number(row.remote_matched) === 1
+        ? 'MATCH_RECORDED_NOT_LIVE' : 'NOT_RECORDED',
+      mediaStore: Number(row.row_recorded) === 1
+        ? 'ROW_RECORDED_NOT_PICKER_VERIFIED' : 'NOT_RECORDED',
+    }));
+    const predicate = before
+      ? " AND (r.created_at<? OR (r.created_at=? AND r.id<?))" : '';
+    const query = 'SELECT r.id,r.created_at,r.classification,r.mediastore_status,r.lease_owner_kind,s.ordinal ' +
+      'FROM device_stage_reconciliations r JOIN device_stage_transfers s ON s.id=r.stage_id ' +
+      'WHERE r.job_id=?' + predicate + ' ORDER BY r.created_at DESC,r.id DESC LIMIT 21';
+    const args: Array<string> = before
+      ? [jobId, before.createdAt, before.createdAt, before.id] : [jobId];
+    const rows = this.db.prepare(query).all(...args);
+    const hasMore = rows.length > 20;
+    const page = rows.slice(0, 20);
+    const observations: JobStageReviewPage['observations'] = page.map((row) => ({
+      stageOrdinal: Number(row.ordinal),
+      classification: row.classification as JobStageReviewPage['observations'][number]['classification'],
+      mediaStoreStatus: row.mediastore_status == null ? null
+        : row.mediastore_status as JobStageReviewPage['observations'][number]['mediaStoreStatus'],
+      leaseOwnerKind: row.lease_owner_kind as 'JOB' | 'MANUAL',
+      createdAt: String(row.created_at),
+    }));
+    const last = page.at(-1);
+    const nextCursor = hasMore && last
+      ? Buffer.from(JSON.stringify({
+          jobId, revision: job.revision,
+          createdAt: String(last.created_at), id: String(last.id),
+        })).toString('base64url')
+      : null;
+    return {
+      jobId, jobRevision: job.revision, jobState: job.state, scope: 'PERSISTED_ONLY',
+      canDispatch: false, stages, observations, hasMore, nextCursor,
     };
   }
 

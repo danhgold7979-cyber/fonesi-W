@@ -19,6 +19,7 @@ import type {
   JobQuery,
   JobPage,
   JobPreflightReport,
+  JobStageReviewPage,
   JobChangeRequest,
   JobChangePreview,
   JobChangeResult,
@@ -143,6 +144,7 @@ export interface StudioApi {
   applySchedule(token: string): Promise<{ jobIds: string[]; alreadyApplied: boolean }>;
   jobs(query: JobQuery): Promise<JobPage>;
   jobPreflight(id: string): Promise<JobPreflightReport>;
+  jobStageReview(id: string, cursor?: string): Promise<JobStageReviewPage>;
   previewJobChanges(request: JobChangeRequest): Promise<JobChangePreview>;
   applyJobChanges(token: string): Promise<JobChangeResult>;
   rescheduleJob(
@@ -223,6 +225,7 @@ export type ApiCommand =
   | 'applySchedule'
   | 'jobs'
   | 'jobPreflight'
+  | 'jobStageReview'
   | 'rescheduleJob'
   | 'previewJobChanges'
   | 'applyJobChanges'
@@ -307,6 +310,8 @@ export function createStudioApi(transport: Transport): StudioApi {
     applySchedule: (token) => call('applySchedule', { token }),
     jobs: (query) => call('jobs', { query }),
     jobPreflight: (id) => call('jobPreflight', { id }),
+    jobStageReview: (id, cursor) =>
+      call('jobStageReview', { id, ...(cursor ? { cursor } : {}) }),
     previewJobChanges: (request) => call('previewJobChanges', { request }),
     applyJobChanges: (token) => call('applyJobChanges', { token }),
     rescheduleJob: (id, expectedRevision, localDate, localTime, timezone) =>
