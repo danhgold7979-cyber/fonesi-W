@@ -504,6 +504,48 @@ test('read-only job preflight shows persisted blockers without claiming a phone 
       revision: 0, state: 'SCHEDULED',
     });
   } finally { dbCheck.close(); }
+
+  // Simulate ONLY the Electron-native bridge after proving the public browser
+  // has no such capability. The fake is a safe status receipt, never real ADB.
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'studioStageReview', {
+      configurable: true,
+      value: {
+        reobserve: async () => { throw new Error('Not an Android fixture'); },
+        requestCleanupReview: async () => { throw new Error('No cleanup permission'); },
+        reviewCleanupAbsence: async () => ({
+          scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
+          status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+          remote: 'ABSENT', mediaStore: 'NOT_INDEXED',
+          blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+          canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+        }),
+      },
+    });
+  });
+  await page.goto('http://127.0.0.1:4176/');
+  await page.locator('[data-route="schedule"]').click();
+  await page.getByRole('combobox', { name: 'Lọc lịch theo tiến trình' })
+    .selectOption(processId);
+  await page.getByRole('button', { name: 'Hồ sơ đối soát ' + jobId }).click();
+  const nativeDialog = page.getByRole('dialog', { name: 'Hồ sơ đối soát staging' });
+  const readOnlyButton = nativeDialog.getByRole('button', {
+    name: 'Kiểm tra file staging còn hay mất media 1',
+  });
+  await expect(readOnlyButton).toBeVisible();
+  await readOnlyButton.click();
+  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result'))
+    .toContainText('Không thấy file ở đường dẫn staging sở hữu');
+  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result'))
+    .toContainText('Không xác nhận đã xóa');
+  const body = await nativeDialog.innerText();
+  for (const secret of [
+    remotePath, stageId, nonce, mediaHash, 'host_stage_secret',
+    'effect_private_review_ui', 'cleanup_ui_private_request',
+  ]) expect(body).not.toContain(secret);
+  await expect(nativeDialog.getByRole('button', {
+    name: /Xóa file|Thực hiện cleanup|Đăng lại|Retry bài/,
+  })).toHaveCount(0);
 });
 
 
@@ -637,6 +679,8 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).toContainText('Stage thừa, trùng hoặc nằm ngoài thứ tự asset');
   await expect(dialog).toContainText('không chọn theo tên tệp hoặc thumbnail');
   await expect(dialog.getByRole('button', { name: /Kiểm tra lại Android/ })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: /Kiểm tra file staging còn hay mất/ }))
+    .toHaveCount(0);
   await expect(dialog.getByRole('button', { name: /Ghi yêu cầu rà soát cleanup/ })).toHaveCount(0);
   expect(await page.evaluate(() => typeof (window as Window & {
     studioStageReview?: unknown;
@@ -661,6 +705,15 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
     },
   });
   expect(((await forged.json()) as { ok: boolean }).ok).toBe(false);
+  const forgedAbsence = await page.request.post(origin + '/api', {
+    headers: { Origin: origin, 'X-Studio-Token': token! },
+    data: {
+      operationId: 'op_untrusted_owned_absence',
+      command: 'stage.reviewCleanupAbsence',
+      input: { jobId, ordinal: 0 },
+    },
+  });
+  expect(((await forgedAbsence.json()) as { ok: boolean }).ok).toBe(false);
   await expect(dialog.getByTestId('stage-cleanup-review-request')).toHaveCount(1);
   await expect(dialog).toContainText('Đã ghi yêu cầu rà soát, đang chờ kiểm tra phần cứng');
   await expect(dialog).toContainText('không có file nào');
