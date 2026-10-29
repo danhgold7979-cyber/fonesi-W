@@ -2113,6 +2113,14 @@ export class StudioDatabase {
           .get(id),
       );
       assertJobTransition(job.state, to, pending);
+      // DB-only CONFIRMED/DEFINITIVELY_REJECTED is not independent provider
+      // proof. No generic terminal transition may hide a PUBLISH/COMMENT
+      // effect until a separate authenticated verifier transaction exists.
+      if (terminalJobStates.has(to) && this.db.prepare(
+        "SELECT 1 FROM effects WHERE job_id=? AND kind IN('PUBLISH','COMMENT') LIMIT 1",
+      ).get(id))
+        throw new DomainError('EFFECT_TERMINAL_CERTIFICATION_REQUIRED',
+          'External effect must be independently verified before terminal result.');
       if (to === 'RUNNING' &&
           this.db.prepare('SELECT 1 FROM device_stage_transfers WHERE job_id=? LIMIT 1').get(id))
         throw new DomainError('DEVICE_STAGE_UNVERIFIED', 'Android MediaStore verification missing.');
