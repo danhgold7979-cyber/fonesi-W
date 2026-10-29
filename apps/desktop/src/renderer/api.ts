@@ -1,14 +1,16 @@
 import { createStudioApi } from '@autoreels/contracts';
-import type { StudioApi, NativeStageReviewApi } from '@autoreels/contracts';
+import type { StudioApi, NativeStageReviewApi, NativeEffectReviewApi } from '@autoreels/contracts';
 
 declare global {
   interface Window {
     studioApi?: StudioApi;
     studioStageReview?: NativeStageReviewApi;
+    studioEffectReview?: NativeEffectReviewApi;
   }
 }
 /** This bridge is intentionally absent from the public loopback browser. */
 export const nativeStageReview: NativeStageReviewApi | null = window.studioStageReview ?? null;
+export const nativeEffectReview: NativeEffectReviewApi | null = window.studioEffectReview ?? null;
 export const api: StudioApi =
   window.studioApi ??
   createStudioApi(async (command, input) => {
