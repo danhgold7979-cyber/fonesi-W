@@ -546,6 +546,28 @@ test('read-only job preflight shows persisted blockers without claiming a phone 
   await expect(nativeDialog.getByRole('button', {
     name: /Xóa file|Thực hiện cleanup|Đăng lại|Retry bài/,
   })).toHaveCount(0);
+
+  // A forged native receipt containing an execution capability or raw
+  // private path is rejected before rendering a follow-up status.
+  await page.evaluate(() => {
+    const w = window as Window & {
+      studioStageReview?: { reviewCleanupAbsence: () => Promise<unknown> };
+    };
+    if (!w.studioStageReview) throw new Error('Missing fake native review bridge');
+    w.studioStageReview.reviewCleanupAbsence = async () => ({
+      scope: 'PRIVATE_OWNED_STAGE_ABSENCE_NOT_DELETE_CERTIFIED',
+      status: 'ABSENCE_CANDIDATE_UNCERTIFIED',
+      remote: 'ABSENT', mediaStore: 'NOT_INDEXED',
+      blockers: ['PROVIDER_AND_CLEANUP_UNCERTIFIED'],
+      canDelete: true, canMarkClean: false, canRetry: false, canDispatch: false,
+      remotePath: '/sdcard/DCIM/Camera/private.mp4',
+    });
+  });
+  await readOnlyButton.click();
+  await expect(nativeDialog.getByRole('alert'))
+    .toContainText('Bằng chứng kiểm tra file staging không hợp lệ');
+  await expect(nativeDialog.getByTestId('stage-cleanup-absence-result')).toHaveCount(0);
+  await expect(nativeDialog).not.toContainText('/sdcard/DCIM/Camera/private.mp4');
 });
 
 
