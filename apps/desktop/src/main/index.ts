@@ -185,6 +185,20 @@ else {
         }).parse(raw);
         return nativeStageReview.reobserve(selection.jobId, selection.ordinal);
       });
+      ipcMain.handle('studio:stage-cleanup-absence', async (event, raw: unknown) => {
+        if (
+          event.sender !== window?.webContents ||
+          event.senderFrame !== window.webContents.mainFrame ||
+          event.senderFrame.url !== allowedUrl
+        ) throw new Error('Unauthorized sender');
+        // Renderer chooses only a persisted job and ordinal. The MANUAL lease,
+        // ADB serial, owned path and MediaStore identifiers remain host-only.
+        const selection = z.strictObject({
+          jobId: idSchema,
+          ordinal: z.number().int().min(0).max(31),
+        }).parse(raw);
+        return nativeStageReview.reviewCleanupAbsence(selection.jobId, selection.ordinal);
+      });
       ipcMain.handle('studio:stage-cleanup-review', async (event, raw: unknown) => {
         if (
           event.sender !== window?.webContents ||
