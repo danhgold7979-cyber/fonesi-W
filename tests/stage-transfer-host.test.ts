@@ -106,6 +106,7 @@ type Fixture = Awaited<ReturnType<typeof fixture>>;
 function coordinator(
   outcome: 'OK' | 'FAIL' | 'WRONG_ACK' | 'WRONG_READBACK' | 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' = 'OK',
   confirmReview?: (summary: { jobId: string; ordinal: number }) => Promise<boolean>,
+  statMode: 'PRESENT' | 'MISSING' | 'WRONG_BYTES' | 'FOREIGN' = 'PRESENT',
 ) {
   return new HostStageTransferService({
     internal: async <T>(request: InternalRequest) => {
@@ -142,6 +143,27 @@ function coordinator(
             '/asset-' + String(input.ordinal).padStart(3, '0') + '-' + input.nonce + input.extension,
           hash: outcome === 'WRONG_READBACK' ? 'f'.repeat(64) : input.expectedHash,
           bytes: input.expectedBytes,
+        };
+      },
+      statOwnedStage: async (input: {
+        serial: string; jobId: string; ordinal: number; nonce: string;
+        extension: string; expectedBytes: number;
+      }) => {
+        events.push('fake.adb.stat');
+        await fence();
+        const absent = statMode === 'MISSING';
+        return {
+          status: absent ? 'REMOTE_ABSENT_OBSERVED' as const :
+            'REMOTE_PRESENT_OBSERVED' as const,
+          remotePath: statMode === 'FOREIGN' ? '/sdcard/DCIM/Camera/not-owned.mp4' :
+            '/sdcard/Download/AutoReelsStudio/job-' + input.jobId +
+            '/asset-' + String(input.ordinal).padStart(3, '0') +
+            '-' + input.nonce + input.extension,
+          observedBytes: absent ? null : statMode === 'WRONG_BYTES' ?
+            input.expectedBytes + 1 : input.expectedBytes,
+          matchesExpectedBytes: statMode === 'PRESENT',
+          canDelete: false as const,
+          canMarkClean: false as const,
         };
       },
       probeOwnedStageMediaStore: async (input: {
@@ -635,8 +657,9 @@ function nativeStageService(
   ownerHost = hostId,
   beforeLeaseTask?: () => void,
   confirmReview?: (summary: { jobId: string; ordinal: number }) => Promise<boolean>,
+  statMode: 'PRESENT' | 'MISSING' | 'WRONG_BYTES' | 'FOREIGN' = 'PRESENT',
 ) {
-  const adapter = coordinator(outcome, confirmReview);
+  const adapter = coordinator(outcome, confirmReview, statMode);
   return new NativeStageReviewService({
     request: async (command, input) =>
       dispatch(db, { operationId: 'op_native_review_fixture', command, input }),
