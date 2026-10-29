@@ -94,6 +94,28 @@ export interface JobPreflightReport {
   blockers: { code: string; message: string }[];
 }
 
+/** S096.1 persisted ordering evidence only; no picker row is a selectable grant. */
+export type MediaOrderBlocker =
+  | 'JOB_STATE_NOT_REVIEWABLE' | 'EXTERNAL_EFFECT_PRESENT'
+  | 'FROZEN_SELECTION_INVALID' | 'PINNED_ASSET_INVALID'
+  | 'STAGE_MISSING' | 'STAGE_UNEXPECTED_OR_DUPLICATE'
+  | 'STAGE_OWNER_MISMATCH' | 'STAGE_GENERATION_MISMATCH'
+  | 'REMOTE_BYTES_NOT_VERIFIED' | 'MEDIASTORE_ROW_NOT_VERIFIED'
+  | 'MEDIASTORE_ROW_COLLISION' | 'LATEST_OBSERVATION_CONTRADICTS_ROW';
+
+export interface PersistedOrderedMediaReport {
+  scope: 'PERSISTED_STAGE_ORDER_NOT_PICKER_VERIFIED';
+  status: 'BLOCKED' | 'INDEXED_CANDIDATES_NOT_PICKER_VERIFIED' | 'NO_MEDIA';
+  canSelect: false;
+  canDispatch: false;
+  blockers: MediaOrderBlocker[];
+  slots: {
+    ordinal: number;
+    kind: 'IMAGE' | 'VIDEO' | 'UNKNOWN';
+    evidence: 'INDEXED_ROW_RECORDED_NOT_LIVE' | 'BLOCKED';
+    blockers: MediaOrderBlocker[];
+  }[];
+}
 /** Operator-visible persistence projection only. No paths, hashes, nonces, serials or owner IDs. */
 export interface JobStageReviewPage {
   jobId: string;
@@ -121,6 +143,8 @@ export interface JobStageReviewPage {
     status: 'REVIEW_REQUESTED_HARDWARE_PENDING';
   }[];
   cleanupHasMore: boolean;
+  /** Frozen asset order reconciled with owned stage and indexed-row journals. */
+  mediaOrder: PersistedOrderedMediaReport;
   hasMore: boolean;
   nextCursor: string | null;
 }

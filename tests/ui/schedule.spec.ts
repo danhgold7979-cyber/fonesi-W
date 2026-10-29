@@ -606,6 +606,10 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).toContainText('Có bản ghi byte khớp');
   await expect(dialog).toContainText('chưa xác minh picker');
   await expect(dialog.getByTestId('stage-review-summary')).toHaveCount(1);
+  await expect(dialog).toContainText('Thứ tự media đóng băng (chưa xác minh picker)');
+  await expect(dialog.getByTestId('media-order-status')).toContainText('Đối chiếu media bị chặn');
+  await expect(dialog).toContainText('Stage thừa, trùng hoặc nằm ngoài thứ tự asset');
+  await expect(dialog).toContainText('không chọn theo tên tệp hoặc thumbnail');
   await expect(dialog.getByRole('button', { name: /Kiểm tra lại Android/ })).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: /Ghi yêu cầu rà soát cleanup/ })).toHaveCount(0);
   expect(await page.evaluate(() => typeof (window as Window & {
@@ -643,7 +647,7 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog).not.toContainText(nonce);
   await expect(dialog).not.toContainText('host_stage_secret');
   await expect(dialog).not.toContainText('cleanup_ui_private_request');
-  await expect(dialog.getByRole('button', { name: /Đăng|Xóa|Chạy lại/ })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: /Đăng|Xóa|Chạy lại|Chọn media/ })).toHaveCount(0);
   const report = await request<unknown>(page, 'jobStageReview', { id: jobId });
   const response = JSON.stringify(report);
   for (const secret of [remotePath, nonce, mediaHash, secretCaption, stageId,

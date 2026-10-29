@@ -96,6 +96,7 @@ import { validateBundle, compileWorkflow } from '@autoreels/workflow-engine';
 import { deviceFingerprint, parseEndpoint, assertOwnedStageLocation } from '@autoreels/devices';
 import { bulkPatch } from '@autoreels/import-export';
 import { migrations, SCHEMA_VERSION } from './schema.js';
+import { assessPersistedMediaOrder, type LastStageObservation } from './media-selection.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
 const now = (): string => new Date().toISOString();
@@ -2554,7 +2555,7 @@ export class StudioDatabase {
    */
   jobStageReview(jobId: string, cursor?: string): JobStageReviewPage {
     idSchema.parse(jobId);
-    const { job } = this.getJob(jobId);
+    const { job, snapshot, snapshotHash } = this.getJob(jobId);
     let before: { createdAt: string; id: string } | null = null;
     if (cursor !== undefined) {
       if (typeof cursor !== 'string' || !/^[A-Za-z0-9_-]{1,1024}$/.test(cursor))
@@ -2634,6 +2635,35 @@ export class StudioDatabase {
         recordedAt: String(row.created_at),
         status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
       }));
+    // S096: ordered frozen media vs immutable, uniquely owned stage/row evidence.
+    // No live picker claim; all raw paths/row IDs/hashes remain inside DB worker.
+    const ownedStages = this.listDeviceStageTransfers(jobId);
+    const claim = this.db.prepare('SELECT generation FROM job_claims WHERE job_id=?')
+      .get(jobId);
+    const latestByStage = new Map<string, LastStageObservation>();
+    const lastAudit = this.db.prepare(
+      'SELECT classification,mediastore_status,observed_hash,observed_bytes ' +
+      'FROM device_stage_reconciliations WHERE stage_id=? ' +
+      'ORDER BY created_at DESC,id DESC LIMIT 1',
+    );
+    for (const stage of ownedStages) {
+      const record = lastAudit.get(stage.id);
+      if (!record) continue;
+      latestByStage.set(stage.id, {
+        classification: String(record.classification) as LastStageObservation['classification'],
+        mediaStoreStatus: record.mediastore_status == null ? null
+          : String(record.mediastore_status) as LastStageObservation['mediaStoreStatus'],
+        observedHash: record.observed_hash == null ? null : String(record.observed_hash),
+        observedBytes: record.observed_bytes == null ? null : Number(record.observed_bytes),
+      });
+    }
+    const mediaOrder = assessPersistedMediaOrder({
+      job, snapshot, snapshotHash, stages: ownedStages,
+      claimGeneration: claim ? Number(claim.generation) : null,
+      hasExternalEffect: Boolean(this.db.prepare('SELECT 1 FROM effects WHERE job_id=? LIMIT 1')
+        .get(jobId)),
+      lastObservationByStage: latestByStage,
+    });
     const last = page.at(-1);
     const nextCursor = hasMore && last
       ? Buffer.from(JSON.stringify({
@@ -2644,7 +2674,7 @@ export class StudioDatabase {
     return {
       jobId, jobRevision: job.revision, jobState: job.state, scope: 'PERSISTED_ONLY',
       canDispatch: false, stages, observations, cleanupRequests, cleanupHasMore,
-      hasMore, nextCursor,
+      mediaOrder, hasMore, nextCursor,
     };
   }
 

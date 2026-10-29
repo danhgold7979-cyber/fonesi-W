@@ -411,6 +411,12 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
     jobId: f.jobId, jobRevision: f.jobRevision, jobState: 'PREFLIGHT',
     scope: 'PERSISTED_ONLY', canDispatch: false,
     stages: [], observations: [], cleanupRequests: [], cleanupHasMore: false,
+    mediaOrder: {
+      scope: 'PERSISTED_STAGE_ORDER_NOT_PICKER_VERIFIED', status: 'BLOCKED',
+      canSelect: false, canDispatch: false,
+      blockers: ['STAGE_MISSING'],
+      slots: [{ ordinal: 0, kind: 'VIDEO', evidence: 'BLOCKED', blockers: ['STAGE_MISSING'] }],
+    },
     hasMore: false, nextCursor: null,
   });
   const publicPage = await dispatch(db, {
@@ -423,6 +429,66 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
   })).rejects.toThrow();
   expect(db.getJob(f.jobId).job).toEqual(before);
   expect(db.listDeviceStageTransfers(f.jobId)).toHaveLength(0);
+});
+
+it('derives persisted exact MediaStore candidate evidence from the frozen job, never picker readiness', () => {
+  const f = fixture();
+  const stage = readyForReconciliation(f);
+  const before = db.getJob(f.jobId).job;
+  const original = db.listDeviceStageTransfers(f.jobId)[0]!;
+  const staged = db.recordClaimedDeviceStageMediaStore({
+    stageId: stage.id, lease: f.lease, expectedJobRevision: f.jobRevision,
+    rowId: '4242', displayName: stage.remotePath.split('/').at(-1)!,
+    relativePath: 'Download/AutoReelsStudio/job-' + f.jobId + '/',
+    mimeType: 'video/mp4', observedBytes: stage.expectedBytes, at: at + 235,
+  });
+  expect(staged.mediaStoreRowId).toBe('4242');
+  let eventsBefore = -1;
+  sql((conn) => {
+    eventsBefore = Number(conn.prepare(
+      'SELECT COUNT(*) AS total FROM queue_events WHERE job_id=?',
+    ).get(f.jobId)?.total);
+  });
+  const page = db.jobStageReview(f.jobId);
+  expect(page.mediaOrder).toEqual({
+    scope: 'PERSISTED_STAGE_ORDER_NOT_PICKER_VERIFIED',
+    status: 'INDEXED_CANDIDATES_NOT_PICKER_VERIFIED',
+    canSelect: false, canDispatch: false,
+    blockers: [], slots: [{
+      ordinal: 0, kind: 'VIDEO', evidence: 'INDEXED_ROW_RECORDED_NOT_LIVE', blockers: [],
+    }],
+  });
+  const json = JSON.stringify(page);
+  for (const secret of [
+    stage.id, stage.assetId, stage.remotePath, stage.nonce,
+    stage.expectedHash, f.snapshotHash, '4242', hostId,
+  ]) expect(json).not.toContain(secret);
+  const publicPage = dispatchInternal(db, { command: 'stage.list', jobId: f.jobId });
+  expect(publicPage).toHaveLength(1);
+  expect(db.getJob(f.jobId).job).toEqual(before);
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(staged);
+  sql((conn) => expect(Number(conn.prepare(
+    'SELECT COUNT(*) AS total FROM queue_events WHERE job_id=?',
+  ).get(f.jobId)?.total)).toBe(eventsBefore));
+  db.close(); db = new StudioDatabase(dbPath());
+  expect(db.jobStageReview(f.jobId).mediaOrder).toEqual(page.mediaOrder);
+
+  // A newer MANUAL/JOB reconciliation that contradicts the indexed row must
+  // invalidate historical candidate evidence, without deleting its journal.
+  db.recordClaimedDeviceStageReconciliation({
+    requestId: 'stage_index_later_contradiction', stageId: stage.id,
+    lease: f.lease, expectedJobRevision: f.jobRevision, at: at + 240,
+    classification: 'REMOTE_MISMATCH',
+    observedHash: 'b'.repeat(64), observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'NOT_INDEXED',
+  });
+  const blocked = db.jobStageReview(f.jobId).mediaOrder;
+  expect(blocked.status).toBe('BLOCKED');
+  expect(blocked.blockers).toContain('LATEST_OBSERVATION_CONTRADICTS_ROW');
+  expect(blocked.canSelect).toBe(false);
+  expect(db.getJob(f.jobId).job).toEqual(before);
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(staged);
+  expect(original.state).toBe('SYNC_ACK_UNVERIFIED');
 });
 
 it('paginates redacted JOB and MANUAL audit history without changing review state or leaking ownership bytes', async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   JobStageReviewPage, NativeStageReviewResult, NativeStageCleanupReviewResult,
+  MediaOrderBlocker,
 } from '@autoreels/contracts';
 import { api, nativeStageReview } from './api.js';
 import { Dialog } from './components.js';
@@ -24,6 +25,20 @@ const observationLabels: Record<Observation['classification'], string> = {
   REVIEW_REQUIRED: 'Bằng chứng không rõ; cần đối soát',
 };
 
+const orderBlockerLabels: Record<MediaOrderBlocker, string> = {
+  JOB_STATE_NOT_REVIEWABLE: 'Trạng thái job không phù hợp để đối chiếu staging',
+  EXTERNAL_EFFECT_PRESENT: 'Đã có external effect; không thể dùng lại chứng cứ này',
+  FROZEN_SELECTION_INVALID: 'Thứ tự asset trong snapshot không hợp lệ',
+  PINNED_ASSET_INVALID: 'Asset ghim không đầy đủ hoặc đã không còn READY',
+  STAGE_MISSING: 'Chưa có stage đúng vị trí asset',
+  STAGE_UNEXPECTED_OR_DUPLICATE: 'Stage thừa, trùng hoặc nằm ngoài thứ tự asset',
+  STAGE_OWNER_MISMATCH: 'Stage không khớp owner, asset, hash, byte hoặc đường dẫn sở hữu',
+  STAGE_GENERATION_MISMATCH: 'Stage không khớp thế hệ JOB claim lịch sử',
+  REMOTE_BYTES_NOT_VERIFIED: 'Chưa có bằng chứng readback byte đúng và ACK',
+  MEDIASTORE_ROW_NOT_VERIFIED: 'Chưa có hàng MediaStore chính xác theo stage',
+  MEDIASTORE_ROW_COLLISION: 'Nhiều asset dùng chung một hàng MediaStore',
+  LATEST_OBSERVATION_CONTRADICTS_ROW: 'Quan sát gần nhất không còn xác nhận hàng MediaStore',
+};
 /** Operator-facing persisted history only. No lease, ADB, deletion or dispatch. */
 export function JobStageReviewDialog({ jobId, close }: Props) {
   const [report, setReport] = useState<JobStageReviewPage | null>(null);
@@ -212,6 +227,41 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                         Ghi yêu cầu rà soát cleanup (không xóa)
                       </button>
                     )}
+                </li>
+              ))}
+            </ol>
+          )}
+          <h3>Thứ tự media đóng băng (chưa xác minh picker)</h3>
+          <p className="muted">
+            Mỗi vị trí lấy từ snapshot job, không chọn theo tên tệp hoặc thumbnail.
+            Bằng chứng hàng MediaStore chỉ là bản ghi lịch sử, không xác nhận file đã được
+            chọn trong Android picker. Không có quyền chọn, đăng hoặc điều khiển điện thoại.
+          </p>
+          <p role="status" data-testid="media-order-status">
+            {report.mediaOrder.status === 'NO_MEDIA'
+              ? 'Job không ghim media nào; không có quyền thực thi.'
+              : report.mediaOrder.status === 'BLOCKED'
+                ? 'Đối chiếu media bị chặn; không được tiếp tục chọn media.'
+                : 'Các hàng MediaStore khớp dữ liệu đã lưu, nhưng chưa xác minh trong picker.'}
+          </p>
+          {report.mediaOrder.blockers.length > 0 && (
+            <ul aria-label="Điều kiện chặn thứ tự media">
+              {report.mediaOrder.blockers.map((code) =>
+                <li key={code}>{orderBlockerLabels[code]}</li>)}
+            </ul>
+          )}
+          {report.mediaOrder.slots.length > 0 && (
+            <ol aria-label="Thứ tự media đã ghim">
+              {report.mediaOrder.slots.map((entry) => (
+                <li key={entry.ordinal} data-testid="media-order-slot">
+                  <strong>Media {entry.ordinal + 1}</strong> ·
+                  {' '}{entry.kind === 'IMAGE' ? 'Ảnh' : entry.kind === 'VIDEO' ? 'Video' : 'Không rõ định dạng'} ·
+                  {' '}{entry.evidence === 'INDEXED_ROW_RECORDED_NOT_LIVE'
+                    ? 'Đã ghi đúng hàng MediaStore lịch sử (chưa xác minh picker)'
+                    : 'Chưa đủ bằng chứng an toàn'}.
+                  {entry.blockers.length > 0 && (
+                    <span> {entry.blockers.map((code) => orderBlockerLabels[code]).join('; ')}.</span>
+                  )}
                 </li>
               ))}
             </ol>
