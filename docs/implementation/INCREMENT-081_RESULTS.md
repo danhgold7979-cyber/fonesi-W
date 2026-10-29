@@ -1,5 +1,14 @@
 # Increment081 RESULTS — P11/S102.2 private native MANUAL-fenced owned-stage readback
 
+## Verified CI addendum — source 6062541c (29/10/2026)
+
+The original "No exact-SHA CI runs" statement above described a PR-only lookup, not an absence of GitHub checks. The full GitHub Actions runs collection confirms the actual `push`-triggered workflow:
+- **Source SHA:** `6062541c80ecd1c8d91b470e854b45fa2174a1f3`, [CI run 40914222820](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40914222820), event `push`, completed **SUCCESS Ubuntu+Windows**.
+- **Ubuntu:** 606/606 unit/integration (49 files), 31/31 Chromium UI; `pnpm check` and `pnpm check:plan` PASS.
+- **Windows:** 605 PASS + 1 platform skip (49 files), Windows launcher `-VerifyOnly`, `pnpm check` and `pnpm check:plan` PASS.
+- Generated contracts, typecheck, lint and build included in both passing `pnpm check` jobs. Status **TESTED_S102_NATIVE_OWNED_READBACK_NOT_ACCEPTED**; no Android hardware/provider certification or deletion rights. [checkpoint-074](../evidence/implementation/checkpoint-074.json).
+
+
 Date: 2026-10-29. Repository `danhgold7979-cyber/fonesi-W`, branch `feat/studio-workspace`. Plan first [`3a7d4a49`](https://github.com/danhgold7979-cyber/fonesi-W/commit/3a7d4a49280d43920252f6a40cf9814d93dd093d), baseline `4b61c4d0a01e203edde8d967fad2d7e7df71fadf`. Never touch `main`.
 
 ## Implemented
