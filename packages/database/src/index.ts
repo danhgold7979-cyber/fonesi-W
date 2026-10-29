@@ -5178,9 +5178,6 @@ export class StudioDatabase {
       'SELECT id,kind,state FROM effects WHERE job_id=? ' +
       'ORDER BY created_at DESC,id DESC LIMIT 21',
     ).all(jobId);
-    if (rows.length > 20)
-      throw new DomainError('EFFECT_REVIEW_PAGE_REQUIRED',
-        'Effect inventory requires a bounded page before selecting a review target.');
     const row = rows[ordinal];
     if (!row || !['PUBLISH','COMMENT'].includes(String(row.kind)) ||
         !['INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW'].includes(String(row.state)))
