@@ -2,6 +2,7 @@ import { extname, join, resolve } from 'node:path';
 import { idSchema, hashSchema } from '@autoreels/contracts';
 import type {
   DeviceLease, DeviceRecord, DeviceStageTransfer, DeviceStageReconciliation, JobMediaPreflightPlan,
+  ReviewedStageMediaSnapshot,
 } from '@autoreels/contracts';
 import type { OwnedSyncInput, OwnedSyncAck } from '@autoreels/devices';
 import type { HostStageResult } from '@autoreels/media';
@@ -71,7 +72,7 @@ export class HostStageTransferService {
   }> {
     idSchema.parse(request.requestId); idSchema.parse(request.jobId); idSchema.parse(request.stageId);
     hashSchema.parse(request.expectedSnapshotHash);
-    if (request.lease.ownerKind !== 'JOB' || !request.lease.deviceId ||
+    if (!['JOB', 'MANUAL'].includes(request.lease.ownerKind) || !request.lease.deviceId ||
         !Number.isSafeInteger(request.expectedJobRevision) || request.expectedJobRevision < 0 ||
         !Number.isSafeInteger(request.transportGeneration) || request.transportGeneration < 1 ||
         !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(request.transportSerial) || signal?.aborted)
@@ -79,6 +80,12 @@ export class HostStageTransferService {
     const fence = async (): Promise<void> => {
       if (signal?.aborted) throw new DomainError('CANCELLED', 'Stage reconciliation cancelled.');
       await this.db.internal({ command: 'lease.assert', lease: request.lease, at: Date.now() });
+      if (request.lease.ownerKind === 'MANUAL')
+        await this.db.internal({
+          command: 'stage.assertReview', stageId: request.stageId, hostId: this.hostId,
+          expectedJobRevision: request.expectedJobRevision,
+          expectedSnapshotHash: request.expectedSnapshotHash, lease: request.lease, at: Date.now(),
+        });
       await this.db.internal({ command: 'device.assertTransport', hostId: this.hostId,
         deviceId: request.lease.deviceId, serial: request.transportSerial, generation: request.transportGeneration });
       const records = await this.db.internal<DeviceRecord[]>({ command: 'device.records', hostId: this.hostId });
@@ -93,17 +100,35 @@ export class HostStageTransferService {
     const rows = await this.db.internal<DeviceStageTransfer[]>({ command: 'stage.list', jobId: request.jobId });
     const stage = rows.find((item) => item.id === request.stageId);
     if (!stage || stage.hostId !== this.hostId || stage.deviceId !== request.lease.deviceId ||
-        stage.claimGeneration !== request.lease.generation || stage.snapshotHash !== request.expectedSnapshotHash ||
+        (request.lease.ownerKind === 'JOB' && stage.claimGeneration !== request.lease.generation) ||
+        stage.snapshotHash !== request.expectedSnapshotHash ||
         !['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state))
       throw new DomainError('STAGE_RECONCILE_NOT_ELIGIBLE', 'Stage identity or state requires operator review.');
-    const plan = await this.db.internal<JobMediaPreflightPlan>({
-      command: 'job.mediaPlan', jobId: request.jobId, hostId: this.hostId,
-    });
-    const asset = plan.entries[stage.ordinal];
-    if (!asset || plan.jobRevision !== request.expectedJobRevision || plan.snapshotHash !== request.expectedSnapshotHash ||
-        asset.assetId !== stage.assetId || asset.pinnedHash !== stage.expectedHash || asset.pinnedBytes !== stage.expectedBytes)
-      throw new DomainError('STAGE_SNAPSHOT_STALE', 'Pinned asset or job snapshot changed.');
-    const extension = extname(asset.binding.relativePath).toLowerCase();
+    let extension: string;
+    if (request.lease.ownerKind === 'MANUAL') {
+      const frozen = await this.db.internal<ReviewedStageMediaSnapshot>({
+        command: 'stage.reviewSnapshot', stageId: stage.id, hostId: this.hostId,
+        expectedJobRevision: request.expectedJobRevision,
+        expectedSnapshotHash: request.expectedSnapshotHash, lease: request.lease, at: Date.now(),
+      });
+      if (frozen.jobId !== stage.jobId || frozen.ordinal !== stage.ordinal ||
+          frozen.jobRevision !== request.expectedJobRevision ||
+          frozen.snapshotHash !== request.expectedSnapshotHash ||
+          frozen.assetId !== stage.assetId || frozen.pinnedHash !== stage.expectedHash ||
+          frozen.pinnedBytes !== stage.expectedBytes)
+        throw new DomainError('STAGE_SNAPSHOT_STALE', 'Frozen review media changed.');
+      extension = frozen.extension;
+    } else {
+      const plan = await this.db.internal<JobMediaPreflightPlan>({
+        command: 'job.mediaPlan', jobId: request.jobId, hostId: this.hostId,
+      });
+      const asset = plan.entries[stage.ordinal];
+      if (!asset || plan.jobRevision !== request.expectedJobRevision ||
+          plan.snapshotHash !== request.expectedSnapshotHash || asset.assetId !== stage.assetId ||
+          asset.pinnedHash !== stage.expectedHash || asset.pinnedBytes !== stage.expectedBytes)
+        throw new DomainError('STAGE_SNAPSHOT_STALE', 'Pinned asset or job snapshot changed.');
+      extension = extname(asset.binding.relativePath).toLowerCase();
+    }
     if (!/^\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension))
       throw new DomainError('STAGE_EXTENSION_INVALID', 'Pinned media format is unsupported.');
     let classification: import('@autoreels/contracts').StageReconciliationClassification;
@@ -144,6 +169,7 @@ export class HostStageTransferService {
     const recorded = await this.db.internal<DeviceStageReconciliation>({
       command: 'stage.recordReconciliation', requestId: request.requestId, stageId: stage.id,
       lease: request.lease, expectedJobRevision: request.expectedJobRevision,
+      hostId: this.hostId, expectedSnapshotHash: request.expectedSnapshotHash,
       classification, observedHash, observedBytes, mediaStoreStatus, at: Date.now(),
     });
     if (recorded.classification !== classification)

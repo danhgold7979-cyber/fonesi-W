@@ -305,6 +305,103 @@ it('rejects stale generation, stale revision and expired lease before reconcilia
   expect(db.getJob(f.jobId).job.state).toBe('PREFLIGHT');
 });
 
+
+it('preserves only expired stage-backed claims and allows MANUAL read-only audit under a new generation', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  expect(db.recoverExpiredClaims(f.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.recoverExpiredClaims(f.deviceId, at + 3001))
+    .toEqual({ requeued: [], review: [] });
+  let historical: unknown;
+  sql((conn) => { historical = conn.prepare(
+    'SELECT generation,expires_at FROM job_claims WHERE job_id=?',
+  ).get(f.jobId); });
+  expect(historical).toMatchObject({ generation: f.lease.generation, expires_at: at + 3000 });
+  expect(db.claimDueJob(f.deviceId, 'another_worker', at + 3001).status).toBe('NEEDS_REVIEW');
+  const manual = db.acquireLease(f.deviceId, 'stage_operator', 'MANUAL', at + 3001, 3000);
+  const nextRevision = db.getJob(f.jobId).job.revision;
+  const frozen = db.reviewedDeviceStageMediaSnapshot({
+    stageId: stage.id, hostId, lease: manual,
+    expectedJobRevision: nextRevision, expectedSnapshotHash: f.snapshotHash, at: at + 3010,
+  });
+  expect(frozen).toMatchObject({
+    jobId: f.jobId, jobRevision: nextRevision, assetId: stage.assetId,
+    pinnedHash: stage.expectedHash, pinnedBytes: stage.expectedBytes, extension: '.mp4',
+  });
+  const valid = {
+    requestId: 'manual_reconcile_001', stageId: stage.id, hostId,
+    expectedSnapshotHash: f.snapshotHash, expectedJobRevision: nextRevision, lease: manual,
+    classification: 'REMOTE_BYTES_MATCHED' as const,
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'NOT_INDEXED' as const, at: at + 3010,
+  };
+  const recorded = db.recordClaimedDeviceStageReconciliation(valid);
+  expect(recorded).toMatchObject({
+    claimGeneration: f.lease.generation, leaseOwnerKind: 'MANUAL',
+    leaseGeneration: manual.generation, classification: 'REMOTE_BYTES_MATCHED',
+  });
+  expect(db.recordClaimedDeviceStageReconciliation(valid)).toEqual(recorded);
+  db.releaseLease(manual);
+  const next = db.acquireLease(f.deviceId, 'another_operator', 'MANUAL', at + 3020, 3000);
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...valid, lease: next, at: at + 3030,
+  })).toThrow('Request ID has different evidence');
+  expect(reconciliationAuditCount(stage.id)).toBe(1);
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stage);
+  expect(db.getJob(f.jobId).job).toMatchObject({
+    state: 'NEEDS_REVIEW', revision: nextRevision,
+  });
+});
+
+it('rejects MANUAL reviews with live JOB, invalid lease, stale revision/host/snapshot or historical generation', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  const original = {
+    stageId: stage.id, hostId, expectedJobRevision: f.jobRevision,
+    expectedSnapshotHash: f.snapshotHash, lease: { ...f.lease, ownerKind: 'MANUAL' as const },
+    at: at + 250,
+  };
+  expect(() => db.reviewedDeviceStageMediaSnapshot(original)).toThrow();
+  expect(db.recoverExpiredClaims(f.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  const manual = db.acquireLease(f.deviceId, 'manual_stage_checks', 'MANUAL', at + 3001, 1000);
+  const current = { ...original, expectedJobRevision: f.jobRevision + 1, lease: manual, at: at + 3005 };
+  expect(() => db.assertReviewedDeviceStage({ ...current, hostId: 'foreign_host' })).toThrow();
+  expect(() => db.assertReviewedDeviceStage({
+    ...current, expectedSnapshotHash: contentHash('wrong'),
+  })).toThrow();
+  expect(() => db.assertReviewedDeviceStage({
+    ...current, expectedJobRevision: f.jobRevision,
+  })).toThrow();
+  expect(() => db.assertReviewedDeviceStage({
+    ...current, lease: { ...manual, deviceId: 'another_device' },
+  })).toThrow();
+  expect(() => db.assertReviewedDeviceStage({ ...current, at: manual.expiresAt })).toThrow();
+  sql((conn) => conn.prepare(
+    'UPDATE job_claims SET generation=generation+1 WHERE job_id=?',
+  ).run(f.jobId));
+  expect(() => db.assertReviewedDeviceStage(current)).toThrow();
+  expect(() => db.recordClaimedDeviceStageReconciliation({
+    ...current, requestId: 'manual_bad_generation', classification: 'REMOTE_BYTES_MATCHED',
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'NOT_INDEXED',
+  })).toThrow();
+  expect(reconciliationAuditCount(stage.id)).toBe(0);
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toEqual(stage);
+});
+
+it('requeues stage-free expired preflight and deletes its historical claim', () => {
+  const f = fixture();
+  expect(db.recoverExpiredClaims(f.deviceId, at + 3000))
+    .toEqual({ requeued: [f.jobId], review: [] });
+  let claims = -1;
+  sql((conn) => { claims = Number(conn.prepare(
+    'SELECT COUNT(*) AS count FROM job_claims WHERE job_id=?',
+  ).get(f.jobId)?.count); });
+  expect(claims).toBe(0);
+  expect(db.getJob(f.jobId).job.state).toBe('QUEUED');
+});
+
 it('private DB worker tracks one stage; public HTTP dispatcher cannot forge stage intent', async () => {
   const f = fixture();
   await expect(dispatch(db, {

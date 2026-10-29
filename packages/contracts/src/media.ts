@@ -128,10 +128,16 @@ export type StageReconciliationClassification =
   | 'REMOTE_MISSING' | 'REMOTE_MISMATCH' | 'PROBE_UNSUPPORTED' | 'REVIEW_REQUIRED';
 export interface DeviceStageReconciliation {
   id: string; requestId: string; stageId: string; jobId: string; deviceId: string;
-  hostId: string; claimGeneration: number; classification: StageReconciliationClassification;
+  hostId: string; claimGeneration: number; leaseOwnerKind: 'JOB' | 'MANUAL';
+  leaseGeneration: number; classification: StageReconciliationClassification;
   observedHash: string | null; observedBytes: number | null;
   mediaStoreStatus: 'INDEXED_EXACT' | 'NOT_INDEXED' | 'AMBIGUOUS' | 'UNSUPPORTED' | null;
   createdAt: string;
+}
+/** Private frozen media identity for read-only operator review; no host source grant. */
+export interface ReviewedStageMediaSnapshot {
+  jobId: string; jobRevision: number; snapshotHash: string; ordinal: number;
+  assetId: string; pinnedHash: string; pinnedBytes: number; extension: string;
 }
 /** Private DB/host remote staging journal; not a posting or MediaStore receipt. */
 export interface DeviceStageTransfer {

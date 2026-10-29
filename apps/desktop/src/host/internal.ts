@@ -40,7 +40,12 @@ export type InternalRequest =
       at: number;
     }
   | { command: 'stage.recordMediaStore'; stageId: string; lease: DeviceLease; expectedJobRevision: number; rowId: string; displayName: string; relativePath: string; mimeType: string; observedBytes: number; at: number }
-  | { command: 'stage.recordReconciliation'; requestId: string; stageId: string; lease: DeviceLease; expectedJobRevision: number; classification: import('@autoreels/contracts').StageReconciliationClassification; observedHash: string | null; observedBytes: number | null; mediaStoreStatus: import('@autoreels/contracts').DeviceStageReconciliation['mediaStoreStatus']; at: number }
+  | { command: 'stage.recordReconciliation'; requestId: string; stageId: string; lease: DeviceLease; expectedJobRevision: number; hostId?: string; expectedSnapshotHash?: string; classification: import('@autoreels/contracts').StageReconciliationClassification; observedHash: string | null; observedBytes: number | null; mediaStoreStatus: import('@autoreels/contracts').DeviceStageReconciliation['mediaStoreStatus']; at: number }
+  | {
+      command: 'stage.assertReview' | 'stage.reviewSnapshot';
+      stageId: string; hostId: string; expectedJobRevision: number;
+      expectedSnapshotHash: string; lease: DeviceLease; at: number;
+    }
   | { command: 'stage.list'; jobId: string }
   | {
       command: 'stage.assertClaim';
@@ -191,6 +196,10 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.recordClaimedDeviceStageMediaStore(request);
     case 'stage.recordReconciliation':
       return db.recordClaimedDeviceStageReconciliation(request);
+    case 'stage.assertReview':
+      return db.assertReviewedDeviceStage(request);
+    case 'stage.reviewSnapshot':
+      return db.reviewedDeviceStageMediaSnapshot(request);
     case 'stage.list':
       return db.listDeviceStageTransfers(request.jobId);
     case 'stage.assertClaim':

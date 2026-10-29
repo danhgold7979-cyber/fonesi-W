@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 18;
+export const SCHEMA_VERSION = 19;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -187,5 +187,10 @@ CREATE TABLE device_stage_reconciliations(
  created_at TEXT NOT NULL, UNIQUE(stage_id,request_id)
 ) STRICT;
 CREATE INDEX stage_reconciliation_job ON device_stage_reconciliations(job_id,created_at);
+` },
+  { version: 19, sql: `
+ALTER TABLE device_stage_reconciliations ADD COLUMN lease_owner_kind TEXT NOT NULL DEFAULT 'JOB' CHECK(lease_owner_kind IN('JOB','MANUAL'));
+ALTER TABLE device_stage_reconciliations ADD COLUMN lease_generation INTEGER NOT NULL DEFAULT 1 CHECK(lease_generation>0);
+UPDATE device_stage_reconciliations SET lease_generation=claim_generation;
 ` },
 ] as const;

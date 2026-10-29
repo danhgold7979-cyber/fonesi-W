@@ -49,6 +49,7 @@ import type {
   DeviceStageTransfer,
   DeviceStageReconciliation,
   StageReconciliationClassification,
+  ReviewedStageMediaSnapshot,
   SchedulePreviewDto,
   JobChangeRequest,
   JobChangePreview,
@@ -2448,6 +2449,15 @@ export class StudioDatabase {
         const hasStage = Boolean(
           this.db.prepare('SELECT 1 FROM device_stage_transfers WHERE job_id=?').get(job.id),
         );
+        if (job.state === 'NEEDS_REVIEW' && hasStage) {
+          // Historical claim belongs to a previous JOB generation; retain it,
+          // without creating duplicate review events during repeated recovery.
+          if (matches)
+            this.db.prepare(
+              'UPDATE leases SET owner_id=NULL,owner_kind=NULL,expires_at=0 WHERE device_id=?',
+            ).run(deviceId);
+          continue;
+        }
         if (job.state === 'PREFLIGHT' && !hasEffect && !hasStage) {
           this.db
             .prepare("UPDATE jobs SET state='QUEUED',revision=revision+1 WHERE id=?")
@@ -2492,7 +2502,9 @@ export class StudioDatabase {
               'UPDATE leases SET owner_id=NULL,owner_kind=NULL,expires_at=0 WHERE device_id=?',
             )
             .run(deviceId);
-        this.db.prepare('DELETE FROM job_claims WHERE job_id=?').run(job.id);
+        // Only an expired stage-backed review keeps the old JOB claim.
+        if (!(hasStage && result.review.includes(job.id)))
+          this.db.prepare('DELETE FROM job_claims WHERE job_id=?').run(job.id);
       }
       return result;
     });
@@ -2762,9 +2774,75 @@ export class StudioDatabase {
   }
 
 
+  /** Only an active MANUAL lease may inspect a stage after expired JOB recovery. */
+  assertReviewedDeviceStage(args: {
+    stageId: string; hostId: string; expectedJobRevision: number;
+    expectedSnapshotHash: string; lease: DeviceLease; at: number;
+  }): void {
+    idSchema.parse(args.stageId);
+    idSchema.parse(args.hostId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    if (args.lease.ownerKind !== 'MANUAL' ||
+        !Number.isSafeInteger(args.expectedJobRevision) || args.expectedJobRevision < 0 ||
+        !Number.isSafeInteger(args.at) || !Number.isFinite(new Date(args.at).getTime()))
+      throw new DomainError('STAGE_REVIEW_LEASE_REQUIRED', 'A current MANUAL review lease is required.');
+    this.assertLease(args.lease, args.at);
+    const stage = this.stageTransfer(args.stageId);
+    const { job, snapshotHash } = this.getJob(stage.jobId);
+    const claim = this.db.prepare('SELECT * FROM job_claims WHERE job_id=?').get(job.id);
+    if (stage.hostId !== args.hostId || stage.deviceId !== args.lease.deviceId ||
+        stage.snapshotHash !== args.expectedSnapshotHash || snapshotHash !== args.expectedSnapshotHash ||
+        job.deviceId !== stage.deviceId || job.state !== 'NEEDS_REVIEW' ||
+        job.revision !== args.expectedJobRevision ||
+        !['TRANSFER_UNCERTAIN', 'SYNC_ACK_UNVERIFIED'].includes(stage.state) ||
+        !claim || claim.device_id !== stage.deviceId ||
+        Number(claim.generation) !== stage.claimGeneration ||
+        Number(claim.expires_at) > args.at ||
+        this.db.prepare('SELECT 1 FROM job_claims WHERE device_id=? AND expires_at>? LIMIT 1')
+          .get(stage.deviceId, args.at))
+      throw new DomainError('STAGE_REVIEW_NOT_ELIGIBLE', 'Review stage or historical JOB claim is stale.');
+    const device = this.db.prepare(
+      'SELECT d.enabled,p.identity FROM devices d LEFT JOIN device_profiles p ON p.device_id=d.id WHERE d.id=?',
+    ).get(stage.deviceId);
+    if (!device?.enabled || device.identity !== 'VERIFIED_PROPERTIES')
+      throw new DomainError('STAGE_REVIEW_DEVICE_BLOCKED', 'Verified device identity is required.');
+  }
+
+  /** Frozen job asset identity, without accessing mutable local media grants. */
+  reviewedDeviceStageMediaSnapshot(args: {
+    stageId: string; hostId: string; expectedJobRevision: number;
+    expectedSnapshotHash: string; lease: DeviceLease; at: number;
+  }): ReviewedStageMediaSnapshot {
+    this.assertReviewedDeviceStage(args);
+    const stage = this.stageTransfer(args.stageId);
+    const { job, snapshot, snapshotHash } = this.getJob(stage.jobId);
+    if (snapshot.contentId !== job.contentId ||
+        snapshot.workflowHash !== bundleHash(snapshot.bundle) ||
+        !Array.isArray(snapshot.assetIds) || snapshot.assetIds.length > 32 ||
+        new Set(snapshot.assetIds).size !== snapshot.assetIds.length)
+      throw new DomainError('STAGE_REVIEW_SNAPSHOT_STALE', 'Frozen job media bindings are invalid.');
+    const assetId = snapshot.assetIds[stage.ordinal];
+    const pinned = snapshot.assets?.filter((item) => item.id === assetId) ?? [];
+    const extension = extname(stage.remotePath).toLowerCase();
+    const expectedRemote = '/sdcard/Download/AutoReelsStudio/job-' + stage.jobId +
+      '/asset-' + String(stage.ordinal).padStart(3, '0') + '-' + stage.nonce + extension;
+    if (!assetId || pinned.length !== 1 || pinned[0]!.state !== 'READY' ||
+        pinned[0]!.hash !== stage.expectedHash ||
+        pinned[0]!.bytes !== stage.expectedBytes ||
+        stage.assetId !== assetId || stage.remotePath !== expectedRemote ||
+        !/^\.(?:mp4|mov|mkv|webm|m4v|avi|jpg|jpeg|png|webp|gif|bmp)$/.test(extension))
+      throw new DomainError('STAGE_REVIEW_SNAPSHOT_STALE', 'Frozen stage asset does not match the job.');
+    return {
+      jobId: stage.jobId, jobRevision: job.revision, snapshotHash,
+      ordinal: stage.ordinal, assetId, pinnedHash: stage.expectedHash,
+      pinnedBytes: stage.expectedBytes, extension,
+    };
+  }
+
   /** Append fenced reconciliation evidence; never mutates stage/job state. */
   recordClaimedDeviceStageReconciliation(args: {
     requestId: string; stageId: string; lease: DeviceLease; expectedJobRevision: number;
+    hostId?: string; expectedSnapshotHash?: string;
     classification: StageReconciliationClassification; observedHash: string | null;
     observedBytes: number | null; mediaStoreStatus: DeviceStageReconciliation['mediaStoreStatus']; at: number;
   }): DeviceStageReconciliation {
@@ -2783,18 +2861,31 @@ export class StudioDatabase {
       throw new DomainError('STAGE_RECONCILIATION_INVALID','Verified result requires hash and bytes.');
     return this.transaction(() => {
       const stage = this.stageTransfer(args.stageId);
-      this.assertStageClaim(stage,args.lease,args.expectedJobRevision,args.at);
+      if (args.lease.ownerKind === 'MANUAL') {
+        if (!args.hostId || !args.expectedSnapshotHash)
+          throw new DomainError('STAGE_REVIEW_LEASE_REQUIRED', 'Review host and snapshot are required.');
+        this.assertReviewedDeviceStage({
+          stageId: stage.id, hostId: args.hostId, expectedJobRevision: args.expectedJobRevision,
+          expectedSnapshotHash: args.expectedSnapshotHash, lease: args.lease, at: args.at,
+        });
+      } else {
+        this.assertStageClaim(stage,args.lease,args.expectedJobRevision,args.at);
+      }
       const old = this.db.prepare('SELECT * FROM device_stage_reconciliations WHERE stage_id=? AND request_id=?')
         .get(stage.id,args.requestId);
       if (old) {
         if (String(old.classification)!==args.classification ||
             (old.observed_hash==null?null:String(old.observed_hash))!==args.observedHash ||
             (old.observed_bytes==null?null:Number(old.observed_bytes))!==args.observedBytes ||
-            (old.mediastore_status==null?null:String(old.mediastore_status))!==args.mediaStoreStatus)
+            (old.mediastore_status==null?null:String(old.mediastore_status))!==args.mediaStoreStatus ||
+            old.lease_owner_kind !== args.lease.ownerKind ||
+            Number(old.lease_generation) !== args.lease.generation)
           throw new DomainError('STAGE_RECONCILIATION_IDEMPOTENCY_CONFLICT','Request ID has different evidence.');
         return {id:String(old.id),requestId:String(old.request_id),stageId:String(old.stage_id),
           jobId:String(old.job_id),deviceId:String(old.device_id),hostId:String(old.host_id),
           claimGeneration:Number(old.claim_generation),
+          leaseOwnerKind:old.lease_owner_kind as 'JOB' | 'MANUAL',
+          leaseGeneration:Number(old.lease_generation),
           classification:String(old.classification) as StageReconciliationClassification,
           observedHash:old.observed_hash==null?null:String(old.observed_hash),
           observedBytes:old.observed_bytes==null?null:Number(old.observed_bytes),
@@ -2822,14 +2913,17 @@ export class StudioDatabase {
           !exactBytes)
         throw new DomainError('STAGE_RECONCILIATION_MISMATCH','Observed bytes do not match pinned stage.');
       const id=makeId('stage_reconcile'), createdAt=new Date(args.at).toISOString();
-      this.db.prepare('INSERT INTO device_stage_reconciliations(id,request_id,stage_id,job_id,device_id,host_id,claim_generation,classification,observed_hash,observed_bytes,mediastore_status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+      this.db.prepare('INSERT INTO device_stage_reconciliations(id,request_id,stage_id,job_id,device_id,host_id,claim_generation,lease_owner_kind,lease_generation,classification,observed_hash,observed_bytes,mediastore_status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
         .run(id,args.requestId,stage.id,stage.jobId,stage.deviceId,stage.hostId,stage.claimGeneration,
+          args.lease.ownerKind,args.lease.generation,
           args.classification,args.observedHash,args.observedBytes,args.mediaStoreStatus,createdAt);
       this.queueEvent(stage.jobId,'DEVICE_STAGE_RECONCILIATION_RECORDED',{
         stageId:stage.id,claimGeneration:stage.claimGeneration,classification:args.classification,
       },args.at);
       return {id,requestId:args.requestId,stageId:stage.id,jobId:stage.jobId,deviceId:stage.deviceId,
-        hostId:stage.hostId,claimGeneration:stage.claimGeneration,classification:args.classification,
+        hostId:stage.hostId,claimGeneration:stage.claimGeneration,
+        leaseOwnerKind:args.lease.ownerKind as 'JOB' | 'MANUAL',leaseGeneration:args.lease.generation,
+        classification:args.classification,
         observedHash:args.observedHash,observedBytes:args.observedBytes,mediaStoreStatus:args.mediaStoreStatus,createdAt};
     });
   }

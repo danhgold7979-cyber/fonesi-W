@@ -6,7 +6,7 @@ import type { ProcessDefinition, JobSnapshot, JobDefinition } from '@autoreels/c
 import { contentHash } from '@autoreels/domain';
 import { StudioDatabase } from './index.js';
 import { DatabaseSync } from 'node:sqlite';
-import { migration } from './schema.js';
+import { migration, migrations } from './schema.js';
 
 describe('immutable external workflow closure', () => {
   it('pins full dependency bytes in the stored parent version and keeps them after child edits/restart', () => {
@@ -374,6 +374,40 @@ describe('snapshots, leases and effect durability', () => {
     expect(db.effectState(effect)).toBe('INTENT');
   });
 });
+
+describe('schema v18 to v19 durable reconciliation migration', () => {
+  it('backfills old JOB observations with their historical claim generation', () => {
+    const path = join(dir, 'legacy-stage-v18.sqlite');
+    const old = new DatabaseSync(path);
+    old.exec('PRAGMA foreign_keys=OFF');
+    for (const step of migrations.filter((item) => item.version <= 18)) {
+      old.exec(step.sql);
+      old.prepare('INSERT INTO schema_migrations VALUES(?,?)')
+        .run(step.version, contentHash(step.sql));
+    }
+    old.exec('PRAGMA user_version=18');
+    old.prepare('INSERT INTO device_stage_reconciliations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+      .run('legacy_audit', 'legacy_request', 'legacy_stage', 'legacy_job',
+        'legacy_device', 'legacy_host', 7, 'REMOTE_BYTES_MATCHED',
+        'a'.repeat(64), 24, 'NOT_INDEXED', '2026-10-28T00:00:00.000Z');
+    old.close();
+    const migrated = new StudioDatabase(path);
+    migrated.close();
+    const read = new DatabaseSync(path);
+    try {
+      const row = read.prepare(
+        'SELECT claim_generation,lease_owner_kind,lease_generation FROM device_stage_reconciliations WHERE id=?',
+      ).get('legacy_audit');
+      expect(row).toMatchObject({
+        claim_generation: 7, lease_owner_kind: 'JOB', lease_generation: 7,
+      });
+      expect(read.prepare('PRAGMA user_version').get()?.user_version).toBe(19);
+    } finally {
+      read.close();
+    }
+  });
+});
+
 describe('backup/restore', () => {
   it('migrates a v1 database and restores an older backup through staging', async () => {
     const path = join(dir, 'v1.sqlite'),
