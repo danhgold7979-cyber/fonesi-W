@@ -52,6 +52,15 @@ export type InternalRequest =
       expectedJobRevision: number; expectedSnapshotHash: string;
       lease: DeviceLease; confirmed: true; at: number;
     }
+  | {
+      command: 'stage.cleanupRecheckRecord';
+      requestId: string; stageId: string; hostId: string;
+      expectedJobRevision: number; expectedSnapshotHash: string;
+      lease: DeviceLease;
+      result: import('@autoreels/contracts').NativeStageCleanupAbsenceResult;
+      at: number;
+    }
+  | { command: 'stage.cleanupRecheckHistory'; jobId: string }
   | { command: 'stage.cleanupReviewHistory'; jobId: string }
   | {
       command: 'stage.postCleanupReview';
@@ -304,6 +313,10 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.assessOwnedStageCleanup(request);
     case 'stage.cleanupReviewRecord':
       return db.recordOwnedStageCleanupReviewRequest(request);
+    case 'stage.cleanupRecheckRecord':
+      return db.recordOwnedStageCleanupRecheck(request);
+    case 'stage.cleanupRecheckHistory':
+      return db.listOwnedStageCleanupRechecks(request.jobId);
     case 'stage.cleanupReviewHistory':
       return db.listOwnedStageCleanupReviewRequests(request.jobId);
     case 'stage.postCleanupReview':
