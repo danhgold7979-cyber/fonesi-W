@@ -127,6 +127,8 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
   const [recheckResult, setRecheckResult] = useState<NativeStageCleanupRecheckResult | null>(null);
   const [effectReviewDrafts, setEffectReviewDrafts] =
     useState<Record<number, EffectReviewDraft>>({});
+  const [manualEffectReceipt, setManualEffectReceipt] =
+    useState<NativeEffectManualReviewResult | null>(null);
   const generation = useRef(0);
 
   useEffect(() => {
@@ -151,6 +153,11 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
       .finally(() => { if (token === generation.current) setLoading(false); });
     return () => { generation.current++; };
   }, [jobId, reload]);
+
+  useEffect(() => {
+    setEffectReviewDrafts({});
+    setManualEffectReceipt(null);
+  }, [jobId]);
 
   async function reobserve(ordinal: number): Promise<void> {
     if (!nativeStageReview || reviewBusy || loading || loadingMore) return;
@@ -327,6 +334,7 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
       return;
     }
     setReviewError('');
+    setManualEffectReceipt(null);
     setLastLive(null);
     setCleanupResult(null);
     setAbsenceResult(null);
@@ -352,10 +360,13 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
           Object.keys(result).sort().join(',') !==
             'alreadyRecorded,canConfirm,canDispatch,canRetry,createdAt,disposition,evidenceCount,jobId,kind,ordinal,reasonCode,scope,state')
         throw new Error('Biên nhận rà soát effect không hợp lệ hoặc có quyền thực thi.');
+      setManualEffectReceipt(result);
       setReload((value) => value + 1);
     } catch (cause) {
-      if (token === generation.current)
+      if (token === generation.current) {
+        setManualEffectReceipt(null);
         setReviewError(cause instanceof Error ? cause.message : 'Không thể ghi chú rà soát effect.');
+      }
     } finally {
       if (token === generation.current) setReviewBusy(false);
     }
@@ -400,6 +411,15 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {reviewError && <p className="error" role="alert">{reviewError}</p>}
+      {manualEffectReceipt && (
+        <p role="status" data-testid="effect-manual-review-result">
+          Effect {manualEffectReceipt.ordinal + 1}: đã ghi chú
+          {' '}{effectReviewReasonLabels[manualEffectReceipt.reasonCode]} ·
+          {' '}{effectReviewDispositionLabels[manualEffectReceipt.disposition]}.
+          {' '}Actor là tự khai báo, chưa xác thực. Không xác nhận provider,
+          không đổi trạng thái effect/job và không cho phép retry hay dispatch.
+        </p>
+      )}
       {reviewBusy && <p role="status">
         Đang xác minh Android và, nếu được yêu cầu, mở hộp thoại xác nhận native…
       </p>}
