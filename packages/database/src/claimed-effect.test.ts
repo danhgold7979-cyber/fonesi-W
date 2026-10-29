@@ -702,7 +702,11 @@ it('fences a changed job revision or device identity after SQLite uncertainty', 
         return receipt;
       },
     });
-    await expect(host.attempt(claimedInput(f))).rejects.toThrow();
+    // Effect keys are globally unique; each independent failure fixture must
+    // use its own frozen key to reach the dispatch fence under test.
+    await expect(host.attempt({
+      ...claimedInput(f), effectKey: contentHash('host_fence_' + suffix),
+    })).rejects.toThrow();
     expect(sends).toBe(0);
     const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
     const effectId = String(sql.prepare('SELECT id FROM effects WHERE job_id=?').get(f.jobId)!.id);
