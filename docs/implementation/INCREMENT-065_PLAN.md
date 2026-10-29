@@ -17,3 +17,7 @@ The durable S097 host boundary intentionally stops at ATTEMPT_UNCERTAIN and trea
 ## State transitions and acceptance
 
 No new database schema, effect transitions, runtime provider connection or renderer/HTTP/API command. A matching *synthetic* observation is **NOT** proof of an actual post and never advances ATTEMPT_UNCERTAIN. Actual Windows 10 + Android USB/LAN app/profile/identity/Unicode/picker/post/readback, crash-safe recovery, provider certification, fleet/load and packaging remain NOT_RUN; S098/AT-098, S097, P11 and downstream P12–P14 NOT_ACCEPTED. Best status: TESTED_S098_EXACT_POST_CANDIDATE_FILTER_NOT_ACCEPTED.
+
+## CI-driven regression harness correction
+
+The exact-source Windows **push** run for this increment and an earlier checkpoint PR intermittently timed out in `packages/database/src/content-page-upgrade.test.ts` at Vitest's default 10-second limit while other Ubuntu/Windows runs passed. That test checks historical SQLite migration **correctness**, not a migration throughput SLA. Increase only its per-test budget to 30 seconds, keep every database state/schema/history assertion intact, and re-run Ubuntu/Windows source checks. Record the original failed runs and the corrected SHA; do not hide real test assertions or accept hardware outcomes.

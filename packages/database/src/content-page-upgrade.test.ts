@@ -115,4 +115,6 @@ it('upgrades P08 schema13 through content epoch and cleanup-review schema20 with
   } finally {
     again.close();
   }
-});
+  // This verifies migration fidelity, not a throughput SLA. A shared Windows
+  // CI runner may take >10s to apply/check 20 SQLite schema versions.
+}, 30000);
