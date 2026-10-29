@@ -173,6 +173,19 @@ export type InternalRequest =
       scope: 'row' | 'process';
     }
   | {
+      command: 'comment.resolveClaimed';
+      effectId: string;
+      jobId: string;
+      expectedJobRevision: number;
+      expectedSnapshotHash: string;
+      postEffectId: string;
+      fieldKey: string;
+      scope: 'row' | 'process';
+      ordinal: number;
+      lease: DeviceLease;
+      at: number;
+    }
+  | {
       command: 'source.register';
       processId: string;
       expectedRevision: number;
@@ -346,6 +359,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       });
     case 'comment.planFrozen':
       return db.frozenCommentListPlan(request);
+    case 'comment.resolveClaimed':
+      return db.resolveClaimedCommentDispatch(request);
     case 'source.register':
       return db.registerNativeSources(request.processId, request.expectedRevision, request.grants);
     case 'source.grant':

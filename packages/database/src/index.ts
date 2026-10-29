@@ -3447,6 +3447,88 @@ export class StudioDatabase {
     });
   }
 
+  /**
+   * Trusted host-only rehydration AFTER an effect is durably ATTEMPT_UNCERTAIN.
+   * Re-fences JOB ownership/revision and binds the journal's key/payload hash
+   * to one exact immutable comment ordinal. Not a provider certification.
+   * Never expose this response through public StudioApi or renderer.
+   */
+  resolveClaimedCommentDispatch(args: {
+    effectId: string;
+    jobId: string;
+    expectedJobRevision: number;
+    expectedSnapshotHash: string;
+    postEffectId: string;
+    fieldKey: string;
+    scope: 'row' | 'process';
+    ordinal: number;
+    lease: DeviceLease;
+    at: number;
+  }): {
+    scope: 'FROZEN_COMMENT_ADAPTER_PRIVATE';
+    effectId: string;
+    jobId: string;
+    ordinal: number;
+    value: string;
+    utf8Hash: string;
+    utf8Bytes: number;
+    effectKey: string;
+    payloadHash: string;
+  } {
+    idSchema.parse(args.effectId);
+    idSchema.parse(args.jobId);
+    idSchema.parse(args.postEffectId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    if (!Number.isSafeInteger(args.ordinal) ||
+        args.ordinal < 0 || args.ordinal >= 32 ||
+        !['row', 'process'].includes(args.scope))
+      throw new DomainError('COMMENT_DISPATCH_SOURCE_INVALID',
+        'Exact frozen comment source binding is invalid.');
+
+    // A positive fence is bounded to this precise effect and current
+    // generation, not permission to reuse an earlier provider outcome.
+    this.assertClaimedEffectDispatch({
+      effectId: args.effectId,
+      expectedJobRevision: args.expectedJobRevision,
+      expectedSnapshotHash: args.expectedSnapshotHash,
+      lease: args.lease,
+      at: args.at,
+    });
+    const journal = this.db.prepare(
+      'SELECT job_id,kind,effect_key,payload_hash FROM effects WHERE id=?',
+    ).get(args.effectId);
+    if (!journal || journal.kind !== 'COMMENT' ||
+        journal.job_id !== args.jobId)
+      throw new DomainError('COMMENT_DISPATCH_JOURNAL_MISMATCH',
+        'Effect is not a claimed comment belonging to this job.');
+
+    const plan = this.frozenCommentListPlan({
+      jobId: args.jobId,
+      expectedSnapshotHash: args.expectedSnapshotHash,
+      postEffectId: args.postEffectId,
+      fieldKey: args.fieldKey,
+      scope: args.scope,
+    });
+    const item = plan.items[args.ordinal];
+    if (plan.status !== 'FROZEN_COMMENTS_PROVIDER_UNVERIFIED' ||
+        !item || item.ordinal !== args.ordinal ||
+        journal.effect_key !== item.effectKey ||
+        journal.payload_hash !== item.payloadHash)
+      throw new DomainError('COMMENT_DISPATCH_JOURNAL_MISMATCH',
+        'Journal effect does not match the exact frozen comment item.');
+    return {
+      scope: 'FROZEN_COMMENT_ADAPTER_PRIVATE',
+      effectId: args.effectId,
+      jobId: args.jobId,
+      ordinal: item.ordinal,
+      value: item.value,
+      utf8Hash: item.utf8Hash,
+      utf8Bytes: item.utf8Bytes,
+      effectKey: item.effectKey,
+      payloadHash: item.payloadHash,
+    };
+  }
+
   /** Persist uncertainty and job phase together before the provider dispatch boundary. */
   beginClaimedEffectAttempt(args: {
     effectId: string;

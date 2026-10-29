@@ -941,3 +941,221 @@ it('rejects a host COMMENT without frozen source or a PUBLISH carrying a comment
   expect(Number(sql.prepare('SELECT COUNT(*) AS n FROM effects').get()?.n)).toBe(0);
   sql.close();
 });
+
+/**
+ * Synthetic persisted confirmation is intentionally not a real provider
+ * receipt. It exists only to exercise trusted host/SQLite contract ordering.
+ */
+function confirmedCommentHostFixture(ordinal = 0) {
+  const f = fixture('device_comment', 'comment', true);
+  const publish = prepare(f);
+  db.beginClaimedEffectAttempt({
+    effectId: publish.effectId, expectedJobRevision: publish.jobRevision,
+    lease: f.lease, at: at + 100,
+  });
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  try {
+    sql.prepare("UPDATE jobs SET state='POSTED',revision=revision+1 WHERE id=?")
+      .run(f.jobId);
+    sql.prepare("UPDATE effects SET state='CONFIRMED' WHERE id=?")
+      .run(publish.effectId);
+  } finally { sql.close(); }
+  const source = {
+    postEffectId: publish.effectId, fieldKey: 'comments',
+    scope: 'row' as const, ordinal,
+  };
+  const plan = db.frozenCommentListPlan({
+    jobId: f.jobId, expectedSnapshotHash: f.snapshotHash,
+    postEffectId: publish.effectId, fieldKey: 'comments', scope: 'row',
+  });
+  expect(plan.status).toBe('FROZEN_COMMENTS_PROVIDER_UNVERIFIED');
+  const item = plan.items[ordinal]!;
+  const input = {
+    jobId: f.jobId,
+    expectedJobRevision: db.getJob(f.jobId).job.revision,
+    expectedSnapshotHash: f.snapshotHash,
+    nodeId: 'comment',
+    kind: 'COMMENT' as const,
+    effectKey: item.effectKey,
+    payloadHash: item.payloadHash,
+    commentSource: source,
+    lease: f.lease,
+  };
+  return { f, publish, source, item, input };
+}
+
+it('hydrates only the exact immutable multiline Unicode COMMENT into the private adapter after durable journal', async () => {
+  const { f, item, input } = confirmedCommentHostFixture(1);
+  const events: string[] = [];
+  let seen = 0;
+  const mutable = 'MUTABLE_PRIVATE_AFTER_SCHEDULE_NOT_COMMENT';
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async (arg) => {
+      events.push('adapter');
+      seen++;
+      expect(arg.kind).toBe('COMMENT');
+      if (arg.kind !== 'COMMENT') throw new Error('Expected COMMENT adapter input');
+      expect(arg.comment).toEqual({
+        ordinal: 1, value: item.value, utf8Hash: item.utf8Hash,
+        utf8Bytes: item.utf8Bytes,
+      });
+      expect(arg.comment.value).toBe('Bình luận thứ nhất 👨‍👩‍👧\r\nCâu tiếp');
+      expect(arg.comment.value).not.toBe(mutable);
+      expect(db.effectState(arg.effectId)).toBe('ATTEMPT_UNCERTAIN');
+      expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+      return 'ACK';
+    },
+  };
+  const host = hostEffect(adapter, {
+    clock: () => at + 150,
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      events.push(request.command);
+      const receipt = dispatchInternal(db, request) as T;
+      if (request.command === 'effect.beginClaimedAttempt') {
+        const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+        try {
+          sql.prepare('UPDATE content_items SET fields=? WHERE id=?').run(
+            JSON.stringify({ comments: [mutable] }), db.getJob(f.jobId).job.contentId,
+          );
+        } finally { sql.close(); }
+      }
+      return receipt;
+    },
+  });
+  const result = await host.attempt(input);
+  expect(result).toMatchObject({
+    state: 'ATTEMPT_UNCERTAIN', observation: 'ACK_UNVERIFIED',
+    canConfirm: false, canRetry: false, canDispatchAgain: false,
+  });
+  expect(events).toEqual([
+    'effect.prepareClaimed', 'effect.beginClaimedAttempt', 'effect.assertClaim',
+    'comment.resolveClaimed', 'adapter',
+  ]);
+  expect(seen).toBe(1);
+  expect(JSON.stringify(result)).not.toContain(item.value);
+  expect(JSON.stringify(result)).not.toContain(item.utf8Hash);
+  expect(JSON.stringify(result)).not.toContain(item.effectKey);
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.effectState(result.effectId)).toBe('ATTEMPT_UNCERTAIN');
+  await expect(hostEffect(adapter).attempt(input)).rejects.toThrow();
+  expect(seen).toBe(1);
+});
+
+it('blocks a mutated durable COMMENT hash after journal commit and before adapter resolution', async () => {
+  const { f, input } = confirmedCommentHostFixture();
+  let sends = 0, pendingId = '';
+  const adapter: ClaimedEffectAdapter = { sendOnce: async () => { sends++; return 'ACK'; } };
+  const host = hostEffect(adapter, {
+    clock: () => at + 150,
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const reply = dispatchInternal(db, request) as T;
+      if (request.command === 'effect.assertClaim') {
+        const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+        try {
+          const effect = sql.prepare("SELECT id FROM effects WHERE job_id=? AND kind='COMMENT'")
+            .get(f.jobId);
+          pendingId = String(effect!.id);
+          sql.prepare('UPDATE effects SET payload_hash=? WHERE id=?')
+            .run(contentHash('changed-synthetic-journal'), pendingId);
+        } finally { sql.close(); }
+      }
+      return reply;
+    },
+  });
+  await expect(host.attempt(input)).rejects.toMatchObject({
+    code: 'COMMENT_DISPATCH_JOURNAL_MISMATCH',
+  });
+  expect(sends).toBe(0);
+  expect(db.effectState(pendingId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+});
+
+for (const kind of ['text', 'hash', 'ordinal', 'effectKey'] as const) {
+  it('blocks a forged private comment receipt '+kind+' before adapter callback', async () => {
+    const { f, input, item } = confirmedCommentHostFixture(1);
+    let sends = 0, pendingId = '';
+    const adapter: ClaimedEffectAdapter = {
+      sendOnce: async () => { sends++; return 'ACK'; },
+    };
+    const host = hostEffect(adapter, {
+      clock: () => at + 150,
+      internal: async <T>(request: InternalRequest): Promise<T> => {
+        const reply = dispatchInternal(db, request);
+        if (request.command === 'comment.resolveClaimed') {
+          pendingId = String((reply as { effectId: string }).effectId);
+          if (kind === 'text') return { ...reply as object, value: 'FORGED_PRIVATE_TEXT' } as T;
+          if (kind === 'hash') return { ...reply as object, utf8Hash: 'd'.repeat(64) } as T;
+          if (kind === 'ordinal') return { ...reply as object, ordinal: 0 } as T;
+          return { ...reply as object, effectKey: contentHash('wrong-key') } as T;
+        }
+        return reply as T;
+      },
+    });
+    await expect(host.attempt(input)).rejects.toMatchObject({
+      code: 'COMMENT_ADAPTER_PAYLOAD_INVALID',
+    });
+    expect(sends).toBe(0);
+    expect(db.effectState(pendingId)).toBe('ATTEMPT_UNCERTAIN');
+    expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+    expect(JSON.stringify({ status: 'blocked' })).not.toContain(item.value);
+  });
+}
+
+it('re-fences a released lease between effect check and comment hydration, never calls adapter', async () => {
+  const { f, input } = confirmedCommentHostFixture(0);
+  let sends = 0, pendingId = '';
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { sends++; return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    clock: () => at + 150,
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const reply = dispatchInternal(db, request) as T;
+      if (request.command === 'effect.assertClaim') {
+        const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+        try {
+          pendingId = String(sql.prepare(
+            "SELECT id FROM effects WHERE job_id=? AND kind='COMMENT'",
+          ).get(f.jobId)!.id);
+        } finally { sql.close(); }
+        db.releaseLease(f.lease);
+      }
+      return reply;
+    },
+  });
+  await expect(host.attempt(input)).rejects.toThrow();
+  expect(sends).toBe(0);
+  expect(db.effectState(pendingId)).toBe('ATTEMPT_UNCERTAIN');
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+});
+
+it('keeps a comment uncertain if cancellation arrives after exact payload resolution', async () => {
+  const { f, input } = confirmedCommentHostFixture(0);
+  const controller = new AbortController();
+  let sends = 0, pendingId = '';
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { sends++; return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    clock: () => at + 150,
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const reply = dispatchInternal(db, request) as T;
+      if (request.command === 'comment.resolveClaimed') {
+        pendingId = String((reply as { effectId: string }).effectId);
+        controller.abort();
+      }
+      return reply;
+    },
+  });
+  const result = await host.attempt(input, controller.signal);
+  expect(result).toMatchObject({
+    state: 'ATTEMPT_UNCERTAIN', observation: 'NOT_DISPATCHED',
+    canConfirm: false, canRetry: false, canDispatchAgain: false,
+  });
+  expect(sends).toBe(0);
+  expect(db.effectState(pendingId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
+});

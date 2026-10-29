@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { hashSchema, idSchema, isSafeKey } from '@autoreels/contracts';
 import type { DeviceLease } from '@autoreels/contracts';
 import { DomainError } from '@autoreels/domain';
@@ -7,14 +8,26 @@ import type { InternalRequest } from './internal.js';
  * Trusted host-only port. No renderer, HTTP or preload path may instantiate a
  * provider. Adapter success is a transport observation, NOT a provider post.
  */
+export interface FrozenAdapterComment {
+  /** Trusted host-only payload, never serialized to StudioApi or logs. */
+  ordinal: number;
+  value: string;
+  utf8Hash: string;
+  utf8Bytes: number;
+}
+export type ClaimedEffectAdapterInput = {
+  effectId: string;
+  jobId: string;
+  nodeId: string;
+  lease: DeviceLease;
+} & (
+  | { kind: 'PUBLISH'; comment?: never }
+  | { kind: 'COMMENT'; comment: FrozenAdapterComment }
+);
 export interface ClaimedEffectAdapter {
-  sendOnce(input: {
-    effectId: string;
-    jobId: string;
-    nodeId: string;
-    kind: 'PUBLISH' | 'COMMENT';
-    lease: DeviceLease;
-  }, signal?: AbortSignal): Promise<'ACK' | 'UNKNOWN'>;
+  sendOnce(
+    input: ClaimedEffectAdapterInput, signal?: AbortSignal,
+  ): Promise<'ACK' | 'UNKNOWN'>;
 }
 interface ClaimedEffectDbPort {
   internal<T>(request: InternalRequest): Promise<T>;
@@ -166,11 +179,65 @@ export class HostClaimedEffectService {
       throw new DomainError('EFFECT_DISPATCH_FENCE_INVALID',
         'The effect dispatch fence was not confirmed.');
     if (signal?.aborted) return { ...base, observation: 'NOT_DISPATCHED' };
+
+    // Only a durably journaled COMMENT can be rehydrated into exact frozen
+    // Unicode text. A mismatched worker receipt cannot reach the adapter.
+    let comment: FrozenAdapterComment | null = null;
+    if (request.kind === 'COMMENT') {
+      const source = request.commentSource!;
+      const receipt = await this.db.internal<{
+        scope: 'FROZEN_COMMENT_ADAPTER_PRIVATE';
+        effectId: string;
+        jobId: string;
+        ordinal: number;
+        value: string;
+        utf8Hash: string;
+        utf8Bytes: number;
+        effectKey: string;
+        payloadHash: string;
+      }>({
+        command: 'comment.resolveClaimed',
+        effectId: attempt.effectId,
+        jobId: request.jobId,
+        expectedJobRevision: attempt.jobRevision,
+        expectedSnapshotHash: request.expectedSnapshotHash,
+        postEffectId: source.postEffectId,
+        fieldKey: source.fieldKey,
+        scope: source.scope,
+        ordinal: source.ordinal,
+        lease: request.lease,
+        at: this.now(),
+      });
+      const utf8 = typeof receipt?.value === 'string'
+        ? Buffer.from(receipt.value, 'utf8') : null;
+      if (receipt?.scope !== 'FROZEN_COMMENT_ADAPTER_PRIVATE' ||
+          receipt.effectId !== attempt.effectId ||
+          receipt.jobId !== request.jobId ||
+          receipt.ordinal !== source.ordinal ||
+          receipt.effectKey !== request.effectKey ||
+          receipt.payloadHash !== request.payloadHash ||
+          !hashSchema.safeParse(receipt.utf8Hash).success ||
+          !Number.isSafeInteger(receipt.utf8Bytes) ||
+          !utf8 || utf8.byteLength !== receipt.utf8Bytes ||
+          createHash('sha256').update(utf8).digest('hex') !== receipt.utf8Hash)
+        throw new DomainError('COMMENT_ADAPTER_PAYLOAD_INVALID',
+          'Trusted frozen comment receipt does not match the claimed effect.');
+      comment = {
+        ordinal: source.ordinal, value: receipt.value,
+        utf8Hash: receipt.utf8Hash, utf8Bytes: receipt.utf8Bytes,
+      };
+    }
+    if (signal?.aborted) return { ...base, observation: 'NOT_DISPATCHED' };
+
+    const common = {
+      effectId: attempt.effectId, jobId: request.jobId,
+      nodeId: request.nodeId, lease: request.lease,
+    };
+    const adapterInput: ClaimedEffectAdapterInput = request.kind === 'COMMENT'
+      ? { ...common, kind: 'COMMENT', comment: comment! }
+      : { ...common, kind: 'PUBLISH' };
     try {
-      const ack = await this.adapter.sendOnce({
-        effectId: attempt.effectId, jobId: request.jobId,
-        nodeId: request.nodeId, kind: request.kind, lease: request.lease,
-      }, signal);
+      const ack = await this.adapter.sendOnce(adapterInput, signal);
       return { ...base, observation: ack === 'ACK' ? 'ACK_UNVERIFIED' : 'UNKNOWN' };
     } catch {
       // Transport failure, app crash, cancellation and unknown ACK all require
