@@ -2565,15 +2565,19 @@ export class StudioDatabase {
         if (!value || typeof value !== 'object' || Array.isArray(value))
           throw new Error('Invalid cursor object');
         const entry = value as Record<string, unknown>;
-        if (entry.jobId !== jobId)
-          throw new DomainError('STAGE_REVIEW_CURSOR_SCOPE', 'Cursor belongs to another job.');
-        if (entry.revision !== job.revision)
-          throw new DomainError('STAGE_REVIEW_CURSOR_STALE', 'Job changed; reload stage evidence.');
-        if (typeof entry.createdAt !== 'string' ||
+        if (Object.keys(entry).sort().join(',') !== 'createdAt,id,jobId,revision' ||
+            !idSchema.safeParse(entry.jobId).success ||
+            !Number.isSafeInteger(entry.revision) ||
+            Number(entry.revision) < 0 ||
+            typeof entry.createdAt !== 'string' ||
             !Number.isFinite(Date.parse(entry.createdAt)) ||
             new Date(entry.createdAt).toISOString() !== entry.createdAt ||
             !idSchema.safeParse(entry.id).success)
           throw new Error('Invalid cursor content');
+        if (entry.jobId !== jobId)
+          throw new DomainError('STAGE_REVIEW_CURSOR_SCOPE', 'Cursor belongs to another job.');
+        if (entry.revision !== job.revision)
+          throw new DomainError('STAGE_REVIEW_CURSOR_STALE', 'Job changed; reload stage evidence.');
         before = { createdAt: entry.createdAt, id: String(entry.id) };
       } catch (error) {
         if (error instanceof DomainError) throw error;
