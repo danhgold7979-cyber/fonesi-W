@@ -5186,6 +5186,12 @@ export class StudioDatabase {
         !['INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW'].includes(String(row.state)))
       throw new DomainError('EFFECT_REVIEW_TARGET_NOT_UNRESOLVED',
         'Only an exact visible unresolved effect may receive a manual review note.');
+    const noteCount = Number(this.db.prepare(
+      'SELECT COUNT(*) AS total FROM effect_manual_reviews WHERE effect_id=?',
+    ).get(String(row.id))?.total ?? 0);
+    if (!Number.isSafeInteger(noteCount) || noteCount < 0 || noteCount >= 32)
+      throw new DomainError('EFFECT_REVIEW_HISTORY_LIMIT',
+        'This effect has reached the 32-note audit limit.');
     return {
       jobId, jobRevision: job.revision, ordinal, effectId: String(row.id),
       kind: row.kind as 'PUBLISH' | 'COMMENT',
