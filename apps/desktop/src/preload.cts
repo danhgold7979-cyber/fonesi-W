@@ -1,4 +1,4 @@
-import type { StudioApi, ApiCommand, NativeStageReviewApi } from '@autoreels/contracts';
+import type { StudioApi, ApiCommand, NativeStageReviewApi, NativeEffectReviewApi } from '@autoreels/contracts';
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron');
 const send = <T,>(command: ApiCommand, input: unknown = {}): Promise<T> =>
   ipcRenderer.invoke('studio:request', { command, input }) as Promise<T>;
@@ -99,3 +99,7 @@ const stageReview: NativeStageReviewApi = {
     ipcRenderer.invoke('studio:stage-cleanup-recheck', { jobId, ordinal }),
 };
 contextBridge.exposeInMainWorld('studioStageReview', stageReview);
+const effectReview: NativeEffectReviewApi = {
+  recordManualReview: (input) => ipcRenderer.invoke('studio:effect-manual-review', input),
+};
+contextBridge.exposeInMainWorld('studioEffectReview', effectReview);
