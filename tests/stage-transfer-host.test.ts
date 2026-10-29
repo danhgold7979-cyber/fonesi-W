@@ -1145,3 +1145,119 @@ it('refuses native cleanup STAT before a valid reviewed job, owned stage or oper
   expect(events).not.toContain('fake.adb.stat');
   expect(events).not.toContain('fake.adb.mediastore');
 });
+
+
+it('native bounded cleanup-only recheck records three actual readbacks, refusing fourth before Android access', async () => {
+  const f = await nativeCleanupRequestFixture();
+  const jobBefore = db.getJob(jobId).job;
+  const stageBefore = db.listDeviceStageTransfers(jobId)[0]!;
+  const counts = () => {
+    const conn = new DatabaseSync(filepath());
+    try {
+      return [
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?').get(jobId)?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?').get(jobId)?.n),
+        Number(conn.prepare('SELECT COUNT(*) AS n FROM device_stage_cleanup_rechecks WHERE job_id=?')
+          .get(jobId)?.n),
+      ];
+    } finally { conn.close(); }
+  };
+  const before = counts();
+  const expectedStatuses = [
+    'ABSENCE_CANDIDATE_UNCERTIFIED',
+    'ABSENCE_CANDIDATE_UNCERTIFIED',
+    'ABSENCE_CANDIDATE_UNCERTIFIED',
+  ];
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    events.length = 0;
+    const native = nativeStageService(
+      'NOT_INDEXED', hostId, undefined, undefined, 'MISSING',
+    );
+    const receipt = await native.recordCleanupRecheck(jobId, 0);
+    expect(receipt).toEqual({
+      jobId, ordinal: 0,
+      scope: 'LIVE_ANDROID_CLEANUP_RECHECK_NOT_DELETE_CERTIFIED',
+      status: expectedStatuses[attempt - 1],
+      attemptOrdinal: attempt, recordedAt: expect.any(String),
+      canDelete: false, canMarkClean: false, canRetry: false, canDispatch: false,
+    });
+    expect(events.filter(x => x === 'native.manual.actor')).toHaveLength(1);
+    expect(events.filter(x => x === 'fake.adb.stat')).toHaveLength(1);
+    expect(events.filter(x => x === 'fake.adb.mediastore')).toHaveLength(1);
+    expect(events.filter(x => x === 'stage.cleanupRecheckRecord')).toHaveLength(1);
+    expect(events.indexOf('fake.adb.stat')).toBeLessThan(events.indexOf('fake.adb.mediastore'));
+    expect(events.indexOf('fake.adb.mediastore')).toBeLessThan(
+      events.indexOf('stage.cleanupRecheckRecord'));
+    expect(events).not.toContain('fake.adb.send');
+    expect(events).not.toContain('stage.recordReconciliation');
+    expect(events).not.toContain('stage.cleanupReviewRecord');
+    expect(counts()).toEqual([before[0], before[1], attempt]);
+    expect(db.getJob(jobId).job).toEqual(jobBefore);
+    expect(db.listDeviceStageTransfers(jobId)[0]).toEqual(stageBefore);
+    for (const secret of [f.stageId, f.expectedSnapshotHash,
+      stageBefore.remotePath, stageBefore.expectedHash,
+      stageBefore.nonce, f.lease.ownerId, 'USB_STAGE_FIXTURE'])
+      expect(JSON.stringify(receipt)).not.toContain(secret);
+    sql(conn => expect(conn.prepare('SELECT owner_id FROM leases WHERE device_id=?')
+      .get(deviceId)?.owner_id).toBeNull());
+  }
+  events.length = 0;
+  await expect(nativeStageService(
+    'NOT_INDEXED', hostId, undefined, undefined, 'MISSING',
+  ).recordCleanupRecheck(jobId, 0)).rejects.toMatchObject({
+    code: 'CLEANUP_RECHECK_LIMIT',
+  });
+  expect(events).toContain('stage.cleanupRecheckHistory');
+  expect(events).not.toContain('native.manual.actor');
+  expect(events).not.toContain('fake.adb.stat');
+  expect(events).not.toContain('fake.adb.mediastore');
+  expect(counts()).toEqual([before[0], before[1], 3]);
+  const history = db.listOwnedStageCleanupRechecks(jobId);
+  expect(history.items).toHaveLength(3);
+  expect(history.canDelete).toBe(false);
+  expect(history.canRetry).toBe(false);
+  db.close(); db = new StudioDatabase(filepath());
+  expect(db.listOwnedStageCleanupRechecks(jobId)).toEqual(history);
+  expect(db.getJob(jobId).job).toEqual(jobBefore);
+  expect(db.claimDueJob(deviceId, 'no_repost_after_recheck', Date.now()).status)
+    .toBe('NEEDS_REVIEW');
+  await expect(dispatch(db, {
+    operationId: 'op_forged_cleanup_recheck_native',
+    command: 'stage.cleanupRecheckRecord' as never,
+    input: { jobId, ordinal: 0 },
+  })).rejects.toThrow();
+});
+
+it('native cleanup-only recheck refuses stale job, foreign host and lost MANUAL lease before persisting', async () => {
+  const f = await nativeCleanupRequestFixture();
+  events.length = 0;
+  await expect(nativeStageService('NOT_INDEXED', hostId, undefined, undefined, 'MISSING')
+    .recordCleanupRecheck(jobId, 1)).rejects.toMatchObject({
+    code: 'STAGE_REOBSERVE_UNAVAILABLE',
+  });
+  await expect(nativeStageService('NOT_INDEXED', 'untrusted_host', undefined, undefined, 'MISSING')
+    .recordCleanupRecheck(jobId, 0)).rejects.toMatchObject({
+    code: 'STAGE_REOBSERVE_OWNER_MISMATCH',
+  });
+  expect(events).not.toContain('native.manual.actor');
+  expect(events).not.toContain('fake.adb.stat');
+  const failFence = nativeStageService('NOT_INDEXED', hostId, () => {
+    sql(conn => conn.prepare('UPDATE jobs SET revision=revision+1 WHERE id=?')
+      .run(jobId));
+  }, undefined, 'MISSING');
+  await expect(failFence.recordCleanupRecheck(jobId, 0)).rejects.toThrow();
+  expect(events).not.toContain('fake.adb.stat');
+  sql(conn => conn.prepare('UPDATE jobs SET revision=revision-1 WHERE id=?')
+    .run(jobId));
+  const lostLease = nativeStageService('NOT_INDEXED', hostId, () => {
+    sql(conn => conn.prepare(
+      'UPDATE leases SET owner_id=NULL,owner_kind=NULL,expires_at=0 WHERE device_id=?',
+    ).run(deviceId));
+  }, undefined, 'MISSING');
+  await expect(lostLease.recordCleanupRecheck(jobId, 0)).rejects.toThrow();
+  expect(db.listOwnedStageCleanupRechecks(jobId).items).toHaveLength(0);
+  expect(db.getJob(jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.listDeviceStageTransfers(jobId)[0]).toMatchObject({
+    id: f.stageId, state: 'SYNC_ACK_UNVERIFIED',
+  });
+});
