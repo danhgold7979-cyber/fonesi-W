@@ -173,6 +173,16 @@ export interface PersistedEffectReview {
     ordinal: number;
     kind: 'PUBLISH' | 'COMMENT' | 'UNKNOWN';
     state: import('./models.js').EffectState | 'UNKNOWN';
+    /** Append-only manual review note inventory; self-reported actor is not authenticated. */
+    manualReviewCount: number;
+    latestManualReview: {
+      actorId: string;
+      reasonCode: 'UNKNOWN_EFFECT' | 'CANCEL_REQUESTED' |
+        'PROVIDER_EVIDENCE_MISSING' | 'COMMENT_UNCERTAIN';
+      disposition: 'AWAITING_EVIDENCE' | 'ESCALATED' | 'INSPECTED_UNCERTIFIED';
+      evidenceCount: number;
+      createdAt: string;
+    } | null;
   }[];
   canConfirm: false;
   canRetry: false;
@@ -277,6 +287,34 @@ export interface NativeStageCleanupRecheckResult {
   canMarkClean: false;
   canRetry: false;
   canDispatch: false;
+}
+/** Native-only effect review audit receipt. It cannot confirm, retry or dispatch. */
+export interface NativeEffectManualReviewResult {
+  jobId: string;
+  ordinal: number;
+  kind: 'PUBLISH' | 'COMMENT';
+  state: 'INTENT' | 'ATTEMPT_UNCERTAIN' | 'NEEDS_REVIEW';
+  reasonCode: 'UNKNOWN_EFFECT' | 'CANCEL_REQUESTED' |
+    'PROVIDER_EVIDENCE_MISSING' | 'COMMENT_UNCERTAIN';
+  disposition: 'AWAITING_EVIDENCE' | 'ESCALATED' | 'INSPECTED_UNCERTIFIED';
+  evidenceCount: number;
+  createdAt: string;
+  alreadyRecorded: boolean;
+  scope: 'PRIVATE_EFFECT_MANUAL_REVIEW_NOTE_NOT_CERTIFIED';
+  canConfirm: false;
+  canRetry: false;
+  canDispatch: false;
+}
+/** Electron-only trusted entrypoint. No effect ID is accepted from the renderer. */
+export interface NativeEffectReviewApi {
+  recordManualReview(input: {
+    jobId: string;
+    ordinal: number;
+    actorId: string;
+    reasonCode: NativeEffectManualReviewResult['reasonCode'];
+    disposition: NativeEffectManualReviewResult['disposition'];
+    evidenceRefs: string[];
+  }): Promise<NativeEffectManualReviewResult>;
 }
 /** Separate Electron-only bridge: never add this to public StudioApi/ApiCommand. */
 export interface NativeStageReviewApi {
