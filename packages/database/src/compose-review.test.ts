@@ -87,6 +87,19 @@ describe('S096.3 frozen compose source expectation without Android/PUBLISH capab
     ]) expect(dto).not.toContain(sensitive);
   });
 
+  it('derives canonical selected order from assetIds, not descriptor insertion order or basename', () => {
+    const v = setup();
+    v.snapshot.assets!.reverse();
+    const result = assess(v);
+    expect(result.summary.status).toBe('FROZEN_EXPECTATIONS_LIVE_UNVERIFIED');
+    expect(result.manifest?.orderedAssetIds).toEqual(['asset_a', 'asset_b']);
+    expect(result.manifest?.orderedAssets).toEqual([
+      { ordinal: 0, assetId: 'asset_a', kind: 'VIDEO', pinnedHash: 'a'.repeat(64), pinnedBytes: 101 },
+      { ordinal: 1, assetId: 'asset_b', kind: 'VIDEO', pinnedHash: 'b'.repeat(64), pinnedBytes: 202 },
+    ]);
+    expect(result.summary.canPublish).toBe(false);
+  });
+
   it('permits a text-only source expectation without fabricating a picker slot', () => {
     const v = setup();
     v.snapshot.assetIds = [];
@@ -120,7 +133,6 @@ describe('S096.3 frozen compose source expectation without Android/PUBLISH capab
     { name: 'changed pinned media state', mutate: v => { v.snapshot.assets![0]!.state = 'CHANGED'; }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
     { name: 'wrong asset media kind', mutate: v => { v.snapshot.assets![0]!.kind = 'image'; }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
     { name: 'media report wrong kind', mutate: v => { v.mediaOrder.slots[0]!.kind = 'IMAGE'; }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
-    { name: 'swapped selected descriptors', mutate: v => { v.snapshot.assets!.reverse(); }, code: 'FROZEN_MEDIA_BINDING_INVALID' },
     { name: 'different job content', mutate: v => { v.job.contentId = 'content_other'; }, code: 'CONTENT_BINDING_MISMATCH' },
     { name: 'not preflight', mutate: v => { v.job.state = 'NEEDS_REVIEW'; }, code: 'JOB_NOT_PREFLIGHT' },
     { name: 'prior external effect', mutate: v => { v.hasExternalEffect = true; }, code: 'EXTERNAL_EFFECT_PRESENT' },

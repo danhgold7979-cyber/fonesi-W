@@ -108,7 +108,6 @@ export function deriveFrozenComposeExpectation(input: {
       const kind = asset?.kind === 'video' ? 'VIDEO'
         : asset?.kind === 'image' ? 'IMAGE' : null;
       if (matches.length !== 1 || !asset ||
-          frozenAssets[ordinal]?.id !== assetId ||
           !idSchema.safeParse(asset.contentId).success ||
           asset.state !== 'READY' || kind === null ||
           !hashSchema.safeParse(asset.hash).success ||
