@@ -3053,7 +3053,7 @@ export class StudioDatabase {
       if (this.db.prepare(
         'SELECT 1 FROM device_stage_cleanup_reviews WHERE stage_id=? ' +
         'AND lease_generation=? AND reconciliation_id=? LIMIT 1',
-      ).get(stage.id, args.lease.generation, latest.id))
+      ).get(stage.id, args.lease.generation, String(latest.id)))
         throw new DomainError('CLEANUP_REVIEW_ALREADY_RECORDED',
           'This observation already has an operator request.');
       const recordedAt = new Date(args.at).toISOString();
