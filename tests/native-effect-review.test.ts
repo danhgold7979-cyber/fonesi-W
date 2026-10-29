@@ -84,9 +84,10 @@ describe('S101.3 native-only manual effect review note', () => {
       evidenceRefs: [], at,
     });
     const redacted = JSON.stringify(result);
+    const persistedRequestId = calls[1]?.command === 'effect.reviewRecord'
+      ? calls[1].requestId : '';
     for (const secret of [
-      target.effectId, input.actorId, String(calls[1]?.requestId ?? ''),
-      'effect_review_',
+      target.effectId, input.actorId, persistedRequestId, 'effect_review_',
     ]) expect(redacted).not.toContain(secret);
   });
 
