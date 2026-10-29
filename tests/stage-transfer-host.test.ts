@@ -855,6 +855,14 @@ it('native cleanup review uses ONE MANUAL lease for fresh readback, confirmation
   db.close();
   db = new StudioDatabase(filepath());
   expect(db.jobStageReview(jobId).cleanupRequests).toHaveLength(1);
+  events.length = 0;
+  await expect(nativeStageService('NOT_INDEXED', hostId, undefined, async () => {
+    throw new Error('Duplicate native confirmation must never open');
+  }).requestCleanupReview(jobId, 0)).rejects.toMatchObject({
+    code: 'STAGE_CLEANUP_ALREADY_PENDING',
+  });
+  expect(events).not.toContain('native.manual.actor');
+  expect(events).not.toContain('fake.adb.readback');
   expect(db.claimDueJob(deviceId, 'no_worker_post_request', Date.now()).status)
     .toBe('NEEDS_REVIEW');
   await expect(dispatch(db, {

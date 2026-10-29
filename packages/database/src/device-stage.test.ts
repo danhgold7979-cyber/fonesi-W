@@ -675,7 +675,7 @@ it('records a native-confirmed cleanup review durably but never authorizes or mu
     .toEqual([receipt]);
   expect(() => db.recordOwnedStageCleanupReviewRequest({
     ...record, requestId: 'cleanup_native_duplicate_002',
-  })).toThrow('already has an operator request');
+  })).toThrow('already pending for this stage');
   await expect(dispatch(db, {
     operationId: 'op_forged_cleanup_review', command: 'stage.cleanupReviewRecord' as never,
     input: record,
@@ -700,6 +700,55 @@ it('records a native-confirmed cleanup review durably but never authorizes or mu
     'DELETE FROM device_stage_cleanup_reviews WHERE request_id=?',
   ).run(record.requestId))).toThrow('cleanup review immutable');
   expect(db.listOwnedStageCleanupReviewRequests(f.jobId)).toEqual([receipt]);
+});
+
+
+it('blocks a second cleanup request across later MANUAL lease generations while preserving idempotent replay', () => {
+  const f = fixture(), stage = readyForReconciliation(f);
+  db.recoverExpiredClaims(f.deviceId, at + 3000);
+  const first = db.acquireLease(f.deviceId, 'cleanup_first_operator', 'MANUAL', at + 3001, 5000);
+  const revision = db.getJob(f.jobId).job.revision;
+  db.recordClaimedDeviceStageReconciliation({
+    requestId: 'cleanup_first_observation', stageId: stage.id, hostId,
+    expectedSnapshotHash: f.snapshotHash, expectedJobRevision: revision,
+    lease: first, classification: 'REMOTE_BYTES_MATCHED',
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'NOT_INDEXED', at: at + 3010,
+  });
+  const original = {
+    requestId: 'cleanup_first_pending', stageId: stage.id, hostId,
+    expectedJobRevision: revision, expectedSnapshotHash: f.snapshotHash,
+    lease: first, at: at + 3011, confirmed: true as const,
+  };
+  const receipt = db.recordOwnedStageCleanupReviewRequest(original);
+  expect(db.recordOwnedStageCleanupReviewRequest(original)).toEqual(receipt);
+  expect(db.assessOwnedStageCleanup(original).blockers)
+    .toEqual(['CLEANUP_REVIEW_ALREADY_PENDING']);
+  db.releaseLease(first);
+  const second = db.acquireLease(
+    f.deviceId, 'cleanup_second_operator', 'MANUAL', at + 3020, 5000,
+  );
+  db.recordClaimedDeviceStageReconciliation({
+    requestId: 'cleanup_second_observation', stageId: stage.id, hostId,
+    expectedSnapshotHash: f.snapshotHash, expectedJobRevision: revision,
+    lease: second, classification: 'REMOTE_BYTES_MATCHED',
+    observedHash: stage.expectedHash, observedBytes: stage.expectedBytes,
+    mediaStoreStatus: 'NOT_INDEXED', at: at + 3030,
+  });
+  const fresh = { ...original, requestId: 'cleanup_second_pending',
+    lease: second, at: at + 3031 };
+  expect(db.assessOwnedStageCleanup(fresh).blockers)
+    .toEqual(['CLEANUP_REVIEW_ALREADY_PENDING']);
+  expect(() => db.recordOwnedStageCleanupReviewRequest(fresh))
+    .toThrow('already pending for this stage');
+  expect(() => db.recordOwnedStageCleanupReviewRequest({
+    ...original, lease: second, at: at + 3031,
+  })).toThrow('already bound to another observation');
+  expect(db.listOwnedStageCleanupReviewRequests(f.jobId)).toEqual([receipt]);
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.listDeviceStageTransfers(f.jobId)[0]).toMatchObject({
+    id: stage.id, state: 'SYNC_ACK_UNVERIFIED',
+  });
 });
 
 it('fences cleanup review journal against consent forgery, changed observations, stale lease and effects', () => {

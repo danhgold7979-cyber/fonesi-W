@@ -2971,6 +2971,12 @@ export class StudioDatabase {
       add('MEDIASTORE_ROW_RECORDED');
     if (this.db.prepare('SELECT 1 FROM effects WHERE job_id=? LIMIT 1').get(stage.jobId))
       add('EXTERNAL_EFFECT_PRESENT');
+    // No resolution executor exists: an earlier review remains hardware-pending
+    // across restarts and new MANUAL generations, never a new cleanup ticket.
+    if (this.db.prepare(
+      'SELECT 1 FROM device_stage_cleanup_reviews WHERE stage_id=? LIMIT 1',
+    ).get(stage.id))
+      add('CLEANUP_REVIEW_ALREADY_PENDING');
     if (this.db.prepare(
       "SELECT 1 FROM device_stage_reconciliations WHERE stage_id=? AND mediastore_status='INDEXED_EXACT' LIMIT 1",
     ).get(stage.id))
@@ -3024,7 +3030,9 @@ export class StudioDatabase {
     return this.transaction(() => {
       // BEGIN IMMEDIATE guarantees revalidation and insert see one state.
       const assessment = this.assessOwnedStageCleanup(args);
-      if (assessment.status !== 'PREREQUISITES_MET')
+      const pendingOnly = assessment.blockers.length === 1 &&
+        assessment.blockers[0] === 'CLEANUP_REVIEW_ALREADY_PENDING';
+      if (assessment.status !== 'PREREQUISITES_MET' && !pendingOnly)
         throw new DomainError('CLEANUP_REVIEW_NOT_ELIGIBLE',
           'Cleanup review prerequisites changed; no request was stored.');
       const stage = this.stageTransfer(args.stageId);
@@ -3064,12 +3072,14 @@ export class StudioDatabase {
           canDelete: false, canDispatch: false,
         };
       }
-      if (this.db.prepare(
-        'SELECT 1 FROM device_stage_cleanup_reviews WHERE stage_id=? ' +
-        'AND lease_generation=? AND reconciliation_id=? LIMIT 1',
-      ).get(stage.id, args.lease.generation, String(latest.id)))
-        throw new DomainError('CLEANUP_REVIEW_ALREADY_RECORDED',
-          'This observation already has an operator request.');
+      // Same ID is idempotent only while *all* other guards remain current.
+      // A distinct ID cannot create a second unresolved request even when a
+      // later MANUAL lease produces a new reconciliation audit.
+      if (pendingOnly || this.db.prepare(
+        'SELECT 1 FROM device_stage_cleanup_reviews WHERE stage_id=? LIMIT 1',
+      ).get(stage.id))
+        throw new DomainError('CLEANUP_REVIEW_ALREADY_PENDING',
+          'A cleanup review is already pending for this stage.');
       const recordedAt = new Date(args.at).toISOString();
       this.db.prepare(
         'INSERT INTO device_stage_cleanup_reviews(' +

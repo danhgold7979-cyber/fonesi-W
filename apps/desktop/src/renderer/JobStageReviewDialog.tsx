@@ -202,7 +202,8 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                   {nativeStageReview && report.jobState === 'NEEDS_REVIEW' &&
                     stage.state === 'SYNC_ACK_UNVERIFIED' &&
                     stage.remoteBytes === 'MATCH_RECORDED_NOT_LIVE' &&
-                    stage.mediaStore === 'NOT_RECORDED' && (
+                    stage.mediaStore === 'NOT_RECORDED' &&
+                    !report.cleanupRequests.some((r) => r.stageOrdinal === stage.ordinal) && (
                       <button
                         aria-label={'Ghi yêu cầu rà soát cleanup media ' + (stage.ordinal + 1)}
                         disabled={reviewBusy || loading || loadingMore}

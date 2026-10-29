@@ -114,6 +114,11 @@ export class NativeStageReviewService {
     jobId: string, ordinal: number,
   ): Promise<NativeStageCleanupReviewResult> {
     const { summary, owned } = await this.selectOwnedStage(jobId, ordinal);
+    // Bounded public summary avoids unnecessary ADB and duplicate native prompts;
+    // transactional DB preflight remains authoritative for older hidden rows.
+    if (summary.cleanupRequests.some((item) => item.stageOrdinal === ordinal))
+      throw new DomainError('STAGE_CLEANUP_ALREADY_PENDING',
+        'This media already has a hardware-pending cleanup review.');
     return this.devices.withManualStageReviewLease(owned.deviceId,
       async (lease, transport): Promise<NativeStageCleanupReviewResult> => {
         const observed = await this.stageCoordinator.reconcileStage({
