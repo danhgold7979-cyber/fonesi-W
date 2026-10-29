@@ -1,0 +1,21 @@
+# Increment082 RESULTS — P11/S102.2 Electron native-only owned-stage absence UI
+
+Date: 2026-10-29. Repository `danhgold7979-cyber/fonesi-W`, branch `feat/studio-workspace`. Plan-first [`6b9a7695`](https://github.com/danhgold7979-cyber/fonesi-W/commit/6b9a76955c78d01bf732b804d0169bf1febb1808). `main` unchanged.
+
+## Implemented source
+- `packages/contracts/src/schedule.ts`: added `NativeStageCleanupAbsenceResult` with redacted owned-file/MediaStore statuses and bounded blockers; all `canDelete/canMarkClean/canRetry/canDispatch=false`. Extended only `NativeStageReviewApi`; no public StudioApi or loopback endpoint added.
+- `apps/desktop/src/preload.cts`: `reviewCleanupAbsence(jobId,ordinal)` uses a dedicated native IPC channel, not a public request command.
+- `apps/desktop/src/main/index.ts`: strict `studio:stage-cleanup-absence` main-frame sender/origin check and Zod `jobId`/0–31 `ordinal` validation. All stage ID, nonce, path, ADB serial, transport generation and MANUAL lease are resolved inside trusted native host.
+- `apps/desktop/src/renderer/JobStageReviewDialog.tsx`: actual per-media operator action `Kiểm tra file staging còn hay mất (chỉ đọc)` in Electron review-only state; presents presence/index status with explicit uncertified cleanup warning. Validates response shape, no-action flags, status and blockers, rejects forged receipt/private path, and does not render an Android delete or repost control.
+- `tests/ui/schedule.spec.ts`: browser/loopback fallback has no native action and rejects forged HTTP attempt; fixture-injected native bridge displays a safe result and rejects a forged response with `canDelete:true` and a private DCIM path before display.
+- Existing Increment081 private MANUAL host and mocked Android integration tests remain in scope: real SQLite and live-fence sequencing are not bypassed by the renderer.
+
+## Commits and CI correction
+- Contract `6804036055078334a68412fd116c4b80bc8eddc0`, preload `8f48e6631c90e1a99317aaa90029a8ceb3ea5c11`, strict Electron handler `a32774d44c6bb30092b6d068492639f567ebd46d`, renderer `138cb1286d16a4c45969834252fa1ec47518fa88`.
+- Initial browser regression commit `33b7b0ed07d4918219664e4e84edca9cfd50022a`, forged native negative scenario `469b3865c85f74009c27d1b53439d5d2062bf596`, TypeScript test mock cast correction `7abfddbe344a9fbbc64c8bd68c7bc7c0141606c3`.
+- The initial push CI runs (including [40915639123](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40915639123) and [40915950735](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40915950735)) caught a test-source error: the new Playwright fake stage review was appended to an unrelated preflight test without `jobId/processId` and path variables. The fix moved that mock to the actual existing `NEEDS_REVIEW` stage review test without weakening runtime gates.
+- **Exact tested source** [`2aeba149`](https://github.com/danhgold7979-cyber/fonesi-W/commit/2aeba1492dd8b978d6376e3030479be10f8b3178). [Push CI 40916300088](https://github.com/danhgold7979-cyber/fonesi-W/actions/runs/40916300088) **SUCCESS both `ubuntu-latest` and `windows-latest`**, verified via actual Actions run list, job steps and logs: Ubuntu **606/606 unit/integration tests (49 files), 31/31 Chromium UI**; Windows **605 PASS + 1 platform-only skip (49 files)**. Both `pnpm check` (generated contracts, typecheck, ESLint, tests, build) and `pnpm check:plan` PASS; Windows launcher VerifyOnly PASS.
+- No local `pnpm`/GitHub network checkout was used and no real Android device test was run. This is cloud CI and local Playwright/mock evidence, not proof of hardware cleanup.
+
+## Remaining acceptance and limitations
+Status **TESTED_S102_ELECTRON_OWNED_ABSENCE_UI_NOT_ACCEPTED**. The operator can request a **read-only** ADB STAT and MediaStore readback through Electron native review, but the result `ABSENCE_CANDIDATE_UNCERTIFIED` is never proof that the file was deleted; no Android unlink, MediaStore delete, PC media deletion, independent provider verification, publish or retry exists in this flow. S102.2/AT-102 requires physical Windows10+Android USB/LAN plus trusted provider posting and post-delete evidence. S100.3, S101 final provider-side results, S102.3–S103 and P12 app adapters/P13 20–300 fleet/P14 installer-release remain OPEN. No auditable overall tool percentage is available.
