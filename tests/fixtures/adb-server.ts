@@ -35,6 +35,11 @@ export async function startAdbFixture() {
     list: 'USB_FIXTURE\tdevice product:fixture model:Fixture_Phone transport_id:1\n',
     requests: [] as string[],
     shells: [] as string[],
+    syncPaths: [] as string[],
+    syncStatMode: 0o100644,
+    syncStatSize: 1234,
+    syncStatMtime: 1761710400,
+    syncStatResponse: 'STAT' as 'STAT' | 'MALFORMED' | 'FAIL',
     rotation: 0,
     rotateOnXml: false,
     xml: '<?xml version="1.0"?><hierarchy rotation="0"><node bounds="[0,0][360,640]" class="android.view.View" package="com.facebook.katana" enabled="true"><node bounds="[20,30][200,100]" resource-id="com.facebook.katana:id/submit" text="Publish fixture" class="android.widget.Button" package="com.facebook.katana" clickable="true" enabled="true"/></node></hierarchy>',
@@ -57,7 +62,8 @@ export async function startAdbFixture() {
     socket.on('close', () => sockets.delete(socket));
     socket.on('error', () => undefined);
     let buffer = Buffer.alloc(0),
-      stream = false;
+      stream = false,
+      sync = false;
     const write = (data: Buffer | string, end = false) => {
       const value = typeof data === 'string' ? Buffer.from(data) : data;
       if (state.split) {
@@ -76,6 +82,29 @@ export async function startAdbFixture() {
       return Buffer.concat([header, bytes]);
     };
     socket.on('data', (data: Buffer) => {
+      if (sync) {
+        buffer = Buffer.concat([buffer, data]);
+        if (buffer.length < 8) return;
+        const op = buffer.toString('ascii', 0, 4),
+          length = buffer.readUInt32LE(4);
+        if (length > 1024) { socket.destroy(); return; }
+        if (buffer.length < 8 + length) return;
+        const remotePath = buffer.toString('utf8', 8, 8 + length);
+        state.syncPaths.push(remotePath);
+        const reply = Buffer.alloc(16);
+        reply.write(
+          state.syncStatResponse === 'STAT' ? 'STAT' :
+          state.syncStatResponse === 'FAIL' ? 'FAIL' : 'BADS',
+          0, 'ascii',
+        );
+        if (op === 'STAT') {
+          reply.writeUInt32LE(state.syncStatMode, 4);
+          reply.writeUInt32LE(state.syncStatSize, 8);
+          reply.writeUInt32LE(state.syncStatMtime, 12);
+          write(reply, true);
+        } else socket.end('FAIL', () => socket.destroy());
+        return;
+      }
       if (stream) return;
       buffer = Buffer.concat([buffer, data]);
       while (buffer.length >= 4) {
@@ -103,6 +132,10 @@ export async function startAdbFixture() {
             .filter((row) => !row.startsWith(service.slice(16) + '\t'))
             .join('\n');
           string('disconnected');
+        } else if (service === 'sync:') {
+          sync = true;
+          stream = true;
+          write('OKAY');
         } else if (service === 'exec:screencap -p') {
           stream = true;
           write(Buffer.concat([Buffer.from('OKAY'), png(state.width, state.height)]), true);
