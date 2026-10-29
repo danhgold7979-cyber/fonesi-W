@@ -102,6 +102,7 @@ import { deriveFrozenComposeExpectation } from './compose-review.js';
 import { deriveFrozenCommentList, type FrozenCommentListPlan } from './comment-list.js';
 import { assessProviderCommentCandidates, type ProviderCommentObservation, type CommentCandidateAssessment } from './comment-verification.js';
 import { assessPersistedCommentJournal, type PersistedCommentJournalRow, type CommentJournalListReview } from './comment-journal-review.js';
+import { assessPersistedCommentPartialOutcome, type PersistedPublishReviewRow, type CommentPartialOutcomeReview } from './comment-partial-outcome.js';
 export type { ProviderCommentObservation } from './comment-verification.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
@@ -3467,6 +3468,42 @@ export class StudioDatabase {
       "SELECT effect_key AS effectKey,payload_hash AS payloadHash,state FROM effects WHERE job_id=? AND kind='COMMENT' ORDER BY created_at,id LIMIT 33",
     ).all(args.jobId) as unknown as PersistedCommentJournalRow[];
     return assessPersistedCommentJournal({ frozen, rows });
+  }
+
+  /**
+   * S101.2: compare exact frozen comment journals and a single DB-confirmed
+   * parent post. DB-only "definitive" states never authorize a terminal job,
+   * repost, comment retry or cleanup. No lease, writes or provider requests.
+   */
+  reviewPersistedCommentPartialOutcome(args: {
+    jobId: string;
+    expectedSnapshotHash: string;
+    postEffectId: string;
+    fieldKey: string;
+    scope: 'row' | 'process';
+  }): CommentPartialOutcomeReview {
+    const { job, snapshotHash } = this.getJob(args.jobId);
+    hashSchema.parse(args.expectedSnapshotHash);
+    if (snapshotHash !== args.expectedSnapshotHash)
+      throw new DomainError('COMMENT_PARTIAL_SNAPSHOT_STALE',
+        'Partial-result review requires the exact persisted snapshot.');
+    const frozen = this.frozenCommentListPlan(args);
+    const commentRows = this.db.prepare(
+      "SELECT effect_key AS effectKey,payload_hash AS payloadHash,state " +
+      "FROM effects WHERE job_id=? AND kind='COMMENT' " +
+      "ORDER BY created_at,id LIMIT 33",
+    ).all(args.jobId) as unknown as PersistedCommentJournalRow[];
+    const journal = assessPersistedCommentJournal({
+      frozen, rows: commentRows,
+    });
+    const publishRows = this.db.prepare(
+      "SELECT id,kind,state FROM effects WHERE job_id=? AND kind='PUBLISH' " +
+      "ORDER BY created_at,id LIMIT 2",
+    ).all(args.jobId) as unknown as PersistedPublishReviewRow[];
+    return assessPersistedCommentPartialOutcome({
+      jobState: job.state, parentEffectId: args.postEffectId,
+      publishRows, commentJournal: journal,
+    });
   }
 
   /**
