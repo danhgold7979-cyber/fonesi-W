@@ -4821,8 +4821,8 @@ export class StudioDatabase {
         /** Not a guarantee the provider action had not started. */
         providerInputNotCertified: true,
       }, args.at);
-      return receipt(job.state === nextState ? job.state : nextState,
-        job.revision + 1, nextState === 'CANCELLED'
+      return receipt(nextState, job.revision + 1,
+        nextState === 'CANCELLED'
           ? 'CANCELLED_BEFORE_EFFECT' : 'REVIEW_REQUIRED');
     });
   }
