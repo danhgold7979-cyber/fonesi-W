@@ -44,7 +44,6 @@ function assess(value = setup()) {
     ...value, unicode: deriveFrozenUnicodeTextPlan(value.snapshot),
   });
 }
-const reasons = (v: ReturnType<typeof setup>) => assess(v).summary.blockers;
 
 describe('S096.3 frozen compose source expectation without Android/PUBLISH capability', () => {
   it('keeps private exact app/account/target/content, media ordinals and UTF-8 digests', () => {
