@@ -1430,3 +1430,209 @@ it('keeps a comment uncertain if cancellation arrives after exact payload resolu
   expect(db.effectState(pendingId)).toBe('ATTEMPT_UNCERTAIN');
   expect(db.getJob(f.jobId).job.state).toBe('COMMENT_PENDING');
 });
+
+
+it('cancels a fully unclaimed scheduled job atomically, with a single audit and no effect', async () => {
+  const f = fixture('device_cancel_safe', 'cancel_safe');
+  // Move the synthetic fixture back to the pre-claim boundary, with no
+  // external effect, stage, job claim or live lease.
+  db.releaseLease(f.lease);
+  const setup = new DatabaseSync(join(dir, 'studio.sqlite'));
+  setup.prepare('DELETE FROM job_claims WHERE job_id=?').run(f.jobId);
+  setup.prepare("UPDATE jobs SET state='SCHEDULED',revision=revision+1 WHERE id=?")
+    .run(f.jobId);
+  setup.close();
+  const scheduled = db.getJob(f.jobId).job;
+  const req = {
+    command: 'job.requestCancellation' as const, jobId: f.jobId,
+    expectedRevision: scheduled.revision, actorId: 'operator_cancel_safe',
+    at: at + 200,
+  };
+  const first = dispatchInternal(db, req) as
+    ReturnType<StudioDatabase['requestJobCancellation']>;
+  expect(first).toMatchObject({
+    state: 'CANCELLED', disposition: 'CANCELLED_BEFORE_EFFECT',
+    jobRevision: scheduled.revision + 1,
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  expect(db.getJob(f.jobId).job.state).toBe('CANCELLED');
+  expect(dispatchInternal(db, {
+    ...req, expectedRevision: first.jobRevision,
+  })).toMatchObject({
+    state: 'CANCELLED', disposition: 'ALREADY_CANCELLED',
+    jobRevision: first.jobRevision,
+  });
+  const count = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(count.prepare("SELECT COUNT(*) AS n FROM effects WHERE job_id=?")
+    .get(f.jobId)?.n).toBe(0);
+  expect(count.prepare(
+    "SELECT COUNT(*) AS n FROM queue_events WHERE job_id=? AND kind='JOB_CANCELLATION_REQUESTED'",
+  ).get(f.jobId)?.n).toBe(1);
+  count.close();
+  expect(db.claimDueJob(f.lease.deviceId, 'after_cancel', at + 3010).status).toBe('EMPTY');
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.getJob(f.jobId).job.state).toBe('CANCELLED');
+});
+
+it('turns active RUNNING cancellation into durable NEEDS_REVIEW and holds the device', async () => {
+  const f = fixture('device_cancel_running', 'cancel_running');
+  const receipt = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: f.running.revision,
+    actorId: 'operator_cancel_running', at: at + 200,
+  });
+  expect(receipt).toMatchObject({
+    state: 'NEEDS_REVIEW', disposition: 'REVIEW_REQUIRED',
+    jobRevision: f.running.revision + 1,
+    canRetry: false, canDispatch: false, canConfirm: false,
+  });
+  expect(db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: receipt.jobRevision,
+    actorId: 'operator_cancel_running', at: at + 210,
+  })).toMatchObject({
+    disposition: 'ALREADY_NEEDS_REVIEW', jobRevision: receipt.jobRevision,
+  });
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(sql.prepare('SELECT owner_id FROM job_claims WHERE job_id=?')
+    .get(f.jobId)?.owner_id).toBe(f.lease.ownerId);
+  expect(sql.prepare(
+    "SELECT COUNT(*) AS n FROM queue_events WHERE job_id=? AND kind='JOB_CANCELLATION_REQUESTED'",
+  ).get(f.jobId)?.n).toBe(1);
+  sql.close();
+  expect(() => prepare(f, at + 250)).toThrow();
+  expect(db.claimDueJob(f.lease.deviceId, 'next_job', at + 250).status).toBe('NEEDS_REVIEW');
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+});
+
+it('cannot terminal-cancel an unverified PUBLISH INTENT or restart its attempt', () => {
+  const f = fixture('device_cancel_intent', 'cancel_intent');
+  const intent = prepare(f);
+  const before = db.getJob(f.jobId).job;
+  const result = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: before.revision,
+    actorId: 'operator_cancel_intent', at: at + 100,
+  });
+  expect(result).toMatchObject({ state: 'NEEDS_REVIEW', disposition: 'REVIEW_REQUIRED' });
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+  expect(() => db.transitionJob(f.jobId, 'CANCELLED', result.jobRevision))
+    .toThrow('Resolve uncertain external effect');
+  expect(() => db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 110,
+  })).toThrow();
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  expect(sql.prepare('SELECT state FROM effects WHERE id=?').get(intent.effectId)?.state)
+    .toBe('INTENT');
+  sql.close();
+});
+
+it('rejects an in-flight host callback when cancellation advances the persisted claim fence', async () => {
+  const f = fixture('device_cancel_race', 'cancel_race');
+  let sends = 0, pendingId = '';
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { sends++; return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const response = dispatchInternal(db, request) as T;
+      if (request.command === 'effect.beginClaimedAttempt') {
+        pendingId = request.effectId;
+        const job = db.getJob(f.jobId).job;
+        expect(db.requestJobCancellation({
+          jobId: f.jobId, expectedRevision: job.revision,
+          actorId: 'operator_cancel_race', at: at + 100,
+        })).toMatchObject({
+          state: 'NEEDS_REVIEW', disposition: 'REVIEW_REQUIRED',
+        });
+      }
+      return response;
+    },
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toMatchObject({
+    code: 'EFFECT_DISPATCH_CLAIM_STALE',
+  });
+  expect(sends).toBe(0);
+  expect(db.effectState(pendingId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.claimDueJob(f.lease.deviceId, 'no_replay', at + 150).status)
+    .toBe('NEEDS_REVIEW');
+});
+
+it('holds already POSTED synthetic parent for review, without pretending it can retract it', () => {
+  const { f, publish } = confirmedCommentHostFixture(0);
+  const job = db.getJob(f.jobId).job;
+  expect(job.state).toBe('POSTED');
+  const result = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: job.revision,
+    actorId: 'operator_posted_cancel', at: at + 200,
+  });
+  expect(result).toMatchObject({
+    state: 'NEEDS_REVIEW', disposition: 'REVIEW_REQUIRED',
+    canRetry: false, canDispatch: false,
+  });
+  expect(db.effectState(publish.effectId)).toBe('CONFIRMED');
+  const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+  const events = sql.prepare(
+    "SELECT detail FROM queue_events WHERE job_id=? AND kind='JOB_CANCELLATION_REQUESTED'",
+  ).all(f.jobId);
+  expect(events).toHaveLength(1);
+  expect(JSON.stringify(events)).not.toContain('Bình luận');
+  sql.close();
+});
+
+it('preserves the exact COMMENT INTENT and its confirmed parent on cancellation', () => {
+  const { f, publish, input } = confirmedCommentHostFixture(1);
+  const intent = db.prepareClaimedEffect({ ...input, at: at + 125 });
+  const job = db.getJob(f.jobId).job;
+  expect(job.state).toBe('COMMENT_PENDING');
+  const result = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: job.revision,
+    actorId: 'operator_comment_cancel', at: at + 150,
+  });
+  expect(result).toMatchObject({
+    state: 'NEEDS_REVIEW', disposition: 'REVIEW_REQUIRED',
+  });
+  expect(db.effectState(publish.effectId)).toBe('CONFIRMED');
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+  expect(() => db.beginClaimedEffectAttempt({
+    effectId: intent.effectId, expectedJobRevision: intent.jobRevision,
+    lease: f.lease, at: at + 180,
+  })).toThrow();
+  expect(() => db.transitionJob(f.jobId, 'CANCELLED', result.jobRevision))
+    .toThrow('Resolve uncertain external effect');
+});
+
+it('rejects stale/invalid cancellation requests and forged public command without mutation', async () => {
+  const f = fixture('device_cancel_invalid', 'cancel_invalid');
+  const req = {
+    jobId: f.jobId, expectedRevision: f.running.revision,
+    actorId: 'operator_cancel_invalid', at: at + 100,
+  };
+  const counts = () => {
+    const sql = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try {
+      return [
+        sql.prepare('SELECT COUNT(*) AS n FROM effects WHERE job_id=?').get(f.jobId)?.n,
+        sql.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?').get(f.jobId)?.n,
+      ];
+    } finally { sql.close(); }
+  };
+  const before = counts();
+  for (const invalid of [
+    { ...req, expectedRevision: -1 },
+    { ...req, expectedRevision: req.expectedRevision + 1 },
+    { ...req, actorId: '' },
+    { ...req, at: Number.NaN },
+  ]) {
+    expect(() => db.requestJobCancellation(invalid)).toThrow();
+    expect(db.getJob(f.jobId).job).toEqual(f.running);
+    expect(counts()).toEqual(before);
+  }
+  await expect(dispatch(db, {
+    operationId: 'op_forged_cancellation',
+    command: 'job.requestCancellation' as never,
+    input: req,
+  })).rejects.toThrow();
+  expect(counts()).toEqual(before);
+});
