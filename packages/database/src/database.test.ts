@@ -6,7 +6,7 @@ import type { ProcessDefinition, JobSnapshot, JobDefinition } from '@autoreels/c
 import { contentHash } from '@autoreels/domain';
 import { StudioDatabase } from './index.js';
 import { DatabaseSync } from 'node:sqlite';
-import { migration, migrations } from './schema.js';
+import { migration, migrations, SCHEMA_VERSION } from './schema.js';
 
 describe('immutable external workflow closure', () => {
   it('pins full dependency bytes in the stored parent version and keeps them after child edits/restart', () => {
@@ -411,7 +411,7 @@ describe('schema v18 to v19 durable reconciliation migration', () => {
       expect(row).toMatchObject({
         claim_generation: 7, lease_owner_kind: 'JOB', lease_generation: 7,
       });
-      expect(read.prepare('PRAGMA user_version').get()?.user_version).toBe(20);
+      expect(read.prepare('PRAGMA user_version').get()?.user_version).toBe(SCHEMA_VERSION);
       expect(read.prepare(
         "SELECT 1 FROM sqlite_master WHERE type='table' AND name='device_stage_cleanup_reviews'",
       ).get()).toBeTruthy();
@@ -444,7 +444,7 @@ describe('schema v19 to v20 immutable cleanup review migration', () => {
     migrated.close();
     const conn = new DatabaseSync(path);
     try {
-      expect(conn.prepare('PRAGMA user_version').get()?.user_version).toBe(20);
+      expect(conn.prepare('PRAGMA user_version').get()?.user_version).toBe(SCHEMA_VERSION);
       const first19 = conn.prepare(
         'SELECT version,checksum FROM schema_migrations WHERE version<=19 ORDER BY version',
       ).all();
