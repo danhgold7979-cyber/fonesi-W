@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   JobStageReviewPage, NativeStageReviewResult, NativeStageCleanupReviewResult,
-  MediaOrderBlocker,
+  MediaOrderBlocker, FrozenUnicodeBlocker,
 } from '@autoreels/contracts';
 import { api, nativeStageReview } from './api.js';
 import { Dialog } from './components.js';
@@ -38,6 +38,15 @@ const orderBlockerLabels: Record<MediaOrderBlocker, string> = {
   MEDIASTORE_ROW_NOT_VERIFIED: 'Chưa có hàng MediaStore chính xác theo stage',
   MEDIASTORE_ROW_COLLISION: 'Nhiều asset dùng chung một hàng MediaStore',
   LATEST_OBSERVATION_CONTRADICTS_ROW: 'Quan sát gần nhất không còn xác nhận hàng MediaStore',
+};
+const unicodeBlockerLabels: Record<FrozenUnicodeBlocker, string> = {
+  DECLARATION_INVALID: 'Khai báo field không hợp lệ hoặc bị lặp',
+  UNDECLARED_VALUE: 'Snapshot có giá trị chưa khai báo đúng scope',
+  REQUIRED_VALUE_MISSING: 'Giá trị bắt buộc bị thiếu hoặc rỗng',
+  VALUE_NOT_TEXT: 'Kiểu field không phải chuỗi Unicode',
+  UNSAFE_UNICODE: 'Chuỗi có Unicode hỏng hoặc ký tự điều khiển nguy hiểm',
+  TEXT_TOO_LARGE: 'Chuỗi vượt giới hạn byte/độ dài an toàn',
+  URL_UNSAFE: 'URL sai giao thức hoặc có thông tin xác thực',
 };
 /** Operator-facing persisted history only. No lease, ADB, deletion or dispatch. */
 export function JobStageReviewDialog({ jobId, close }: Props) {
@@ -262,6 +271,40 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                   {entry.blockers.length > 0 && (
                     <span> {entry.blockers.map((code) => orderBlockerLabels[code]).join('; ')}.</span>
                   )}
+                </li>
+              ))}
+            </ol>
+          )}
+          <h3>Nội dung Unicode đã ghim (chưa nhập Android)</h3>
+          <p className="muted">
+            Chỉ kiểm tra chuỗi trong snapshot của job. Không hiển thị nội dung,
+            caption, URL hoặc hash của người dùng; không tự trim, đổi Unicode,
+            xuống dòng hay dùng adb input text. Phương thức nhập trên điện thoại
+            cần được kiểm chứng riêng theo ứng dụng và profile.
+          </p>
+          <p role="status" data-testid="frozen-unicode-status">
+            {report.frozenUnicode.status === 'NO_TEXT_FIELDS'
+              ? 'Không có trường text/URL đóng băng để nhập.'
+              : report.frozenUnicode.status === 'BLOCKED'
+                ? 'Kiểm tra dữ liệu Unicode bị chặn; không được nhập.'
+                : 'Chuỗi Unicode đóng băng hợp lệ; chưa xác minh phương thức nhập Android.'}
+          </p>
+          {report.frozenUnicode.blockers.length > 0 && (
+            <ul aria-label="Điều kiện chặn nội dung Unicode">
+              {report.frozenUnicode.blockers.map((code) =>
+                <li key={code}>{unicodeBlockerLabels[code]}</li>)}
+            </ul>
+          )}
+          {report.frozenUnicode.fields.length > 0 && (
+            <ol aria-label="Trường Unicode đã ghim">
+              {report.frozenUnicode.fields.map((field) => (
+                <li key={field.ordinal} data-testid="frozen-unicode-field">
+                  <strong>Trường {field.ordinal + 1}</strong> ·
+                  {' '}{field.scope === 'ROW' ? 'Dòng nội dung' : 'Tiến trình'} ·
+                  {' '}{field.kind === 'URL' ? 'URL' : 'Text'} ·
+                  {' '}{field.evidence === 'EXACT_FROZEN_TEXT'
+                    ? 'Giữ chính xác chuỗi đã lưu; chưa nhập điện thoại'
+                    : 'Bằng chứng dữ liệu không hợp lệ'}.
                 </li>
               ))}
             </ol>

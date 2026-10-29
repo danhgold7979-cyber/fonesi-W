@@ -417,8 +417,13 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
       blockers: ['STAGE_MISSING'],
       slots: [{ ordinal: 0, kind: 'VIDEO', evidence: 'BLOCKED', blockers: ['STAGE_MISSING'] }],
     },
+    frozenUnicode: expect.objectContaining({
+      scope: 'FROZEN_UNICODE_NOT_ANDROID_INPUT', canType: false, canDispatch: false,
+    }),
     hasMore: false, nextCursor: null,
   });
+  expect(page.frozenUnicode.canType).toBe(false);
+  expect(page.frozenUnicode.canDispatch).toBe(false);
   const publicPage = await dispatch(db, {
     operationId: 'op_review_read_only', command: 'jobStageReview', input: { id: f.jobId },
   });

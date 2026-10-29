@@ -116,6 +116,26 @@ export interface PersistedOrderedMediaReport {
     blockers: MediaOrderBlocker[];
   }[];
 }
+/** Frozen row/process text only; NEVER evidence of Android Unicode input. */
+export type FrozenUnicodeBlocker =
+  | 'DECLARATION_INVALID' | 'UNDECLARED_VALUE'
+  | 'REQUIRED_VALUE_MISSING' | 'VALUE_NOT_TEXT'
+  | 'UNSAFE_UNICODE' | 'TEXT_TOO_LARGE' | 'URL_UNSAFE';
+
+export interface FrozenUnicodePreflight {
+  scope: 'FROZEN_UNICODE_NOT_ANDROID_INPUT';
+  status: 'BLOCKED' | 'EXACT_FROZEN_TEXT_METHOD_UNVERIFIED' | 'NO_TEXT_FIELDS';
+  canType: false;
+  canDispatch: false;
+  blockers: FrozenUnicodeBlocker[];
+  fields: {
+    ordinal: number;
+    scope: 'ROW' | 'PROCESS';
+    kind: 'TEXT' | 'URL';
+    evidence: 'EXACT_FROZEN_TEXT' | 'BLOCKED';
+    blockers: FrozenUnicodeBlocker[];
+  }[];
+}
 /** Operator-visible persistence projection only. No paths, hashes, nonces, serials or owner IDs. */
 export interface JobStageReviewPage {
   jobId: string;
@@ -145,6 +165,7 @@ export interface JobStageReviewPage {
   cleanupHasMore: boolean;
   /** Frozen asset order reconciled with owned stage and indexed-row journals. */
   mediaOrder: PersistedOrderedMediaReport;
+  frozenUnicode: FrozenUnicodePreflight;
   hasMore: boolean;
   nextCursor: string | null;
 }

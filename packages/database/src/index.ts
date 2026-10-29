@@ -97,6 +97,7 @@ import { deviceFingerprint, parseEndpoint, assertOwnedStageLocation } from '@aut
 import { bulkPatch } from '@autoreels/import-export';
 import { migrations, SCHEMA_VERSION } from './schema.js';
 import { assessPersistedMediaOrder, type LastStageObservation } from './media-selection.js';
+import { deriveFrozenUnicodeTextPlan } from './unicode-compose.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
 const now = (): string => new Date().toISOString();
@@ -2664,6 +2665,9 @@ export class StudioDatabase {
         .get(jobId)),
       lastObservationByStage: latestByStage,
     });
+    // Compute privately from the immutable snapshot; NEVER return raw Unicode
+    // strings, URL text or SHA-256 fingerprints through the renderer/HTTP DTO.
+    const frozenUnicode = deriveFrozenUnicodeTextPlan(snapshot).summary;
     const last = page.at(-1);
     const nextCursor = hasMore && last
       ? Buffer.from(JSON.stringify({
@@ -2674,7 +2678,7 @@ export class StudioDatabase {
     return {
       jobId, jobRevision: job.revision, jobState: job.state, scope: 'PERSISTED_ONLY',
       canDispatch: false, stages, observations, cleanupRequests, cleanupHasMore,
-      mediaOrder, hasMore, nextCursor,
+      mediaOrder, frozenUnicode, hasMore, nextCursor,
     };
   }
 

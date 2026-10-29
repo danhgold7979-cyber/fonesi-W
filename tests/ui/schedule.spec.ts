@@ -608,6 +608,11 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog.getByTestId('stage-review-summary')).toHaveCount(1);
   await expect(dialog).toContainText('Thứ tự media đóng băng (chưa xác minh picker)');
   await expect(dialog.getByTestId('media-order-status')).toContainText('Đối chiếu media bị chặn');
+  await expect(dialog).toContainText('Nội dung Unicode đã ghim (chưa nhập Android)');
+  await expect(dialog.getByTestId('frozen-unicode-status')).toBeVisible();
+  await expect(dialog).toContainText('không tự trim, đổi Unicode');
+  await expect(dialog.getByRole('button', { name: /Nhập Unicode|Gõ caption|Dán văn bản/ }))
+    .toHaveCount(0);
   await expect(dialog).toContainText('Stage thừa, trùng hoặc nằm ngoài thứ tự asset');
   await expect(dialog).toContainText('không chọn theo tên tệp hoặc thumbnail');
   await expect(dialog.getByRole('button', { name: /Kiểm tra lại Android/ })).toHaveCount(0);
