@@ -146,6 +146,7 @@ export type InternalRequest =
   | { command: 'lease.release'; lease: DeviceLease }
   | { command: 'queue.claim'; deviceId: string; ownerId: string; at: number; ttl: number }
   | { command: 'queue.renew'; jobId: string; lease: DeviceLease; at: number; ttl: number }
+  | { command: 'effect.reviewTarget'; jobId: string; ordinal: number }
   | {
       command: 'effect.reviewRecord';
       requestId: string;
@@ -401,6 +402,8 @@ export function dispatchInternal(db: StudioDatabase, request: InternalRequest): 
       return db.claimDueJob(request.deviceId, request.ownerId, request.at, request.ttl);
     case 'queue.renew':
       return db.renewJobClaim(request.jobId, request.lease, request.at, request.ttl);
+    case 'effect.reviewTarget':
+      return db.effectManualReviewTarget(request.jobId, request.ordinal);
     case 'effect.reviewRecord':
       return db.recordEffectManualReview(request);
     case 'effect.reviewHistory':
