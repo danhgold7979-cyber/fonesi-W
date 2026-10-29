@@ -2652,6 +2652,21 @@ export class StudioDatabase {
         recordedAt: String(row.created_at),
         status: 'REVIEW_REQUESTED_HARDWARE_PENDING',
       }));
+    // S102.3: immutable v22 cleanup-only history is bounded at 32×3.
+    // Do not expose request/stage/actor/transport IDs, hashes or owned paths.
+    const recordedRechecks = this.listOwnedStageCleanupRechecks(jobId);
+    if (recordedRechecks.canDelete !== false ||
+        recordedRechecks.canMarkClean !== false ||
+        recordedRechecks.canRetry !== false ||
+        recordedRechecks.canDispatch !== false)
+      throw new DomainError('CLEANUP_RECHECK_HISTORY_INVALID',
+        'Persisted cleanup-only history cannot grant execution rights.');
+    const cleanupRechecks: JobStageReviewPage['cleanupRechecks'] =
+      recordedRechecks.items.map((row) => ({
+        stageOrdinal: row.ordinal, attemptOrdinal: row.attemptOrdinal,
+        status: row.status, remote: row.remote, mediaStore: row.mediaStore,
+        recordedAt: row.recordedAt,
+      }));
     // S096: ordered frozen media vs immutable, uniquely owned stage/row evidence.
     // No live picker claim; all raw paths/row IDs/hashes remain inside DB worker.
     const ownedStages = this.listDeviceStageTransfers(jobId);
@@ -2739,7 +2754,7 @@ export class StudioDatabase {
     return {
       jobId, jobRevision: job.revision, jobState: job.state, scope: 'PERSISTED_ONLY',
       canDispatch: false, stages, observations, cleanupRequests, cleanupHasMore,
-      mediaOrder, frozenUnicode, compose, effectReview, hasMore, nextCursor,
+      cleanupRechecks, mediaOrder, frozenUnicode, compose, effectReview, hasMore, nextCursor,
     };
   }
 
