@@ -95,7 +95,9 @@ export class HostClaimedEffectService {
       at,
     });
     if (intent.state !== 'INTENT' || intent.jobId !== request.jobId ||
-        !idSchema.safeParse(intent.effectId).success)
+        !idSchema.safeParse(intent.effectId).success ||
+        !Number.isSafeInteger(intent.jobRevision) ||
+        intent.jobRevision !== request.expectedJobRevision + 1)
       throw new DomainError('EFFECT_INTENT_RECEIPT_INVALID',
         'The durable journal receipt does not match the claimed job.');
     if (signal?.aborted) {
@@ -118,7 +120,9 @@ export class HostClaimedEffectService {
       at: Math.max(at, this.now()),
     });
     if (attempt.state !== 'ATTEMPT_UNCERTAIN' ||
-        attempt.effectId !== intent.effectId || attempt.jobId !== request.jobId)
+        attempt.effectId !== intent.effectId || attempt.jobId !== request.jobId ||
+        !Number.isSafeInteger(attempt.jobRevision) ||
+        attempt.jobRevision !== intent.jobRevision + 1)
       throw new DomainError('EFFECT_ATTEMPT_RECEIPT_INVALID',
         'Attempt uncertainty was not durably confirmed.');
     const base = {

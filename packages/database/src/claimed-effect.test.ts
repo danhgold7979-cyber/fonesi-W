@@ -528,3 +528,71 @@ it('unknown adapter acknowledgement leaves the durable effect unresolved and nev
   await expect(host.attempt(claimedInput(f))).rejects.toThrow();
   expect(events).toEqual(['adapter']);
 });
+
+it('fences a forged INTENT revision receipt after SQLite commit without dispatch or replay', async () => {
+  const f = fixture();
+  let sends = 0, journalId = '';
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { sends++; return 'ACK'; },
+  };
+  const host = hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const receipt = dispatchInternal(db, request) as {
+        effectId?: string; jobRevision?: number;
+      };
+      if (request.command === 'effect.prepareClaimed') {
+        journalId = receipt.effectId!;
+        return { ...receipt, jobRevision: f.running.revision } as T;
+      }
+      return receipt as T;
+    },
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toMatchObject({
+    code: 'EFFECT_INTENT_RECEIPT_INVALID',
+  });
+  expect(sends).toBe(0);
+  expect(db.effectState(journalId)).toBe('INTENT');
+  expect(db.getJob(f.jobId).job.state).toBe('POST_INTENT');
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.effectState(journalId)).toBe('INTENT');
+  await expect(hostEffect(adapter).attempt(claimedInput(f))).rejects.toThrow();
+  expect(sends).toBe(0);
+});
+
+it('fences a forged ATTEMPT revision receipt after SQLite commit without dispatch or replay', async () => {
+  const f = fixture();
+  let sends = 0, journalId = '';
+  const adapter: ClaimedEffectAdapter = {
+    sendOnce: async () => { sends++; return 'UNKNOWN'; },
+  };
+  const host = hostEffect(adapter, {
+    internal: async <T>(request: InternalRequest): Promise<T> => {
+      const receipt = dispatchInternal(db, request) as {
+        effectId?: string; jobRevision?: number;
+      };
+      if (request.command === 'effect.beginClaimedAttempt') {
+        journalId = receipt.effectId!;
+        return { ...receipt, jobRevision: receipt.jobRevision! - 1 } as T;
+      }
+      return receipt as T;
+    },
+  });
+  await expect(host.attempt(claimedInput(f))).rejects.toMatchObject({
+    code: 'EFFECT_ATTEMPT_RECEIPT_INVALID',
+  });
+  expect(sends).toBe(0);
+  expect(db.effectState(journalId)).toBe('ATTEMPT_UNCERTAIN');
+  expect(db.getJob(f.jobId).job.state).toBe('POST_PENDING');
+  db.close();
+  db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.recoverExpiredClaims(f.lease.deviceId, at + 3000))
+    .toEqual({ requeued: [], review: [f.jobId] });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.effectState(journalId)).toBe('ATTEMPT_UNCERTAIN');
+  await expect(hostEffect(adapter).attempt(claimedInput(f))).rejects.toThrow();
+  expect(sends).toBe(0);
+});
