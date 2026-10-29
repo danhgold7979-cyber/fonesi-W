@@ -14,7 +14,8 @@ export type CommentJournalOrdinalState =
   | 'INTENT_JOURNALED'
   | 'ATTEMPT_UNCERTAIN'
   | 'NEEDS_REVIEW'
-  | 'CONFIRMED_DB_ONLY';
+  | 'CONFIRMED_DB_ONLY'
+  | 'DEFINITIVELY_REJECTED_DB_ONLY';
 export type CommentJournalReviewBlocker =
   | 'FROZEN_PLAN_INVALID'
   | 'JOURNAL_SET_INVALID'
@@ -112,7 +113,8 @@ export function assessPersistedCommentJournal(input: {
       row.state === 'INTENT' ? 'INTENT_JOURNALED' :
       row.state === 'ATTEMPT_UNCERTAIN' ? 'ATTEMPT_UNCERTAIN' :
       row.state === 'NEEDS_REVIEW' ? 'NEEDS_REVIEW' :
-      row.state === 'CONFIRMED' ? 'CONFIRMED_DB_ONLY' : null;
+      row.state === 'CONFIRMED' ? 'CONFIRMED_DB_ONLY' :
+      row.state === 'DEFINITIVELY_REJECTED' ? 'DEFINITIVELY_REJECTED_DB_ONLY' : null;
     if (!state) {
       block('JOURNAL_STATE_UNSUPPORTED');
       continue;
