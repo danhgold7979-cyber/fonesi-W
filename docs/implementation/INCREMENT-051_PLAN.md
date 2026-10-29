@@ -10,7 +10,7 @@ The current reconciler correctly requires a live JOB lease. After a crash, `reco
 
 ## Implementation steps
 
-1. Add a read-only DB assertion for review reconciliation. It requires a live `MANUAL` lease for the same device, job state `NEEDS_REVIEW`, exact expected job revision/snapshot, a durable stage tied to the historical JOB claim generation, expired historical claim, stage state `TRANSFER_UNCERTAIN` or `SYNC_ACK_UNVERIFIED`, and no current active JOB lease/claim for that job.
+1. Add a read-only DB assertion for review reconciliation. It requires a live `MANUAL` lease for the same device, job state `NEEDS_REVIEW`, exact expected job revision/snapshot, a durable stage tied to the historical JOB claim generation, expired historical claim, stage state `TRANSFER_UNCERTAIN` or `SYNC_ACK_UNVERIFIED`, and no current active JOB lease/claim for that job. The existing recovery path deletes `job_claims`, so change it to retain the expired historical claim row only for stage-backed jobs routed to `NEEDS_REVIEW`; repeat recovery must be idempotent, while ordinary preflight-only jobs remain requeueable and have their stale claim removed.
 2. Extend schema v19 reconciliation audit with `lease_owner_kind` and `lease_generation`. Existing rows migrate deterministically as JOB lease generation = historical claim generation. Preserve all v1–v18 migration SQL.
 3. Record which lease authorized each audit observation. A review observation retains the stage's original `claim_generation` and separately stores the current MANUAL lease owner kind/generation. Idempotency includes these fields.
 4. Extend the private coordinator with a review-mode reconciliation path. It uses the current MANUAL lease and fresh verified transport generation, reloads the pinned job media snapshot, reads only the existing durable owned path and probes the exact MediaStore row. It must not upload, delete, create a new nonce/path, mutate stage/job state, or set dispatch permission.
@@ -21,7 +21,7 @@ The current reconciler correctly requires a live JOB lease. After a crash, `reco
 ## Expected files
 
 - `packages/contracts/src/media.ts`
-- `packages/database/src/schema.ts`, `packages/database/src/index.ts`, `packages/database/src/device-stage.test.ts`, migration tests
+- `packages/database/src/schema.ts`, `packages/database/src/index.ts`, `packages/database/src/device-stage.test.ts`, `packages/database/src/database.test.ts` (v18→v19 migration regression)
 - `apps/desktop/src/host/internal.ts`, `apps/desktop/src/host/stage-transfer-service.ts`
 - `tests/stage-transfer-host.test.ts`
 - `docs/implementation/INCREMENT-051_RESULTS.md`
