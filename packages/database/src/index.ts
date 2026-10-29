@@ -101,6 +101,7 @@ import { deriveFrozenUnicodeTextPlan } from './unicode-compose.js';
 import { deriveFrozenComposeExpectation } from './compose-review.js';
 import { deriveFrozenCommentList, type FrozenCommentListPlan } from './comment-list.js';
 import { assessProviderCommentCandidates, type ProviderCommentObservation, type CommentCandidateAssessment } from './comment-verification.js';
+import { assessPersistedCommentJournal, type PersistedCommentJournalRow, type CommentJournalListReview } from './comment-journal-review.js';
 export type { ProviderCommentObservation } from './comment-verification.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
@@ -3447,6 +3448,25 @@ export class StudioDatabase {
       postEffectId: args.postEffectId, postEffectKey: String(effect.effect_key),
       fieldKey: args.fieldKey, scope: args.scope,
     });
+  }
+
+  /**
+   * S100.3: read-only per-ordinal inventory across crash/restart. A missing
+   * COMMENT journal is NOT proof of a safe new send; CONFIRMED is DB-only.
+   * No live lease, no public command and no effect/job mutations.
+   */
+  reviewPersistedCommentListProgress(args: {
+    jobId: string;
+    expectedSnapshotHash: string;
+    postEffectId: string;
+    fieldKey: string;
+    scope: 'row' | 'process';
+  }): CommentJournalListReview {
+    const frozen = this.frozenCommentListPlan(args);
+    const rows = this.db.prepare(
+      "SELECT effect_key AS effectKey,payload_hash AS payloadHash,state FROM effects WHERE job_id=? AND kind='COMMENT' ORDER BY created_at,id LIMIT 33",
+    ).all(args.jobId) as unknown as PersistedCommentJournalRow[];
+    return assessPersistedCommentJournal({ frozen, rows });
   }
 
   /**
