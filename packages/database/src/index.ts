@@ -98,6 +98,7 @@ import { bulkPatch } from '@autoreels/import-export';
 import { migrations, SCHEMA_VERSION } from './schema.js';
 import { assessPersistedMediaOrder, type LastStageObservation } from './media-selection.js';
 import { deriveFrozenUnicodeTextPlan } from './unicode-compose.js';
+import { deriveFrozenComposeExpectation } from './compose-review.js';
 
 const makeId = (prefix: string): string => prefix + '_' + randomUUID().replaceAll('-', '');
 const now = (): string => new Date().toISOString();
@@ -2658,16 +2659,22 @@ export class StudioDatabase {
         observedBytes: record.observed_bytes == null ? null : Number(record.observed_bytes),
       });
     }
+    const hasExternalEffect = Boolean(this.db.prepare(
+      'SELECT 1 FROM effects WHERE job_id=? LIMIT 1',
+    ).get(jobId));
     const mediaOrder = assessPersistedMediaOrder({
       job, snapshot, snapshotHash, stages: ownedStages,
       claimGeneration: claim ? Number(claim.generation) : null,
-      hasExternalEffect: Boolean(this.db.prepare('SELECT 1 FROM effects WHERE job_id=? LIMIT 1')
-        .get(jobId)),
+      hasExternalEffect,
       lastObservationByStage: latestByStage,
     });
     // Compute privately from the immutable snapshot; NEVER return raw Unicode
     // strings, URL text or SHA-256 fingerprints through the renderer/HTTP DTO.
-    const frozenUnicode = deriveFrozenUnicodeTextPlan(snapshot).summary;
+    const unicode = deriveFrozenUnicodeTextPlan(snapshot);
+    const frozenUnicode = unicode.summary;
+    const compose = deriveFrozenComposeExpectation({
+      job, snapshot, mediaOrder, unicode, hasExternalEffect,
+    }).summary;
     const last = page.at(-1);
     const nextCursor = hasMore && last
       ? Buffer.from(JSON.stringify({
@@ -2678,7 +2685,7 @@ export class StudioDatabase {
     return {
       jobId, jobRevision: job.revision, jobState: job.state, scope: 'PERSISTED_ONLY',
       canDispatch: false, stages, observations, cleanupRequests, cleanupHasMore,
-      mediaOrder, frozenUnicode, hasMore, nextCursor,
+      mediaOrder, frozenUnicode, compose, hasMore, nextCursor,
     };
   }
 

@@ -420,10 +420,20 @@ it('projects a stage-free job as a bounded redacted read-only operator inventory
     frozenUnicode: expect.objectContaining({
       scope: 'FROZEN_UNICODE_NOT_ANDROID_INPUT', canType: false, canDispatch: false,
     }),
+    compose: expect.objectContaining({
+      scope: 'FROZEN_COMPOSE_NOT_ANDROID_VERIFIED', status: 'BLOCKED',
+      canVerify: false, canPublish: false, canDispatch: false,
+      blockers: expect.arrayContaining([
+        'ACCOUNT_NOT_PINNED', 'TARGET_NOT_PINNED', 'MEDIA_ORDER_NOT_VERIFIED',
+      ]),
+    }),
     hasMore: false, nextCursor: null,
   });
   expect(page.frozenUnicode.canType).toBe(false);
   expect(page.frozenUnicode.canDispatch).toBe(false);
+  expect(page.compose.mediaSlots).toBe(1);
+  expect(page.compose.textFields).toBe(0);
+  expect(JSON.stringify(page.compose)).not.toContain(f.snapshotHash);
   const publicPage = await dispatch(db, {
     operationId: 'op_review_read_only', command: 'jobStageReview', input: { id: f.jobId },
   });

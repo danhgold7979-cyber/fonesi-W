@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   JobStageReviewPage, NativeStageReviewResult, NativeStageCleanupReviewResult,
-  MediaOrderBlocker, FrozenUnicodeBlocker,
+  MediaOrderBlocker, FrozenUnicodeBlocker, FrozenComposeBlocker,
 } from '@autoreels/contracts';
 import { api, nativeStageReview } from './api.js';
 import { Dialog } from './components.js';
@@ -47,6 +47,17 @@ const unicodeBlockerLabels: Record<FrozenUnicodeBlocker, string> = {
   UNSAFE_UNICODE: 'Chuỗi có Unicode hỏng hoặc ký tự điều khiển nguy hiểm',
   TEXT_TOO_LARGE: 'Chuỗi vượt giới hạn byte/độ dài an toàn',
   URL_UNSAFE: 'URL sai giao thức hoặc có thông tin xác thực',
+};
+const composeBlockerLabels: Record<FrozenComposeBlocker, string> = {
+  JOB_NOT_PREFLIGHT: 'Job không ở pha PREFLIGHT an toàn để chuẩn bị compose',
+  WORKFLOW_BINDING_INVALID: 'Workflow hoặc ứng dụng đóng băng thiếu định danh hợp lệ',
+  ACCOUNT_NOT_PINNED: 'Chưa ghim tài khoản cho job',
+  TARGET_NOT_PINNED: 'Chưa ghim đích đăng cho job',
+  CONTENT_BINDING_MISMATCH: 'Nội dung không khớp job đã lên lịch',
+  MEDIA_ORDER_NOT_VERIFIED: 'Thứ tự media chưa có bằng chứng lưu trữ nhất quán',
+  UNICODE_SOURCE_INVALID: 'Nội dung Unicode chưa có nguồn đóng băng hợp lệ',
+  EMPTY_FROZEN_CONTENT: 'Job không có media hoặc text được đóng băng',
+  EXTERNAL_EFFECT_PRESENT: 'Có external effect cũ; không tự tiếp tục compose',
 };
 /** Operator-facing persisted history only. No lease, ADB, deletion or dispatch. */
 export function JobStageReviewDialog({ jobId, close }: Props) {
@@ -308,6 +319,30 @@ export function JobStageReviewDialog({ jobId, close }: Props) {
                 </li>
               ))}
             </ol>
+          )}
+          <h3>Đích đăng và nội dung đã ghim (chưa kiểm chứng Android)</h3>
+          <p className="muted">
+            Đây chỉ là kế hoạch dữ liệu đóng băng: không kiểm tra tài khoản/đích đang mở,
+            picker, trường nhập thực tế hay trạng thái Publish trong ứng dụng Android.
+            Không hiển thị định danh tài khoản, đích đăng, caption hoặc mã băm.
+          </p>
+          <p role="status" data-testid="frozen-compose-status">
+            {report.compose.status === 'BLOCKED'
+              ? 'Compose bị chặn bởi dữ liệu đã lưu; không được đăng.'
+              : 'Kế hoạch compose đã ghim nhất quán; vẫn chưa xác minh Android và không được đăng.'}
+          </p>
+          <p>
+            Ứng dụng: {report.compose.app === 'PINNED_NOT_OBSERVED' ? 'đã ghim, chưa quan sát' : 'thiếu'} ·
+            {' '}Tài khoản: {report.compose.account === 'PINNED_NOT_OBSERVED' ? 'đã ghim, chưa quan sát' : 'thiếu'} ·
+            {' '}Đích đăng: {report.compose.target === 'PINNED_NOT_OBSERVED' ? 'đã ghim, chưa quan sát' : 'thiếu'} ·
+            {' '}Nội dung: {report.compose.content === 'PINNED_NOT_OBSERVED' ? 'đã ghim, chưa quan sát' : 'không khớp'}.
+            {' '}{report.compose.mediaSlots} vị trí media; {report.compose.textFields} trường text/URL.
+          </p>
+          {report.compose.blockers.length > 0 && (
+            <ul aria-label="Điều kiện chặn compose đã ghim">
+              {report.compose.blockers.map((code) =>
+                <li key={code}>{composeBlockerLabels[code]}</li>)}
+            </ul>
           )}
           <h3>Yêu cầu rà soát cleanup đã lưu</h3>
           <p className="muted">

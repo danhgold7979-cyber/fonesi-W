@@ -610,6 +610,12 @@ test('NEEDS_REVIEW operator sees real persisted staging history without secrets 
   await expect(dialog.getByTestId('media-order-status')).toContainText('Đối chiếu media bị chặn');
   await expect(dialog).toContainText('Nội dung Unicode đã ghim (chưa nhập Android)');
   await expect(dialog.getByTestId('frozen-unicode-status')).toBeVisible();
+  await expect(dialog).toContainText('Đích đăng và nội dung đã ghim (chưa kiểm chứng Android)');
+  await expect(dialog.getByTestId('frozen-compose-status'))
+    .toContainText('Compose bị chặn');
+  await expect(dialog).toContainText('Chưa ghim tài khoản cho job');
+  await expect(dialog.getByRole('button', { name: /Xác minh đích đăng|Publish|Bắt đầu đăng/ }))
+    .toHaveCount(0);
   await expect(dialog).toContainText('không tự trim, đổi Unicode');
   await expect(dialog.getByRole('button', { name: /Nhập Unicode|Gõ caption|Dán văn bản/ }))
     .toHaveCount(0);

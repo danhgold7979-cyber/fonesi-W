@@ -136,6 +136,29 @@ export interface FrozenUnicodePreflight {
     blockers: FrozenUnicodeBlocker[];
   }[];
 }
+/** S096.3 frozen compose *source expectations*, never a live Android target/picker grant. */
+export type FrozenComposeBlocker =
+  | 'JOB_NOT_PREFLIGHT' | 'WORKFLOW_BINDING_INVALID'
+  | 'ACCOUNT_NOT_PINNED' | 'TARGET_NOT_PINNED'
+  | 'CONTENT_BINDING_MISMATCH' | 'MEDIA_ORDER_NOT_VERIFIED'
+  | 'UNICODE_SOURCE_INVALID' | 'EMPTY_FROZEN_CONTENT'
+  | 'EXTERNAL_EFFECT_PRESENT';
+
+export interface FrozenComposePreflight {
+  scope: 'FROZEN_COMPOSE_NOT_ANDROID_VERIFIED';
+  status: 'BLOCKED' | 'FROZEN_EXPECTATIONS_LIVE_UNVERIFIED';
+  app: 'PINNED_NOT_OBSERVED' | 'MISSING';
+  account: 'PINNED_NOT_OBSERVED' | 'MISSING';
+  target: 'PINNED_NOT_OBSERVED' | 'MISSING';
+  content: 'PINNED_NOT_OBSERVED' | 'MISSING';
+  mediaSlots: number;
+  textFields: number;
+  blockers: FrozenComposeBlocker[];
+  canVerify: false;
+  canPublish: false;
+  canDispatch: false;
+}
+
 /** Operator-visible persistence projection only. No paths, hashes, nonces, serials or owner IDs. */
 export interface JobStageReviewPage {
   jobId: string;
@@ -166,6 +189,7 @@ export interface JobStageReviewPage {
   /** Frozen asset order reconciled with owned stage and indexed-row journals. */
   mediaOrder: PersistedOrderedMediaReport;
   frozenUnicode: FrozenUnicodePreflight;
+  compose: FrozenComposePreflight;
   hasMore: boolean;
   nextCursor: string | null;
 }
