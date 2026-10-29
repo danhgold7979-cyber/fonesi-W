@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 20;
+export const SCHEMA_VERSION = 21;
 export const migration = `
 CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT;
 CREATE TABLE apps(id TEXT PRIMARY KEY, metadata TEXT NOT NULL) STRICT;
@@ -214,5 +214,26 @@ CREATE TRIGGER cleanup_reviews_immutable_update BEFORE UPDATE ON device_stage_cl
  BEGIN SELECT RAISE(ABORT,'cleanup review immutable'); END;
 CREATE TRIGGER cleanup_reviews_immutable_delete BEFORE DELETE ON device_stage_cleanup_reviews
  BEGIN SELECT RAISE(ABORT,'cleanup review immutable'); END;
+` },
+  { version: 21, sql: `
+CREATE TABLE effect_manual_reviews(
+ request_id TEXT PRIMARY KEY,
+ job_id TEXT NOT NULL REFERENCES jobs(id),
+ effect_id TEXT NOT NULL REFERENCES effects(id),
+ job_revision INTEGER NOT NULL CHECK(job_revision>=0),
+ expected_effect_state TEXT NOT NULL CHECK(expected_effect_state IN('INTENT','ATTEMPT_UNCERTAIN','NEEDS_REVIEW')),
+ actor_id TEXT NOT NULL,
+ reason_code TEXT NOT NULL CHECK(reason_code IN('UNKNOWN_EFFECT','CANCEL_REQUESTED','PROVIDER_EVIDENCE_MISSING','COMMENT_UNCERTAIN')),
+ disposition TEXT NOT NULL CHECK(disposition IN('AWAITING_EVIDENCE','ESCALATED','INSPECTED_UNCERTIFIED')),
+ evidence_refs TEXT NOT NULL CHECK(json_valid(evidence_refs)),
+ request_hash TEXT NOT NULL CHECK(length(request_hash)=64),
+ created_at TEXT NOT NULL
+) STRICT;
+CREATE INDEX effect_manual_reviews_effect ON effect_manual_reviews(effect_id,created_at,request_id);
+CREATE INDEX effect_manual_reviews_job ON effect_manual_reviews(job_id,created_at);
+CREATE TRIGGER effect_manual_reviews_immutable_update BEFORE UPDATE ON effect_manual_reviews
+ BEGIN SELECT RAISE(ABORT,'effect manual review immutable'); END;
+CREATE TRIGGER effect_manual_reviews_immutable_delete BEFORE DELETE ON effect_manual_reviews
+ BEGIN SELECT RAISE(ABORT,'effect manual review immutable'); END;
 ` },
 ] as const;
