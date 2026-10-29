@@ -811,11 +811,11 @@ it('reads exact frozen comment ordinals only after a persisted confirmed post, n
   expect(() => db.frozenCommentListPlan({
     ...req, postEffectId: 'effect_foreign',
   })).toThrow('not confirmed');
-  expect(() => dispatch(db, {
+  await expect(dispatch(db, {
     operationId: 'op_forge_frozen_comment_plan',
     command: 'comment.planFrozen' as never,
     input: req,
-  })).toThrow();
+  })).rejects.toThrow();
   sql.close();
 
   const beforeJob = db.getJob(f.jobId);
