@@ -2173,3 +2173,105 @@ it('bounds effect manual review notes at 32 and blocks the 33rd native target be
   expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
   expect(db.effectState(intent.effectId)).toBe('INTENT');
 });
+
+
+it('records provider-evidence-missing with zero refs, projects a redacted latest note, and preserves uncertainty', () => {
+  const f = fixture('device_missing_provider_evidence', 'missing_provider_evidence');
+  const intent = prepare(f);
+  const cancel = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: intent.jobRevision,
+    actorId: 'operator_cancel_missing_provider', at: at + 100,
+  });
+  expect(cancel.state).toBe('NEEDS_REVIEW');
+  const target = db.effectManualReviewTarget(f.jobId, 0);
+  expect(target).toMatchObject({
+    jobId: f.jobId, ordinal: 0, effectId: intent.effectId,
+    jobRevision: cancel.jobRevision, kind: 'PUBLISH', state: 'INTENT',
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  const beforeJob = db.getJob(f.jobId).job;
+  const beforeEvents = (() => {
+    const conn = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try { return Number(conn.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?')
+      .get(f.jobId)?.n); } finally { conn.close(); }
+  })();
+  const receipt = db.recordEffectManualReview({
+    requestId: 'manual_review_provider_missing_empty',
+    jobId: f.jobId, effectId: target.effectId,
+    expectedJobRevision: target.jobRevision,
+    expectedEffectState: target.state,
+    actorId: 'operator_self_reported_missing',
+    reasonCode: 'PROVIDER_EVIDENCE_MISSING',
+    disposition: 'AWAITING_EVIDENCE',
+    evidenceRefs: [], at: at + 150,
+  });
+  expect(receipt).toMatchObject({
+    evidenceCount: 0, reasonCode: 'PROVIDER_EVIDENCE_MISSING',
+    disposition: 'AWAITING_EVIDENCE',
+    canConfirm: false, canRetry: false, canDispatch: false,
+  });
+  const history = db.effectManualReviewHistory({
+    jobId: f.jobId, effectId: intent.effectId, limit: 1,
+  });
+  expect(history.items[0]).toMatchObject({
+    actorId: 'operator_self_reported_missing',
+    reasonCode: 'PROVIDER_EVIDENCE_MISSING',
+    disposition: 'AWAITING_EVIDENCE', evidenceCount: 0,
+  });
+  const page = db.jobStageReview(f.jobId);
+  expect(page.effectReview.entries[0]).toMatchObject({
+    ordinal: 0, kind: 'PUBLISH', state: 'INTENT',
+    manualReviewCount: 1,
+    latestManualReview: {
+      actorId: 'operator_self_reported_missing',
+      reasonCode: 'PROVIDER_EVIDENCE_MISSING',
+      disposition: 'AWAITING_EVIDENCE', evidenceCount: 0,
+    },
+  });
+  expect(JSON.stringify(page.effectReview.entries)).not.toContain(intent.effectId);
+  expect(db.getJob(f.jobId).job).toEqual(beforeJob);
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+  const afterEvents = (() => {
+    const conn = new DatabaseSync(join(dir, 'studio.sqlite'));
+    try { return Number(conn.prepare('SELECT COUNT(*) AS n FROM queue_events WHERE job_id=?')
+      .get(f.jobId)?.n); } finally { conn.close(); }
+  })();
+  expect(afterEvents).toBe(beforeEvents);
+  db.close(); db = new StudioDatabase(join(dir, 'studio.sqlite'));
+  expect(db.jobStageReview(f.jobId).effectReview.entries[0])
+    .toMatchObject({ manualReviewCount: 1, latestManualReview: { evidenceCount: 0 } });
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+});
+
+it('enforces a 32-note cap per unresolved effect without allowing a 33rd target', () => {
+  const f = fixture('device_effect_review_note_cap', 'effect_review_note_cap');
+  const intent = prepare(f);
+  const cancel = db.requestJobCancellation({
+    jobId: f.jobId, expectedRevision: intent.jobRevision,
+    actorId: 'operator_cancel_note_cap', at: at + 100,
+  });
+  for (let n = 0; n < 32; n++) {
+    const receipt = db.recordEffectManualReview({
+      requestId: 'manual_review_cap_' + n,
+      jobId: f.jobId, effectId: intent.effectId,
+      expectedJobRevision: cancel.jobRevision, expectedEffectState: 'INTENT',
+      actorId: 'operator_self_reported_cap',
+      reasonCode: 'PROVIDER_EVIDENCE_MISSING', disposition: 'AWAITING_EVIDENCE',
+      evidenceRefs: [], at: at + 200 + n,
+    });
+    expect(receipt.evidenceCount).toBe(0);
+  }
+  expect(db.jobStageReview(f.jobId).effectReview.entries[0]?.manualReviewCount).toBe(32);
+  expect(() => db.effectManualReviewTarget(f.jobId, 0)).toThrow('32-note audit limit');
+  expect(() => db.recordEffectManualReview({
+    requestId: 'manual_review_cap_33',
+    jobId: f.jobId, effectId: intent.effectId,
+    expectedJobRevision: cancel.jobRevision, expectedEffectState: 'INTENT',
+    actorId: 'operator_self_reported_cap',
+    reasonCode: 'PROVIDER_EVIDENCE_MISSING', disposition: 'AWAITING_EVIDENCE',
+    evidenceRefs: [], at: at + 300,
+  })).toThrow('32 immutable manual review notes');
+  expect(db.getJob(f.jobId).job.state).toBe('NEEDS_REVIEW');
+  expect(db.effectState(intent.effectId)).toBe('INTENT');
+});
