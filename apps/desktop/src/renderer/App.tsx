@@ -349,7 +349,7 @@ export function App() {
                   onChange={(e) => setFilter(e.target.value)}
                 />
                 <select
-                  aria-label="Lọc ứng dụng workflow tùy chỉnh"
+                  aria-label="Lọc ứng dụng thư viện"
                   value={libraryApp}
                   onChange={(e) => setLibraryApp(e.target.value)}
                 >

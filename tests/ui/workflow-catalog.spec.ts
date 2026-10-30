@@ -66,7 +66,7 @@ test('each Facebook template explains identity, ordered comments and safe stop c
     await expect(dialog).toContainText('PLANNED');
     await expect(dialog.getByRole('button', { name: /chạy/i })).toHaveCount(0);
 
-    await dialog.getByRole('button', { name: 'Đóng' }).click();
+    await dialog.getByRole('button', { name: 'Đóng', exact: true }).click();
     await expect(dialog).not.toBeVisible();
   }
 });
@@ -74,6 +74,6 @@ test('each Facebook template explains identity, ordered comments and safe stop c
 test('custom workflow creation remains available beside the fixed catalog', async ({ page }) => {
   await page.getByRole('button', { name: '＋ Workflow mới' }).click();
   await expect(page.getByRole('dialog')).toContainText('Tạo workflow mới');
-  await expect(page.getByRole('combobox', { name: 'Ứng dụng workflow' })).toHaveValue('fb');
+  await expect(page.getByRole('combobox', { name: 'Ứng dụng workflow', exact: true })).toHaveValue('fb');
   await page.getByRole('button', { name: 'Hủy' }).click();
 });
