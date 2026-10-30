@@ -10,6 +10,7 @@ import { Dialog, Empty } from './components.js';
 import { Processes } from './Processes.js';
 import { Devices } from './Devices.js';
 import { WorkspacePanel } from './WorkspacePanel.js';
+import { WorkflowCatalog } from './WorkflowCatalog.js';
 const Editor = lazy(() => import('./Editor.js').then((module) => ({ default: module.Editor })));
 const Schedule = lazy(() =>
   import('./Schedule.js').then((module) => ({ default: module.Schedule })),
@@ -19,7 +20,7 @@ const routes = [
   { id: 'devices', name: 'Điện thoại', icon: '▦' },
   { id: 'inspector', name: 'Inspector', icon: '⌘' },
   { id: 'processes', name: 'Tiến trình', icon: '☷' },
-  { id: 'library', name: 'Thư viện', icon: '◇' },
+  { id: 'library', name: 'Quy trình', icon: '◇' },
   { id: 'schedule', name: 'Lịch đăng', icon: '▣' },
   { id: 'history', name: 'Lịch sử', icon: '◷' },
 ] as const;
@@ -316,93 +317,98 @@ export function App() {
             </Empty>
           ))}
         {view === 'library' && (
-          <div className="page">
-            <div className="page-heading">
-              <div>
-                <h1>Thư viện workflow</h1>
-                <p>Thiết kế một lần, liên kết với nhiều tiến trình và thiết bị.</p>
-              </div>
-              <div className="actions">
-                <button onClick={() => fileInput.current?.click()}>Nhập JSON</button>
-                <button onClick={() => setModal('app')}>＋ Thêm app</button>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setWorkflowApp(libraryApp === 'all' ? 'fb' : libraryApp);
-                    setModal('create');
-                  }}
-                >
-                  ＋ Workflow mới
-                </button>
-              </div>
-            </div>
-            <div className="list-toolbar">
-              <input
-                aria-label="Tìm workflow"
-                placeholder="Tìm workflow…"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              />
-              <select
-                aria-label="Lọc ứng dụng thư viện"
-                value={libraryApp}
-                onChange={(e) => setLibraryApp(e.target.value)}
-              >
-                <option value="all">Tất cả ứng dụng</option>
-                {boot.apps.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-              <small className="muted">{library.length} workflow</small>
-            </div>
-            {library.length ? (
-              <div className="workflow-grid">
-                {library.map((w) => (
-                  <article key={w.id} className="workflow-card">
-                    <span className="app-icon">
-                      {boot.apps.find((a) => a.id === w.appId)?.name[0] ?? 'A'}
-                    </span>
-                    <button className="card-open" onClick={() => void open(w.id)}>
-                      <h3>{w.name}</h3>
-                      <p>
-                        {boot.apps.find((a) => a.id === w.appId)?.name} · Bản nháp r{w.revision}
-                      </p>
-                    </button>
-                    <div className="card-footer">
-                      <span className="badge">Chưa chứng nhận Android</span>
-                      <button
-                        aria-label={'Lưu trữ ' + w.name}
-                        onClick={() => {
-                          setArchive(w);
-                          setModal('archive');
-                        }}
-                      >
-                        ⋯
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <Empty
-                title="Chưa có workflow trong bộ lọc này"
-                action={
+          <div className="page workflow-library-page">
+            <WorkflowCatalog />
+            <section className="custom-workflow-section" aria-labelledby="custom-workflows-heading">
+              <div className="page-heading">
+                <div>
+                  <h1 id="custom-workflows-heading">Workflow tùy chỉnh</h1>
+                  <p>
+                    Dành cho quy trình tự thiết kế, nhập JSON và các workflow chưa có mẫu cố định.
+                  </p>
+                </div>
+                <div className="actions">
+                  <button onClick={() => fileInput.current?.click()}>Nhập JSON</button>
+                  <button onClick={() => setModal('app')}>＋ Thêm app</button>
                   <button
+                    className="primary"
                     onClick={() => {
                       setWorkflowApp(libraryApp === 'all' ? 'fb' : libraryApp);
                       setModal('create');
                     }}
                   >
-                    Tạo workflow mới
+                    ＋ Workflow mới
                   </button>
-                }
-              >
-                Tạo workflow generic hoặc nhập JSON đã xuất. App tùy chỉnh không tự có adapter đã
-                chứng nhận.
-              </Empty>
-            )}
+                </div>
+              </div>
+              <div className="list-toolbar">
+                <input
+                  aria-label="Tìm workflow tùy chỉnh"
+                  placeholder="Tìm workflow tùy chỉnh…"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
+                <select
+                  aria-label="Lọc ứng dụng workflow tùy chỉnh"
+                  value={libraryApp}
+                  onChange={(e) => setLibraryApp(e.target.value)}
+                >
+                  <option value="all">Tất cả ứng dụng</option>
+                  {boot.apps.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+                <small className="muted">{library.length} workflow</small>
+              </div>
+              {library.length ? (
+                <div className="workflow-grid">
+                  {library.map((w) => (
+                    <article key={w.id} className="workflow-card">
+                      <span className="app-icon">
+                        {boot.apps.find((a) => a.id === w.appId)?.name[0] ?? 'A'}
+                      </span>
+                      <button className="card-open" onClick={() => void open(w.id)}>
+                        <h3>{w.name}</h3>
+                        <p>
+                          {boot.apps.find((a) => a.id === w.appId)?.name} · Bản nháp r{w.revision}
+                        </p>
+                      </button>
+                      <div className="card-footer">
+                        <span className="badge">Chưa chứng nhận Android</span>
+                        <button
+                          aria-label={'Lưu trữ ' + w.name}
+                          onClick={() => {
+                            setArchive(w);
+                            setModal('archive');
+                          }}
+                        >
+                          ⋯
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <Empty
+                  title="Chưa có workflow tùy chỉnh trong bộ lọc này"
+                  action={
+                    <button
+                      onClick={() => {
+                        setWorkflowApp(libraryApp === 'all' ? 'fb' : libraryApp);
+                        setModal('create');
+                      }}
+                    >
+                      Tạo workflow mới
+                    </button>
+                  }
+                >
+                  Tạo workflow generic hoặc nhập JSON đã xuất. App tùy chỉnh không tự có adapter đã
+                  chứng nhận.
+                </Empty>
+              )}
+            </section>
           </div>
         )}
         {view === 'processes' && (
